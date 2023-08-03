@@ -18,7 +18,7 @@ namespace R3
 		};
 
 		std::string_view GetCmdLine();
-		InitResult Initialise(int argc, char* argv[]);
+		InitResult Initialise(std::string_view fullCmdLine);
 		ShutdownResult Shutdown();
 	}
 }

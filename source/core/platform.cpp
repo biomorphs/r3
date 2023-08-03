@@ -34,24 +34,14 @@ namespace R3
 #endif
 		}
 
-		InitResult Initialise(int argc, char* argv[])
+		InitResult Initialise(std::string_view fullCmdLine)
 		{
-			if (argc > 1)
-			{
-				Internal::g_fullCmdLine = "";
-				for (int i = 1; i < argc; ++i)
-				{
-					Internal::g_fullCmdLine += argv[i];
-				}
-				ProcessCommandLine();
-			}
-
+			Internal::g_fullCmdLine = fullCmdLine;
+			ProcessCommandLine();
 
 			fmt::print("Initialising SDL");
-
 			int sdlResult = SDL_Init(SDL_INIT_EVERYTHING);
 			assert(sdlResult == 0);
-
 			if (sdlResult != 0)
 			{
 				fmt::print("Failed to initialise SDL:\r\n\t{}", SDL_GetError());
