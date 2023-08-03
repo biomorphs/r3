@@ -1,0 +1,58 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Assets
+*.fbx
+*.png
+*.jpg
+*.bmp
+*.psd
+*.blend
+*.blend1
+*.mtl
+*.obj
+*.txt
+*.skp
+*.tif
+*.hdr
+*.ini
+
+build/*
+videos/*
+data/playground_config.json
+*.glb
+*.url
+*.dae
+*.stl
+*.gltf
+data/OptickCore.exp

@@ -1,0 +1,73 @@
+#include "platform.h"
+#include "core/profiler.h"
+#include <cassert>
+#include <SDL.h>
+#include <fmt/format.h>
+
+namespace R3
+{
+	namespace Platform
+	{
+		namespace Internal
+		{
+			std::string g_fullCmdLine;
+		}
+
+		std::string_view GetCmdLine()
+		{
+			return Internal::g_fullCmdLine;
+		}
+
+		void ProcessCommandLine()
+		{
+#ifdef R3_USE_OPTICK
+			if (GetCmdLine().find("-waitforprofiler") != std::string::npos)
+			{
+				fmt::print("Waiting for profiler connection...");
+				while (!R3_PROF_IS_ACTIVE())
+				{
+					R3_PROF_FRAME("Main Thread");	// kick off the profiler with a fake frame
+					R3_PROF_EVENT();
+					_sleep(20);
+				}
+			}
+#endif
+		}
+
+		InitResult Initialise(int argc, char* argv[])
+		{
+			if (argc > 1)
+			{
+				Internal::g_fullCmdLine = "";
+				for (int i = 1; i < argc; ++i)
+				{
+					Internal::g_fullCmdLine += argv[i];
+				}
+				ProcessCommandLine();
+			}
+
+
+			fmt::print("Initialising SDL");
+
+			int sdlResult = SDL_Init(SDL_INIT_EVERYTHING);
+			assert(sdlResult == 0);
+
+			if (sdlResult != 0)
+			{
+				fmt::print("Failed to initialise SDL:\r\n\t{}", SDL_GetError());
+				return InitResult::InitFailed;
+			}
+
+			return InitResult::InitOK;
+		}
+
+		ShutdownResult Shutdown()
+		{
+			fmt::print("Shutting down SDL");
+
+			SDL_Quit();
+
+			return ShutdownResult::ShutdownOK;
+		}
+	}
+}

@@ -1,0 +1,9 @@
+{
+  "name": "r3",
+  "version-string": "0.0.1",
+  "license": "MIT",
+  "dependencies": [
+    "fmt",
+	"sdl2"
+  ]
+}
