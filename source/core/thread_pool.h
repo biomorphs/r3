@@ -1,7 +1,9 @@
 #pragma once
+#include <string>
 #include <stdint.h>
 #include <functional>
 #include <atomic>
+#include <memory>
 #include "core/semaphore.h"
 
 namespace R3

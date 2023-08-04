@@ -9,3 +9,6 @@ target_link_libraries(R3 PRIVATE
 	SDL2::SDL2 
 	SDL2::SDL2main
 )
+
+# Setup default working directory
+set(TARGET R3 PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/data")
