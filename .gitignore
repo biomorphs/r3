@@ -32,27 +32,24 @@
 *.app
 
 # Assets
-*.fbx
-*.png
-*.jpg
-*.bmp
-*.psd
-*.blend
-*.blend1
-*.mtl
-*.obj
-*.txt
-*.skp
-*.tif
-*.hdr
-*.ini
+data/*.fbx
+data/*.png
+data/*.jpg
+data/*.bmp
+data/*.psd
+data/*.blend
+data/*.blend1
+data/*.mtl
+data/*.obj
+data/*.skp
+data/*.tif
+data/*.hdr
+data/*.ini
+data/*.glb
+data/*.url
+data/*.dae
+data/*.stl
+data/*.gltf
+data/OptickCore.exp
 
 build/*
-videos/*
-data/playground_config.json
-*.glb
-*.url
-*.dae
-*.stl
-*.gltf
-data/OptickCore.exp
