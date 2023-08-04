@@ -1,5 +1,5 @@
-#include <functional>
 #pragma once
+#include <functional>
 
 namespace R3
 {

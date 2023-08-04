@@ -20,6 +20,7 @@ namespace R3
 
 		// Run the engine
 
+
 		// Shutdown
 		auto shutdownResult = Platform::Shutdown();
 		assert(shutdownResult == Platform::ShutdownResult::ShutdownOK);
