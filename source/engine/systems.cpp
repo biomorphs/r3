@@ -25,6 +25,11 @@ namespace R3
 		}
 	}
 
+	void System::RegisterTick(std::string_view name, std::function<bool()> fn)
+	{
+		Systems::GetInstance().RegisterTick(name, fn);
+	}
+
 	void Systems::RegisterTick(std::string_view name, std::function<bool()> fn)
 	{
 		TickFnRecord newRecord;

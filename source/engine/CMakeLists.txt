@@ -10,6 +10,8 @@ set(EngineLib_SourceFiles
 	systems/time_system.cpp
 	systems/event_system.h
 	systems/event_system.cpp
+	systems/input_system.h
+	systems/input_system.cpp
 )
 
 add_library(Engine ${EngineLib_SourceFiles})

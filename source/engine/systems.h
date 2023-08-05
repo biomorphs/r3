@@ -10,15 +10,16 @@ namespace R3
 	class FrameGraph;
 
 	// Base system
-	// 3 phase init
-	// single phase shutdown
 	class System
 	{
 	public:
 		virtual ~System() = default;
-		virtual void RegisterTickFns() { }		// called after init
-		virtual bool Init() { return true; }	// Called in order of registration!
-		virtual void Shutdown() { }				// Called in reverse order to init
+		virtual void RegisterTickFns() { }			// called after init, register tick fns with Systems
+		virtual bool Init() { return true; }		// Called in order of registration!
+		virtual void Shutdown() { }					// Called in reverse order to init
+	protected:
+		template<class T> static T* GetSystem();	// Convenience helpers
+		static void RegisterTick(std::string_view name, std::function<bool()> fn);
 	};
 
 	// Singleton, owns all systems + knows about frame graph fns
@@ -27,15 +28,13 @@ namespace R3
 	public:
 		static Systems& GetInstance();
 		template<class T> void RegisterSystem();
+		template<class T> static T* GetSystem();
+
 		void RegisterTick(std::string_view name, std::function<bool()> fn);
 		std::function<bool()> GetTick(std::string_view name);
 
 		bool Initialise();	// call after all systems registered
 		void Shutdown();
-
-		template<class T>
-		static T* GetSystem();
-
 	private:
 		struct SystemRecord {
 			std::string m_name;
@@ -48,6 +47,13 @@ namespace R3
 		std::vector<SystemRecord> m_allSystems;
 		std::vector<TickFnRecord> m_allTicks;
 	};
+
+	template<class T>
+	static T* System::GetSystem()
+	{
+		auto& s = Systems::GetInstance();
+		return s.GetSystem<T>();
+	}
 
 	template<class T>
 	static T* Systems::GetSystem() 

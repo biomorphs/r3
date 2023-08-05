@@ -3,6 +3,7 @@
 #include "systems.h"
 #include "systems/time_system.h"
 #include "systems/event_system.h"
+#include "systems/input_system.h"
 #include "core/platform.h"
 #include "core/random.h"
 #include "core/profiler.h"
@@ -18,6 +19,7 @@ namespace R3
 		auto& s = Systems::GetInstance();
 		s.RegisterSystem<TimeSystem>();
 		s.RegisterSystem<EventSystem>();
+		s.RegisterSystem<InputSystem>();
 	}
 
 	// the default frame graph of the engine describes the entire frame structure
@@ -28,6 +30,7 @@ namespace R3
 			auto& frameStart = fg.m_root.AddSequence("FrameStart");
 			frameStart.AddFn("Time::FrameStart");
 			frameStart.AddFn("Events::FrameStart");
+			frameStart.AddFn("Input::FrameStart");
 		}
 		{
 			auto& fixedUpdate = fg.m_root.AddFixedUpdateSequence("FixedUpdate");
