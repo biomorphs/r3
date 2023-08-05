@@ -4,6 +4,12 @@ set(EngineLib_SourceFiles
 	engine_startup.cpp
 	systems.h
 	systems.cpp
+	frame_graph.h
+	frame_graph.cpp
+	systems/time_system.h
+	systems/time_system.cpp
+	systems/event_system.h
+	systems/event_system.cpp
 )
 
 add_library(Engine ${EngineLib_SourceFiles})

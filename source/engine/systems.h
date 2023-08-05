@@ -28,9 +28,13 @@ namespace R3
 		static Systems& GetInstance();
 		template<class T> void RegisterSystem();
 		void RegisterTick(std::string_view name, std::function<bool()> fn);
+		std::function<bool()> GetTick(std::string_view name);
 
 		bool Initialise();	// call after all systems registered
 		void Shutdown();
+
+		template<class T>
+		static T* GetSystem();
 
 	private:
 		struct SystemRecord {
@@ -45,12 +49,29 @@ namespace R3
 		std::vector<TickFnRecord> m_allTicks;
 	};
 
+	template<class T>
+	static T* Systems::GetSystem() 
+	{
+		auto& s = Systems::GetInstance();
+		auto found = std::find_if(s.m_allSystems.begin(), s.m_allSystems.end(), [](const SystemRecord& s) {
+			return s.m_name == T::GetName();
+		});
+		if (found != s.m_allSystems.end())
+		{
+			return static_cast<T*>(found->m_ptr.get());
+		}
+		else
+		{
+			return nullptr;
+		}
+	};
+
 	template<class T> void Systems::RegisterSystem()
 	{
-		std::string sysName = T::GetName();
-		SystemRecord newSys
+		std::string sysName(T::GetName());
+		SystemRecord newSys;
 		newSys.m_name = sysName;
-		newSys.m_ptr = std::make_unique<t>();
+		newSys.m_ptr = std::make_unique<T>();
 		m_allSystems.push_back(std::move(newSys));
 	}
 }

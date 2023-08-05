@@ -10,6 +10,8 @@ set(CoreLib_SourceFiles
 	random.cpp
 	semaphore.h
 	semaphore.cpp
+	time.h
+	time.cpp
 )
 
 add_library(Core ${CoreLib_SourceFiles})

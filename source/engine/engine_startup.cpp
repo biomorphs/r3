@@ -1,20 +1,48 @@
 #include "engine_startup.h"
+#include "frame_graph.h"
 #include "systems.h"
+#include "systems/time_system.h"
+#include "systems/event_system.h"
 #include "core/platform.h"
 #include "core/random.h"
+#include "core/profiler.h"
 #include <cassert>
 #include <fmt/format.h>
 
 namespace R3
 {
-	void RegisterSystems(std::function<void()> systemCreation)
+	// All default engine systems go here
+	void RegisterSystems()
 	{
+		R3_PROF_EVENT();
+		auto& s = Systems::GetInstance();
+		s.RegisterSystem<TimeSystem>();
+		s.RegisterSystem<EventSystem>();
+	}
 
+	// the default frame graph of the engine describes the entire frame structure
+	void BuildFrameGraph(FrameGraph& fg)
+	{
+		R3_PROF_EVENT();
+		{
+			auto& frameStart = fg.m_root.AddSequence("FrameStart");
+			frameStart.AddFn("Time::FrameStart");
+			frameStart.AddFn("Events::FrameStart");
+		}
+		{
+			auto& fixedUpdate = fg.m_root.AddFixedUpdateSequence("FixedUpdate");
+			fixedUpdate.AddFn("Time::FixedUpdateEnd");
+		}
+		{
+			auto& varUpdate = fg.m_root.AddSequence("VariableUpdate");
+		}
 	}
 
 	// Engine entry point
-	int Run(std::string_view fullCmdLine, std::function<void()> systemCreation, std::function<void(FrameGraph&)> frameGraphBuildCb)
+	int Run(std::string_view fullCmdLine, RegisterSystemsFn systemCreation, BuildFrameGraphFn frameGraphBuildCb)
 	{
+		R3_PROF_EVENT();
+
 		auto result = R3::Platform::Initialise(fullCmdLine);
 		assert(result == R3::Platform::InitOK);
 		if (result == R3::Platform::InitFailed)
@@ -26,9 +54,13 @@ namespace R3
 		R3::Random::ResetGlobalSeed();
 
 		// Register all engine and user systems
-		RegisterSystems(systemCreation);
+		RegisterSystems();
+		if (systemCreation)
+		{
+			systemCreation();
+		}
 
-		// Initialise systems
+		// Initialise systems (also registers tick fns)
 		bool systemsInitialised = Systems::GetInstance().Initialise();
 		if (!systemsInitialised)
 		{
@@ -37,13 +69,19 @@ namespace R3
 		}
 
 		// Build the frame graph
-		// ...
+		FrameGraph runFrame;
+		BuildFrameGraph(runFrame);
+		if (frameGraphBuildCb)
+		{
+			frameGraphBuildCb(runFrame);
+		}
 
 		// Run the engine
-		bool running = false;
+		bool running = true;
 		while (running)
 		{
-
+			R3_PROF_FRAME("Main Thread");
+			running = runFrame.m_root.Run();
 		}
 
 		// Shut down systems

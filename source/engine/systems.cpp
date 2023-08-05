@@ -9,6 +9,22 @@ namespace R3
 		return s_instance;
 	}
 
+	std::function<bool()> Systems::GetTick(std::string_view name)
+	{
+		std::function<bool()> result = []() { return false; };
+		auto found = std::find_if(m_allTicks.begin(), m_allTicks.end(), [name](const TickFnRecord& fn) {
+			return fn.m_name == name;
+		});
+		if (found != m_allTicks.end())
+		{
+			return found->m_fn;
+		}
+		else
+		{
+			return result;
+		}
+	}
+
 	void Systems::RegisterTick(std::string_view name, std::function<bool()> fn)
 	{
 		TickFnRecord newRecord;
