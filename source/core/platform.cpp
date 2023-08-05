@@ -23,7 +23,7 @@ namespace R3
 #ifdef R3_USE_OPTICK
 			if (GetCmdLine().find("-waitforprofiler") != std::string::npos)
 			{
-				fmt::print("Waiting for profiler connection...");
+				fmt::print("Waiting for profiler connection...\n");
 				while (!R3_PROF_IS_ACTIVE())
 				{
 					R3_PROF_FRAME("Main Thread");	// kick off the profiler with a fake frame
@@ -39,12 +39,12 @@ namespace R3
 			Internal::g_fullCmdLine = fullCmdLine;
 			ProcessCommandLine();
 
-			fmt::print("Initialising SDL");
+			fmt::print("Initialising SDL\n");
 			int sdlResult = SDL_Init(SDL_INIT_EVERYTHING);
 			assert(sdlResult == 0);
 			if (sdlResult != 0)
 			{
-				fmt::print("Failed to initialise SDL:\r\n\t{}", SDL_GetError());
+				fmt::print("Failed to initialise SDL:\r\n\t{}\n", SDL_GetError());
 				return InitResult::InitFailed;
 			}
 
@@ -53,7 +53,7 @@ namespace R3
 
 		ShutdownResult Shutdown()
 		{
-			fmt::print("Shutting down SDL");
+			fmt::print("Shutting down SDL\n");
 
 			SDL_Quit();
 

@@ -1,6 +1,7 @@
 #pragma once
 #include "engine/systems.h"
 
+struct VkExtensionProperties;
 namespace R3
 {
 	class Window;
@@ -14,6 +15,10 @@ namespace R3
 		virtual bool Init();
 		virtual void Shutdown();
 	private:
+		bool CreateWindow();
+		bool CreateVkInstance();
 		std::unique_ptr<Window> m_mainWindow;
+		struct VkStuff;
+		std::unique_ptr<VkStuff> m_vk;
 	};
 }

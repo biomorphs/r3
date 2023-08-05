@@ -29,7 +29,7 @@ namespace R3
 		m_handle = SDL_CreateWindow(props.m_title.c_str(), windowPosX, windowPosY, props.m_sizeX, props.m_sizeY, windowFlags);
 		if (m_handle == nullptr)
 		{
-			fmt::print("Error creating window ({})", SDL_GetError());
+			fmt::print("Error creating window ({})\n", SDL_GetError());
 		}
 		assert(m_handle);
 	}
