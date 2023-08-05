@@ -1,6 +1,8 @@
 #include "render_system.h"
 #include "window.h"
 #include "vulkan/vulkan.h"
+#include "vulkan/vk_enum_string_helper.h"
+#include "core/file_io.h"
 #include <SDL.h>
 #include <SDL_vulkan.h>
 #include <fmt/format.h>
@@ -41,13 +43,24 @@ namespace R3
 		VkQueue m_graphicsQueue = VK_NULL_HANDLE;
 		VkQueue m_presentQueue = VK_NULL_HANDLE;
 		VkSwapchainKHR m_swapChain;
+		VkExtent2D m_swapChainExtents;
+		VkSurfaceFormatKHR m_swapChainFormat;
+		VkPresentModeKHR m_swapChainPresentMode;
+		std::vector<VkImage> m_swapChainImages;
+		std::vector<VkImageView> m_swapChainImageViews;
+
+		// Simple triangle stuff
+		VkShaderModule m_singleTriVertexShaderModule;
+		VkShaderModule m_singleTriFragmentShaderModule;
+		VkPipelineLayout m_singleTriPipelineLayout;
 	};
 
 	bool CheckResult(const VkResult& r)
 	{
 		if (r)
 		{
-			fmt::print("Vulkan Error! {}\n", r);
+			std::string errorString = string_VkResult(r);
+			fmt::print("Vulkan Error! {}\n", errorString);
 			int* crashMe = nullptr;
 			*crashMe = 1;
 		}
@@ -179,6 +192,27 @@ namespace R3
 		return qfi;
 	}
 
+	// ShaderModule wraps the spirv
+	VkShaderModule CreateShaderModule(VkDevice device, std::vector<uint8_t> srcSpirv)
+	{
+		assert((srcSpirv.size() % 4) == 0);	// VkShaderModuleCreateInfo wants uint32, make sure the buffer is big enough 
+		VkShaderModuleCreateInfo createInfo = { 0 };
+		createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		createInfo.pCode = reinterpret_cast<const uint32_t*>(srcSpirv.data());
+		createInfo.codeSize = srcSpirv.size();	// size in BYTES
+		VkShaderModule shaderModule = { 0 };
+		VkResult r = vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule);
+		if (CheckResult(r))
+		{
+			return shaderModule;
+		}
+		else
+		{
+			fmt::print("Failed to create shader module from src spirv\n");
+			return VkShaderModule {0};
+		}
+	}
+
 	RenderSystem::RenderSystem()
 	{
 		m_vk = std::make_unique<VkStuff>();
@@ -231,6 +265,12 @@ namespace R3
 			return false;
 		}
 
+		if (!CreateSimpleTriPipeline())
+		{
+			fmt::print("Failed to create pipeline\n");
+			return false;
+		}
+
 		m_mainWindow->Show();
 
 		return true;
@@ -239,11 +279,188 @@ namespace R3
 	void RenderSystem::Shutdown()
 	{
 		m_mainWindow->Hide();
+
+		vkDestroyPipelineLayout(m_vk->m_device, m_vk->m_singleTriPipelineLayout, nullptr);
+
+		vkDestroyShaderModule(m_vk->m_device, m_vk->m_singleTriFragmentShaderModule, nullptr);
+		vkDestroyShaderModule(m_vk->m_device, m_vk->m_singleTriVertexShaderModule, nullptr);
+
+		for (auto imageView : m_vk->m_swapChainImageViews) {
+			vkDestroyImageView(m_vk->m_device, imageView, nullptr);
+		}
+		m_vk->m_swapChainImageViews.clear();
+		m_vk->m_swapChainImages.clear();
 		vkDestroySwapchainKHR(m_vk->m_device, m_vk->m_swapChain, nullptr);
 		vkDestroyDevice(m_vk->m_device, nullptr);
 		vkDestroySurfaceKHR(m_vk->m_vkInstance, m_vk->m_mainSurface, nullptr);
 		vkDestroyInstance(m_vk->m_vkInstance, nullptr);
 		m_mainWindow = nullptr;
+	}
+
+	bool RenderSystem::CreateSimpleTriPipeline()
+	{
+		// Load the shaders
+		std::string basePath(R3::FileIO::GetBasePath());
+		basePath += "shaders_spirv\\vk_tutorials\\";
+		std::vector<uint8_t> vertexSpirv, fragmentSpirv;
+		if (!R3::FileIO::LoadBinaryFile(basePath + "fixed_triangle.vert.spv", vertexSpirv))
+		{
+			fmt::print("Failed to load spirv file\n");
+			return false;
+		}
+		if (!R3::FileIO::LoadBinaryFile(basePath + "fixed_triangle.frag.spv", fragmentSpirv))
+		{
+			fmt::print("Failed to load spirv file\n");
+			return false;
+		}
+		m_vk->m_singleTriVertexShaderModule = CreateShaderModule(m_vk->m_device, vertexSpirv);
+		m_vk->m_singleTriFragmentShaderModule = CreateShaderModule(m_vk->m_device, fragmentSpirv);
+		if (m_vk->m_singleTriVertexShaderModule == VK_NULL_HANDLE)
+		{
+			fmt::print("Failed to create shader module");
+			return false;
+		}
+		if (m_vk->m_singleTriFragmentShaderModule == VK_NULL_HANDLE)
+		{
+			fmt::print("Failed to create shader module");
+			return false;
+		}
+
+		// Create the shader stage descriptors for the pipeline
+		std::vector<VkPipelineShaderStageCreateInfo> shaderStates;
+
+		VkPipelineShaderStageCreateInfo vertexStageInfo = { 0 };
+		vertexStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		vertexStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+		vertexStageInfo.module = m_vk->m_singleTriVertexShaderModule;
+		vertexStageInfo.pName = "main";	// entry point name
+		shaderStates.push_back(vertexStageInfo);
+
+		VkPipelineShaderStageCreateInfo fragmentStageInfo = { 0 };
+		fragmentStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		fragmentStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+		fragmentStageInfo.module = m_vk->m_singleTriFragmentShaderModule;
+		fragmentStageInfo.pName = "main";	// entry point name
+		shaderStates.push_back(fragmentStageInfo);
+
+		// Some pipeline state can be dynamic, specify it here
+		std::vector<VkDynamicState> dynamicStates = {
+		//	VK_DYNAMIC_STATE_VIEWPORT,		// we will set viewport at draw time
+		//	VK_DYNAMIC_STATE_SCISSOR		// same for the scissor data
+		};
+		VkPipelineDynamicStateCreateInfo dynamicState = {0};
+		dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+		dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+		if (dynamicStates.size() > 0)
+		{
+			dynamicState.pDynamicStates = dynamicStates.data();
+		}
+
+		// Set up vertex buffer input state. Since we have no input buffers, just set it to 0
+		VkPipelineVertexInputStateCreateInfo vertexInputInfo = {0};
+		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+		vertexInputInfo.vertexBindingDescriptionCount = 0;
+		vertexInputInfo.vertexAttributeDescriptionCount = 0;
+
+		// Input assembly describes type of geometry (lines/tris) and topology(strips,lists,etc) to draw
+		VkPipelineInputAssemblyStateCreateInfo inputAssembly = {0};
+		inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+		inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;	// 3 verts per tri
+		inputAssembly.primitiveRestartEnable = VK_FALSE;	// used with strips to break up lines/tris
+
+		// Viewport to draw to (if not using dynamic viewport I guess!)
+		VkViewport viewport = { 0 };
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = (float)m_vk->m_swapChainExtents.width;
+		viewport.height = (float)m_vk->m_swapChainExtents.height;
+		viewport.minDepth = 0.0f;	// normalised! must be between 0 and 1
+		viewport.maxDepth = 1.0f;	// ^^
+
+		// Scissor state (if not using dynamic I guess!)
+		VkRect2D scissor = {0};
+		scissor.offset = { 0, 0 };
+		scissor.extent = m_vk->m_swapChainExtents;	// draw the full image
+
+		// create the viewport state for the pipeline
+		// if using dynamic we only need to set the counts
+		VkPipelineViewportStateCreateInfo viewportState = {0};
+		viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+		viewportState.viewportCount = 1;
+		viewportState.pViewports = &viewport;
+		viewportState.scissorCount = 1;
+		viewportState.pScissors = &scissor;
+
+		// Setup rasteriser state
+		VkPipelineRasterizationStateCreateInfo rasterizer = {0};
+		rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+		rasterizer.depthClampEnable = VK_FALSE;		// if true fragments outsize max depth are clamped, not discarded
+													// (requires enabling a device feature!)
+		rasterizer.rasterizerDiscardEnable = VK_FALSE;	// set to true to disable raster stage!
+		rasterizer.polygonMode = VK_POLYGON_MODE_FILL;	// we want filled polys
+		rasterizer.lineWidth = 1.0f;					// sensible default
+		rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;	// cull back-facing
+		rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;	// front faces are clockwise
+		rasterizer.depthBiasEnable = VK_FALSE;			// no depth biasing pls
+
+		// Multisampling state
+		VkPipelineMultisampleStateCreateInfo multisampling = {0};
+		multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+		multisampling.sampleShadingEnable = VK_FALSE;	// no MSAA pls
+		multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;	// just 1 sample thx
+		multisampling.minSampleShading = 1.0f; // Optional
+		multisampling.pSampleMask = nullptr; // Optional
+		multisampling.alphaToCoverageEnable = VK_FALSE; // Optional, putputs alpha to coverage for blending
+		multisampling.alphaToOneEnable = VK_FALSE; // Optional, sets alpha to one for all samples
+
+		// Depth-stencil state (we have no depth/stencil right now, disable it all)
+		VkPipelineDepthStencilStateCreateInfo depthStencilState = { 0 };
+		depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		depthStencilState.depthTestEnable = VK_FALSE;
+		depthStencilState.depthWriteEnable = VK_FALSE;
+		depthStencilState.depthBoundsTestEnable = VK_FALSE;
+		depthStencilState.stencilTestEnable = VK_FALSE;
+
+		// Colour blending state
+
+		// Per-attachment state
+		VkPipelineColorBlendAttachmentState colorBlendAttachment = { 0 };
+		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+		colorBlendAttachment.blendEnable = VK_FALSE;					// No blending
+		colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
+		colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
+		colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD; // Optional
+		colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
+		colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
+		colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD; // Optional
+
+		// Pipeline attachment/blend state
+		VkPipelineColorBlendStateCreateInfo colorBlending = { 0 };
+		colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+		colorBlending.logicOpEnable = VK_FALSE;		// no logical ops pls on write pls
+		colorBlending.logicOp = VK_LOGIC_OP_COPY; // Optional
+		colorBlending.attachmentCount = 1;
+		colorBlending.pAttachments = &colorBlendAttachment;
+		colorBlending.blendConstants[0] = 0.0f; // Optional
+		colorBlending.blendConstants[1] = 0.0f; // Optional
+		colorBlending.blendConstants[2] = 0.0f; // Optional
+		colorBlending.blendConstants[3] = 0.0f; // Optional
+
+		// Create an empty (for now) pipeline layout to be used later 
+		// This is where push constant data is reserved apparently!
+		VkPipelineLayoutCreateInfo pipelineLayoutInfo = {0};
+		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		pipelineLayoutInfo.setLayoutCount = 0; // Optional
+		pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
+		pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
+		pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
+		if (!CheckResult(vkCreatePipelineLayout(m_vk->m_device, &pipelineLayoutInfo, nullptr, &m_vk->m_singleTriPipelineLayout))) 
+		{
+			fmt::print("Failed to create pipeline layout!\n");
+			return false;
+		}
+
+		return true;
 	}
 
 	SwapchainDescriptor GetSwapchainInfo(VkPhysicalDevice& physDevice, VkSurfaceKHR surface)
@@ -359,6 +576,42 @@ namespace R3
 		{
 			fmt::print("Failed to create swap chain\n");
 			return false;
+		}
+
+		// Get all the images created as part of the swapchain
+		uint32_t actualImageCount = 0;
+		CheckResult(vkGetSwapchainImagesKHR(m_vk->m_device, m_vk->m_swapChain, &actualImageCount, nullptr));
+		m_vk->m_swapChainImages.resize(actualImageCount);
+		CheckResult(vkGetSwapchainImagesKHR(m_vk->m_device, m_vk->m_swapChain, &actualImageCount, m_vk->m_swapChainImages.data()));
+		m_vk->m_swapChainExtents = extents;
+		m_vk->m_swapChainFormat = bestFormat;
+		m_vk->m_swapChainPresentMode = bestPresentMode;
+
+		// Create image views for every image in the swap chain
+		m_vk->m_swapChainImageViews.resize(actualImageCount);
+		for (int i = 0; i < actualImageCount; ++i)
+		{
+			VkImageViewCreateInfo createView = { 0 };
+			createView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			createView.image = m_vk->m_swapChainImages[i];
+			createView.flags = 0;
+			createView.viewType = VK_IMAGE_VIEW_TYPE_2D;	// we want a view to a 2d image
+			createView.format = bestFormat.format;			// match the format of the swap chain image
+			createView.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;	// no data swizzling pls
+			createView.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createView.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createView.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;	// which parts of the image do we want to be visible
+			createView.subresourceRange.baseMipLevel = 0;
+			createView.subresourceRange.levelCount = 1;		// mip count (we only have 1 for swap images)
+			createView.subresourceRange.baseArrayLayer = 0;	// no array textures here
+			createView.subresourceRange.layerCount = 1;		// array texture counts
+			VkResult r = vkCreateImageView(m_vk->m_device, &createView, nullptr, &m_vk->m_swapChainImageViews[i]);
+			if (!CheckResult(r))
+			{
+				fmt::print("Failed to create image view for swap image {}\n", i);
+				return false;
+			}
 		}
 
 		return true;

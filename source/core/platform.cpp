@@ -1,5 +1,6 @@
 #include "platform.h"
 #include "core/profiler.h"
+#include "core/file_io.h"
 #include <cassert>
 #include <SDL.h>
 #include <fmt/format.h>
@@ -37,6 +38,8 @@ namespace R3
 		InitResult Initialise(std::string_view fullCmdLine)
 		{
 			Internal::g_fullCmdLine = fullCmdLine;
+			R3::FileIO::InitialisePaths();
+
 			ProcessCommandLine();
 
 			fmt::print("Initialising SDL\n");
@@ -47,6 +50,8 @@ namespace R3
 				fmt::print("Failed to initialise SDL:\r\n\t{}\n", SDL_GetError());
 				return InitResult::InitFailed;
 			}
+
+
 
 			return InitResult::InitOK;
 		}

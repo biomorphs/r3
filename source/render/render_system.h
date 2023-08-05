@@ -21,6 +21,7 @@ namespace R3
 		bool CreateLogicalDevice();
 		bool CreateSurface();
 		bool CreateSwapchain();
+		bool CreateSimpleTriPipeline();
 		std::unique_ptr<Window> m_mainWindow;
 		struct VkStuff;
 		std::unique_ptr<VkStuff> m_vk;

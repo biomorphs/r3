@@ -5,7 +5,7 @@
 #include <filesystem>
 #include <SDL_filesystem.h>
 
-namespace Core
+namespace R3
 {
 	namespace FileIO
 	{
@@ -14,8 +14,8 @@ namespace Core
 
 		void InitialisePaths()
 		{
-			c_baseDirectory = std::filesystem::current_path().u8string();
-			c_exeDirectory = SDL_GetBasePath();
+			c_baseDirectory = std::filesystem::current_path().u8string() + "\\";
+			c_exeDirectory = std::string(SDL_GetBasePath()) + "\\";
 		}
 
 		const std::string_view GetBasePath()
@@ -23,10 +23,10 @@ namespace Core
 			return c_baseDirectory;
 		}
 
-		bool SaveTextToFile(const std::string& filePath, const std::string& src)
+		bool SaveTextToFile(std::string_view filePath, const std::string& src)
 		{
 			R3_PROF_EVENT();
-			std::ofstream fileStream(filePath.c_str(), std::ios::out);
+			std::ofstream fileStream(filePath.data(), std::ios::out);
 			if (!fileStream.is_open())
 			{
 				return false;
@@ -36,11 +36,11 @@ namespace Core
 			return true;
 		}
 
-		bool LoadTextFromFile(const std::string& fileSrcPath, std::string& resultBuffer)
+		bool LoadTextFromFile(std::string_view fileSrcPath, std::string& resultBuffer)
 		{
 			R3_PROF_EVENT();
 			resultBuffer.clear();
-			std::ifstream fileStream(fileSrcPath.c_str(), std::ios::in);
+			std::ifstream fileStream(fileSrcPath.data(), std::ios::in);
 			if (!fileStream.is_open())
 			{
 				return false;
@@ -59,10 +59,10 @@ namespace Core
 			return true;
 		}
 
-		bool LoadBinaryFile(const std::string& fileSrcPath, std::vector<uint8_t>& resultBuffer)
+		bool LoadBinaryFile(std::string_view fileSrcPath, std::vector<uint8_t>& resultBuffer)
 		{
 			R3_PROF_EVENT();
-			std::ifstream fileStream(fileSrcPath.c_str(), std::ios::binary | std::ios::in);
+			std::ifstream fileStream(fileSrcPath.data(), std::ios::binary | std::ios::in);
 			if (!fileStream.is_open())
 			{
 				return false;
@@ -79,10 +79,10 @@ namespace Core
 			return true;
 		}
 
-		bool SaveBinaryFile(const std::string& filePath, const std::vector<uint8_t>& src)
+		bool SaveBinaryFile(std::string_view filePath, const std::vector<uint8_t>& src)
 		{
 			R3_PROF_EVENT();
-			std::ofstream fileStream(filePath.c_str(), std::ios::binary | std::ios::out);
+			std::ofstream fileStream(filePath.data(), std::ios::binary | std::ios::out);
 			if (!fileStream.is_open())
 			{
 				return false;

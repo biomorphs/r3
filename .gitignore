@@ -52,4 +52,7 @@ data/*.stl
 data/*.gltf
 data/OptickCore.exp
 
+# Compiled assets
+data/shaders_spirv/*
+
 build/*
