@@ -20,6 +20,7 @@ namespace R3
 		bool CreatePhysicalDevice();
 		bool CreateLogicalDevice();
 		bool CreateSurface();
+		bool CreateSwapchain();
 		std::unique_ptr<Window> m_mainWindow;
 		struct VkStuff;
 		std::unique_ptr<VkStuff> m_vk;

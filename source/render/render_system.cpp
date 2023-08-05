@@ -19,6 +19,19 @@ namespace R3
 		std::vector<VkExtensionProperties> m_supportedExtensions;
 	};
 
+	struct SwapchainDescriptor
+	{
+		VkSurfaceCapabilitiesKHR m_caps;
+		std::vector<VkSurfaceFormatKHR> m_formats;
+		std::vector<VkPresentModeKHR> m_presentModes;
+	};
+
+	struct QueueFamilyIndices
+	{
+		uint32_t m_graphicsIndex = -1;
+		uint32_t m_presentIndex = -1;
+	};
+
 	struct RenderSystem::VkStuff
 	{
 		VkInstance m_vkInstance;
@@ -27,6 +40,7 @@ namespace R3
 		VkDevice m_device = VK_NULL_HANDLE;
 		VkQueue m_graphicsQueue = VK_NULL_HANDLE;
 		VkQueue m_presentQueue = VK_NULL_HANDLE;
+		VkSwapchainKHR m_swapChain;
 	};
 
 	bool CheckResult(const VkResult& r)
@@ -142,6 +156,29 @@ namespace R3
 		return results;
 	}
 
+	// find indices for the queue families we care about
+	QueueFamilyIndices FindQueueFamilyIndices(const PhysicalDeviceDescriptor& pdd, VkSurfaceKHR surface = VK_NULL_HANDLE)
+	{
+		QueueFamilyIndices qfi;
+		for (int q = 0; q < pdd.m_queues.size() && (qfi.m_graphicsIndex == -1 && qfi.m_presentIndex == -1); ++q)
+		{
+			if (pdd.m_queues[q].queueFlags & VK_QUEUE_GRAPHICS_BIT)	// graphics queue?
+			{
+				qfi.m_graphicsIndex = q;
+			}
+			if (surface)	// can it present to the surface?
+			{
+				VkBool32 isSupported = false;
+				VkResult r = vkGetPhysicalDeviceSurfaceSupportKHR(pdd.m_device, q, surface, &isSupported);
+				if (CheckResult(r) && isSupported)
+				{
+					qfi.m_presentIndex = q;
+				}
+			}
+		}
+		return qfi;
+	}
+
 	RenderSystem::RenderSystem()
 	{
 		m_vk = std::make_unique<VkStuff>();
@@ -188,6 +225,12 @@ namespace R3
 			return false;
 		}
 
+		if (!CreateSwapchain())
+		{
+			fmt::print("Failed to create swapchain\n");
+			return false;
+		}
+
 		m_mainWindow->Show();
 
 		return true;
@@ -196,10 +239,129 @@ namespace R3
 	void RenderSystem::Shutdown()
 	{
 		m_mainWindow->Hide();
+		vkDestroySwapchainKHR(m_vk->m_device, m_vk->m_swapChain, nullptr);
 		vkDestroyDevice(m_vk->m_device, nullptr);
 		vkDestroySurfaceKHR(m_vk->m_vkInstance, m_vk->m_mainSurface, nullptr);
 		vkDestroyInstance(m_vk->m_vkInstance, nullptr);
 		m_mainWindow = nullptr;
+	}
+
+	SwapchainDescriptor GetSwapchainInfo(VkPhysicalDevice& physDevice, VkSurfaceKHR surface)
+	{
+		SwapchainDescriptor desc;
+		CheckResult(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physDevice, surface, &desc.m_caps));
+		
+		uint32_t formats = 0;
+		CheckResult(vkGetPhysicalDeviceSurfaceFormatsKHR(physDevice, surface, &formats, nullptr));
+		desc.m_formats.resize(formats);
+		CheckResult(vkGetPhysicalDeviceSurfaceFormatsKHR(physDevice, surface, &formats, desc.m_formats.data()));
+
+		uint32_t presentModes = 0;
+		CheckResult(vkGetPhysicalDeviceSurfacePresentModesKHR(physDevice, surface, &presentModes, nullptr));
+		desc.m_presentModes.resize(presentModes);
+		CheckResult(vkGetPhysicalDeviceSurfacePresentModesKHR(physDevice, surface, &presentModes, desc.m_presentModes.data()));
+
+		return desc;
+	}
+
+	VkSurfaceFormatKHR GetSwapchainSurfaceFormat(const SwapchainDescriptor& sd)
+	{
+		for (const auto& f : sd.m_formats)
+		{
+			// We would prefer bgra8_srg format
+			if (f.format == VK_FORMAT_B8G8R8A8_SRGB && f.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+			{
+				return f;
+			}
+		}
+		if (sd.m_formats.size() > 0)	// but anything else will do
+		{
+			return sd.m_formats[0];
+		}
+		else
+		{
+			fmt::print("Failed to find a suitable surface format");
+			return {};
+		}
+	}
+
+	VkPresentModeKHR GetSwapchainSurfacePresentMode(const SwapchainDescriptor& sd)
+	{
+		for (const auto& mode : sd.m_presentModes) 
+		{
+			// preferable, doesn't wait for vsync but avoids tearing by copying previous frame
+			if (mode == VK_PRESENT_MODE_MAILBOX_KHR)	
+			{
+				return mode;
+			}
+		}
+		// regular vsync
+		return VK_PRESENT_MODE_FIFO_KHR;
+	}
+
+	VkExtent2D GetSwapchainSurfaceExtents(Window& window, const SwapchainDescriptor& sd)
+	{
+		VkExtent2D extents;
+		int w = 0, h = 0;
+		SDL_Vulkan_GetDrawableSize(window.GetHandle(), &w, &h);
+		extents.width = glm::clamp((uint32_t)w, sd.m_caps.minImageExtent.width, sd.m_caps.maxImageExtent.width);
+		extents.height = glm::clamp((uint32_t)h, sd.m_caps.minImageExtent.height, sd.m_caps.maxImageExtent.height);
+		return extents;
+	}
+
+	bool RenderSystem::CreateSwapchain()
+	{
+		// find what swap chains are supported
+		SwapchainDescriptor swapChainSupport = GetSwapchainInfo(m_vk->m_physicalDevice.m_device, m_vk->m_mainSurface);
+
+		// find a good combination of format/present mode
+		VkSurfaceFormatKHR bestFormat = GetSwapchainSurfaceFormat(swapChainSupport);
+		VkPresentModeKHR bestPresentMode = GetSwapchainSurfacePresentMode(swapChainSupport);
+		VkExtent2D extents = GetSwapchainSurfaceExtents(*m_mainWindow, swapChainSupport);
+
+		// We generally want min image count + 1 to avoid stalls. Apparently
+		uint32_t imageCount = glm::min(swapChainSupport.m_caps.minImageCount + 1, swapChainSupport.m_caps.maxImageCount);
+		VkSwapchainCreateInfoKHR scInfo = { 0 };
+		scInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+		scInfo.flags = 0;
+		scInfo.surface = m_vk->m_mainSurface;
+		scInfo.minImageCount = imageCount;
+		scInfo.imageFormat = bestFormat.format;
+		scInfo.imageColorSpace = bestFormat.colorSpace;
+		scInfo.imageExtent = extents;
+		scInfo.imageArrayLayers = 1;	// 1 unless doing vr
+		scInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;	// image used as colour attachment
+		scInfo.preTransform = swapChainSupport.m_caps.currentTransform;
+		scInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;	// we dont care about alpha from window system
+		scInfo.presentMode = bestPresentMode;
+		scInfo.clipped = VK_TRUE;		// yes we want clipping
+
+		auto qfi = FindQueueFamilyIndices(m_vk->m_physicalDevice, m_vk->m_mainSurface);
+		if (qfi.m_graphicsIndex == qfi.m_presentIndex)	// do we have more than 1 queue?
+		{
+			// An image is owned by one queue family at a time and ownership must be explicitly transferred before using it in another queue family
+			// Since we only have one queue family it is safe
+			// If we had more, we would need to do queue family transfers... apparently
+			scInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		}
+		else
+		{
+			//  Images can be used across multiple queue families without explicit ownership transfers.
+			//	VK_SHARING_MODE_CONCURRENT specifies that concurrent access to any range or image subresource of the object from multiple queue families is supported.
+			//  (as long as the queue families match these ones)
+			scInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+			scInfo.queueFamilyIndexCount = 2;
+			scInfo.pQueueFamilyIndices = reinterpret_cast<const uint32_t*>(&qfi);	// gross
+		}
+
+		VkResult r = vkCreateSwapchainKHR(m_vk->m_device, &scInfo, nullptr, &m_vk->m_swapChain);
+		if (!CheckResult(r))
+		{
+			fmt::print("Failed to create swap chain\n");
+			return false;
+		}
+
+		return true;
 	}
 	
 	bool RenderSystem::CreateWindow()
@@ -218,12 +380,6 @@ namespace R3
 		return SDL_Vulkan_CreateSurface(m_mainWindow->GetHandle(), m_vk->m_vkInstance, &m_vk->m_mainSurface);
 	}
 
-	struct QueueFamilyIndices
-	{
-		uint32_t m_graphicsIndex = -1;
-		uint32_t m_presentIndex = -1;
-	};
-
 	std::vector<const char*> GetRequiredDeviceExtensions()
 	{
 		return {
@@ -231,30 +387,7 @@ namespace R3
 		};
 	}
 
-	// find indices for the queue families we care about
-	QueueFamilyIndices FindQueueFamilyIndices(const PhysicalDeviceDescriptor& pdd, VkSurfaceKHR surface = VK_NULL_HANDLE)
-	{
-		QueueFamilyIndices qfi;
-		for (int q = 0; q < pdd.m_queues.size() && (qfi.m_graphicsIndex == -1 && qfi.m_presentIndex == -1); ++q)
-		{
-			if (pdd.m_queues[q].queueFlags & VK_QUEUE_GRAPHICS_BIT)	// graphics queue?
-			{
-				qfi.m_graphicsIndex = q;
-			}
-			if (surface)	// can it present to the surface?
-			{
-				VkBool32 isSupported = false;
-				VkResult r = vkGetPhysicalDeviceSurfaceSupportKHR(pdd.m_device, q, surface, &isSupported);
-				if (CheckResult(r) && isSupported)
-				{
-					qfi.m_presentIndex = q;
-				}
-			}
-		}
-		return qfi;
-	}
-
-	int FindGraphicsPhysicalDevice(const std::vector<PhysicalDeviceDescriptor>& allDevices, VkSurfaceKHR surface)
+	int FindGraphicsPhysicalDevice(std::vector<PhysicalDeviceDescriptor>& allDevices, VkSurfaceKHR surface)
 	{
 		for (int i=0;i<allDevices.size();++i)
 		{
@@ -263,10 +396,13 @@ namespace R3
 			{
 				// does it have a graphics queue and a queue that can present to the surface?
 				QueueFamilyIndices qfi = FindQueueFamilyIndices(allDevices[i], surface);
-				if (qfi.m_graphicsIndex != -1 && qfi.m_presentIndex != -1)
+				bool hasQueueFamilies = qfi.m_graphicsIndex != -1 && qfi.m_presentIndex != -1;
+				bool extensionsSupported = AreExtensionsSupported(allDevices[i].m_supportedExtensions, GetRequiredDeviceExtensions());
+				if (hasQueueFamilies && extensionsSupported)
 				{
-					// does it support the extensions we want?
-					if (AreExtensionsSupported(allDevices[i].m_supportedExtensions, GetRequiredDeviceExtensions()))
+					// does it support a valid swap chain for the surface?
+					SwapchainDescriptor swapChainSupport = GetSwapchainInfo(allDevices[i].m_device, surface);
+					if (swapChainSupport.m_formats.size() > 0 && swapChainSupport.m_presentModes.size() > 0)
 					{
 						return i;
 					}
