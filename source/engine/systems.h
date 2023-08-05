@@ -13,6 +13,9 @@ namespace R3
 	class System
 	{
 	public:
+		System() = default;
+		System(const System&) = delete;
+		System(System&&) = delete;
 		virtual ~System() = default;
 		virtual void RegisterTickFns() { }			// called after init, register tick fns with Systems
 		virtual bool Init() { return true; }		// Called in order of registration!

@@ -1,3 +1,3 @@
 mkdir build
 cd build
-cmake .. --debug-output
+cmake --verbose --debug-output  ..

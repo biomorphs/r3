@@ -4,7 +4,11 @@
   "license": "MIT",
   "dependencies": [
     "fmt",
-	"sdl2",
-	"sol2"
+	  {
+		  "name": "sdl2",
+		  "features": [ "vulkan" ]
+	  },
+    "sol2",
+    "glm"
   ]
 }

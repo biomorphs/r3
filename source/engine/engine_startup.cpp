@@ -4,6 +4,7 @@
 #include "systems/time_system.h"
 #include "systems/event_system.h"
 #include "systems/input_system.h"
+#include "render/render_system.h"
 #include "core/platform.h"
 #include "core/random.h"
 #include "core/profiler.h"
@@ -20,6 +21,7 @@ namespace R3
 		s.RegisterSystem<TimeSystem>();
 		s.RegisterSystem<EventSystem>();
 		s.RegisterSystem<InputSystem>();
+		s.RegisterSystem<RenderSystem>();
 	}
 
 	// the default frame graph of the engine describes the entire frame structure

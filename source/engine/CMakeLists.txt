@@ -16,4 +16,5 @@ set(EngineLib_SourceFiles
 
 add_library(Engine ${EngineLib_SourceFiles})
 target_include_directories(Engine PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../)
-target_link_libraries(Engine PRIVATE Core fmt::fmt Optick::OptickCore SDL2::SDL2) 
+target_include_directories(Engine PRIVATE ${Vulkan_INCLUDE_DIRS})
+target_link_libraries(Engine PRIVATE Core fmt::fmt Optick::OptickCore SDL2::SDL2 glm::glm) 

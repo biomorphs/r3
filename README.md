@@ -6,12 +6,13 @@
 2. Install vcpkg
 	- git clone https://github.com/Microsoft/vcpkg.git
 	- run .\vcpkg\bootstrap-vcpkg.bat
-3.  Clone + install non-vcpkg dependencies
+3. Install Vulkan SDK from https://vulkan.lunarg.com/sdk/home (+ restart afterwards)
+4. Clone + install non-vcpkg dependencies
 	- git clone https://github.com/bombomby/optick.git
 	- run optick\tools\GenerateProjects_cmake.bat
 	- open optick\build\cmake\Optick.sln (as admin!)
 		- build + run install (release)
-4. Run setup-msvc.bat
+5. Run setup-msvc.bat
 	Open build/R3.sln
 	
 ### Goals
