@@ -9,50 +9,21 @@ namespace R3
 {
 	static constexpr bool c_validationLayersEnabled = true;
 
+	struct PhysicalDeviceDescriptor
+	{
+		VkPhysicalDevice m_device = VK_NULL_HANDLE;
+		VkPhysicalDeviceProperties m_properties;
+		VkPhysicalDeviceFeatures m_features;
+		std::vector<VkQueueFamilyProperties> m_queues;
+	};
+
 	struct RenderSystem::VkStuff
 	{
 		VkInstance m_vkInstance;
+		PhysicalDeviceDescriptor m_physicalDevice;
+		VkDevice m_device = VK_NULL_HANDLE;
+		VkQueue m_graphicsQueue = VK_NULL_HANDLE;
 	};
-
-	RenderSystem::RenderSystem()
-	{
-		m_vk = std::make_unique<VkStuff>();
-	}
-
-	RenderSystem::~RenderSystem()
-	{
-		m_vk = nullptr;
-	}
-
-	void RenderSystem::RegisterTickFns()
-	{
-	}
-
-	bool RenderSystem::Init()
-	{
-		if (!CreateWindow())
-		{
-			fmt::print("Failed to create window... {}", SDL_GetError());
-			return false;
-		}
-
-		if (!CreateVkInstance())
-		{
-			fmt::print("Failed to create VK instance");
-			return false;
-		}
-
-		m_mainWindow->Show();
-
-		return true;
-	}
-
-	void RenderSystem::Shutdown()
-	{
-		m_mainWindow->Hide();
-		vkDestroyInstance(m_vk->m_vkInstance, nullptr);
-		m_mainWindow = nullptr;
-	}
 
 	bool CheckResult(const VkResult& r)
 	{
@@ -63,17 +34,6 @@ namespace R3
 			*crashMe = 1;
 		}
 		return !r;
-	}
-	
-	bool RenderSystem::CreateWindow()
-	{
-		Window::Properties windowProps;
-		windowProps.m_sizeX = 1280;
-		windowProps.m_sizeY = 720;
-		windowProps.m_title = "R3";
-		windowProps.m_flags = 0;
-		m_mainWindow = std::make_unique<Window>(windowProps);
-		return m_mainWindow != nullptr;
 	}
 
 	std::vector<VkExtensionProperties> GetSupportedExtensions() {
@@ -112,7 +72,7 @@ namespace R3
 			result.resize(count);
 			CheckResult(vkEnumerateInstanceLayerProperties(&count, result.data()));
 		}
-		
+
 		return result;
 	}
 
@@ -122,7 +82,7 @@ namespace R3
 		{
 			auto found = std::find_if(allLayers.begin(), allLayers.end(), [&r](const VkLayerProperties& p) {
 				return strcmp(p.layerName, r) == 0;
-			});
+				});
 			if (found == allLayers.end())
 			{
 				return false;
@@ -131,9 +91,197 @@ namespace R3
 		return true;
 	}
 
+	
+	std::vector<PhysicalDeviceDescriptor> GetAllPhysicalDevices(VkInstance& instance)
+	{
+		std::vector<PhysicalDeviceDescriptor> results;
+		uint32_t count = 0;
+		std::vector<VkPhysicalDevice> allDevices;
+		if (CheckResult(vkEnumeratePhysicalDevices(instance, &count, nullptr)))
+		{
+			allDevices.resize(count);
+			CheckResult(vkEnumeratePhysicalDevices(instance, &count, allDevices.data()));
+		}
+		for (const auto it : allDevices)
+		{
+			PhysicalDeviceDescriptor newDesc;
+			newDesc.m_device = it;
+			vkGetPhysicalDeviceProperties(it, &newDesc.m_properties);
+			vkGetPhysicalDeviceFeatures(it, &newDesc.m_features);
+
+			uint32_t queueCount = 0;
+			vkGetPhysicalDeviceQueueFamilyProperties(it, &queueCount, nullptr);
+			newDesc.m_queues.resize(queueCount);
+			vkGetPhysicalDeviceQueueFamilyProperties(it, &queueCount, newDesc.m_queues.data());
+
+			results.push_back(newDesc);
+		}
+		return results;
+	}
+
+	RenderSystem::RenderSystem()
+	{
+		m_vk = std::make_unique<VkStuff>();
+	}
+
+	RenderSystem::~RenderSystem()
+	{
+		m_vk = nullptr;
+	}
+
+	void RenderSystem::RegisterTickFns()
+	{
+	}
+
+	bool RenderSystem::Init()
+	{
+		if (!CreateWindow())
+		{
+			fmt::print("Failed to create window... {}\n", SDL_GetError());
+			return false;
+		}
+
+		if (!CreateVkInstance())
+		{
+			fmt::print("Failed to create VK instance\n");
+			return false;
+		}
+
+		if (!CreatePhysicalDevice())
+		{
+			fmt::print("Failed to create physical device\n");
+			return false;
+		}
+
+		if (!CreateLogicalDevice())
+		{
+			fmt::print("Failed to create logical device\n");
+			return false;
+		}
+
+		m_mainWindow->Show();
+
+		return true;
+	}
+
+	void RenderSystem::Shutdown()
+	{
+		m_mainWindow->Hide();
+		vkDestroyDevice(m_vk->m_device, nullptr);
+		vkDestroyInstance(m_vk->m_vkInstance, nullptr);
+		m_mainWindow = nullptr;
+	}
+	
+	bool RenderSystem::CreateWindow()
+	{
+		Window::Properties windowProps;
+		windowProps.m_sizeX = 1280;
+		windowProps.m_sizeY = 720;
+		windowProps.m_title = "R3";
+		windowProps.m_flags = 0;
+		m_mainWindow = std::make_unique<Window>(windowProps);
+		return m_mainWindow != nullptr;
+	}
+
+	int FindPhysicalDevice(const std::vector<PhysicalDeviceDescriptor>& allDevices)
+	{
+		for (int i=0;i<allDevices.size();++i)
+		{
+			// is it discrete?
+			if (allDevices[i].m_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+			{
+				// does it have a graphics queue?
+				for (int q = 0; q < allDevices[i].m_queues.size(); ++q)
+				{
+					if ((allDevices[i].m_queues[q].queueFlags & VK_QUEUE_GRAPHICS_BIT))
+					{
+						return i;
+					}
+				}
+			}
+		}
+		return -1;
+	}
+
+	int FindQueueFamilyIndex(const PhysicalDeviceDescriptor& pdd, uint32_t queueFlags)
+	{
+		for (int q=0;q<pdd.m_queues.size();++q)
+		{
+			if (pdd.m_queues[q].queueFlags & queueFlags)
+			{
+				return q;
+			}
+		}
+		return -1;
+	}
+
+	bool RenderSystem::CreateLogicalDevice()
+	{
+		std::vector<VkDeviceQueueCreateInfo> queues;	// which queues (and how many) do we want?
+		std::vector<float> priorities;
+
+		// 1 Graphics queue
+		int graphicsQueueIndex = FindQueueFamilyIndex(m_vk->m_physicalDevice, VK_QUEUE_GRAPHICS_BIT);
+		float graphicsPriority = 1.0f;
+		if (graphicsQueueIndex >= 0)
+		{
+			VkDeviceQueueCreateInfo graphicsQueue = { 0 };
+			graphicsQueue.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+			graphicsQueue.queueFamilyIndex = static_cast<uint32_t>(graphicsQueueIndex);
+			graphicsQueue.queueCount = 1;
+			graphicsQueue.pQueuePriorities = &graphicsPriority;
+			queues.push_back(graphicsQueue);
+		}
+
+		// Which device features do we use
+		VkPhysicalDeviceFeatures requiredFeatures {};
+
+		// Create the device
+		VkDeviceCreateInfo deviceCreate = { 0 };
+		deviceCreate.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+		deviceCreate.queueCreateInfoCount = queues.size();
+		deviceCreate.pQueueCreateInfos = queues.data();
+
+		// pass the same validation layers
+		std::vector<const char*> requiredLayers;
+		if constexpr (c_validationLayersEnabled)
+		{
+			fmt::print("Enabling validation layer\n");
+			requiredLayers.push_back("VK_LAYER_KHRONOS_validation");
+		}
+		deviceCreate.enabledLayerCount = requiredLayers.size();
+		deviceCreate.ppEnabledLayerNames = requiredLayers.data();
+		deviceCreate.enabledExtensionCount = 0;
+		deviceCreate.pEnabledFeatures = &requiredFeatures;
+		VkResult r = vkCreateDevice(m_vk->m_physicalDevice.m_device, &deviceCreate, nullptr, &m_vk->m_device);
+		if (CheckResult(r))
+		{
+			vkGetDeviceQueue(m_vk->m_device, graphicsQueueIndex, 0, &m_vk->m_graphicsQueue);
+		}
+		return CheckResult(r);
+	}
+
+	bool RenderSystem::CreatePhysicalDevice()
+	{
+		std::vector<PhysicalDeviceDescriptor> allDevices = GetAllPhysicalDevices(m_vk->m_vkInstance);
+		fmt::print("All supported devices:\n");
+		for (const auto& it : allDevices)
+		{
+			fmt::print("\t{} ({} queues)\n", it.m_properties.deviceName, it.m_queues.size());
+		}
+		int bestMatchIndex = FindPhysicalDevice(allDevices);
+		if (bestMatchIndex >= 0)
+		{
+			m_vk->m_physicalDevice = allDevices[bestMatchIndex];
+			return true;
+		}
+
+		return false;
+	}
+
 	bool RenderSystem::CreateVkInstance()
 	{
-		VkApplicationInfo appInfo;
+		VkApplicationInfo appInfo = { 0 };
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 		appInfo.pNext = nullptr;
 		appInfo.pApplicationName = "R3";
@@ -170,7 +318,7 @@ namespace R3
 			return false;
 		}
 
-		VkInstanceCreateInfo createInfo{};
+		VkInstanceCreateInfo createInfo = {0};
 		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 		createInfo.pApplicationInfo = &appInfo;
 		createInfo.enabledExtensionCount = requiredExtensions.size();

@@ -17,6 +17,8 @@ namespace R3
 	private:
 		bool CreateWindow();
 		bool CreateVkInstance();
+		bool CreatePhysicalDevice();
+		bool CreateLogicalDevice();
 		std::unique_ptr<Window> m_mainWindow;
 		struct VkStuff;
 		std::unique_ptr<VkStuff> m_vk;
