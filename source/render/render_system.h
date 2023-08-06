@@ -15,6 +15,8 @@ namespace R3
 		virtual bool Init();
 		virtual void Shutdown();
 	private:
+		bool DrawFrame();
+
 		bool CreateWindow();
 		bool CreateVkInstance();
 		bool CreatePhysicalDevice();
@@ -24,6 +26,10 @@ namespace R3
 		bool CreateRenderPass();
 		bool CreateFramebuffers();
 		bool CreateSimpleTriPipeline();
+		bool CreateCommandPool();
+		bool CreateCommandBuffer();
+		bool RecordCommandBuffer(int swapImageIndex);
+		bool CreateSyncObjects();
 		std::unique_ptr<Window> m_mainWindow;
 		struct VkStuff;
 		std::unique_ptr<VkStuff> m_vk;

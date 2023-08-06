@@ -41,6 +41,10 @@ namespace R3
 		{
 			auto& varUpdate = fg.m_root.AddSequence("VariableUpdate");
 		}
+		{
+			auto& render = fg.m_root.AddSequence("Render");
+			render.AddFn("Render::DrawFrame");
+		}
 	}
 
 	// Engine entry point

@@ -56,6 +56,13 @@ namespace R3
 		VkRenderPass m_mainRenderPass;
 		VkPipeline m_simpleTriPipeline;
 		VkPipelineLayout m_singleTriPipelineLayout;
+
+		VkCommandPool m_graphicsCommandPool;	// allocates command buffers
+		VkCommandBuffer m_graphicsCmdBuffer;	// graphics cmds
+
+		VkSemaphore m_imageAvailableSemaphore;	// signalled when new swap chain image available
+		VkSemaphore m_renderFinishedSemaphore;	// signalled when m_graphicsCmdBuffer has been fully submitted to a queue
+		VkFence m_inFlightFence;				// signalled when previous cmd buffer finished executing (initialised as signalled)
 	};
 
 	bool CheckResult(const VkResult& r)
@@ -68,6 +75,208 @@ namespace R3
 			*crashMe = 1;
 		}
 		return !r;
+	}
+
+	RenderSystem::RenderSystem()
+	{
+		m_vk = std::make_unique<VkStuff>();
+	}
+
+	RenderSystem::~RenderSystem()
+	{
+		m_vk = nullptr;
+	}
+
+	void RenderSystem::RegisterTickFns()
+	{
+		RegisterTick("Render::DrawFrame", [this]() {
+			return DrawFrame();
+		});
+	}
+
+	bool RenderSystem::DrawFrame()
+	{
+		// wait for the previous frame to finish with no timeout (blocking call)
+		CheckResult(vkWaitForFences(m_vk->m_device, 1, &m_vk->m_inFlightFence, VK_TRUE, UINT64_MAX));
+		// reset the fence back to unsignalled
+		CheckResult(vkResetFences(m_vk->m_device, 1, &m_vk->m_inFlightFence));
+
+		// acquire the next swap chain image (blocks with no timeout)
+		// m_imageAvailableSemaphore will be signalled when we are able to draw to the image
+		// note that fences can also be passed here
+		uint32_t swapImageIndex = 0;
+		if (!CheckResult(vkAcquireNextImageKHR(m_vk->m_device, m_vk->m_swapChain, UINT64_MAX, m_vk->m_imageAvailableSemaphore, VK_NULL_HANDLE, &swapImageIndex)))
+		{
+			fmt::print("Failed to aqcuire next swap chain image index");
+			return false;
+		}
+
+		// reset + record the cmd buffer
+		// (its safe since we waited on the inflight fence)
+		vkResetCommandBuffer(m_vk->m_graphicsCmdBuffer, 0);
+		RecordCommandBuffer(swapImageIndex);
+
+		// submit the cmd buffer to the graphics queue
+		VkSubmitInfo submitInfo{};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.pCommandBuffers = &m_vk->m_graphicsCmdBuffer;	// which buffer to submit
+		submitInfo.commandBufferCount = 1;
+
+		// we describe which sync objects to wait on before execution can begin
+		// and at which stage in the pipeline we should wait for them
+		VkSemaphore waitSemaphores[] = { m_vk->m_imageAvailableSemaphore };	// wait on the newly aquired image to be available 
+		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };	// wait before we try to write to its colour attachments
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = waitSemaphores;
+		submitInfo.pWaitDstStageMask = waitStages;
+		submitInfo.commandBufferCount = 1;
+
+		// signal m_renderFinishedSemaphore once execution completes
+		VkSemaphore signalSemaphores[] = { m_vk->m_renderFinishedSemaphore };
+		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.pSignalSemaphores = signalSemaphores;
+
+		// submit the cmd buffer to the queue, the inflight fence will be signalled when execution completes
+		if (!CheckResult(vkQueueSubmit(m_vk->m_graphicsQueue, 1, &submitInfo, m_vk->m_inFlightFence))) 
+		{
+			fmt::print("failed to submit draw command buffer!");
+			return false;
+		}
+
+		// present!
+		// this will put the image we just rendered into the visible window.
+		VkPresentInfoKHR presentInfo = {};
+		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		presentInfo.pNext = nullptr;
+		presentInfo.pSwapchains = &m_vk->m_swapChain;
+		presentInfo.swapchainCount = 1;
+		presentInfo.pWaitSemaphores = &m_vk->m_renderFinishedSemaphore;		// wait on this semaphore before presenting
+		presentInfo.waitSemaphoreCount = 1;
+		presentInfo.pImageIndices = &swapImageIndex;
+		if (!CheckResult(vkQueuePresentKHR(m_vk->m_presentQueue, &presentInfo)))
+		{
+			fmt::print("Failed to present!");
+			return false;
+		}
+
+		return true;
+	}
+
+	bool RenderSystem::Init()
+	{
+		if (!CreateWindow())
+		{
+			fmt::print("Failed to create window... {}\n", SDL_GetError());
+			return false;
+		}
+
+		if (!CreateVkInstance())
+		{
+			fmt::print("Failed to create VK instance\n");
+			return false;
+		}
+
+		if (!CreateSurface())
+		{
+			fmt::print("Failed to create surface\n");
+			return false;
+		}
+
+		if (!CreatePhysicalDevice())
+		{
+			fmt::print("Failed to create physical device\n");
+			return false;
+		}
+
+		if (!CreateLogicalDevice())
+		{
+			fmt::print("Failed to create logical device\n");
+			return false;
+		}
+
+		if (!CreateSwapchain())
+		{
+			fmt::print("Failed to create swapchain\n");
+			return false;
+		}
+
+		if (!CreateRenderPass())
+		{
+			fmt::print("Failed to create render pass\n");
+			return false;
+		}
+
+		if (!CreateSimpleTriPipeline())
+		{
+			fmt::print("Failed to create pipeline\n");
+			return false;
+		}
+
+		if (!CreateFramebuffers())
+		{
+			fmt::print("Failed to create frame buffers\n");
+			return false;
+		}
+
+		if (!CreateCommandPool())
+		{
+			fmt::print("Failed to create command pool\n");
+			return false;
+		}
+
+		if (!CreateCommandBuffer())
+		{
+			fmt::print("Failed to create command buffer\n");
+			return false;
+		}
+
+		if (!CreateSyncObjects())
+		{
+			fmt::print("Failed to create sync objects");
+			return false;
+		}
+
+		m_mainWindow->Show();
+
+		return true;
+	}
+
+	void RenderSystem::Shutdown()
+	{
+		m_mainWindow->Hide();
+
+		// Wait for rendering to finish before shutting down
+		CheckResult(vkDeviceWaitIdle(m_vk->m_device));
+
+		vkDestroyFence(m_vk->m_device, m_vk->m_inFlightFence, nullptr);
+		vkDestroySemaphore(m_vk->m_device, m_vk->m_imageAvailableSemaphore, nullptr);
+		vkDestroySemaphore(m_vk->m_device, m_vk->m_renderFinishedSemaphore, nullptr);
+
+		//cmd buffers do not need to be destroyed, removing the pool is enough
+		vkDestroyCommandPool(m_vk->m_device, m_vk->m_graphicsCommandPool, nullptr);
+
+		for (auto framebuffer : m_vk->m_swapChainFramebuffers) {
+			vkDestroyFramebuffer(m_vk->m_device, framebuffer, nullptr);
+		}
+
+		vkDestroyPipeline(m_vk->m_device, m_vk->m_simpleTriPipeline, nullptr);
+		vkDestroyPipelineLayout(m_vk->m_device, m_vk->m_singleTriPipelineLayout, nullptr);
+
+		vkDestroyShaderModule(m_vk->m_device, m_vk->m_singleTriFragmentShaderModule, nullptr);
+		vkDestroyShaderModule(m_vk->m_device, m_vk->m_singleTriVertexShaderModule, nullptr);
+
+		vkDestroyRenderPass(m_vk->m_device, m_vk->m_mainRenderPass, nullptr);
+
+		for (auto imageView : m_vk->m_swapChainImageViews) {
+			vkDestroyImageView(m_vk->m_device, imageView, nullptr);
+		}
+		m_vk->m_swapChainImageViews.clear();
+		m_vk->m_swapChainImages.clear();
+		vkDestroySwapchainKHR(m_vk->m_device, m_vk->m_swapChain, nullptr);
+		vkDestroyDevice(m_vk->m_device, nullptr);
+		vkDestroySurfaceKHR(m_vk->m_vkInstance, m_vk->m_mainSurface, nullptr);
+		vkDestroyInstance(m_vk->m_vkInstance, nullptr);
+		m_mainWindow = nullptr;
 	}
 
 	std::vector<VkExtensionProperties> GetSupportedInstanceExtensions() {
@@ -87,7 +296,7 @@ namespace R3
 		{
 			auto found = std::find_if(allExtensions.begin(), allExtensions.end(), [&r](const VkExtensionProperties& p) {
 				return strcmp(p.extensionName, r) == 0;
-			});
+				});
 			if (found == allExtensions.end())
 			{
 				return false;
@@ -139,7 +348,7 @@ namespace R3
 		}
 		return true;
 	}
-	
+
 	std::vector<PhysicalDeviceDescriptor> GetAllPhysicalDevices(VkInstance& instance)
 	{
 		std::vector<PhysicalDeviceDescriptor> results;
@@ -212,111 +421,118 @@ namespace R3
 		else
 		{
 			fmt::print("Failed to create shader module from src spirv\n");
-			return VkShaderModule {0};
+			return VkShaderModule{ 0 };
 		}
 	}
 
-	RenderSystem::RenderSystem()
+	bool RenderSystem::CreateSyncObjects()
 	{
-		m_vk = std::make_unique<VkStuff>();
-	}
+		// semaphores + fences dont have many params
+		VkSemaphoreCreateInfo semaphoreInfo = {0};
+		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+		VkFenceCreateInfo fenceInfo = {0};
+		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;	// create the fence signalled since we wait on it immediately
 
-	RenderSystem::~RenderSystem()
-	{
-		m_vk = nullptr;
-	}
-
-	void RenderSystem::RegisterTickFns()
-	{
-	}
-
-	bool RenderSystem::Init()
-	{
-		if (!CreateWindow())
+		if (!CheckResult(vkCreateSemaphore(m_vk->m_device, &semaphoreInfo, nullptr, &m_vk->m_imageAvailableSemaphore)))
 		{
-			fmt::print("Failed to create window... {}\n", SDL_GetError());
+			fmt::print("Failed to create semaphore");
 			return false;
 		}
-
-		if (!CreateVkInstance())
+		if (!CheckResult(vkCreateSemaphore(m_vk->m_device, &semaphoreInfo, nullptr, &m_vk->m_renderFinishedSemaphore)))
 		{
-			fmt::print("Failed to create VK instance\n");
+			fmt::print("Failed to create semaphore");
 			return false;
 		}
-
-		if (!CreateSurface())
+		if (!CheckResult(vkCreateFence(m_vk->m_device, &fenceInfo, nullptr, &m_vk->m_inFlightFence)))
 		{
-			fmt::print("Failed to create surface\n");
+			fmt::print("Failed to create fence");
 			return false;
 		}
-
-		if (!CreatePhysicalDevice())
-		{
-			fmt::print("Failed to create physical device\n");
-			return false;
-		}
-
-		if (!CreateLogicalDevice())
-		{
-			fmt::print("Failed to create logical device\n");
-			return false;
-		}
-
-		if (!CreateSwapchain())
-		{
-			fmt::print("Failed to create swapchain\n");
-			return false;
-		}
-
-		if (!CreateRenderPass())
-		{
-			fmt::print("Failed to create render pass\n");
-			return false;
-		}
-
-		if (!CreateSimpleTriPipeline())
-		{
-			fmt::print("Failed to create pipeline\n");
-			return false;
-		}
-
-		if (!CreateFramebuffers())
-		{
-			fmt::print("Failed to create frame buffers\n");
-			return false;
-		}
-
-		m_mainWindow->Show();
 
 		return true;
 	}
 
-	void RenderSystem::Shutdown()
+	bool RenderSystem::RecordCommandBuffer(int swapImageIndex)
 	{
-		m_mainWindow->Hide();
-
-		for (auto framebuffer : m_vk->m_swapChainFramebuffers) {
-			vkDestroyFramebuffer(m_vk->m_device, framebuffer, nullptr);
+		// start writing
+		VkCommandBufferBeginInfo beginInfo = {0};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		if (!CheckResult(vkBeginCommandBuffer(m_vk->m_graphicsCmdBuffer, &beginInfo)))	// resets the cmd buffer
+		{
+			fmt::print("failed to begin recording command buffer!");
+			return false;
 		}
 
-		vkDestroyPipeline(m_vk->m_device, m_vk->m_simpleTriPipeline, nullptr);
-		vkDestroyPipelineLayout(m_vk->m_device, m_vk->m_singleTriPipelineLayout, nullptr);
+		// start the render pass 
+		VkRenderPassBeginInfo renderPassInfo = {0};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassInfo.renderPass = m_vk->m_mainRenderPass;
+		renderPassInfo.framebuffer = m_vk->m_swapChainFramebuffers[swapImageIndex];
+		renderPassInfo.renderArea.offset = { 0, 0 };			// offset/extents to draw to
+		renderPassInfo.renderArea.extent = m_vk->m_swapChainExtents;
+		// attachment clear op values -  clear colour/depth values go here
+		VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
+		renderPassInfo.clearValueCount = 1;
+		renderPassInfo.pClearValues = &clearColor;
+		// VK_SUBPASS_CONTENTS_INLINE - commands are all stored in primary buffer
+		vkCmdBeginRenderPass(m_vk->m_graphicsCmdBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-		vkDestroyShaderModule(m_vk->m_device, m_vk->m_singleTriFragmentShaderModule, nullptr);
-		vkDestroyShaderModule(m_vk->m_device, m_vk->m_singleTriVertexShaderModule, nullptr);
+		// bind the pipeline
+		vkCmdBindPipeline(m_vk->m_graphicsCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_vk->m_simpleTriPipeline);
 
-		vkDestroyRenderPass(m_vk->m_device, m_vk->m_mainRenderPass, nullptr);
+		// draw one triangle made of 3 verts
+		vkCmdDraw(m_vk->m_graphicsCmdBuffer, 3, 1, 0, 0);
 
-		for (auto imageView : m_vk->m_swapChainImageViews) {
-			vkDestroyImageView(m_vk->m_device, imageView, nullptr);
+		// end render pass
+		vkCmdEndRenderPass(m_vk->m_graphicsCmdBuffer);
+
+		if (!CheckResult(vkEndCommandBuffer(m_vk->m_graphicsCmdBuffer)))
+		{
+			fmt::print("failed to end recording command buffer!\n");
+			return false;
 		}
-		m_vk->m_swapChainImageViews.clear();
-		m_vk->m_swapChainImages.clear();
-		vkDestroySwapchainKHR(m_vk->m_device, m_vk->m_swapChain, nullptr);
-		vkDestroyDevice(m_vk->m_device, nullptr);
-		vkDestroySurfaceKHR(m_vk->m_vkInstance, m_vk->m_mainSurface, nullptr);
-		vkDestroyInstance(m_vk->m_vkInstance, nullptr);
-		m_mainWindow = nullptr;
+
+		return true;
+	}
+
+	bool RenderSystem::CreateCommandBuffer()
+	{
+		// allocate the graphics cmd buffer from the graphics cmd pool
+		VkCommandBufferAllocateInfo allocInfo = {};
+		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		allocInfo.commandPool = m_vk->m_graphicsCommandPool;
+		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;	// primary = can be submitted to queue, can't be called from other buffers
+															// secondary = can't be directly submitted, can be called from other primary buffers
+		allocInfo.commandBufferCount = 1;
+
+		if (!CheckResult(vkAllocateCommandBuffers(m_vk->m_device, &allocInfo, &m_vk->m_graphicsCmdBuffer))) 
+		{
+			fmt::print("failed to allocate command buffers!\n");
+			return false;
+		}
+		return true;
+	}
+
+	bool RenderSystem::CreateCommandPool()
+	{
+		// find a graphics queue
+		QueueFamilyIndices queueFamilyIndices = FindQueueFamilyIndices(m_vk->m_physicalDevice, m_vk->m_mainSurface);
+
+		// create
+		VkCommandPoolCreateInfo poolInfo = {};
+		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;	// - allow individual buffers to be re-recorded
+																			// // VK_COMMAND_POOL_CREATE_TRANSIENT_BIT - hint that buffers are re-recorded often
+		poolInfo.queueFamilyIndex = queueFamilyIndices.m_graphicsIndex;		// graphics queue pls
+
+		if (!CheckResult(vkCreateCommandPool(m_vk->m_device, &poolInfo, nullptr, &m_vk->m_graphicsCommandPool)))
+		{
+			fmt::print("failed to create command pool!");
+			return false;
+		}
+
+		return true;
 	}
 
 	bool RenderSystem::CreateFramebuffers()
