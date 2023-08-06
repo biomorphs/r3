@@ -48,10 +48,13 @@ namespace R3
 		VkPresentModeKHR m_swapChainPresentMode;
 		std::vector<VkImage> m_swapChainImages;
 		std::vector<VkImageView> m_swapChainImageViews;
+		std::vector<VkFramebuffer> m_swapChainFramebuffers; // references the swap chain image views
 
 		// Simple triangle stuff
 		VkShaderModule m_singleTriVertexShaderModule;
 		VkShaderModule m_singleTriFragmentShaderModule;
+		VkRenderPass m_mainRenderPass;
+		VkPipeline m_simpleTriPipeline;
 		VkPipelineLayout m_singleTriPipelineLayout;
 	};
 
@@ -265,9 +268,21 @@ namespace R3
 			return false;
 		}
 
+		if (!CreateRenderPass())
+		{
+			fmt::print("Failed to create render pass\n");
+			return false;
+		}
+
 		if (!CreateSimpleTriPipeline())
 		{
 			fmt::print("Failed to create pipeline\n");
+			return false;
+		}
+
+		if (!CreateFramebuffers())
+		{
+			fmt::print("Failed to create frame buffers\n");
 			return false;
 		}
 
@@ -280,10 +295,17 @@ namespace R3
 	{
 		m_mainWindow->Hide();
 
+		for (auto framebuffer : m_vk->m_swapChainFramebuffers) {
+			vkDestroyFramebuffer(m_vk->m_device, framebuffer, nullptr);
+		}
+
+		vkDestroyPipeline(m_vk->m_device, m_vk->m_simpleTriPipeline, nullptr);
 		vkDestroyPipelineLayout(m_vk->m_device, m_vk->m_singleTriPipelineLayout, nullptr);
 
 		vkDestroyShaderModule(m_vk->m_device, m_vk->m_singleTriFragmentShaderModule, nullptr);
 		vkDestroyShaderModule(m_vk->m_device, m_vk->m_singleTriVertexShaderModule, nullptr);
+
+		vkDestroyRenderPass(m_vk->m_device, m_vk->m_mainRenderPass, nullptr);
 
 		for (auto imageView : m_vk->m_swapChainImageViews) {
 			vkDestroyImageView(m_vk->m_device, imageView, nullptr);
@@ -297,9 +319,84 @@ namespace R3
 		m_mainWindow = nullptr;
 	}
 
+	bool RenderSystem::CreateFramebuffers()
+	{
+		// create a frame buffer for each swap chain image
+		m_vk->m_swapChainFramebuffers.resize(m_vk->m_swapChainImageViews.size());
+		for (int i = 0; i < m_vk->m_swapChainImageViews.size(); ++i)
+		{
+			VkImageView attachments[] = 
+			{
+				m_vk->m_swapChainImageViews[i]
+			};
+
+			VkFramebufferCreateInfo framebufferInfo{};
+			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			framebufferInfo.renderPass = m_vk->m_mainRenderPass;	// frame buffer must be compatible with a pass
+			framebufferInfo.attachmentCount = 1;
+			framebufferInfo.pAttachments = attachments;
+			framebufferInfo.width = m_vk->m_swapChainExtents.width;
+			framebufferInfo.height = m_vk->m_swapChainExtents.height;
+			framebufferInfo.layers = 1;	// no arrays pls
+
+			if (!CheckResult(vkCreateFramebuffer(m_vk->m_device, &framebufferInfo, nullptr, &m_vk->m_swapChainFramebuffers[i]))) 
+			{
+				fmt::print("failed to create framebuffer!");
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	bool RenderSystem::CreateRenderPass()
+	{
+		// Describe all image attachments for the render pass
+
+		// colour attachment from swap chain
+		VkAttachmentDescription colourDesc = {};
+		colourDesc.format = m_vk->m_swapChainFormat.format;
+		colourDesc.samples = VK_SAMPLE_COUNT_1_BIT;			// no msaa
+		colourDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;	// clear the contents of the image before this pass
+		colourDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;	// store the contents after this pass
+		colourDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;		// we dont use stencil
+		colourDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;	// ^^
+		colourDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;			// we dont care about initial layout
+		colourDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;		// layout required for swap chain images
+
+		// Each sub-pass can reference the attachments above with different layouts
+		VkAttachmentReference colorAttachmentRef = {};
+		colorAttachmentRef.attachment = 0;	// colour attachment
+		colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;	// we want the image to be optimal for rendering
+																				// note vulkan will handle this transition for you between sub-passes
+
+		// Setup our single subpass pass
+		VkSubpassDescription subpassDesc = {};
+		subpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;	// this is a graphics subpass
+		subpassDesc.colorAttachmentCount = 1;	// note the index of the attachments in this array match the layout(location = x) out vec4 gl_colour in the shader!
+		subpassDesc.pColorAttachments = &colorAttachmentRef;
+
+		// create the full pass!
+		VkRenderPassCreateInfo rpci = {};
+		rpci.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		rpci.attachmentCount = 1;
+		rpci.pAttachments = &colourDesc;
+		rpci.subpassCount = 1;
+		rpci.pSubpasses = &subpassDesc;
+		if (!CheckResult(vkCreateRenderPass(m_vk->m_device, &rpci, nullptr, &m_vk->m_mainRenderPass))) 
+		{
+			fmt::print("failed to create render pass!");
+			return false;
+		}
+
+		return true;
+	}
+
 	bool RenderSystem::CreateSimpleTriPipeline()
 	{
 		// Load the shaders
+		// Note the shader modules can be destroyed once the pipeline is created
+		// compiled shader state is associated with the pipeline, not the module!
 		std::string basePath(R3::FileIO::GetBasePath());
 		basePath += "shaders_spirv\\vk_tutorials\\";
 		std::vector<uint8_t> vertexSpirv, fragmentSpirv;
@@ -327,21 +424,21 @@ namespace R3
 		}
 
 		// Create the shader stage descriptors for the pipeline
-		std::vector<VkPipelineShaderStageCreateInfo> shaderStates;
+		std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
 
 		VkPipelineShaderStageCreateInfo vertexStageInfo = { 0 };
 		vertexStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		vertexStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
 		vertexStageInfo.module = m_vk->m_singleTriVertexShaderModule;
 		vertexStageInfo.pName = "main";	// entry point name
-		shaderStates.push_back(vertexStageInfo);
+		shaderStages.push_back(vertexStageInfo);
 
 		VkPipelineShaderStageCreateInfo fragmentStageInfo = { 0 };
 		fragmentStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		fragmentStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 		fragmentStageInfo.module = m_vk->m_singleTriFragmentShaderModule;
 		fragmentStageInfo.pName = "main";	// entry point name
-		shaderStates.push_back(fragmentStageInfo);
+		shaderStages.push_back(fragmentStageInfo);
 
 		// Some pipeline state can be dynamic, specify it here
 		std::vector<VkDynamicState> dynamicStates = {
@@ -457,6 +554,30 @@ namespace R3
 		if (!CheckResult(vkCreatePipelineLayout(m_vk->m_device, &pipelineLayoutInfo, nullptr, &m_vk->m_singleTriPipelineLayout))) 
 		{
 			fmt::print("Failed to create pipeline layout!\n");
+			return false;
+		}
+
+		// Finally create the pipeline, using the renderpasses created earlier
+		VkGraphicsPipelineCreateInfo pipelineInfo{};
+		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+		pipelineInfo.stageCount = shaderStages.size();
+		pipelineInfo.pStages = shaderStages.data();
+		pipelineInfo.pVertexInputState = &vertexInputInfo;
+		pipelineInfo.pInputAssemblyState = &inputAssembly;
+		pipelineInfo.pViewportState = &viewportState;
+		pipelineInfo.pRasterizationState = &rasterizer;
+		pipelineInfo.pMultisampleState = &multisampling;
+		pipelineInfo.pDepthStencilState = nullptr; // Optional
+		pipelineInfo.pColorBlendState = &colorBlending;
+		pipelineInfo.pDynamicState = &dynamicState;
+		pipelineInfo.layout = m_vk->m_singleTriPipelineLayout;
+		pipelineInfo.renderPass = m_vk->m_mainRenderPass;		// pipeline is tied to a specific render pass/subpass!
+		pipelineInfo.subpass = 0;
+		pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // used for pipeline derivatives, we dont care for now
+		pipelineInfo.basePipelineIndex = -1; // ^^
+		if (!CheckResult(vkCreateGraphicsPipelines(m_vk->m_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_vk->m_simpleTriPipeline))) 
+		{
+			fmt::print("failed to create graphics pipeline!");
 			return false;
 		}
 
