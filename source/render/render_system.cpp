@@ -4,7 +4,9 @@
 #include "vulkan/vk_enum_string_helper.h"
 #include "core/file_io.h"
 #include "core/profiler.h"
+#include "engine/systems/event_system.h"
 #include <SDL.h>
+#include <SDL_events.h>
 #include <SDL_vulkan.h>
 #include <fmt/format.h>
 #include <set>
@@ -111,13 +113,26 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 
+		if (m_isWindowMinimised)
+		{
+			return true;
+		}
+
+		if (m_recreateSwapchain)
+		{
+			if (!RecreateSwapchainAndFramebuffers())
+			{
+				fmt::print("Failed to recreate swap chain\n");
+				return false;
+			}
+			m_recreateSwapchain = false;
+		}
+
 		auto& fd = m_vk->ThisFrameData();
 		{
 			R3_PROF_STALL("Wait for fence");
 			// wait for the previous frame to finish with no timeout (blocking call)
 			CheckResult(vkWaitForFences(m_vk->m_device, 1, &fd.m_inFlightFence, VK_TRUE, UINT64_MAX));
-			// reset the fence back to unsignalled
-			CheckResult(vkResetFences(m_vk->m_device, 1, &fd.m_inFlightFence));
 		}
 
 		uint32_t swapImageIndex = 0;
@@ -126,11 +141,22 @@ namespace R3
 			// acquire the next swap chain image (blocks with no timeout)
 			// m_imageAvailableSemaphore will be signalled when we are able to draw to the image
 			// note that fences can also be passed here
-			if (!CheckResult(vkAcquireNextImageKHR(m_vk->m_device, m_vk->m_swapChain, UINT64_MAX, fd.m_imageAvailableSemaphore, VK_NULL_HANDLE, &swapImageIndex)))
+			auto r = vkAcquireNextImageKHR(m_vk->m_device, m_vk->m_swapChain, UINT64_MAX, fd.m_imageAvailableSemaphore, VK_NULL_HANDLE, &swapImageIndex);
+			if (r == VK_ERROR_OUT_OF_DATE_KHR)
+			{
+				m_recreateSwapchain = true;
+				return true; // dont continue
+			}
+			else if (!CheckResult(r))
 			{
 				fmt::print("Failed to aqcuire next swap chain image index");
 				return false;
 			}
+		}
+
+		// at this point we are definitely going to draw, so reset the inflight fence
+		{
+			CheckResult(vkResetFences(m_vk->m_device, 1, &fd.m_inFlightFence));
 		}
 
 		// reset + record the cmd buffer
@@ -183,7 +209,12 @@ namespace R3
 		presentInfo.pImageIndices = &swapImageIndex;
 		{
 			R3_PROF_EVENT("Present");
-			if (!CheckResult(vkQueuePresentKHR(m_vk->m_presentQueue, &presentInfo)))
+			auto r = vkQueuePresentKHR(m_vk->m_presentQueue, &presentInfo);
+			if (r == VK_ERROR_OUT_OF_DATE_KHR)
+			{
+				m_recreateSwapchain = true;
+			}
+			else if (!CheckResult(r))
 			{
 				fmt::print("Failed to present!");
 				return false;
@@ -195,9 +226,38 @@ namespace R3
 		return true;
 	}
 
+	void RenderSystem::OnSystemEvent(void* ev)
+	{
+		auto theEvent = (SDL_Event*)ev;
+		if (theEvent->type == SDL_WINDOWEVENT)
+		{
+			const auto et = theEvent->window.event;
+			if (et == SDL_WINDOWEVENT_SIZE_CHANGED || et == SDL_WINDOWEVENT_RESIZED)
+			{
+				if (m_vk->m_swapChainExtents.width != theEvent->window.data1 || m_vk->m_swapChainExtents.height != theEvent->window.data2)
+				{
+					m_recreateSwapchain = true;
+				}
+			}
+			if (et == SDL_WINDOWEVENT_MINIMIZED)
+			{
+				m_isWindowMinimised = true;
+			}
+			else if (et == SDL_WINDOWEVENT_RESTORED || et == SDL_WINDOWEVENT_MAXIMIZED)
+			{
+				m_isWindowMinimised = false;
+			}
+		}
+	}
+
 	bool RenderSystem::Init()
 	{
 		R3_PROF_EVENT();
+
+		auto events = GetSystem<EventSystem>();
+		events->RegisterEventHandler([this](void* event) {
+			OnSystemEvent(event);
+		});
 
 		if (!CreateWindow())
 		{
@@ -247,7 +307,7 @@ namespace R3
 			return false;
 		}
 
-		if (!CreateFramebuffers())
+		if (!CreateFramebuffers())	// must happen after passes created!
 		{
 			fmt::print("Failed to create frame buffers\n");
 			return false;
@@ -285,7 +345,7 @@ namespace R3
 		// Wait for rendering to finish before shutting down
 		CheckResult(vkDeviceWaitIdle(m_vk->m_device));
 
-		for (int f = c_maxFramesInFlight - 1; f >= 0; --f)	// destroy in reverse order
+		for (int f = c_maxFramesInFlight - 1; f >= 0; --f)	// destroy sync objects in reverse order
 		{
 			vkDestroyFence(m_vk->m_device, m_vk->m_perFrameData[f].m_inFlightFence, nullptr);
 			vkDestroySemaphore(m_vk->m_device, m_vk->m_perFrameData[f].m_renderFinishedSemaphore, nullptr);
@@ -295,28 +355,60 @@ namespace R3
 		//cmd buffers do not need to be destroyed, removing the pool is enough
 		vkDestroyCommandPool(m_vk->m_device, m_vk->m_graphicsCommandPool, nullptr);
 
-		for (auto framebuffer : m_vk->m_swapChainFramebuffers) {
-			vkDestroyFramebuffer(m_vk->m_device, framebuffer, nullptr);
-		}
-
+		// destroy pipelines + shader modules
 		vkDestroyPipeline(m_vk->m_device, m_vk->m_simpleTriPipeline, nullptr);
 		vkDestroyPipelineLayout(m_vk->m_device, m_vk->m_singleTriPipelineLayout, nullptr);
 
+		// we can destroy these once pipeline is created
 		vkDestroyShaderModule(m_vk->m_device, m_vk->m_singleTriFragmentShaderModule, nullptr);
 		vkDestroyShaderModule(m_vk->m_device, m_vk->m_singleTriVertexShaderModule, nullptr);
 
+		// render passes
 		vkDestroyRenderPass(m_vk->m_device, m_vk->m_mainRenderPass, nullptr);
 
-		for (auto imageView : m_vk->m_swapChainImageViews) {
-			vkDestroyImageView(m_vk->m_device, imageView, nullptr);
-		}
-		m_vk->m_swapChainImageViews.clear();
-		m_vk->m_swapChainImages.clear();
-		vkDestroySwapchainKHR(m_vk->m_device, m_vk->m_swapChain, nullptr);
+		// swap chain, images, framebuffers
+		DestroySwapchain();
+
 		vkDestroyDevice(m_vk->m_device, nullptr);
 		vkDestroySurfaceKHR(m_vk->m_vkInstance, m_vk->m_mainSurface, nullptr);
 		vkDestroyInstance(m_vk->m_vkInstance, nullptr);
 		m_mainWindow = nullptr;
+	}
+
+	void RenderSystem::DestroySwapchain()
+	{
+		for (auto framebuffer : m_vk->m_swapChainFramebuffers) {
+			vkDestroyFramebuffer(m_vk->m_device, framebuffer, nullptr);
+		}
+
+		for (auto imageView : m_vk->m_swapChainImageViews) {
+			vkDestroyImageView(m_vk->m_device, imageView, nullptr);
+		}
+
+		m_vk->m_swapChainImageViews.clear();
+		m_vk->m_swapChainImages.clear();
+		vkDestroySwapchainKHR(m_vk->m_device, m_vk->m_swapChain, nullptr);
+	}
+
+	bool RenderSystem::RecreateSwapchainAndFramebuffers()
+	{
+		CheckResult(vkDeviceWaitIdle(m_vk->m_device));
+
+		DestroySwapchain();
+
+		if (!CreateSwapchain())
+		{
+			fmt::print("Failed to create swapchain\n");
+			return false;
+		}
+
+		if (!CreateFramebuffers())
+		{
+			fmt::print("Failed to create frame buffers\n");
+			return false;
+		}
+
+		return true;
 	}
 
 	std::vector<VkExtensionProperties> GetSupportedInstanceExtensions() 
@@ -536,6 +628,23 @@ namespace R3
 		// VK_SUBPASS_CONTENTS_INLINE - commands are all stored in primary buffer
 		vkCmdBeginRenderPass(cmdBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+		// Set dynamic state
+		// Viewport to draw to (if not using dynamic viewport I guess!)
+		VkViewport viewport = { 0 };
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = (float)m_vk->m_swapChainExtents.width;
+		viewport.height = (float)m_vk->m_swapChainExtents.height;
+		viewport.minDepth = 0.0f;	// normalised! must be between 0 and 1
+		viewport.maxDepth = 1.0f;	// ^^
+		vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
+
+		// Scissor state (if not using dynamic I guess!)
+		VkRect2D scissor = { 0 };
+		scissor.offset = { 0, 0 };
+		scissor.extent = m_vk->m_swapChainExtents;	// draw the full image
+		vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
+
 		// bind the pipeline
 		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_vk->m_simpleTriPipeline);
 
@@ -654,7 +763,7 @@ namespace R3
 		colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;	// we want the image to be optimal for rendering
 																				// note vulkan will handle this transition for you between sub-passes
 
-		// Setup our single subpass pass
+		// Setup our single subpass
 		VkSubpassDescription subpassDesc = {};
 		subpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;	// this is a graphics subpass
 		subpassDesc.colorAttachmentCount = 1;	// note the index of the attachments in this array match the layout(location = x) out vec4 gl_colour in the shader!
@@ -727,8 +836,8 @@ namespace R3
 
 		// Some pipeline state can be dynamic, specify it here
 		std::vector<VkDynamicState> dynamicStates = {
-		//	VK_DYNAMIC_STATE_VIEWPORT,		// we will set viewport at draw time
-		//	VK_DYNAMIC_STATE_SCISSOR		// same for the scissor data
+			VK_DYNAMIC_STATE_VIEWPORT,		// we will set viewport at draw time (lets us handle window resize without recreating pipelines)
+			VK_DYNAMIC_STATE_SCISSOR		// same for the scissor data
 		};
 		VkPipelineDynamicStateCreateInfo dynamicState = {0};
 		dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
@@ -750,28 +859,12 @@ namespace R3
 		inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;	// 3 verts per tri
 		inputAssembly.primitiveRestartEnable = VK_FALSE;	// used with strips to break up lines/tris
 
-		// Viewport to draw to (if not using dynamic viewport I guess!)
-		VkViewport viewport = { 0 };
-		viewport.x = 0.0f;
-		viewport.y = 0.0f;
-		viewport.width = (float)m_vk->m_swapChainExtents.width;
-		viewport.height = (float)m_vk->m_swapChainExtents.height;
-		viewport.minDepth = 0.0f;	// normalised! must be between 0 and 1
-		viewport.maxDepth = 1.0f;	// ^^
-
-		// Scissor state (if not using dynamic I guess!)
-		VkRect2D scissor = {0};
-		scissor.offset = { 0, 0 };
-		scissor.extent = m_vk->m_swapChainExtents;	// draw the full image
-
 		// create the viewport state for the pipeline
 		// if using dynamic we only need to set the counts
 		VkPipelineViewportStateCreateInfo viewportState = {0};
 		viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 		viewportState.viewportCount = 1;
-		viewportState.pViewports = &viewport;
 		viewportState.scissorCount = 1;
-		viewportState.pScissors = &scissor;
 
 		// Setup rasteriser state
 		VkPipelineRasterizationStateCreateInfo rasterizer = {0};
@@ -1035,7 +1128,7 @@ namespace R3
 		windowProps.m_sizeX = 1280;
 		windowProps.m_sizeY = 720;
 		windowProps.m_title = "R3";
-		windowProps.m_flags = 0;
+		windowProps.m_flags = Window::CreateResizable;
 		m_mainWindow = std::make_unique<Window>(windowProps);
 		return m_mainWindow != nullptr;
 	}

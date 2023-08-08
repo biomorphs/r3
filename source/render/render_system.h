@@ -16,7 +16,6 @@ namespace R3
 		virtual void Shutdown();
 	private:
 		bool DrawFrame();
-
 		bool CreateWindow();
 		bool CreateVkInstance();
 		bool CreatePhysicalDevice();
@@ -30,6 +29,12 @@ namespace R3
 		bool CreateCommandBuffers();
 		bool RecordCommandBuffer(int swapImageIndex);
 		bool CreateSyncObjects();
+		void DestroySwapchain();
+		bool RecreateSwapchainAndFramebuffers();
+		void OnSystemEvent(void* ev);
+
+		bool m_isWindowMinimised = false;
+		bool m_recreateSwapchain = false;
 		std::unique_ptr<Window> m_mainWindow;
 		struct VkStuff;
 		std::unique_ptr<VkStuff> m_vk;
