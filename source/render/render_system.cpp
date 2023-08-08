@@ -4,6 +4,7 @@
 #include "core/profiler.h"
 #include "engine/systems/event_system.h"
 #include "vulkan_helpers.h"
+#include "pipeline_builder.h"
 #include <vulkan/vulkan.h>
 #include <vulkan/vk_enum_string_helper.h>
 #include <vk_mem_alloc.h>
@@ -71,7 +72,8 @@ namespace R3
 		VkShaderModule m_singleTriFragmentShaderModule;
 		VkRenderPass m_mainRenderPass;
 		VkPipeline m_simpleTriPipeline;
-		VkPipelineLayout m_singleTriPipelineLayout;
+		VkPipeline m_simpleTriFromBuffersPipeline;
+		VkPipelineLayout m_simplePipelineLayout;	// no descriptors, nada
 		VkCommandPool m_graphicsCommandPool;	// allocates graphics queue command buffers
 		FrameData m_perFrameData[c_maxFramesInFlight];	// contains per frame cmd buffers, sync objects
 		int m_currentFrame = 0;
@@ -97,7 +99,7 @@ namespace R3
 			return bindingDesc;
 		}
 
-		static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() 
+		static std::array<VkVertexInputAttributeDescription, 2> GetAttributeDescriptions() 
 		{
 			// 2 attributes, position and colour stored in buffer 0
 			std::array<VkVertexInputAttributeDescription, 2> attributes {};
@@ -105,10 +107,10 @@ namespace R3
 			attributes[0].location = 0;	// location visible from shader
 			attributes[0].format = VK_FORMAT_R32G32_SFLOAT;	// pos = vec2
 			attributes[0].offset = offsetof(PosColourVertex, m_position);
-			attributes[0].binding = 0;
-			attributes[0].location = 1;	
-			attributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;	// colour = vec3
-			attributes[0].offset = offsetof(PosColourVertex, m_colour);
+			attributes[1].binding = 0;
+			attributes[1].location = 1;	
+			attributes[1].format = VK_FORMAT_R32G32B32_SFLOAT;	// colour = vec3
+			attributes[1].offset = offsetof(PosColourVertex, m_colour);
 			return attributes;
 		}
 	};
@@ -394,8 +396,9 @@ namespace R3
 		vkDestroyCommandPool(m_vk->m_device, m_vk->m_graphicsCommandPool, nullptr);
 
 		// destroy pipelines + shader modules
+		vkDestroyPipeline(m_vk->m_device, m_vk->m_simpleTriFromBuffersPipeline, nullptr);
 		vkDestroyPipeline(m_vk->m_device, m_vk->m_simpleTriPipeline, nullptr);
-		vkDestroyPipelineLayout(m_vk->m_device, m_vk->m_singleTriPipelineLayout, nullptr);
+		vkDestroyPipelineLayout(m_vk->m_device, m_vk->m_simplePipelineLayout, nullptr);
 
 		// we can destroy these once pipeline is created
 		vkDestroyShaderModule(m_vk->m_device, m_vk->m_singleTriFragmentShaderModule, nullptr);
@@ -816,6 +819,7 @@ namespace R3
 	bool RenderSystem::CreateSimpleTriPipelines()
 	{
 		R3_PROF_EVENT();
+
 		// Load the shaders
 		// Note the shader modules can be destroyed once the pipeline is created
 		// compiled shader state is associated with the pipeline, not the module!
@@ -828,27 +832,28 @@ namespace R3
 			return false;
 		}
 
-		// Create the shader stage descriptors for the pipeline
-		std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
-		shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_VERTEX_BIT, m_vk->m_singleTriVertexShaderModule));
-		shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_FRAGMENT_BIT, m_vk->m_singleTriFragmentShaderModule));
+		PipelineBuilder pb;
 
-		// Some pipeline state can be dynamic, specify it here
-		// dynamic state must be set each time the pipeline is used!
+		// describe the stages and which shader is used
+		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_VERTEX_BIT, m_vk->m_singleTriVertexShaderModule));
+		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_FRAGMENT_BIT, m_vk->m_singleTriFragmentShaderModule));
+
+		// dynamic state must be set each time the pipeline is bound!
 		std::vector<VkDynamicState> dynamicStates = {
 			VK_DYNAMIC_STATE_VIEWPORT,		// we will set viewport at draw time (lets us handle window resize without recreating pipelines)
 			VK_DYNAMIC_STATE_SCISSOR		// same for the scissor data
 		};
-		VkPipelineDynamicStateCreateInfo dynamicState = VulkanHelpers::CreatePipelineDynamicState(dynamicStates);
+		pb.m_dynamicState = VulkanHelpers::CreatePipelineDynamicState(dynamicStates);
 
 		// Set up vertex buffer input state. Since we have no input buffers, just set count to 0
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo = {0};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 		vertexInputInfo.vertexBindingDescriptionCount = 0;
 		vertexInputInfo.vertexAttributeDescriptionCount = 0;
+		pb.m_vertexInputState = vertexInputInfo;
 
 		// Input assembly describes type of geometry (lines/tris) and topology(strips,lists,etc) to draw
-		VkPipelineInputAssemblyStateCreateInfo inputAssembly = VulkanHelpers::CreatePipelineInputAssemblyState(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+		pb.m_inputAssemblyState = VulkanHelpers::CreatePipelineInputAssemblyState(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 
 		// create the viewport state for the pipeline
 		// if using dynamic we only need to set the counts
@@ -856,12 +861,13 @@ namespace R3
 		viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 		viewportState.viewportCount = 1;
 		viewportState.scissorCount = 1;
+		pb.m_viewportState = viewportState;
 
 		// Setup rasteriser state
-		VkPipelineRasterizationStateCreateInfo rasterizer = VulkanHelpers::CreatePipelineRasterState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE);
+		pb.m_rasterState = VulkanHelpers::CreatePipelineRasterState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE);
 
 		// Multisampling state
-		VkPipelineMultisampleStateCreateInfo multisampling = VulkanHelpers::CreatePipelineMultiSampleState_SingleSample();
+		pb.m_multisamplingState = VulkanHelpers::CreatePipelineMultiSampleState_SingleSample();
 
 		// Depth-stencil state (we have no depth/stencil right now, disable it all)
 		VkPipelineDepthStencilStateCreateInfo depthStencilState = { 0 };
@@ -870,56 +876,65 @@ namespace R3
 		depthStencilState.depthWriteEnable = VK_FALSE;
 		depthStencilState.depthBoundsTestEnable = VK_FALSE;
 		depthStencilState.stencilTestEnable = VK_FALSE;
+		pb.m_depthStencilState = depthStencilState;
 
 		// Colour blending state
-
-		// specify blending state per attachment
+		// blending state per attachment
 		VkPipelineColorBlendAttachmentState colourBlendAttachment = VulkanHelpers::CreatePipelineColourBlendAttachment_NoBlending();	
 		std::vector<VkPipelineColorBlendAttachmentState> allAttachments = {
 			colourBlendAttachment
 		};
-
-		// Pipeline also has some global blending state (constants, logical ops enable)
-		// it contains all the colour attachments
-		VkPipelineColorBlendStateCreateInfo colorBlending = VulkanHelpers::CreatePipelineColourBlendState(allAttachments);
+		pb.m_colourBlendState = VulkanHelpers::CreatePipelineColourBlendState(allAttachments);	// Pipeline also has some global blending state (constants, logical ops enable)
 
 		// Create an empty (for now) pipeline layout to be used later 
-		// This is where push constant data is reserved apparently!
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo = {0};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = 0; // Optional
-		pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
-		pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
-		pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
-		if (!CheckResult(vkCreatePipelineLayout(m_vk->m_device, &pipelineLayoutInfo, nullptr, &m_vk->m_singleTriPipelineLayout))) 
+		pipelineLayoutInfo.setLayoutCount = 0;
+		pipelineLayoutInfo.pushConstantRangeCount = 0;
+		if (!CheckResult(vkCreatePipelineLayout(m_vk->m_device, &pipelineLayoutInfo, nullptr, &m_vk->m_simplePipelineLayout)))
 		{
 			fmt::print("Failed to create pipeline layout!\n");
 			return false;
 		}
 
-		// Finally create the pipeline, using the renderpasses created earlier
-		VkGraphicsPipelineCreateInfo pipelineInfo{};
-		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-		pipelineInfo.stageCount = shaderStages.size();
-		pipelineInfo.pStages = shaderStages.data();
-		pipelineInfo.pVertexInputState = &vertexInputInfo;
-		pipelineInfo.pInputAssemblyState = &inputAssembly;
-		pipelineInfo.pViewportState = &viewportState;
-		pipelineInfo.pRasterizationState = &rasterizer;
-		pipelineInfo.pMultisampleState = &multisampling;
-		pipelineInfo.pDepthStencilState = nullptr; // Optional
-		pipelineInfo.pColorBlendState = &colorBlending;
-		pipelineInfo.pDynamicState = &dynamicState;
-		pipelineInfo.layout = m_vk->m_singleTriPipelineLayout;
-		pipelineInfo.renderPass = m_vk->m_mainRenderPass;		// pipeline is tied to a specific render pass/subpass!
-		pipelineInfo.subpass = 0;
-		pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // used for pipeline derivatives, we dont care for now
-		pipelineInfo.basePipelineIndex = -1; // ^^
-		if (!CheckResult(vkCreateGraphicsPipelines(m_vk->m_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_vk->m_simpleTriPipeline))) 
+		// build the pipeline
+		m_vk->m_simpleTriPipeline = pb.Build(m_vk->m_device, m_vk->m_simplePipelineLayout, m_vk->m_mainRenderPass, 0);
+		if (m_vk->m_simpleTriPipeline == VK_NULL_HANDLE)
 		{
-			fmt::print("failed to create graphics pipeline!");
+			fmt::print("Failed to create pipeline!\n");
 			return false;
 		}
+
+		// build a similar pipeline but with shaders that take vertex data from buffers
+		// also passes buffer descriptors!
+		pb.m_shaderStages.clear();
+		VkShaderModule triBufferVertShader = VulkanHelpers::LoadShaderModule(m_vk->m_device, basePath + "triangle_from_buffers.vert.spv");
+		VkShaderModule triBufferFragShader = VulkanHelpers::LoadShaderModule(m_vk->m_device, basePath + "triangle_from_buffers.frag.spv");
+		if (triBufferVertShader == VK_NULL_HANDLE || triBufferVertShader == VK_NULL_HANDLE)
+		{
+			fmt::print("Failed to load fancier shaders\n");
+			return false;
+		}
+		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_VERTEX_BIT, triBufferVertShader));
+		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_FRAGMENT_BIT, triBufferFragShader));
+
+		// bind the buffers + input attrib descriptors
+		auto bufferBindingDescriptions = PosColourVertex::GetInputBindingDescription();
+		auto attributeDescriptions = PosColourVertex::GetAttributeDescriptions();
+		pb.m_vertexInputState.vertexBindingDescriptionCount = 1;
+		pb.m_vertexInputState.pVertexBindingDescriptions = &bufferBindingDescriptions;
+		pb.m_vertexInputState.vertexAttributeDescriptionCount = attributeDescriptions.size();
+		pb.m_vertexInputState.pVertexAttributeDescriptions = attributeDescriptions.data();
+
+		m_vk->m_simpleTriFromBuffersPipeline = pb.Build(m_vk->m_device, m_vk->m_simplePipelineLayout, m_vk->m_mainRenderPass, 0);
+		if (m_vk->m_simpleTriFromBuffersPipeline == VK_NULL_HANDLE)
+		{
+			fmt::print("Failed to create fancier pipeline!\n");
+			return false;
+		}
+
+		vkDestroyShaderModule(m_vk->m_device, triBufferFragShader, nullptr);
+		vkDestroyShaderModule(m_vk->m_device, triBufferVertShader, nullptr);
 
 		return true;
 	}

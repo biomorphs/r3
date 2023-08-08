@@ -6,6 +6,8 @@ set(RenderLib_SourceFiles
 	vulkan_memory_allocator_impl.cpp
 	vulkan_helpers.h
 	vulkan_helpers.cpp
+	pipeline_builder.h
+	pipeline_builder.cpp
 )
 
 add_library(Render ${RenderLib_SourceFiles})
