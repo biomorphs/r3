@@ -3,6 +3,7 @@
 #include "vulkan/vulkan.h"
 #include "vulkan/vk_enum_string_helper.h"
 #include "core/file_io.h"
+#include "core/profiler.h"
 #include <SDL.h>
 #include <SDL_vulkan.h>
 #include <fmt/format.h>
@@ -11,6 +12,15 @@
 namespace R3
 {
 	static constexpr bool c_validationLayersEnabled = true;
+	static constexpr int c_maxFramesInFlight = 2;	// let the cpu get ahead of the gpu by this many frames
+
+	struct FrameData
+	{
+		VkCommandBuffer m_graphicsCmdBuffer;	// graphics queue cmds
+		VkSemaphore m_imageAvailableSemaphore;	// signalled when new swap chain image available
+		VkSemaphore m_renderFinishedSemaphore;	// signalled when m_graphicsCmdBuffer has been fully submitted to a queue
+		VkFence m_inFlightFence;				// signalled when previous cmd buffer finished executing (initialised as signalled)
+	};
 
 	struct PhysicalDeviceDescriptor
 	{
@@ -56,13 +66,15 @@ namespace R3
 		VkRenderPass m_mainRenderPass;
 		VkPipeline m_simpleTriPipeline;
 		VkPipelineLayout m_singleTriPipelineLayout;
+		VkCommandPool m_graphicsCommandPool;	// allocates graphics queue command buffers
+		FrameData m_perFrameData[c_maxFramesInFlight];	// contains per frame cmd buffers, sync objects
+		int m_currentFrame = 0;
 
-		VkCommandPool m_graphicsCommandPool;	// allocates command buffers
-		VkCommandBuffer m_graphicsCmdBuffer;	// graphics cmds
-
-		VkSemaphore m_imageAvailableSemaphore;	// signalled when new swap chain image available
-		VkSemaphore m_renderFinishedSemaphore;	// signalled when m_graphicsCmdBuffer has been fully submitted to a queue
-		VkFence m_inFlightFence;				// signalled when previous cmd buffer finished executing (initialised as signalled)
+		// helpers
+		FrameData& ThisFrameData()
+		{
+			return m_perFrameData[m_currentFrame];
+		}
 	};
 
 	bool CheckResult(const VkResult& r)
@@ -89,6 +101,7 @@ namespace R3
 
 	void RenderSystem::RegisterTickFns()
 	{
+		R3_PROF_EVENT();
 		RegisterTick("Render::DrawFrame", [this]() {
 			return DrawFrame();
 		});
@@ -96,35 +109,47 @@ namespace R3
 
 	bool RenderSystem::DrawFrame()
 	{
-		// wait for the previous frame to finish with no timeout (blocking call)
-		CheckResult(vkWaitForFences(m_vk->m_device, 1, &m_vk->m_inFlightFence, VK_TRUE, UINT64_MAX));
-		// reset the fence back to unsignalled
-		CheckResult(vkResetFences(m_vk->m_device, 1, &m_vk->m_inFlightFence));
+		R3_PROF_EVENT();
 
-		// acquire the next swap chain image (blocks with no timeout)
-		// m_imageAvailableSemaphore will be signalled when we are able to draw to the image
-		// note that fences can also be passed here
-		uint32_t swapImageIndex = 0;
-		if (!CheckResult(vkAcquireNextImageKHR(m_vk->m_device, m_vk->m_swapChain, UINT64_MAX, m_vk->m_imageAvailableSemaphore, VK_NULL_HANDLE, &swapImageIndex)))
+		auto& fd = m_vk->ThisFrameData();
 		{
-			fmt::print("Failed to aqcuire next swap chain image index");
-			return false;
+			R3_PROF_STALL("Wait for fence");
+			// wait for the previous frame to finish with no timeout (blocking call)
+			CheckResult(vkWaitForFences(m_vk->m_device, 1, &fd.m_inFlightFence, VK_TRUE, UINT64_MAX));
+			// reset the fence back to unsignalled
+			CheckResult(vkResetFences(m_vk->m_device, 1, &fd.m_inFlightFence));
+		}
+
+		uint32_t swapImageIndex = 0;
+		{
+			R3_PROF_EVENT("Aquire swap image");
+			// acquire the next swap chain image (blocks with no timeout)
+			// m_imageAvailableSemaphore will be signalled when we are able to draw to the image
+			// note that fences can also be passed here
+			if (!CheckResult(vkAcquireNextImageKHR(m_vk->m_device, m_vk->m_swapChain, UINT64_MAX, fd.m_imageAvailableSemaphore, VK_NULL_HANDLE, &swapImageIndex)))
+			{
+				fmt::print("Failed to aqcuire next swap chain image index");
+				return false;
+			}
 		}
 
 		// reset + record the cmd buffer
 		// (its safe since we waited on the inflight fence)
-		vkResetCommandBuffer(m_vk->m_graphicsCmdBuffer, 0);
-		RecordCommandBuffer(swapImageIndex);
+		{
+			R3_PROF_EVENT("Reset/Record cmd buffer");
+			vkResetCommandBuffer(fd.m_graphicsCmdBuffer, 0);
+			RecordCommandBuffer(swapImageIndex);
+		}
 
 		// submit the cmd buffer to the graphics queue
 		VkSubmitInfo submitInfo{};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.pCommandBuffers = &m_vk->m_graphicsCmdBuffer;	// which buffer to submit
+		submitInfo.pCommandBuffers = &fd.m_graphicsCmdBuffer;	// which buffer to submit
 		submitInfo.commandBufferCount = 1;
 
 		// we describe which sync objects to wait on before execution can begin
 		// and at which stage in the pipeline we should wait for them
-		VkSemaphore waitSemaphores[] = { m_vk->m_imageAvailableSemaphore };	// wait on the newly aquired image to be available 
+		VkSemaphore waitSemaphores[] = { fd.m_imageAvailableSemaphore };	// wait on the newly aquired image to be available 
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };	// wait before we try to write to its colour attachments
 		submitInfo.waitSemaphoreCount = 1;
 		submitInfo.pWaitSemaphores = waitSemaphores;
@@ -132,15 +157,18 @@ namespace R3
 		submitInfo.commandBufferCount = 1;
 
 		// signal m_renderFinishedSemaphore once execution completes
-		VkSemaphore signalSemaphores[] = { m_vk->m_renderFinishedSemaphore };
+		VkSemaphore signalSemaphores[] = { fd.m_renderFinishedSemaphore };
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = signalSemaphores;
 
-		// submit the cmd buffer to the queue, the inflight fence will be signalled when execution completes
-		if (!CheckResult(vkQueueSubmit(m_vk->m_graphicsQueue, 1, &submitInfo, m_vk->m_inFlightFence))) 
 		{
-			fmt::print("failed to submit draw command buffer!");
-			return false;
+			R3_PROF_EVENT("Submit");
+			// submit the cmd buffer to the queue, the inflight fence will be signalled when execution completes
+			if (!CheckResult(vkQueueSubmit(m_vk->m_graphicsQueue, 1, &submitInfo, fd.m_inFlightFence)))
+			{
+				fmt::print("failed to submit draw command buffer!");
+				return false;
+			}
 		}
 
 		// present!
@@ -150,20 +178,27 @@ namespace R3
 		presentInfo.pNext = nullptr;
 		presentInfo.pSwapchains = &m_vk->m_swapChain;
 		presentInfo.swapchainCount = 1;
-		presentInfo.pWaitSemaphores = &m_vk->m_renderFinishedSemaphore;		// wait on this semaphore before presenting
+		presentInfo.pWaitSemaphores = &fd.m_renderFinishedSemaphore;		// wait on this semaphore before presenting
 		presentInfo.waitSemaphoreCount = 1;
 		presentInfo.pImageIndices = &swapImageIndex;
-		if (!CheckResult(vkQueuePresentKHR(m_vk->m_presentQueue, &presentInfo)))
 		{
-			fmt::print("Failed to present!");
-			return false;
+			R3_PROF_EVENT("Present");
+			if (!CheckResult(vkQueuePresentKHR(m_vk->m_presentQueue, &presentInfo)))
+			{
+				fmt::print("Failed to present!");
+				return false;
+			}
 		}
+
+		m_vk->m_currentFrame = (m_vk->m_currentFrame + 1) % c_maxFramesInFlight;
 
 		return true;
 	}
 
 	bool RenderSystem::Init()
 	{
+		R3_PROF_EVENT();
+
 		if (!CreateWindow())
 		{
 			fmt::print("Failed to create window... {}\n", SDL_GetError());
@@ -224,7 +259,7 @@ namespace R3
 			return false;
 		}
 
-		if (!CreateCommandBuffer())
+		if (!CreateCommandBuffers())
 		{
 			fmt::print("Failed to create command buffer\n");
 			return false;
@@ -243,15 +278,20 @@ namespace R3
 
 	void RenderSystem::Shutdown()
 	{
+		R3_PROF_EVENT();
+
 		m_mainWindow->Hide();
 
 		// Wait for rendering to finish before shutting down
 		CheckResult(vkDeviceWaitIdle(m_vk->m_device));
 
-		vkDestroyFence(m_vk->m_device, m_vk->m_inFlightFence, nullptr);
-		vkDestroySemaphore(m_vk->m_device, m_vk->m_imageAvailableSemaphore, nullptr);
-		vkDestroySemaphore(m_vk->m_device, m_vk->m_renderFinishedSemaphore, nullptr);
-
+		for (int f = c_maxFramesInFlight - 1; f >= 0; --f)	// destroy in reverse order
+		{
+			vkDestroyFence(m_vk->m_device, m_vk->m_perFrameData[f].m_inFlightFence, nullptr);
+			vkDestroySemaphore(m_vk->m_device, m_vk->m_perFrameData[f].m_renderFinishedSemaphore, nullptr);
+			vkDestroySemaphore(m_vk->m_device, m_vk->m_perFrameData[f].m_imageAvailableSemaphore, nullptr);
+		}
+		
 		//cmd buffers do not need to be destroyed, removing the pool is enough
 		vkDestroyCommandPool(m_vk->m_device, m_vk->m_graphicsCommandPool, nullptr);
 
@@ -279,7 +319,9 @@ namespace R3
 		m_mainWindow = nullptr;
 	}
 
-	std::vector<VkExtensionProperties> GetSupportedInstanceExtensions() {
+	std::vector<VkExtensionProperties> GetSupportedInstanceExtensions() 
+	{
+		R3_PROF_EVENT();
 		std::vector<VkExtensionProperties> results;
 		uint32_t extCount = 0;
 		if (CheckResult(vkEnumerateInstanceExtensionProperties(nullptr, &extCount, nullptr)))	// get the extension count
@@ -292,6 +334,7 @@ namespace R3
 
 	bool AreExtensionsSupported(const std::vector<VkExtensionProperties>& allExtensions, std::vector<const char*> wantedExtensions)
 	{
+		R3_PROF_EVENT();
 		for (const auto& r : wantedExtensions)
 		{
 			auto found = std::find_if(allExtensions.begin(), allExtensions.end(), [&r](const VkExtensionProperties& p) {
@@ -305,7 +348,9 @@ namespace R3
 		return true;
 	}
 
-	std::vector<const char*> GetSDLRequiredInstanceExtensions(SDL_Window* w) {
+	std::vector<const char*> GetSDLRequiredInstanceExtensions(SDL_Window* w) 
+	{
+		R3_PROF_EVENT();
 		std::vector<const char*> results;
 		uint32_t extensionCount = 0;
 		if (!SDL_Vulkan_GetInstanceExtensions(w, &extensionCount, nullptr))	// first call gets count
@@ -322,7 +367,9 @@ namespace R3
 		return results;
 	}
 
-	std::vector<VkLayerProperties> GetSupportedLayers() {
+	std::vector<VkLayerProperties> GetSupportedLayers() 
+	{
+		R3_PROF_EVENT();
 		std::vector<VkLayerProperties> result;
 		uint32_t count = 0;
 		if (CheckResult(vkEnumerateInstanceLayerProperties(&count, nullptr)))
@@ -330,12 +377,12 @@ namespace R3
 			result.resize(count);
 			CheckResult(vkEnumerateInstanceLayerProperties(&count, result.data()));
 		}
-
 		return result;
 	}
 
 	bool AreLayersSupported(const std::vector<VkLayerProperties>& allLayers, std::vector<const char*> requestedLayers)
 	{
+		R3_PROF_EVENT();
 		for (const auto& r : requestedLayers)
 		{
 			auto found = std::find_if(allLayers.begin(), allLayers.end(), [&r](const VkLayerProperties& p) {
@@ -351,6 +398,7 @@ namespace R3
 
 	std::vector<PhysicalDeviceDescriptor> GetAllPhysicalDevices(VkInstance& instance)
 	{
+		R3_PROF_EVENT();
 		std::vector<PhysicalDeviceDescriptor> results;
 		uint32_t count = 0;
 		std::vector<VkPhysicalDevice> allDevices;
@@ -384,6 +432,7 @@ namespace R3
 	// find indices for the queue families we care about
 	QueueFamilyIndices FindQueueFamilyIndices(const PhysicalDeviceDescriptor& pdd, VkSurfaceKHR surface = VK_NULL_HANDLE)
 	{
+		R3_PROF_EVENT();
 		QueueFamilyIndices qfi;
 		for (int q = 0; q < pdd.m_queues.size() && (qfi.m_graphicsIndex == -1 && qfi.m_presentIndex == -1); ++q)
 		{
@@ -407,6 +456,7 @@ namespace R3
 	// ShaderModule wraps the spirv
 	VkShaderModule CreateShaderModule(VkDevice device, std::vector<uint8_t> srcSpirv)
 	{
+		R3_PROF_EVENT();
 		assert((srcSpirv.size() % 4) == 0);	// VkShaderModuleCreateInfo wants uint32, make sure the buffer is big enough 
 		VkShaderModuleCreateInfo createInfo = { 0 };
 		createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -427,27 +477,31 @@ namespace R3
 
 	bool RenderSystem::CreateSyncObjects()
 	{
+		R3_PROF_EVENT();
 		// semaphores + fences dont have many params
 		VkSemaphoreCreateInfo semaphoreInfo = {0};
 		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 		VkFenceCreateInfo fenceInfo = {0};
 		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;	// create the fence signalled since we wait on it immediately
-
-		if (!CheckResult(vkCreateSemaphore(m_vk->m_device, &semaphoreInfo, nullptr, &m_vk->m_imageAvailableSemaphore)))
+		for (int f = 0; f < c_maxFramesInFlight; ++f)
 		{
-			fmt::print("Failed to create semaphore");
-			return false;
-		}
-		if (!CheckResult(vkCreateSemaphore(m_vk->m_device, &semaphoreInfo, nullptr, &m_vk->m_renderFinishedSemaphore)))
-		{
-			fmt::print("Failed to create semaphore");
-			return false;
-		}
-		if (!CheckResult(vkCreateFence(m_vk->m_device, &fenceInfo, nullptr, &m_vk->m_inFlightFence)))
-		{
-			fmt::print("Failed to create fence");
-			return false;
+			FrameData& fd = m_vk->m_perFrameData[f];
+			if (!CheckResult(vkCreateSemaphore(m_vk->m_device, &semaphoreInfo, nullptr, &fd.m_imageAvailableSemaphore)))
+			{
+				fmt::print("Failed to create semaphore");
+				return false;
+			}
+			if (!CheckResult(vkCreateSemaphore(m_vk->m_device, &semaphoreInfo, nullptr, &fd.m_renderFinishedSemaphore)))
+			{
+				fmt::print("Failed to create semaphore");
+				return false;
+			}
+			if (!CheckResult(vkCreateFence(m_vk->m_device, &fenceInfo, nullptr, &fd.m_inFlightFence)))
+			{
+				fmt::print("Failed to create fence");
+				return false;
+			}
 		}
 
 		return true;
@@ -455,10 +509,14 @@ namespace R3
 
 	bool RenderSystem::RecordCommandBuffer(int swapImageIndex)
 	{
+		R3_PROF_EVENT();
+
+		auto& cmdBuffer = m_vk->ThisFrameData().m_graphicsCmdBuffer;
+
 		// start writing
 		VkCommandBufferBeginInfo beginInfo = {0};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		if (!CheckResult(vkBeginCommandBuffer(m_vk->m_graphicsCmdBuffer, &beginInfo)))	// resets the cmd buffer
+		if (!CheckResult(vkBeginCommandBuffer(cmdBuffer, &beginInfo)))	// resets the cmd buffer
 		{
 			fmt::print("failed to begin recording command buffer!");
 			return false;
@@ -476,18 +534,18 @@ namespace R3
 		renderPassInfo.clearValueCount = 1;
 		renderPassInfo.pClearValues = &clearColor;
 		// VK_SUBPASS_CONTENTS_INLINE - commands are all stored in primary buffer
-		vkCmdBeginRenderPass(m_vk->m_graphicsCmdBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBeginRenderPass(cmdBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 		// bind the pipeline
-		vkCmdBindPipeline(m_vk->m_graphicsCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_vk->m_simpleTriPipeline);
+		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_vk->m_simpleTriPipeline);
 
 		// draw one triangle made of 3 verts
-		vkCmdDraw(m_vk->m_graphicsCmdBuffer, 3, 1, 0, 0);
+		vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
 
 		// end render pass
-		vkCmdEndRenderPass(m_vk->m_graphicsCmdBuffer);
+		vkCmdEndRenderPass(cmdBuffer);
 
-		if (!CheckResult(vkEndCommandBuffer(m_vk->m_graphicsCmdBuffer)))
+		if (!CheckResult(vkEndCommandBuffer(cmdBuffer)))
 		{
 			fmt::print("failed to end recording command buffer!\n");
 			return false;
@@ -496,26 +554,34 @@ namespace R3
 		return true;
 	}
 
-	bool RenderSystem::CreateCommandBuffer()
+	bool RenderSystem::CreateCommandBuffers()
 	{
+		R3_PROF_EVENT();
 		// allocate the graphics cmd buffer from the graphics cmd pool
 		VkCommandBufferAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 		allocInfo.commandPool = m_vk->m_graphicsCommandPool;
 		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;	// primary = can be submitted to queue, can't be called from other buffers
 															// secondary = can't be directly submitted, can be called from other primary buffers
-		allocInfo.commandBufferCount = 1;
-
-		if (!CheckResult(vkAllocateCommandBuffers(m_vk->m_device, &allocInfo, &m_vk->m_graphicsCmdBuffer))) 
+		allocInfo.commandBufferCount = c_maxFramesInFlight;
+		std::vector<VkCommandBuffer> cmdBuffers(c_maxFramesInFlight);
+		if (!CheckResult(vkAllocateCommandBuffers(m_vk->m_device, &allocInfo, cmdBuffers.data())))
 		{
 			fmt::print("failed to allocate command buffers!\n");
 			return false;
 		}
+
+		for (int f = 0; f < c_maxFramesInFlight; ++f)
+		{
+			m_vk->m_perFrameData[f].m_graphicsCmdBuffer = cmdBuffers[f];
+		}
+
 		return true;
 	}
 
 	bool RenderSystem::CreateCommandPool()
 	{
+		R3_PROF_EVENT();
 		// find a graphics queue
 		QueueFamilyIndices queueFamilyIndices = FindQueueFamilyIndices(m_vk->m_physicalDevice, m_vk->m_mainSurface);
 
@@ -537,6 +603,7 @@ namespace R3
 
 	bool RenderSystem::CreateFramebuffers()
 	{
+		R3_PROF_EVENT();
 		// create a frame buffer for each swap chain image
 		m_vk->m_swapChainFramebuffers.resize(m_vk->m_swapChainImageViews.size());
 		for (int i = 0; i < m_vk->m_swapChainImageViews.size(); ++i)
@@ -567,6 +634,7 @@ namespace R3
 
 	bool RenderSystem::CreateRenderPass()
 	{
+		R3_PROF_EVENT();
 		// Describe all image attachments for the render pass
 
 		// colour attachment from swap chain
@@ -610,6 +678,7 @@ namespace R3
 
 	bool RenderSystem::CreateSimpleTriPipeline()
 	{
+		R3_PROF_EVENT();
 		// Load the shaders
 		// Note the shader modules can be destroyed once the pipeline is created
 		// compiled shader state is associated with the pipeline, not the module!
@@ -802,6 +871,7 @@ namespace R3
 
 	SwapchainDescriptor GetSwapchainInfo(VkPhysicalDevice& physDevice, VkSurfaceKHR surface)
 	{
+		R3_PROF_EVENT();
 		SwapchainDescriptor desc;
 		CheckResult(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physDevice, surface, &desc.m_caps));
 		
@@ -820,6 +890,7 @@ namespace R3
 
 	VkSurfaceFormatKHR GetSwapchainSurfaceFormat(const SwapchainDescriptor& sd)
 	{
+		R3_PROF_EVENT();
 		for (const auto& f : sd.m_formats)
 		{
 			// We would prefer bgra8_srg format
@@ -841,6 +912,7 @@ namespace R3
 
 	VkPresentModeKHR GetSwapchainSurfacePresentMode(const SwapchainDescriptor& sd)
 	{
+		R3_PROF_EVENT();
 		for (const auto& mode : sd.m_presentModes) 
 		{
 			// preferable, doesn't wait for vsync but avoids tearing by copying previous frame
@@ -855,6 +927,7 @@ namespace R3
 
 	VkExtent2D GetSwapchainSurfaceExtents(Window& window, const SwapchainDescriptor& sd)
 	{
+		R3_PROF_EVENT();
 		VkExtent2D extents;
 		int w = 0, h = 0;
 		SDL_Vulkan_GetDrawableSize(window.GetHandle(), &w, &h);
@@ -865,6 +938,7 @@ namespace R3
 
 	bool RenderSystem::CreateSwapchain()
 	{
+		R3_PROF_EVENT();
 		// find what swap chains are supported
 		SwapchainDescriptor swapChainSupport = GetSwapchainInfo(m_vk->m_physicalDevice.m_device, m_vk->m_mainSurface);
 
@@ -956,6 +1030,7 @@ namespace R3
 	
 	bool RenderSystem::CreateWindow()
 	{
+		R3_PROF_EVENT();
 		Window::Properties windowProps;
 		windowProps.m_sizeX = 1280;
 		windowProps.m_sizeY = 720;
@@ -967,6 +1042,7 @@ namespace R3
 
 	bool RenderSystem::CreateSurface()
 	{
+		R3_PROF_EVENT();
 		return SDL_Vulkan_CreateSurface(m_mainWindow->GetHandle(), m_vk->m_vkInstance, &m_vk->m_mainSurface);
 	}
 
@@ -979,6 +1055,7 @@ namespace R3
 
 	int FindGraphicsPhysicalDevice(std::vector<PhysicalDeviceDescriptor>& allDevices, VkSurfaceKHR surface)
 	{
+		R3_PROF_EVENT();
 		for (int i=0;i<allDevices.size();++i)
 		{
 			// is it discrete?
@@ -1004,6 +1081,7 @@ namespace R3
 
 	bool RenderSystem::CreateLogicalDevice()
 	{
+		R3_PROF_EVENT();
 		std::vector<VkDeviceQueueCreateInfo> queues;	// which queues (and how many) do we want?
 		std::vector<float> priorities;
 
@@ -1057,6 +1135,7 @@ namespace R3
 
 	bool RenderSystem::CreatePhysicalDevice()
 	{
+		R3_PROF_EVENT();
 		std::vector<PhysicalDeviceDescriptor> allDevices = GetAllPhysicalDevices(m_vk->m_vkInstance);
 		fmt::print("All supported devices:\n");
 		for (const auto& it : allDevices)
@@ -1075,6 +1154,7 @@ namespace R3
 
 	bool RenderSystem::CreateVkInstance()
 	{
+		R3_PROF_EVENT();
 		VkApplicationInfo appInfo = { 0 };
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 		appInfo.pNext = nullptr;

@@ -27,7 +27,7 @@ namespace R3
 		bool CreateFramebuffers();
 		bool CreateSimpleTriPipeline();
 		bool CreateCommandPool();
-		bool CreateCommandBuffer();
+		bool CreateCommandBuffers();
 		bool RecordCommandBuffer(int swapImageIndex);
 		bool CreateSyncObjects();
 		std::unique_ptr<Window> m_mainWindow;

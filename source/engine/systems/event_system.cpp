@@ -32,7 +32,6 @@ namespace R3
 				return false;
 			}
 		}
-		_sleep(10);
 		return true;
 	}
 }
