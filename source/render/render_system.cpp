@@ -66,17 +66,14 @@ namespace R3
 		std::vector<VkImageView> m_swapChainImageViews;
 		std::vector<VkFramebuffer> m_swapChainFramebuffers; // references the swap chain image views
 		VmaAllocator m_allocator;	// vma
+		VkCommandPool m_graphicsCommandPool;	// allocates graphics queue command buffers
+		FrameData m_perFrameData[c_maxFramesInFlight];	// contains per frame cmd buffers, sync objects
+		int m_currentFrame = 0;
 
-		// Simple triangle stuff
-		VkShaderModule m_singleTriVertexShaderModule;
-		VkShaderModule m_singleTriFragmentShaderModule;
 		VkRenderPass m_mainRenderPass;
 		VkPipeline m_simpleTriPipeline;
 		VkPipeline m_simpleTriFromBuffersPipeline;
 		VkPipelineLayout m_simplePipelineLayout;	// no descriptors, nada
-		VkCommandPool m_graphicsCommandPool;	// allocates graphics queue command buffers
-		FrameData m_perFrameData[c_maxFramesInFlight];	// contains per frame cmd buffers, sync objects
-		int m_currentFrame = 0;
 
 		// helpers
 		FrameData& ThisFrameData()
@@ -395,14 +392,10 @@ namespace R3
 		//cmd buffers do not need to be destroyed, removing the pool is enough
 		vkDestroyCommandPool(m_vk->m_device, m_vk->m_graphicsCommandPool, nullptr);
 
-		// destroy pipelines + shader modules
+		// destroy pipelines + layouts
 		vkDestroyPipeline(m_vk->m_device, m_vk->m_simpleTriFromBuffersPipeline, nullptr);
 		vkDestroyPipeline(m_vk->m_device, m_vk->m_simpleTriPipeline, nullptr);
 		vkDestroyPipelineLayout(m_vk->m_device, m_vk->m_simplePipelineLayout, nullptr);
-
-		// we can destroy these once pipeline is created
-		vkDestroyShaderModule(m_vk->m_device, m_vk->m_singleTriFragmentShaderModule, nullptr);
-		vkDestroyShaderModule(m_vk->m_device, m_vk->m_singleTriVertexShaderModule, nullptr);
 
 		// render passes
 		vkDestroyRenderPass(m_vk->m_device, m_vk->m_mainRenderPass, nullptr);
@@ -824,9 +817,9 @@ namespace R3
 		// Note the shader modules can be destroyed once the pipeline is created
 		// compiled shader state is associated with the pipeline, not the module!
 		std::string basePath = "shaders_spirv\\vk_tutorials\\";
-		m_vk->m_singleTriVertexShaderModule = VulkanHelpers::LoadShaderModule(m_vk->m_device, basePath + "fixed_triangle.vert.spv");
-		m_vk->m_singleTriFragmentShaderModule = VulkanHelpers::LoadShaderModule(m_vk->m_device, basePath + "fixed_triangle.frag.spv");
-		if (m_vk->m_singleTriVertexShaderModule == VK_NULL_HANDLE || m_vk->m_singleTriFragmentShaderModule == VK_NULL_HANDLE)
+		auto singleTriVertexShader = VulkanHelpers::LoadShaderModule(m_vk->m_device, basePath + "fixed_triangle.vert.spv");
+		auto singleTriFragmentShader = VulkanHelpers::LoadShaderModule(m_vk->m_device, basePath + "fixed_triangle.frag.spv");
+		if (singleTriVertexShader == VK_NULL_HANDLE || singleTriFragmentShader == VK_NULL_HANDLE)
 		{
 			fmt::print("Failed to create shader modules");
 			return false;
@@ -835,8 +828,8 @@ namespace R3
 		PipelineBuilder pb;
 
 		// describe the stages and which shader is used
-		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_VERTEX_BIT, m_vk->m_singleTriVertexShaderModule));
-		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_FRAGMENT_BIT, m_vk->m_singleTriFragmentShaderModule));
+		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_VERTEX_BIT, singleTriVertexShader));
+		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_FRAGMENT_BIT, singleTriFragmentShader));
 
 		// dynamic state must be set each time the pipeline is bound!
 		std::vector<VkDynamicState> dynamicStates = {
@@ -905,12 +898,16 @@ namespace R3
 			return false;
 		}
 
+		// dont need the shader modules any more!
+		vkDestroyShaderModule(m_vk->m_device, singleTriFragmentShader, nullptr);
+		vkDestroyShaderModule(m_vk->m_device, singleTriVertexShader, nullptr);
+
 		// build a similar pipeline but with shaders that take vertex data from buffers
 		// also passes buffer descriptors!
 		pb.m_shaderStages.clear();
 		VkShaderModule triBufferVertShader = VulkanHelpers::LoadShaderModule(m_vk->m_device, basePath + "triangle_from_buffers.vert.spv");
 		VkShaderModule triBufferFragShader = VulkanHelpers::LoadShaderModule(m_vk->m_device, basePath + "triangle_from_buffers.frag.spv");
-		if (triBufferVertShader == VK_NULL_HANDLE || triBufferVertShader == VK_NULL_HANDLE)
+		if (triBufferVertShader == VK_NULL_HANDLE || triBufferFragShader == VK_NULL_HANDLE)
 		{
 			fmt::print("Failed to load fancier shaders\n");
 			return false;
