@@ -15,6 +15,7 @@ find_package(fmt REQUIRED)
 find_package(SDL2 REQUIRED)
 find_package(sol2 REQUIRED)
 find_package(glm REQUIRED)
+find_package(unofficial-vulkan-memory-allocator REQUIRED)
 
 # external libs not from vcpkg
 find_package(Optick REQUIRED)

@@ -14,6 +14,5 @@ target_link_libraries(R3 PRIVATE
 	SDL2::SDL2 
 	SDL2::SDL2main
 	glm::glm
-	${Vulkan_LIBRARIES}
 )
 

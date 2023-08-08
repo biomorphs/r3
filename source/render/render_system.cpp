@@ -1,15 +1,18 @@
 #include "render_system.h"
 #include "window.h"
-#include "vulkan/vulkan.h"
-#include "vulkan/vk_enum_string_helper.h"
 #include "core/file_io.h"
 #include "core/profiler.h"
 #include "engine/systems/event_system.h"
+#include "vulkan_helpers.h"
+#include <vulkan/vulkan.h>
+#include <vulkan/vk_enum_string_helper.h>
+#include <vk_mem_alloc.h>
 #include <SDL.h>
 #include <SDL_events.h>
 #include <SDL_vulkan.h>
 #include <fmt/format.h>
 #include <set>
+#include <array>
 
 namespace R3
 {
@@ -61,6 +64,7 @@ namespace R3
 		std::vector<VkImage> m_swapChainImages;
 		std::vector<VkImageView> m_swapChainImageViews;
 		std::vector<VkFramebuffer> m_swapChainFramebuffers; // references the swap chain image views
+		VmaAllocator m_allocator;	// vma
 
 		// Simple triangle stuff
 		VkShaderModule m_singleTriVertexShaderModule;
@@ -76,6 +80,36 @@ namespace R3
 		FrameData& ThisFrameData()
 		{
 			return m_perFrameData[m_currentFrame];
+		}
+	};
+
+	struct PosColourVertex {
+		glm::vec2 m_position;
+		glm::vec3 m_colour;
+
+		static VkVertexInputBindingDescription GetInputBindingDescription() 
+		{
+			// we just want to bind a single buffer
+			VkVertexInputBindingDescription bindingDesc = {0};
+			bindingDesc.binding = 0;
+			bindingDesc.stride = sizeof(PosColourVertex);
+			bindingDesc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+			return bindingDesc;
+		}
+
+		static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() 
+		{
+			// 2 attributes, position and colour stored in buffer 0
+			std::array<VkVertexInputAttributeDescription, 2> attributes {};
+			attributes[0].binding = 0;
+			attributes[0].location = 0;	// location visible from shader
+			attributes[0].format = VK_FORMAT_R32G32_SFLOAT;	// pos = vec2
+			attributes[0].offset = offsetof(PosColourVertex, m_position);
+			attributes[0].binding = 0;
+			attributes[0].location = 1;	
+			attributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;	// colour = vec3
+			attributes[0].offset = offsetof(PosColourVertex, m_colour);
+			return attributes;
 		}
 	};
 
@@ -117,7 +151,6 @@ namespace R3
 		{
 			return true;
 		}
-
 		if (m_recreateSwapchain)
 		{
 			if (!RecreateSwapchainAndFramebuffers())
@@ -131,14 +164,14 @@ namespace R3
 		auto& fd = m_vk->ThisFrameData();
 		{
 			R3_PROF_STALL("Wait for fence");
-			// wait for the previous frame to finish with no timeout (blocking call)
+			// wait for the previous frame to finish with infinite timeout (blocking call)
 			CheckResult(vkWaitForFences(m_vk->m_device, 1, &fd.m_inFlightFence, VK_TRUE, UINT64_MAX));
 		}
 
 		uint32_t swapImageIndex = 0;
 		{
-			R3_PROF_EVENT("Aquire swap image");
-			// acquire the next swap chain image (blocks with no timeout)
+			R3_PROF_EVENT("Acquire swap image");
+			// acquire the next swap chain image (blocks with infinite timeout)
 			// m_imageAvailableSemaphore will be signalled when we are able to draw to the image
 			// note that fences can also be passed here
 			auto r = vkAcquireNextImageKHR(m_vk->m_device, m_vk->m_swapChain, UINT64_MAX, fd.m_imageAvailableSemaphore, VK_NULL_HANDLE, &swapImageIndex);
@@ -180,7 +213,6 @@ namespace R3
 		submitInfo.waitSemaphoreCount = 1;
 		submitInfo.pWaitSemaphores = waitSemaphores;
 		submitInfo.pWaitDstStageMask = waitStages;
-		submitInfo.commandBufferCount = 1;
 
 		// signal m_renderFinishedSemaphore once execution completes
 		VkSemaphore signalSemaphores[] = { fd.m_renderFinishedSemaphore };
@@ -289,6 +321,12 @@ namespace R3
 			return false;
 		}
 
+		if (!InitialiseVMA())
+		{
+			fmt::print("Failed to initialise vulkan memory allocator\n");
+			return false;
+		}
+
 		if (!CreateSwapchain())
 		{
 			fmt::print("Failed to create swapchain\n");
@@ -301,9 +339,9 @@ namespace R3
 			return false;
 		}
 
-		if (!CreateSimpleTriPipeline())
+		if (!CreateSimpleTriPipelines())
 		{
-			fmt::print("Failed to create pipeline\n");
+			fmt::print("Failed to create pipelines\n");
 			return false;
 		}
 
@@ -369,10 +407,22 @@ namespace R3
 		// swap chain, images, framebuffers
 		DestroySwapchain();
 
+		vmaDestroyAllocator(m_vk->m_allocator);
+
 		vkDestroyDevice(m_vk->m_device, nullptr);
 		vkDestroySurfaceKHR(m_vk->m_vkInstance, m_vk->m_mainSurface, nullptr);
 		vkDestroyInstance(m_vk->m_vkInstance, nullptr);
 		m_mainWindow = nullptr;
+	}
+
+	bool RenderSystem::InitialiseVMA()
+	{
+		//initialize the memory allocator
+		VmaAllocatorCreateInfo allocatorInfo = {0};
+		allocatorInfo.physicalDevice = m_vk->m_physicalDevice.m_device;
+		allocatorInfo.device = m_vk->m_device;
+		allocatorInfo.instance = m_vk->m_vkInstance;
+		return CheckResult(vmaCreateAllocator(&allocatorInfo, &m_vk->m_allocator));
 	}
 
 	void RenderSystem::DestroySwapchain()
@@ -543,28 +593,6 @@ namespace R3
 			}
 		}
 		return qfi;
-	}
-
-	// ShaderModule wraps the spirv
-	VkShaderModule CreateShaderModule(VkDevice device, std::vector<uint8_t> srcSpirv)
-	{
-		R3_PROF_EVENT();
-		assert((srcSpirv.size() % 4) == 0);	// VkShaderModuleCreateInfo wants uint32, make sure the buffer is big enough 
-		VkShaderModuleCreateInfo createInfo = { 0 };
-		createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		createInfo.pCode = reinterpret_cast<const uint32_t*>(srcSpirv.data());
-		createInfo.codeSize = srcSpirv.size();	// size in BYTES
-		VkShaderModule shaderModule = { 0 };
-		VkResult r = vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule);
-		if (CheckResult(r))
-		{
-			return shaderModule;
-		}
-		else
-		{
-			fmt::print("Failed to create shader module from src spirv\n");
-			return VkShaderModule{ 0 };
-		}
 	}
 
 	bool RenderSystem::CreateSyncObjects()
@@ -785,54 +813,25 @@ namespace R3
 		return true;
 	}
 
-	bool RenderSystem::CreateSimpleTriPipeline()
+	bool RenderSystem::CreateSimpleTriPipelines()
 	{
 		R3_PROF_EVENT();
 		// Load the shaders
 		// Note the shader modules can be destroyed once the pipeline is created
 		// compiled shader state is associated with the pipeline, not the module!
-		std::string basePath(R3::FileIO::GetBasePath());
-		basePath += "shaders_spirv\\vk_tutorials\\";
-		std::vector<uint8_t> vertexSpirv, fragmentSpirv;
-		if (!R3::FileIO::LoadBinaryFile(basePath + "fixed_triangle.vert.spv", vertexSpirv))
+		std::string basePath = "shaders_spirv\\vk_tutorials\\";
+		m_vk->m_singleTriVertexShaderModule = VulkanHelpers::LoadShaderModule(m_vk->m_device, basePath + "fixed_triangle.vert.spv");
+		m_vk->m_singleTriFragmentShaderModule = VulkanHelpers::LoadShaderModule(m_vk->m_device, basePath + "fixed_triangle.frag.spv");
+		if (m_vk->m_singleTriVertexShaderModule == VK_NULL_HANDLE || m_vk->m_singleTriFragmentShaderModule == VK_NULL_HANDLE)
 		{
-			fmt::print("Failed to load spirv file\n");
-			return false;
-		}
-		if (!R3::FileIO::LoadBinaryFile(basePath + "fixed_triangle.frag.spv", fragmentSpirv))
-		{
-			fmt::print("Failed to load spirv file\n");
-			return false;
-		}
-		m_vk->m_singleTriVertexShaderModule = CreateShaderModule(m_vk->m_device, vertexSpirv);
-		m_vk->m_singleTriFragmentShaderModule = CreateShaderModule(m_vk->m_device, fragmentSpirv);
-		if (m_vk->m_singleTriVertexShaderModule == VK_NULL_HANDLE)
-		{
-			fmt::print("Failed to create shader module");
-			return false;
-		}
-		if (m_vk->m_singleTriFragmentShaderModule == VK_NULL_HANDLE)
-		{
-			fmt::print("Failed to create shader module");
+			fmt::print("Failed to create shader modules");
 			return false;
 		}
 
 		// Create the shader stage descriptors for the pipeline
 		std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
-
-		VkPipelineShaderStageCreateInfo vertexStageInfo = { 0 };
-		vertexStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		vertexStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-		vertexStageInfo.module = m_vk->m_singleTriVertexShaderModule;
-		vertexStageInfo.pName = "main";	// entry point name
-		shaderStages.push_back(vertexStageInfo);
-
-		VkPipelineShaderStageCreateInfo fragmentStageInfo = { 0 };
-		fragmentStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		fragmentStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-		fragmentStageInfo.module = m_vk->m_singleTriFragmentShaderModule;
-		fragmentStageInfo.pName = "main";	// entry point name
-		shaderStages.push_back(fragmentStageInfo);
+		shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_VERTEX_BIT, m_vk->m_singleTriVertexShaderModule));
+		shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_FRAGMENT_BIT, m_vk->m_singleTriFragmentShaderModule));
 
 		// Some pipeline state can be dynamic, specify it here
 		// dynamic state must be set each time the pipeline is used!
@@ -840,25 +839,16 @@ namespace R3
 			VK_DYNAMIC_STATE_VIEWPORT,		// we will set viewport at draw time (lets us handle window resize without recreating pipelines)
 			VK_DYNAMIC_STATE_SCISSOR		// same for the scissor data
 		};
-		VkPipelineDynamicStateCreateInfo dynamicState = {0};
-		dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-		dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
-		if (dynamicStates.size() > 0)
-		{
-			dynamicState.pDynamicStates = dynamicStates.data();
-		}
+		VkPipelineDynamicStateCreateInfo dynamicState = VulkanHelpers::CreatePipelineDynamicState(dynamicStates);
 
-		// Set up vertex buffer input state. Since we have no input buffers, just set it to 0
+		// Set up vertex buffer input state. Since we have no input buffers, just set count to 0
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo = {0};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 		vertexInputInfo.vertexBindingDescriptionCount = 0;
 		vertexInputInfo.vertexAttributeDescriptionCount = 0;
 
 		// Input assembly describes type of geometry (lines/tris) and topology(strips,lists,etc) to draw
-		VkPipelineInputAssemblyStateCreateInfo inputAssembly = {0};
-		inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-		inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;	// 3 verts per tri
-		inputAssembly.primitiveRestartEnable = VK_FALSE;	// used with strips to break up lines/tris
+		VkPipelineInputAssemblyStateCreateInfo inputAssembly = VulkanHelpers::CreatePipelineInputAssemblyState(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 
 		// create the viewport state for the pipeline
 		// if using dynamic we only need to set the counts
@@ -868,26 +858,10 @@ namespace R3
 		viewportState.scissorCount = 1;
 
 		// Setup rasteriser state
-		VkPipelineRasterizationStateCreateInfo rasterizer = {0};
-		rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-		rasterizer.depthClampEnable = VK_FALSE;		// if true fragments outsize max depth are clamped, not discarded
-													// (requires enabling a device feature!)
-		rasterizer.rasterizerDiscardEnable = VK_FALSE;	// set to true to disable raster stage!
-		rasterizer.polygonMode = VK_POLYGON_MODE_FILL;	// we want filled polys
-		rasterizer.lineWidth = 1.0f;					// sensible default
-		rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;	// cull back-facing
-		rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;	// front faces are clockwise
-		rasterizer.depthBiasEnable = VK_FALSE;			// no depth biasing pls
+		VkPipelineRasterizationStateCreateInfo rasterizer = VulkanHelpers::CreatePipelineRasterState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE);
 
 		// Multisampling state
-		VkPipelineMultisampleStateCreateInfo multisampling = {0};
-		multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-		multisampling.sampleShadingEnable = VK_FALSE;	// no MSAA pls
-		multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;	// just 1 sample thx
-		multisampling.minSampleShading = 1.0f; // Optional
-		multisampling.pSampleMask = nullptr; // Optional
-		multisampling.alphaToCoverageEnable = VK_FALSE; // Optional, putputs alpha to coverage for blending
-		multisampling.alphaToOneEnable = VK_FALSE; // Optional, sets alpha to one for all samples
+		VkPipelineMultisampleStateCreateInfo multisampling = VulkanHelpers::CreatePipelineMultiSampleState_SingleSample();
 
 		// Depth-stencil state (we have no depth/stencil right now, disable it all)
 		VkPipelineDepthStencilStateCreateInfo depthStencilState = { 0 };
@@ -899,28 +873,15 @@ namespace R3
 
 		// Colour blending state
 
-		// Per-attachment state
-		VkPipelineColorBlendAttachmentState colorBlendAttachment = { 0 };
-		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-		colorBlendAttachment.blendEnable = VK_FALSE;					// No blending
-		colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
-		colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
-		colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD; // Optional
-		colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
-		colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
-		colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD; // Optional
+		// specify blending state per attachment
+		VkPipelineColorBlendAttachmentState colourBlendAttachment = VulkanHelpers::CreatePipelineColourBlendAttachment_NoBlending();	
+		std::vector<VkPipelineColorBlendAttachmentState> allAttachments = {
+			colourBlendAttachment
+		};
 
-		// Pipeline attachment/blend state
-		VkPipelineColorBlendStateCreateInfo colorBlending = { 0 };
-		colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-		colorBlending.logicOpEnable = VK_FALSE;		// no logical ops pls on write pls
-		colorBlending.logicOp = VK_LOGIC_OP_COPY; // Optional
-		colorBlending.attachmentCount = 1;
-		colorBlending.pAttachments = &colorBlendAttachment;
-		colorBlending.blendConstants[0] = 0.0f; // Optional
-		colorBlending.blendConstants[1] = 0.0f; // Optional
-		colorBlending.blendConstants[2] = 0.0f; // Optional
-		colorBlending.blendConstants[3] = 0.0f; // Optional
+		// Pipeline also has some global blending state (constants, logical ops enable)
+		// it contains all the colour attachments
+		VkPipelineColorBlendStateCreateInfo colorBlending = VulkanHelpers::CreatePipelineColourBlendState(allAttachments);
 
 		// Create an empty (for now) pipeline layout to be used later 
 		// This is where push constant data is reserved apparently!

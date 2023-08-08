@@ -9,6 +9,7 @@
 		  "features": [ "vulkan" ]
 	  },
     "sol2",
-    "glm"
+    "glm",
+	"vulkan-memory-allocator"
   ]
 }

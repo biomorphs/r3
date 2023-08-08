@@ -16,6 +16,7 @@ namespace R3
 		virtual void Shutdown();
 	private:
 		bool DrawFrame();
+		bool InitialiseVMA();
 		bool CreateWindow();
 		bool CreateVkInstance();
 		bool CreatePhysicalDevice();
@@ -24,7 +25,7 @@ namespace R3
 		bool CreateSwapchain();
 		bool CreateRenderPass();
 		bool CreateFramebuffers();
-		bool CreateSimpleTriPipeline();
+		bool CreateSimpleTriPipelines();
 		bool CreateCommandPool();
 		bool CreateCommandBuffers();
 		bool RecordCommandBuffer(int swapImageIndex);
