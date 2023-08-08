@@ -628,7 +628,10 @@ namespace R3
 		// VK_SUBPASS_CONTENTS_INLINE - commands are all stored in primary buffer
 		vkCmdBeginRenderPass(cmdBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-		// Set dynamic state
+		// bind the pipeline
+		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_vk->m_simpleTriPipeline);
+
+		// Set pipeline dynamic state
 		// Viewport to draw to (if not using dynamic viewport I guess!)
 		VkViewport viewport = { 0 };
 		viewport.x = 0.0f;
@@ -644,9 +647,6 @@ namespace R3
 		scissor.offset = { 0, 0 };
 		scissor.extent = m_vk->m_swapChainExtents;	// draw the full image
 		vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
-
-		// bind the pipeline
-		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_vk->m_simpleTriPipeline);
 
 		// draw one triangle made of 3 verts
 		vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
@@ -835,6 +835,7 @@ namespace R3
 		shaderStages.push_back(fragmentStageInfo);
 
 		// Some pipeline state can be dynamic, specify it here
+		// dynamic state must be set each time the pipeline is used!
 		std::vector<VkDynamicState> dynamicStates = {
 			VK_DYNAMIC_STATE_VIEWPORT,		// we will set viewport at draw time (lets us handle window resize without recreating pipelines)
 			VK_DYNAMIC_STATE_SCISSOR		// same for the scissor data
