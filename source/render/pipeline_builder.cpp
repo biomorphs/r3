@@ -1,4 +1,5 @@
 #include "pipeline_builder.h"
+#include "core/profiler.h"
 #include <vulkan/vk_enum_string_helper.h>
 #include <fmt/format.h>
 
@@ -6,6 +7,7 @@ namespace R3
 {
 	VkPipeline PipelineBuilder::Build(VkDevice device, VkPipelineLayout layout, VkRenderPass pass, int subPass)
 	{
+		R3_PROF_EVENT();
 		VkPipeline pipeline = VK_NULL_HANDLE;
 		VkGraphicsPipelineCreateInfo pipelineInfo{};
 		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;

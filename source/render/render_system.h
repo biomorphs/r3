@@ -15,6 +15,7 @@ namespace R3
 		virtual bool Init();
 		virtual void Shutdown();
 	private:
+		bool CreateMesh();
 		bool DrawFrame();
 		bool InitialiseVMA();
 		bool CreateWindow();

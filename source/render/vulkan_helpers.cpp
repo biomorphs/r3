@@ -45,6 +45,7 @@ namespace R3
 
 		VkShaderModule LoadShaderModule(VkDevice device, std::string_view filePath)
 		{
+			R3_PROF_EVENT();
 			VkShaderModule result = VK_NULL_HANDLE;
 			std::string fullPath = std::string(R3::FileIO::GetBasePath()) + filePath.data();
 			std::vector<uint8_t> spirv;
@@ -61,6 +62,7 @@ namespace R3
 
 		VkPipelineShaderStageCreateInfo CreatePipelineShaderState(VkShaderStageFlagBits stage, VkShaderModule shader, const char* entryPoint)
 		{
+			R3_PROF_EVENT();
 			VkPipelineShaderStageCreateInfo stageInfo = { 0 };
 			stageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 			stageInfo.stage = stage;
@@ -71,6 +73,7 @@ namespace R3
 
 		VkPipelineDynamicStateCreateInfo CreatePipelineDynamicState(const std::vector<VkDynamicState>& statesToEnable)
 		{
+			R3_PROF_EVENT();
 			VkPipelineDynamicStateCreateInfo dynamicState = { 0 };
 			dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 			dynamicState.dynamicStateCount = static_cast<uint32_t>(statesToEnable.size());
@@ -83,6 +86,7 @@ namespace R3
 
 		VkPipelineInputAssemblyStateCreateInfo CreatePipelineInputAssemblyState(VkPrimitiveTopology topology, bool enablePrimitiveRestart)
 		{
+			R3_PROF_EVENT();
 			VkPipelineInputAssemblyStateCreateInfo inputAssembly = { 0 };
 			inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 			inputAssembly.topology = topology;
@@ -92,6 +96,7 @@ namespace R3
 
 		VkPipelineMultisampleStateCreateInfo CreatePipelineMultiSampleState_SingleSample()
 		{
+			R3_PROF_EVENT();
 			VkPipelineMultisampleStateCreateInfo multisampling = { 0 };
 			multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 			multisampling.sampleShadingEnable = VK_FALSE;	// no MSAA pls
@@ -105,6 +110,7 @@ namespace R3
 
 		VkPipelineRasterizationStateCreateInfo CreatePipelineRasterState(VkPolygonMode polyMode, VkCullModeFlags cullMode, VkFrontFace frontFace)
 		{
+			R3_PROF_EVENT();
 			VkPipelineRasterizationStateCreateInfo rasterizer = { 0 };
 			rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 			rasterizer.depthClampEnable = VK_FALSE;		// if true fragments outsize max depth are clamped, not discarded
@@ -120,6 +126,7 @@ namespace R3
 
 		VkPipelineColorBlendAttachmentState CreatePipelineColourBlendAttachment_NoBlending()
 		{
+			R3_PROF_EVENT();
 			VkPipelineColorBlendAttachmentState attachment = { 0 };
 			attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 			attachment.blendEnable = VK_FALSE;					// No blending
@@ -134,6 +141,7 @@ namespace R3
 
 		VkPipelineColorBlendStateCreateInfo CreatePipelineColourBlendState(const std::vector<VkPipelineColorBlendAttachmentState>& attachments)
 		{
+			R3_PROF_EVENT();
 			VkPipelineColorBlendStateCreateInfo blending = { 0 };
 			blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 			blending.logicOpEnable = VK_FALSE;		// no logical ops on write pls

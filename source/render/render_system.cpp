@@ -44,6 +44,12 @@ namespace R3
 		std::vector<VkPresentModeKHR> m_presentModes;
 	};
 
+	struct AllocatedBuffer
+	{
+		VmaAllocation m_allocation = {};
+		VkBuffer m_buffer = {};
+	};
+
 	struct QueueFamilyIndices
 	{
 		uint32_t m_graphicsIndex = -1;
@@ -73,6 +79,7 @@ namespace R3
 		VkRenderPass m_mainRenderPass;
 		VkPipeline m_simpleTriPipeline;
 		VkPipeline m_simpleTriFromBuffersPipeline;
+		AllocatedBuffer m_posColourVertexBuffer;
 		VkPipelineLayout m_simplePipelineLayout;	// no descriptors, nada
 
 		// helpers
@@ -122,6 +129,26 @@ namespace R3
 			*crashMe = 1;
 		}
 		return !r;
+	}
+
+	AllocatedBuffer CreateBuffer(VmaAllocator& allocator, uint64_t sizeBytes, VkBufferUsageFlags bufferUsage, VmaMemoryUsage memUsage)
+	{
+		R3_PROF_EVENT();
+		AllocatedBuffer newBuffer;
+		VkBufferCreateInfo bci = { 0 };
+		bci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		bci.size = sizeBytes;
+		bci.usage = bufferUsage;
+
+		VmaAllocationCreateInfo allocInfo = { 0 };
+		allocInfo.usage = memUsage;
+
+		VkResult r = vmaCreateBuffer(allocator, &bci, &allocInfo, &newBuffer.m_buffer, &newBuffer.m_allocation, nullptr);
+		if (!CheckResult(r))
+		{
+			fmt::print("Failed to create buffer of size {} bytes", sizeBytes);
+		}
+		return newBuffer;
 	}
 
 	RenderSystem::RenderSystem()
@@ -187,15 +214,13 @@ namespace R3
 		}
 
 		// at this point we are definitely going to draw, so reset the inflight fence
-		{
-			CheckResult(vkResetFences(m_vk->m_device, 1, &fd.m_inFlightFence));
-		}
+		CheckResult(vkResetFences(m_vk->m_device, 1, &fd.m_inFlightFence));
 
 		// reset + record the cmd buffer
-		// (its safe since we waited on the inflight fence)
+		// (its safe since we waited on the inflight fence earlier)
 		{
 			R3_PROF_EVENT("Reset/Record cmd buffer");
-			vkResetCommandBuffer(fd.m_graphicsCmdBuffer, 0);
+			CheckResult(vkResetCommandBuffer(fd.m_graphicsCmdBuffer, 0));
 			RecordCommandBuffer(swapImageIndex);
 		}
 
@@ -259,6 +284,7 @@ namespace R3
 
 	void RenderSystem::OnSystemEvent(void* ev)
 	{
+		R3_PROF_EVENT();
 		auto theEvent = (SDL_Event*)ev;
 		if (theEvent->type == SDL_WINDOWEVENT)
 		{
@@ -368,6 +394,12 @@ namespace R3
 			return false;
 		}
 
+		if (!CreateMesh())
+		{
+			fmt::print("Failed to create mesh");
+			return false;
+		}
+
 		m_mainWindow->Show();
 
 		return true;
@@ -381,6 +413,9 @@ namespace R3
 
 		// Wait for rendering to finish before shutting down
 		CheckResult(vkDeviceWaitIdle(m_vk->m_device));
+
+		// Destroy the mesh buffers
+		vmaDestroyBuffer(m_vk->m_allocator, m_vk->m_posColourVertexBuffer.m_buffer, m_vk->m_posColourVertexBuffer.m_allocation);
 
 		for (int f = c_maxFramesInFlight - 1; f >= 0; --f)	// destroy sync objects in reverse order
 		{
@@ -411,8 +446,41 @@ namespace R3
 		m_mainWindow = nullptr;
 	}
 
+	bool RenderSystem::CreateMesh()
+	{
+		R3_PROF_EVENT();
+
+		PosColourVertex verts[3];
+		verts[0].m_position = { 0.5f, 0.0f };
+		verts[1].m_position = { 0.0f, -1.0f };
+		verts[2].m_position = { 1.0f,  -1.0f };
+		verts[0].m_colour = { 0.f, 0.f, 1.0f };
+		verts[1].m_colour = { 0.f, 1.f, 0.5f };
+		verts[2].m_colour = { 1.f, 0.f, 0.1f };
+
+		m_vk->m_posColourVertexBuffer = CreateBuffer(m_vk->m_allocator, 
+			sizeof(PosColourVertex) * 3, 
+			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 
+			VMA_MEMORY_USAGE_CPU_TO_GPU
+		);
+
+		// upload the data
+		if (m_vk->m_posColourVertexBuffer.m_buffer != VK_NULL_HANDLE)
+		{
+			void* mappedData = nullptr;
+			if (CheckResult(vmaMapMemory(m_vk->m_allocator, m_vk->m_posColourVertexBuffer.m_allocation, &mappedData)))
+			{
+				memcpy(mappedData, verts, 3 * sizeof(PosColourVertex));
+				vmaUnmapMemory(m_vk->m_allocator, m_vk->m_posColourVertexBuffer.m_allocation);
+			}
+		}
+
+		return m_vk->m_posColourVertexBuffer.m_buffer != VK_NULL_HANDLE;
+	}
+
 	bool RenderSystem::InitialiseVMA()
 	{
+		R3_PROF_EVENT();
 		//initialize the memory allocator
 		VmaAllocatorCreateInfo allocatorInfo = {0};
 		allocatorInfo.physicalDevice = m_vk->m_physicalDevice.m_device;
@@ -423,6 +491,7 @@ namespace R3
 
 	void RenderSystem::DestroySwapchain()
 	{
+		R3_PROF_EVENT();
 		for (auto framebuffer : m_vk->m_swapChainFramebuffers) {
 			vkDestroyFramebuffer(m_vk->m_device, framebuffer, nullptr);
 		}
@@ -438,6 +507,7 @@ namespace R3
 
 	bool RenderSystem::RecreateSwapchainAndFramebuffers()
 	{
+		R3_PROF_EVENT();
 		CheckResult(vkDeviceWaitIdle(m_vk->m_device));
 
 		DestroySwapchain();
@@ -629,6 +699,18 @@ namespace R3
 
 		auto& cmdBuffer = m_vk->ThisFrameData().m_graphicsCmdBuffer;
 
+		// pipeline dynamic state
+		VkViewport viewport = { 0 };
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = (float)m_vk->m_swapChainExtents.width;
+		viewport.height = (float)m_vk->m_swapChainExtents.height;
+		viewport.minDepth = 0.0f;	// normalised! must be between 0 and 1
+		viewport.maxDepth = 1.0f;	// ^^
+		VkRect2D scissor = { 0 };
+		scissor.offset = { 0, 0 };
+		scissor.extent = m_vk->m_swapChainExtents;	// draw the full image
+
 		// start writing
 		VkCommandBufferBeginInfo beginInfo = {0};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -656,21 +738,22 @@ namespace R3
 		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_vk->m_simpleTriPipeline);
 
 		// Set pipeline dynamic state
-		// Viewport to draw to (if not using dynamic viewport I guess!)
-		VkViewport viewport = { 0 };
-		viewport.x = 0.0f;
-		viewport.y = 0.0f;
-		viewport.width = (float)m_vk->m_swapChainExtents.width;
-		viewport.height = (float)m_vk->m_swapChainExtents.height;
-		viewport.minDepth = 0.0f;	// normalised! must be between 0 and 1
-		viewport.maxDepth = 1.0f;	// ^^
 		vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
-
-		// Scissor state (if not using dynamic I guess!)
-		VkRect2D scissor = { 0 };
-		scissor.offset = { 0, 0 };
-		scissor.extent = m_vk->m_swapChainExtents;	// draw the full image
 		vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
+
+		// draw one triangle made of 3 verts
+		vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
+
+		// bind the 2nd pipeline
+		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_vk->m_simpleTriFromBuffersPipeline);
+
+		// Set pipeline dynamic state
+		vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
+		vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
+
+		// bind the vertex buffer with offset 0
+		VkDeviceSize offset = 0;
+		vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &m_vk->m_posColourVertexBuffer.m_buffer, &offset);
 
 		// draw one triangle made of 3 verts
 		vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
