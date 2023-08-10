@@ -24,6 +24,8 @@ namespace R3
 
 		bool RunCommandsImmediate(VkDevice d, VkQueue cmdQueue, VkCommandPool cmdPool, VkFence waitFence, std::function<void(VkCommandBuffer&)> fn)
 		{
+			R3_PROF_EVENT();
+
 			// create a temporary cmd buffer from the pool
 			VkCommandBufferAllocateInfo allocInfo = { 0 };
 			allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -60,7 +62,10 @@ namespace R3
 
 			// Submit + wait for the fence
 			CheckResult(vkQueueSubmit(cmdQueue, 1, &submitInfo, waitFence));
-			CheckResult(vkWaitForFences(d, 1, &waitFence, true, 9999999999));
+			{
+				R3_PROF_STALL("Wait for fence");
+				CheckResult(vkWaitForFences(d, 1, &waitFence, true, 9999999999));
+			}
 			CheckResult(vkResetFences(d, 1, &waitFence));
 
 			// We can free the cmd buffer

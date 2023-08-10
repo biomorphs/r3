@@ -197,11 +197,15 @@ namespace R3
 
 	bool RenderSystem::ShowGui()
 	{
+		R3_PROF_EVENT();
 		ImGui::Begin("Render System");
 		{
 			auto str = std::format("Swap chain extents: {}x{}", m_vk->m_swapChainExtents.width, m_vk->m_swapChainExtents.height);
 			ImGui::Text(str.c_str());
 			str = std::format("Swap chain images: {}", m_vk->m_swapChainImages.size());
+			ImGui::Text(str.c_str());
+			auto timeSys = GetSystem<TimeSystem>();
+			str = std::format("FPS/Frame Time: {} / {}ms", 1.0 / timeSys->GetVariableDeltaTime(), timeSys->GetVariableDeltaTime());
 			ImGui::Text(str.c_str());
 		}
 		ImGui::End();
@@ -508,6 +512,7 @@ namespace R3
 
 	void RenderSystem::ImGuiNewFrame()
 	{
+		R3_PROF_EVENT();
 		// does order matter? can ImgGui::NewFrame go in imgui system instead?
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplSDL2_NewFrame(m_mainWindow->GetHandle());
@@ -516,6 +521,7 @@ namespace R3
 
 	bool RenderSystem::InitImGui()
 	{
+		R3_PROF_EVENT();
 		// create a descriptor pool for imgui
 		VkDescriptorPoolSize pool_sizes[] =		// this is way bigger than it needs to be!
 		{
@@ -887,7 +893,7 @@ namespace R3
 		renderPassInfo.renderArea.offset = { 0, 0 };			// offset/extents to draw to
 		renderPassInfo.renderArea.extent = m_vk->m_swapChainExtents;
 		// attachment clear op values -  clear colour/depth values go here
-		VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
+		VkClearValue clearColor = { {{0.1f, 0.0f, 0.0f, 1.0f}} };
 		renderPassInfo.clearValueCount = 1;
 		renderPassInfo.pClearValues = &clearColor;
 		// VK_SUBPASS_CONTENTS_INLINE - commands are all stored in primary buffer
@@ -1106,7 +1112,7 @@ namespace R3
 			return false;
 		}
 
-		// constants specified as byte ranges, bound to specific shader stages
+		// push constants specified as byte ranges, bound to specific shader stages
 		VkPushConstantRange constantRange;
 		constantRange.offset = 0;	// needs to match in the shader if >0!
 		constantRange.size = sizeof(PushConstant);

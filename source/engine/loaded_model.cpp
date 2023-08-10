@@ -21,6 +21,7 @@ namespace R3
 
 	void CalculateAABB(const LoadedModel& m, glm::vec3& minb, glm::vec3& maxb)
 	{
+		R3_PROF_EVENT();
 		glm::vec3 boundsMin(FLT_MAX), boundsMax(-FLT_MAX);
 		for (const auto& m : m.m_meshes)
 		{
@@ -111,6 +112,7 @@ namespace R3
 
 	void ParseSceneNode(const aiScene* scene, const aiNode* node, LoadedModel& model, glm::mat4 parentTransform)
 	{
+		R3_PROF_EVENT();
 		glm::mat4 nodeTransform = ToGlmMatrix(node->mTransformation) * parentTransform;
 
 		for (uint32_t meshIndex = 0; meshIndex < node->mNumMeshes; ++meshIndex)
@@ -127,6 +129,7 @@ namespace R3
 
 	bool ParseMaterials(const aiScene* scene, LoadedModel& result)
 	{
+		R3_PROF_EVENT();
 		if (scene->HasMaterials())
 		{
 			result.m_materials.reserve(scene->mNumMaterials);

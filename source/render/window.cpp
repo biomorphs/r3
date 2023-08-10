@@ -1,5 +1,6 @@
 #include "window.h"
 #include "core/log.h"
+#include "core/profiler.h"
 #include <SDL.h>
 
 namespace R3
@@ -7,6 +8,7 @@ namespace R3
 	Window::Window(const Properties& props)
 		: m_properties(props)
 	{
+		R3_PROF_EVENT();
 		int windowPosX = SDL_WINDOWPOS_UNDEFINED;
 		int windowPosY = SDL_WINDOWPOS_UNDEFINED;
 		int windowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_VULKAN | SDL_WINDOW_ALLOW_HIGHDPI;

@@ -23,7 +23,8 @@ namespace R3
 			hasAnyTasks = m_tasks.size() > 0;
 			for (int i = static_cast<int>(m_tasks.size()) - 1; i >= 0; --i)
 			{
-				if (m_tasks[i].threadMask == 0 || (m_tasks[i].threadMask & threadMask) == m_tasks[i].threadMask)
+				// if any bit matches in the mask, then this is a valid thread
+				if (m_tasks[i].threadMask == 0 || (m_tasks[i].threadMask & threadMask) != 0)
 				{
 					fn = std::move(m_tasks[i].m_fn);
 					m_tasks.erase(m_tasks.begin() + i);

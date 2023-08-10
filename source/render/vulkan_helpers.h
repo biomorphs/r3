@@ -1,6 +1,5 @@
 #pragma once
 
-// yeah, get over it, if you want these you already have this included 99% of the time
 #include <vulkan/vulkan.h>
 #include <vector>
 #include <string_view>

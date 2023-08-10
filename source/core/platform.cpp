@@ -43,12 +43,15 @@ namespace R3
 			ProcessCommandLine();
 
 			LogInfo("Initialising SDL");
-			int sdlResult = SDL_Init(SDL_INIT_EVERYTHING);
-			assert(sdlResult == 0);
-			if (sdlResult != 0)
 			{
-				LogError("Failed to initialise SDL:\n\t{}", SDL_GetError());
-				return InitResult::InitFailed;
+				R3_PROF_EVENT("SDL_Init");
+				int sdlResult = SDL_Init(SDL_INIT_EVERYTHING);
+				assert(sdlResult == 0);
+				if (sdlResult != 0)
+				{
+					LogError("Failed to initialise SDL:\n\t{}", SDL_GetError());
+					return InitResult::InitFailed;
+				}
 			}
 
 			return InitResult::InitOK;
@@ -56,6 +59,8 @@ namespace R3
 
 		ShutdownResult Shutdown()
 		{
+			R3_PROF_EVENT();
+
 			LogInfo("Shutting down SDL");
 
 			SDL_Quit();

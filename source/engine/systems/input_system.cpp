@@ -128,6 +128,8 @@ namespace R3
 
 	void InputSystem::RegisterTickFns()
 	{
+		R3_PROF_EVENT();
+
 		RegisterTick("Input::FrameStart", [this]() {
 			return OnFrameStart();
 		});

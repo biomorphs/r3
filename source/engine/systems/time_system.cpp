@@ -1,10 +1,12 @@
 #include "time_system.h"
 #include "core/time.h"
+#include "core/profiler.h"
 
 namespace R3
 {
 	void TimeSystem::RegisterTickFns()
 	{
+		R3_PROF_EVENT();
 		Systems::GetInstance().RegisterTick("Time::FrameStart", [this]() {
 			return OnFrameStart();
 		});
@@ -40,6 +42,7 @@ namespace R3
 
 	bool TimeSystem::OnFrameStart()
 	{
+		R3_PROF_EVENT();
 		if (m_firstTick)
 		{
 			m_firstTickTime = R3::Time::HighPerformanceCounterTicks();
@@ -59,12 +62,14 @@ namespace R3
 
 	bool TimeSystem::OnFixedUpdateEnd()
 	{
+		R3_PROF_EVENT();
 		m_fixedUpdateCatchup -= m_fixedUpdateDeltaTime;
 		return true;
 	}
 
 	bool TimeSystem::Init()
 	{
+		R3_PROF_EVENT();
 		m_tickFrequency = R3::Time::HighPerformanceCounterFrequency();
 		m_initTime = R3::Time::HighPerformanceCounterTicks();
 		m_fixedUpdateDeltaTime = m_tickFrequency / m_fixedUpdateFPS;
