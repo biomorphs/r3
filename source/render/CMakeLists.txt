@@ -14,4 +14,4 @@ add_library(Render ${RenderLib_SourceFiles})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/../ FILES ${RenderLib_SourceFiles})	# adds directory structure filters in VS
 target_include_directories(Render PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../)
 target_include_directories(Render PRIVATE ${Vulkan_INCLUDE_DIRS})
-target_link_libraries(Render PRIVATE Core fmt::fmt Optick::OptickCore SDL2::SDL2 glm::glm ${Vulkan_LIBRARIES} GPUOpen::VulkanMemoryAllocator imgui::imgui) 
+target_link_libraries(Render PRIVATE Core Optick::OptickCore SDL2::SDL2 glm::glm ${Vulkan_LIBRARIES} GPUOpen::VulkanMemoryAllocator imgui::imgui) 

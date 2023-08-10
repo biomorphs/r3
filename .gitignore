@@ -50,7 +50,7 @@ data/*.url
 data/*.dae
 data/*.stl
 data/*.gltf
-data/OptickCore.exp
+data/*.exp
 
 # Compiled assets
 data/shaders_spirv/*

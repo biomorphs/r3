@@ -65,7 +65,7 @@ namespace R3
 		R3_PROF_EVENT();
 
 		// shutdown in reverse order of init
-		for (int i = m_allSystems.size() - 1; i >= 0; --i)
+		for (int i = (int)m_allSystems.size() - 1; i >= 0; --i)
 		{
 			m_allSystems[i].m_ptr->Shutdown();
 		}

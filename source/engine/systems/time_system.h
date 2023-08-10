@@ -28,7 +28,8 @@ namespace R3
 		uint64_t m_fixedUpdateCatchup = 0;
 		uint64_t m_fixedUpdateDeltaTime = 0;
 		uint64_t m_fixedUpdateCurrentTime = 0;
-		static constexpr double m_updateFrequency = 1.0 / 60.0;
+		static constexpr int m_fixedUpdateFPS = 60;
+		static constexpr double m_updateFrequency = 1.0 / (double)m_fixedUpdateFPS;
 
 		bool m_firstTick = true;
 	};

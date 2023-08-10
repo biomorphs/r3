@@ -21,7 +21,7 @@ namespace R3
 		{
 			ScopedLock lock(m_lock);
 			hasAnyTasks = m_tasks.size() > 0;
-			for (int i = m_tasks.size() - 1; i >= 0; --i)
+			for (int i = static_cast<int>(m_tasks.size()) - 1; i >= 0; --i)
 			{
 				if (m_tasks[i].threadMask == 0 || (m_tasks[i].threadMask & threadMask) == m_tasks[i].threadMask)
 				{

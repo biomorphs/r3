@@ -1,9 +1,9 @@
 #include "vulkan_helpers.h"
 #include "core/profiler.h"
 #include "core/file_io.h"
+#include "core/log.h"
 #include <vulkan/vk_enum_string_helper.h>
 #include <string>
-#include <fmt/format.h>
 #include <cassert>
 
 namespace R3
@@ -15,7 +15,7 @@ namespace R3
 			if (r)
 			{
 				std::string errorString = string_VkResult(r);
-				fmt::print("Vulkan Error! {}\n", errorString);
+				LogError("Vulkan Error! {}", errorString);
 				int* crashMe = nullptr;
 				*crashMe = 1;
 			}
@@ -34,7 +34,7 @@ namespace R3
 			VkCommandBuffer commandBuffer;
 			if (!CheckResult(vkAllocateCommandBuffers(d, &allocInfo, &commandBuffer)))
 			{
-				fmt::print("Failed to create cmd buffer\n");
+				LogError("Failed to create cmd buffer");
 				return false;
 			}
 
@@ -43,7 +43,7 @@ namespace R3
 			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;	// we will only submit this buffer once
 			if (!CheckResult(vkBeginCommandBuffer(commandBuffer, &beginInfo)))
 			{
-				fmt::print("Failed to begin cmd buffer\n");
+				LogError("Failed to begin cmd buffer");
 				return false;
 			}
 
@@ -85,7 +85,7 @@ namespace R3
 			}
 			else
 			{
-				fmt::print("Failed to create shader module from src spirv\n");
+				LogError("Failed to create shader module from src spirv");
 				return VkShaderModule{ 0 };
 			}
 		}
@@ -98,7 +98,7 @@ namespace R3
 			std::vector<uint8_t> spirv;
 			if (!R3::FileIO::LoadBinaryFile(fullPath, spirv))
 			{
-				fmt::print("Failed to load spirv file {}\n", fullPath);
+				LogError("Failed to load spirv file {}", fullPath);
 			}
 			else
 			{
@@ -193,7 +193,7 @@ namespace R3
 			blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 			blending.logicOpEnable = VK_FALSE;		// no logical ops on write pls
 			blending.logicOp = VK_LOGIC_OP_COPY;	// Optional
-			blending.attachmentCount = attachments.size();
+			blending.attachmentCount = static_cast<uint32_t>(attachments.size());
 			blending.pAttachments = attachments.data();
 			blending.blendConstants[0] = 0.0f; // Optional (r component of blending constant)
 			blending.blendConstants[1] = 0.0f; // Optional (g component of blending constant)

@@ -8,7 +8,6 @@ target_link_libraries(R3 PRIVATE
 	Core
 	Engine
 	Render
-	fmt::fmt
 	Optick::OptickCore
 	sol2
 	SDL2::SDL2 

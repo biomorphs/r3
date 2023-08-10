@@ -2,6 +2,7 @@
 #include "window.h"
 #include "core/file_io.h"
 #include "core/profiler.h"
+#include "core/log.h"
 #include "engine/systems/event_system.h"
 #include "engine/systems/time_system.h"
 #include "engine/loaded_model.h"
@@ -15,7 +16,6 @@
 #include <SDL.h>
 #include <SDL_events.h>
 #include <SDL_vulkan.h>
-#include <fmt/format.h>
 #include <set>
 #include <array>
 
@@ -26,25 +26,25 @@ namespace R3
 
 	struct FrameData
 	{
-		VkCommandPool m_graphicsCommandPool;	// allocates graphics queue command buffers
-		VkCommandBuffer m_graphicsCmdBuffer;	// graphics queue cmds
-		VkSemaphore m_imageAvailableSemaphore;	// signalled when new swap chain image available
-		VkSemaphore m_renderFinishedSemaphore;	// signalled when m_graphicsCmdBuffer has been fully submitted to a queue
-		VkFence m_inFlightFence;				// signalled when previous cmd buffer finished executing (initialised as signalled)
+		VkCommandPool m_graphicsCommandPool = VK_NULL_HANDLE;	// allocates graphics queue command buffers
+		VkCommandBuffer m_graphicsCmdBuffer = VK_NULL_HANDLE;	// graphics queue cmds
+		VkSemaphore m_imageAvailableSemaphore = VK_NULL_HANDLE;	// signalled when new swap chain image available
+		VkSemaphore m_renderFinishedSemaphore = VK_NULL_HANDLE;	// signalled when m_graphicsCmdBuffer has been fully submitted to a queue
+		VkFence m_inFlightFence = VK_NULL_HANDLE;				// signalled when previous cmd buffer finished executing (initialised as signalled)
 	};
 
 	struct PhysicalDeviceDescriptor
 	{
 		VkPhysicalDevice m_device = VK_NULL_HANDLE;
-		VkPhysicalDeviceProperties m_properties;
-		VkPhysicalDeviceFeatures m_features;
+		VkPhysicalDeviceProperties m_properties = {};
+		VkPhysicalDeviceFeatures m_features = {};
 		std::vector<VkQueueFamilyProperties> m_queues;
 		std::vector<VkExtensionProperties> m_supportedExtensions;
 	};
 
 	struct SwapchainDescriptor
 	{
-		VkSurfaceCapabilitiesKHR m_caps;
+		VkSurfaceCapabilitiesKHR m_caps = {};
 		std::vector<VkSurfaceFormatKHR> m_formats;
 		std::vector<VkPresentModeKHR> m_presentModes;
 	};
@@ -68,32 +68,32 @@ namespace R3
 
 	struct RenderSystem::VkStuff
 	{
-		VkInstance m_vkInstance;
+		VkInstance m_vkInstance = VK_NULL_HANDLE;
 		VkSurfaceKHR m_mainSurface = nullptr;
 		PhysicalDeviceDescriptor m_physicalDevice;
 		VkDevice m_device = VK_NULL_HANDLE;
 		VkQueue m_graphicsQueue = VK_NULL_HANDLE;
 		VkQueue m_presentQueue = VK_NULL_HANDLE;
-		VkSwapchainKHR m_swapChain;
-		VkExtent2D m_swapChainExtents;
-		VkSurfaceFormatKHR m_swapChainFormat;
-		VkPresentModeKHR m_swapChainPresentMode;
+		VkSwapchainKHR m_swapChain = VK_NULL_HANDLE;
+		VkExtent2D m_swapChainExtents = {};
+		VkSurfaceFormatKHR m_swapChainFormat = {};
+		VkPresentModeKHR m_swapChainPresentMode = {};
 		std::vector<VkImage> m_swapChainImages;
 		std::vector<VkImageView> m_swapChainImageViews;
 		std::vector<VkFramebuffer> m_swapChainFramebuffers; // references the swap chain image views
-		VmaAllocator m_allocator;	// vma
+		VmaAllocator m_allocator = nullptr;	// vma
 		
-		FrameData m_perFrameData[c_maxFramesInFlight];	// contains per frame cmd buffers, sync objects
+		FrameData m_perFrameData[c_maxFramesInFlight] = {};	// contains per frame cmd buffers, sync objects
 		int m_currentFrame = 0;
-		VkFence m_immediateSubmitFence;
+		VkFence m_immediateSubmitFence = VK_NULL_HANDLE;
 
-		VkRenderPass m_mainRenderPass;
-		VkPipeline m_simpleTriPipeline;
-		VkPipeline m_simpleTriFromBuffersPipeline;
-		VkPipeline m_simpleTriFromBuffersPushConstantPipeline;
+		VkRenderPass m_mainRenderPass = VK_NULL_HANDLE;
+		VkPipeline m_simpleTriPipeline = VK_NULL_HANDLE;
+		VkPipeline m_simpleTriFromBuffersPipeline = VK_NULL_HANDLE;
+		VkPipeline m_simpleTriFromBuffersPushConstantPipeline = VK_NULL_HANDLE;
 		AllocatedBuffer m_posColourVertexBuffer;
-		VkPipelineLayout m_simplePipelineLayout;	// no descriptors, nada
-		VkPipelineLayout m_simpleLayoutWithPushConstant;
+		VkPipelineLayout m_simplePipelineLayout = VK_NULL_HANDLE;	// no descriptors, nada
+		VkPipelineLayout m_simpleLayoutWithPushConstant = VK_NULL_HANDLE;
 
 		ImGuiVkStuff m_imgui;
 
@@ -144,7 +144,7 @@ namespace R3
 		if (r)
 		{
 			std::string errorString = string_VkResult(r);
-			fmt::print("Vulkan Error! {}\n", errorString);
+			LogError("Vulkan Error! {}", errorString);
 			int* crashMe = nullptr;
 			*crashMe = 1;
 		}
@@ -169,7 +169,7 @@ namespace R3
 		VkResult r = vmaCreateBuffer(allocator, &bci, &allocInfo, &newBuffer.m_buffer, &newBuffer.m_allocation, nullptr);
 		if (!CheckResult(r))
 		{
-			fmt::print("Failed to create buffer of size {} bytes", sizeBytes);
+			LogError("Failed to create buffer of size {} bytes", sizeBytes);
 		}
 		return newBuffer;
 	}
@@ -197,15 +197,14 @@ namespace R3
 
 	bool RenderSystem::ShowGui()
 	{
-		if (ImGui::Begin("Render System"))
+		ImGui::Begin("Render System");
 		{
-			fmt::print("Swap chain extents: {}x{}", m_vk->m_swapChainExtents.width, m_vk->m_swapChainExtents.height);
-			auto str = fmt::format("Swap chain extents: {}x{}", m_vk->m_swapChainExtents.width, m_vk->m_swapChainExtents.height);
+			auto str = std::format("Swap chain extents: {}x{}", m_vk->m_swapChainExtents.width, m_vk->m_swapChainExtents.height);
 			ImGui::Text(str.c_str());
-			str = fmt::format("Swap chain images: {}", m_vk->m_swapChainImages.size());
+			str = std::format("Swap chain images: {}", m_vk->m_swapChainImages.size());
 			ImGui::Text(str.c_str());
-			ImGui::End();
 		}
+		ImGui::End();
 		return true;
 	}
 
@@ -224,7 +223,7 @@ namespace R3
 		{
 			if (!RecreateSwapchainAndFramebuffers())
 			{
-				fmt::print("Failed to recreate swap chain\n");
+				LogError("Failed to recreate swap chain");
 				return false;
 			}
 			m_recreateSwapchain = false;
@@ -251,7 +250,7 @@ namespace R3
 			}
 			else if (!CheckResult(r))
 			{
-				fmt::print("Failed to aqcuire next swap chain image index");
+				LogError("Failed to aqcuire next swap chain image index");
 				return false;
 			}
 		}
@@ -291,7 +290,7 @@ namespace R3
 			// submit the cmd buffer to the queue, the inflight fence will be signalled when execution completes
 			if (!CheckResult(vkQueueSubmit(m_vk->m_graphicsQueue, 1, &submitInfo, fd.m_inFlightFence)))
 			{
-				fmt::print("failed to submit draw command buffer!");
+				LogError("failed to submit draw command buffer!");
 				return false;
 			}
 		}
@@ -315,7 +314,7 @@ namespace R3
 			}
 			else if (!CheckResult(r))
 			{
-				fmt::print("Failed to present!");
+				LogError("Failed to present!");
 				return false;
 			}
 		}
@@ -361,92 +360,92 @@ namespace R3
 
 		if (!CreateWindow())
 		{
-			fmt::print("Failed to create window... {}\n", SDL_GetError());
+			LogError("Failed to create window... {}", SDL_GetError());
 			return false;
 		}
 
 		if (!CreateVkInstance())
 		{
-			fmt::print("Failed to create VK instance\n");
+			LogError("Failed to create VK instance");
 			return false;
 		}
 
 		if (!CreateSurface())
 		{
-			fmt::print("Failed to create surface\n");
+			LogError("Failed to create surface");
 			return false;
 		}
 
 		if (!CreatePhysicalDevice())
 		{
-			fmt::print("Failed to create physical device\n");
+			LogError("Failed to create physical device");
 			return false;
 		}
 
 		if (!CreateLogicalDevice())
 		{
-			fmt::print("Failed to create logical device\n");
+			LogError("Failed to create logical device");
 			return false;
 		}
 
 		if (!InitialiseVMA())
 		{
-			fmt::print("Failed to initialise vulkan memory allocator\n");
+			LogError("Failed to initialise vulkan memory allocator");
 			return false;
 		}
 
 		if (!CreateSwapchain())
 		{
-			fmt::print("Failed to create swapchain\n");
+			LogError("Failed to create swapchain");
 			return false;
 		}
 
 		if (!CreateRenderPass())
 		{
-			fmt::print("Failed to create render pass\n");
+			LogError("Failed to create render pass");
 			return false;
 		}
 
 		if (!CreateSimpleTriPipelines())
 		{
-			fmt::print("Failed to create pipelines\n");
+			LogError("Failed to create pipelines");
 			return false;
 		}
 
 		if (!CreateFramebuffers())	// must happen after passes created!
 		{
-			fmt::print("Failed to create frame buffers\n");
+			LogError("Failed to create frame buffers");
 			return false;
 		}
 
 		if (!CreateCommandPools())
 		{
-			fmt::print("Failed to create command pools\n");
+			LogError("Failed to create command pools");
 			return false;
 		}
 
 		if (!CreateCommandBuffers())
 		{
-			fmt::print("Failed to create command buffers\n");
+			LogError("Failed to create command buffers");
 			return false;
 		}
 
 		if (!CreateSyncObjects())
 		{
-			fmt::print("Failed to create sync objects");
+			LogError("Failed to create sync objects");
 			return false;
 		}
 
 		if (!CreateMesh())
 		{
-			fmt::print("Failed to create mesh");
+			LogError("Failed to create mesh");
 			return false;
 		}
 
 		LoadedModel cubeMesh;
 		if (!R3::LoadModel("models/cube.fbx", cubeMesh))
 		{
-			fmt::print("Failed to load cube mesh\n");
+			LogError("Failed to load cube mesh");
 			return false;
 		}
 
@@ -536,18 +535,18 @@ namespace R3
 		pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 		pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;	// allows us to free individual descriptor sets
 		pool_info.maxSets = 1000;												// way bigger than needed!
-		pool_info.poolSizeCount = std::size(pool_sizes);
+		pool_info.poolSizeCount = static_cast<uint32_t>(std::size(pool_sizes));
 		pool_info.pPoolSizes = pool_sizes;
 		if (!CheckResult(vkCreateDescriptorPool(m_vk->m_device, &pool_info, nullptr, &m_vk->m_imgui.m_descriptorPool)))
 		{
-			fmt::print("Failed to create descriptor pool for imgui\n");
+			LogError("Failed to create descriptor pool for imgui");
 			return false;
 		}
 
 		// initialise imgui for SDL
 		if (!ImGui_ImplSDL2_InitForVulkan(m_mainWindow->GetHandle()))
 		{
-			fmt::print("Failed to init imgui for SDL/Vulkan\n");
+			LogError("Failed to init imgui for SDL/Vulkan");
 			return false;
 		}
 
@@ -559,12 +558,12 @@ namespace R3
 		init_info.Device = m_vk->m_device;
 		init_info.Queue = m_vk->m_graphicsQueue;
 		init_info.DescriptorPool = m_vk->m_imgui.m_descriptorPool;
-		init_info.MinImageCount = m_vk->m_swapChainImages.size();	// ??
-		init_info.ImageCount = m_vk->m_swapChainImages.size();		// ????!
+		init_info.MinImageCount = static_cast<uint32_t>(m_vk->m_swapChainImages.size());	// ??
+		init_info.ImageCount = static_cast<uint32_t>(m_vk->m_swapChainImages.size());		// ????!
 		init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 		if (!ImGui_ImplVulkan_Init(&init_info, m_vk->m_mainRenderPass))	// note it is tied to a render pass!
 		{
-			fmt::print("Failed to init imgui for Vulkan\n");
+			LogError("Failed to init imgui for Vulkan");
 			return false;
 		}
 
@@ -602,7 +601,7 @@ namespace R3
 		);
 		if (m_vk->m_posColourVertexBuffer.m_buffer == VK_NULL_HANDLE || stagingBuffer.m_buffer == VK_NULL_HANDLE)
 		{
-			fmt::print("Failed to create buffers");
+			LogError("Failed to create buffers");
 			return false;
 		}
 
@@ -666,13 +665,13 @@ namespace R3
 
 		if (!CreateSwapchain())
 		{
-			fmt::print("Failed to create swapchain\n");
+			LogError("Failed to create swapchain");
 			return false;
 		}
 
 		if (!CreateFramebuffers())
 		{
-			fmt::print("Failed to create frame buffers\n");
+			LogError("Failed to create frame buffers");
 			return false;
 		}
 
@@ -715,13 +714,13 @@ namespace R3
 		uint32_t extensionCount = 0;
 		if (!SDL_Vulkan_GetInstanceExtensions(w, &extensionCount, nullptr))	// first call gets count
 		{
-			fmt::print("SDL_Vulkan_GetInstanceExtensions failed\n");
+			LogError("SDL_Vulkan_GetInstanceExtensions failed");
 			return results;
 		}
 		results.resize(extensionCount);
 		if (!SDL_Vulkan_GetInstanceExtensions(w, &extensionCount, results.data()))	// first call gets count
 		{
-			fmt::print("SDL_Vulkan_GetInstanceExtensions failed\n");
+			LogError("SDL_Vulkan_GetInstanceExtensions failed");
 			return results;
 		}
 		return results;
@@ -827,17 +826,17 @@ namespace R3
 			FrameData& fd = m_vk->m_perFrameData[f];
 			if (!CheckResult(vkCreateSemaphore(m_vk->m_device, &semaphoreInfo, nullptr, &fd.m_imageAvailableSemaphore)))
 			{
-				fmt::print("Failed to create semaphore");
+				LogError("Failed to create semaphore");
 				return false;
 			}
 			if (!CheckResult(vkCreateSemaphore(m_vk->m_device, &semaphoreInfo, nullptr, &fd.m_renderFinishedSemaphore)))
 			{
-				fmt::print("Failed to create semaphore");
+				LogError("Failed to create semaphore");
 				return false;
 			}
 			if (!CheckResult(vkCreateFence(m_vk->m_device, &fenceInfo, nullptr, &fd.m_inFlightFence)))
 			{
-				fmt::print("Failed to create fence");
+				LogError("Failed to create fence");
 				return false;
 			}
 		}
@@ -846,7 +845,7 @@ namespace R3
 		fenceInfoNotSignalled.flags = 0;
 		if (!CheckResult(vkCreateFence(m_vk->m_device, &fenceInfoNotSignalled, nullptr, &m_vk->m_immediateSubmitFence)))
 		{
-			fmt::print("Failed to create immediate submit fence");
+			LogError("Failed to create immediate submit fence");
 			return false;
 		}
 
@@ -876,7 +875,7 @@ namespace R3
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		if (!CheckResult(vkBeginCommandBuffer(cmdBuffer, &beginInfo)))	// resets the cmd buffer
 		{
-			fmt::print("failed to begin recording command buffer!");
+			LogError("failed to begin recording command buffer!");
 			return false;
 		}
 
@@ -947,7 +946,7 @@ namespace R3
 
 		if (!CheckResult(vkEndCommandBuffer(cmdBuffer)))
 		{
-			fmt::print("failed to end recording command buffer!\n");
+			LogError("failed to end recording command buffer!");
 			return false;
 		}
 
@@ -969,7 +968,7 @@ namespace R3
 			allocInfo.commandBufferCount = 1;
 			if (!CheckResult(vkAllocateCommandBuffers(m_vk->m_device, &allocInfo, &m_vk->m_perFrameData[f].m_graphicsCmdBuffer)))
 			{
-				fmt::print("failed to allocate command buffer!\n");
+				LogError("failed to allocate command buffer!");
 				return false;
 			}
 		}
@@ -992,7 +991,7 @@ namespace R3
 		{
 			if (!CheckResult(vkCreateCommandPool(m_vk->m_device, &poolInfo, nullptr, &m_vk->m_perFrameData[frame].m_graphicsCommandPool)))
 			{
-				fmt::print("failed to create command pool!");
+				LogError("failed to create command pool!");
 				return false;
 			}
 		}
@@ -1023,7 +1022,7 @@ namespace R3
 
 			if (!CheckResult(vkCreateFramebuffer(m_vk->m_device, &framebufferInfo, nullptr, &m_vk->m_swapChainFramebuffers[i])))
 			{
-				fmt::print("failed to create framebuffer!");
+				LogError("failed to create framebuffer!");
 				return false;
 			}
 		}
@@ -1068,7 +1067,7 @@ namespace R3
 		rpci.pSubpasses = &subpassDesc;
 		if (!CheckResult(vkCreateRenderPass(m_vk->m_device, &rpci, nullptr, &m_vk->m_mainRenderPass)))
 		{
-			fmt::print("failed to create render pass!");
+			LogError("failed to create render pass!");
 			return false;
 		}
 
@@ -1092,7 +1091,7 @@ namespace R3
 			|| triBufferVertShader == VK_NULL_HANDLE || triBufferFragShader == VK_NULL_HANDLE
 			|| triBufferPushConstantVertShader == VK_NULL_HANDLE)
 		{
-			fmt::print("Failed to create shader modules");
+			LogError("Failed to create shader modules");
 			return false;
 		}
 
@@ -1103,7 +1102,7 @@ namespace R3
 		pipelineLayoutInfo.pushConstantRangeCount = 0;
 		if (!CheckResult(vkCreatePipelineLayout(m_vk->m_device, &pipelineLayoutInfo, nullptr, &m_vk->m_simplePipelineLayout)))
 		{
-			fmt::print("Failed to create pipeline layout!\n");
+			LogError("Failed to create pipeline layout!");
 			return false;
 		}
 
@@ -1116,7 +1115,7 @@ namespace R3
 		pipelineLayoutInfo.pPushConstantRanges = &constantRange;
 		if (!CheckResult(vkCreatePipelineLayout(m_vk->m_device, &pipelineLayoutInfo, nullptr, &m_vk->m_simpleLayoutWithPushConstant)))
 		{
-			fmt::print("Failed to create pipeline layout!\n");
+			LogError("Failed to create pipeline layout!");
 			return false;
 		}
 
@@ -1178,7 +1177,7 @@ namespace R3
 		m_vk->m_simpleTriPipeline = pb.Build(m_vk->m_device, m_vk->m_simplePipelineLayout, m_vk->m_mainRenderPass, 0);
 		if (m_vk->m_simpleTriPipeline == VK_NULL_HANDLE)
 		{
-			fmt::print("Failed to create pipeline!\n");
+			LogError("Failed to create pipeline!");
 			return false;
 		}
 
@@ -1197,13 +1196,13 @@ namespace R3
 		auto attributeDescriptions = PosColourVertex::GetAttributeDescriptions();
 		pb.m_vertexInputState.vertexBindingDescriptionCount = 1;
 		pb.m_vertexInputState.pVertexBindingDescriptions = &bufferBindingDescriptions;
-		pb.m_vertexInputState.vertexAttributeDescriptionCount = attributeDescriptions.size();
+		pb.m_vertexInputState.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
 		pb.m_vertexInputState.pVertexAttributeDescriptions = attributeDescriptions.data();
 
 		m_vk->m_simpleTriFromBuffersPipeline = pb.Build(m_vk->m_device, m_vk->m_simplePipelineLayout, m_vk->m_mainRenderPass, 0);
 		if (m_vk->m_simpleTriFromBuffersPipeline == VK_NULL_HANDLE)
 		{
-			fmt::print("Failed to create fancier pipeline!\n");
+			LogError("Failed to create fancier pipeline!");
 			return false;
 		}
 		vkDestroyShaderModule(m_vk->m_device, triBufferVertShader, nullptr);
@@ -1215,7 +1214,7 @@ namespace R3
 		m_vk->m_simpleTriFromBuffersPushConstantPipeline = pb.Build(m_vk->m_device, m_vk->m_simpleLayoutWithPushConstant, m_vk->m_mainRenderPass, 0);
 		if (m_vk->m_simpleTriFromBuffersPushConstantPipeline == VK_NULL_HANDLE)
 		{
-			fmt::print("Failed to create fancier pipeline!\n");
+			LogError("Failed to create fancier pipeline!");
 			return false;
 		}
 		vkDestroyShaderModule(m_vk->m_device, triBufferPushConstantVertShader, nullptr);
@@ -1260,7 +1259,7 @@ namespace R3
 		}
 		else
 		{
-			fmt::print("Failed to find a suitable surface format");
+			LogError("Failed to find a suitable surface format");
 			return {};
 		}
 	}
@@ -1340,7 +1339,7 @@ namespace R3
 		VkResult r = vkCreateSwapchainKHR(m_vk->m_device, &scInfo, nullptr, &m_vk->m_swapChain);
 		if (!CheckResult(r))
 		{
-			fmt::print("Failed to create swap chain\n");
+			LogError("Failed to create swap chain");
 			return false;
 		}
 
@@ -1355,7 +1354,7 @@ namespace R3
 
 		// Create image views for every image in the swap chain
 		m_vk->m_swapChainImageViews.resize(actualImageCount);
-		for (int i = 0; i < actualImageCount; ++i)
+		for (uint32_t i = 0; i < actualImageCount; ++i)
 		{
 			VkImageViewCreateInfo createView = { 0 };
 			createView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -1375,7 +1374,7 @@ namespace R3
 			VkResult r = vkCreateImageView(m_vk->m_device, &createView, nullptr, &m_vk->m_swapChainImageViews[i]);
 			if (!CheckResult(r))
 			{
-				fmt::print("Failed to create image view for swap image {}\n", i);
+				LogError("Failed to create image view for swap image {}", i);
 				return false;
 			}
 		}
@@ -1461,20 +1460,20 @@ namespace R3
 		// Create the device
 		VkDeviceCreateInfo deviceCreate = { 0 };
 		deviceCreate.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-		deviceCreate.queueCreateInfoCount = queues.size();
+		deviceCreate.queueCreateInfoCount = static_cast<uint32_t>(queues.size());
 		deviceCreate.pQueueCreateInfos = queues.data();
 
 		// pass the same validation layers
 		std::vector<const char*> requiredLayers;
 		if constexpr (c_validationLayersEnabled)
 		{
-			fmt::print("Enabling validation layer\n");
+			LogInfo("Enabling validation layer");
 			requiredLayers.push_back("VK_LAYER_KHRONOS_validation");
 		}
-		deviceCreate.enabledLayerCount = requiredLayers.size();
+		deviceCreate.enabledLayerCount = static_cast<uint32_t>(requiredLayers.size());
 		deviceCreate.ppEnabledLayerNames = requiredLayers.data();
 		std::vector<const char*> extensions = GetRequiredDeviceExtensions();
-		deviceCreate.enabledExtensionCount = extensions.size();
+		deviceCreate.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 		deviceCreate.ppEnabledExtensionNames = extensions.data();
 		deviceCreate.pEnabledFeatures = &requiredFeatures;
 		VkResult r = vkCreateDevice(m_vk->m_physicalDevice.m_device, &deviceCreate, nullptr, &m_vk->m_device);
@@ -1492,10 +1491,10 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		std::vector<PhysicalDeviceDescriptor> allDevices = GetAllPhysicalDevices(m_vk->m_vkInstance);
-		fmt::print("All supported devices:\n");
+		LogInfo("All supported devices:");
 		for (const auto& it : allDevices)
 		{
-			fmt::print("\t{} ({} queues)\n", it.m_properties.deviceName, it.m_queues.size());
+			LogInfo("\t{} ({} queues)", it.m_properties.deviceName, it.m_queues.size());
 		}
 		int bestMatchIndex = FindGraphicsPhysicalDevice(allDevices, m_vk->m_mainSurface);
 		if (bestMatchIndex >= 0)
@@ -1522,37 +1521,37 @@ namespace R3
 		// Setup extensions
 		std::vector<const char*> requiredExtensions = GetSDLRequiredInstanceExtensions(m_mainWindow->GetHandle());
 		std::vector<VkExtensionProperties> supportedExtensions = GetSupportedInstanceExtensions();
-		fmt::print("Supported Vulkan Extensions:\n");
+		LogInfo("Supported Vulkan Extensions:");
 		for (auto it : supportedExtensions)
 		{
-			fmt::print("\t{} v{}\n", it.extensionName, it.specVersion);
+			LogInfo("\t{} v{}", it.extensionName, it.specVersion);
 		}
 
 		// Setup layers
 		std::vector<VkLayerProperties> allLayers = GetSupportedLayers();
-		fmt::print("Supported Layers:\n");
+		LogInfo("Supported Layers:");
 		for (auto it : allLayers)
 		{
-			fmt::print("\t{} v{} - {}\n", it.layerName, it.implementationVersion, it.description);
+			LogInfo("\t{} v{} - {}", it.layerName, it.implementationVersion, it.description);
 		}
 		std::vector<const char*> requiredLayers;
 		if constexpr (c_validationLayersEnabled)
 		{
-			fmt::print("Enabling validation layer\n");
+			LogInfo("Enabling validation layer");
 			requiredLayers.push_back("VK_LAYER_KHRONOS_validation");
 		}
 		if (!AreLayersSupported(allLayers, requiredLayers))
 		{
-			fmt::print("Some required layers are not supported!\n");
+			LogError("Some required layers are not supported!");
 			return false;
 		}
 
 		VkInstanceCreateInfo createInfo = {0};
 		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 		createInfo.pApplicationInfo = &appInfo;
-		createInfo.enabledExtensionCount = requiredExtensions.size();
+		createInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
 		createInfo.ppEnabledExtensionNames = requiredExtensions.data();
-		createInfo.enabledLayerCount = requiredLayers.size();
+		createInfo.enabledLayerCount = static_cast<uint32_t>(requiredLayers.size());
 		createInfo.ppEnabledLayerNames = requiredLayers.data();
 		VkResult result = vkCreateInstance(&createInfo, nullptr, &m_vk->m_vkInstance);
 		return CheckResult(result);

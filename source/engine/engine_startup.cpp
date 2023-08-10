@@ -9,8 +9,8 @@
 #include "core/platform.h"
 #include "core/random.h"
 #include "core/profiler.h"
+#include "core/log.h"
 #include <cassert>
-#include <fmt/format.h>
 
 namespace R3
 {
@@ -59,8 +59,6 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 
-		auto test = fmt::format("what:");
-
 		auto result = R3::Platform::Initialise(fullCmdLine);
 		assert(result == R3::Platform::InitOK);
 		if (result == R3::Platform::InitFailed)
@@ -82,7 +80,7 @@ namespace R3
 		bool systemsInitialised = Systems::GetInstance().Initialise();
 		if (!systemsInitialised)
 		{
-			fmt::print("Failed to initialise systems");
+			LogError("Failed to initialise systems");
 			return false;
 		}
 

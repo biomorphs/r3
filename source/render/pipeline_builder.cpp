@@ -1,7 +1,7 @@
 #include "pipeline_builder.h"
 #include "core/profiler.h"
+#include "core/log.h"
 #include <vulkan/vk_enum_string_helper.h>
-#include <fmt/format.h>
 
 namespace R3
 {
@@ -11,7 +11,7 @@ namespace R3
 		VkPipeline pipeline = VK_NULL_HANDLE;
 		VkGraphicsPipelineCreateInfo pipelineInfo{};
 		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-		pipelineInfo.stageCount = m_shaderStages.size();
+		pipelineInfo.stageCount = static_cast<uint32_t>(m_shaderStages.size());
 		pipelineInfo.pStages = m_shaderStages.data();
 		pipelineInfo.pVertexInputState = &m_vertexInputState;
 		pipelineInfo.pInputAssemblyState = &m_inputAssemblyState;
@@ -30,7 +30,7 @@ namespace R3
 		if(r) 
 		{
 			std::string error = string_VkResult(r);
-			fmt::print("failed to create graphics pipeline! {}\n", error);
+			LogError("failed to create graphics pipeline! {}", error);
 			return VK_NULL_HANDLE;
 		}
 		return pipeline;

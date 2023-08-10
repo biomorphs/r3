@@ -1,7 +1,7 @@
 #include "imgui_system.h"
 #include "event_system.h"
 #include "render/render_system.h"
-#include <fmt/format.h>
+#include "core/log.h"
 #include <imgui.h>
 #include <imgui_impl_sdl2.h>
 
@@ -27,7 +27,7 @@ namespace R3
 			ImGui::CreateContext();	//this initializes the core structures of imgui
 			if (!r->InitImGui())	// renderer deals with drawing
 			{
-				fmt::print("Failed to initialise ImGui rendering\n");
+				LogError("Failed to initialise ImGui rendering");
 				return false;
 			}
 			// we will pass the SDL events to imgui

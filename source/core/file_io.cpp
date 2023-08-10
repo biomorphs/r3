@@ -14,7 +14,7 @@ namespace R3
 
 		void InitialisePaths()
 		{
-			c_baseDirectory = std::filesystem::current_path().u8string() + "\\";
+			c_baseDirectory = std::filesystem::current_path().concat("//").string();
 			c_exeDirectory = std::string(SDL_GetBasePath()) + "\\";
 		}
 

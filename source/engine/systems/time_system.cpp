@@ -67,7 +67,7 @@ namespace R3
 	{
 		m_tickFrequency = R3::Time::HighPerformanceCounterFrequency();
 		m_initTime = R3::Time::HighPerformanceCounterTicks();
-		m_fixedUpdateDeltaTime = (double)m_tickFrequency * m_updateFrequency;
+		m_fixedUpdateDeltaTime = m_tickFrequency / m_fixedUpdateFPS;
 		return true;
 	}
 }

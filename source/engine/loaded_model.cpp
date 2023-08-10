@@ -1,10 +1,10 @@
 #include "loaded_model.h"
 #include "core/profiler.h"
 #include "core/file_io.h"
+#include "core/log.h"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-#include <fmt/format.h>
 
 namespace R3
 {
@@ -51,7 +51,7 @@ namespace R3
 		// Make sure its triangles!
 		if (!(mesh->mPrimitiveTypes & aiPrimitiveType_TRIANGLE))
 		{
-			fmt::print("Can't handle this primitive type, sorry! Triangles only\n");
+			LogError("Can't handle this primitive type, sorry! Triangles only");
 			return;
 		}
 
@@ -130,7 +130,7 @@ namespace R3
 		if (scene->HasMaterials())
 		{
 			result.m_materials.reserve(scene->mNumMaterials);
-			for (int i = 0; i < scene->mNumMaterials; ++i)
+			for (unsigned int i = 0; i < scene->mNumMaterials; ++i)
 			{
 				LoadedMeshMaterial newMaterial;
 				const aiMaterial* sceneMat = scene->mMaterials[i];

@@ -15,9 +15,10 @@ set(CoreLib_SourceFiles
 	semaphore.cpp
 	time.h
 	time.cpp
+	log.h
 )
 
 add_library(Core ${CoreLib_SourceFiles})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/../ FILES ${CoreLib_SourceFiles})	# adds directory structure filters in VS
 target_include_directories(Core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../)
-target_link_libraries(Core PRIVATE fmt::fmt Optick::OptickCore SDL2::SDL2 glm::glm) 
+target_link_libraries(Core PRIVATE Optick::OptickCore SDL2::SDL2 glm::glm) 

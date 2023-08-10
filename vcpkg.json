@@ -3,10 +3,13 @@
   "version-string": "0.0.1",
   "license": "MIT",
   "dependencies": [
-    "fmt",
 	  {
 		  "name": "sdl2",
 		  "features": [ "vulkan" ]
+	  },
+	  {
+		  "name": "imgui",
+		  "features": [ "vulkan-binding", "sdl2-binding" ]
 	  },
     "sol2",
     "glm",

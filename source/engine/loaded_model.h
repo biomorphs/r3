@@ -50,8 +50,8 @@ namespace R3
 	{
 		std::vector<LoadedMeshMaterial> m_materials;
 		std::vector<LoadedMesh> m_meshes;
-		glm::vec3 m_boundsMin;
-		glm::vec3 m_boundsMax;
+		glm::vec3 m_boundsMin = glm::vec3{ -1.0f };
+		glm::vec3 m_boundsMax = glm::vec3{ 1.0f };
 	};
 
 	// flattenMeshes - flattens mesh heirarchy into an array of meshes
