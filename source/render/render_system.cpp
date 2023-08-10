@@ -4,6 +4,7 @@
 #include "core/profiler.h"
 #include "engine/systems/event_system.h"
 #include "engine/systems/time_system.h"
+#include "engine/loaded_model.h"
 #include "vulkan_helpers.h"
 #include "pipeline_builder.h"
 #include <vulkan/vulkan.h>
@@ -456,6 +457,13 @@ namespace R3
 		if (!CreateMesh())
 		{
 			fmt::print("Failed to create mesh");
+			return false;
+		}
+
+		LoadedModel cubeMesh;
+		if (!R3::LoadModel("models/cube.fbx", cubeMesh))
+		{
+			fmt::print("Failed to load cube mesh\n");
 			return false;
 		}
 

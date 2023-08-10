@@ -1,4 +1,6 @@
 set(EngineLib_SourceFiles
+	loaded_model.h
+	loaded_model.cpp
 	thread_masks.h
 	engine_startup.h
 	engine_startup.cpp
@@ -17,4 +19,4 @@ set(EngineLib_SourceFiles
 add_library(Engine ${EngineLib_SourceFiles})
 target_include_directories(Engine PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../)
 target_include_directories(Engine PRIVATE ${Vulkan_INCLUDE_DIRS})
-target_link_libraries(Engine PRIVATE Core fmt::fmt Optick::OptickCore SDL2::SDL2 glm::glm) 
+target_link_libraries(Engine PRIVATE Core fmt::fmt Optick::OptickCore SDL2::SDL2 glm::glm assimp::assimp) 

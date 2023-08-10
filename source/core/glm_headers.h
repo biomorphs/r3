@@ -2,7 +2,7 @@
 
 // ALWAYS use this to include glm stuff
 // It enables various features required to get decent perf in debug
-
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE				// gl uses -1 to 1 on z clip space, vulkan uses 0 to 1
 #define GLM_ENABLE_EXPERIMENTAL
 #define GLM_FORCE_EXPLICIT_CTOR					//disable implicit conversions between int and float types
 #define GLM_FORCE_INLINE						// always inline
