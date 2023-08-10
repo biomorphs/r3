@@ -75,6 +75,7 @@ namespace R3
 		VkCommandPool m_graphicsCommandPool;	// allocates graphics queue command buffers
 		FrameData m_perFrameData[c_maxFramesInFlight];	// contains per frame cmd buffers, sync objects
 		int m_currentFrame = 0;
+		VkFence m_immediateSubmitFence;
 
 		VkRenderPass m_mainRenderPass;
 		VkPipeline m_simpleTriPipeline;
@@ -131,7 +132,9 @@ namespace R3
 		return !r;
 	}
 
-	AllocatedBuffer CreateBuffer(VmaAllocator& allocator, uint64_t sizeBytes, VkBufferUsageFlags bufferUsage, VmaMemoryUsage memUsage)
+	// prefer using this one!
+	AllocatedBuffer CreateBuffer(VmaAllocator& allocator, uint64_t sizeBytes, VkBufferUsageFlags bufferUsage, 
+		VmaMemoryUsage memUsage = VMA_MEMORY_USAGE_AUTO, uint32_t allocFlags = 0)
 	{
 		R3_PROF_EVENT();
 		AllocatedBuffer newBuffer;
@@ -142,6 +145,7 @@ namespace R3
 
 		VmaAllocationCreateInfo allocInfo = { 0 };
 		allocInfo.usage = memUsage;
+		allocInfo.flags = allocFlags;
 
 		VkResult r = vmaCreateBuffer(allocator, &bci, &allocInfo, &newBuffer.m_buffer, &newBuffer.m_allocation, nullptr);
 		if (!CheckResult(r))
@@ -149,6 +153,53 @@ namespace R3
 			fmt::print("Failed to create buffer of size {} bytes", sizeBytes);
 		}
 		return newBuffer;
+	}
+
+	bool RunCommandsImmediate(VkDevice d, VkQueue cmdQueue, VkCommandPool cmdPool, VkFence waitFence, std::function<void(VkCommandBuffer&)> fn)
+	{
+		// create a temporary cmd buffer from the pool
+		VkCommandBufferAllocateInfo allocInfo = {0};
+		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		allocInfo.commandPool = cmdPool;
+		allocInfo.commandBufferCount = 1;
+
+		VkCommandBuffer commandBuffer;
+		if (!CheckResult(vkAllocateCommandBuffers(d, &allocInfo, &commandBuffer)))
+		{
+			fmt::print("Failed to create cmd buffer\n");
+			return false;
+		}
+
+		VkCommandBufferBeginInfo beginInfo = {0};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;	// we will only submit this buffer once
+		if(!CheckResult(vkBeginCommandBuffer(commandBuffer, &beginInfo)))
+		{
+			fmt::print("Failed to begin cmd buffer\n");
+			return false;
+		}
+
+		// run the passed fs
+		fn(commandBuffer);
+
+		CheckResult(vkEndCommandBuffer(commandBuffer));
+
+		// submit the cmd buffer to the queue, passing the immediate fence
+		VkSubmitInfo submitInfo = { 0 };
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &commandBuffer;
+
+		// Submit + wait for the fence
+		CheckResult(vkQueueSubmit(cmdQueue, 1, &submitInfo, waitFence));
+		CheckResult(vkWaitForFences(d, 1, &waitFence, true, 9999999999));
+		CheckResult(vkResetFences(d, 1, &waitFence));
+
+		// We can free the cmd buffer
+		vkFreeCommandBuffers(d, cmdPool, 1, &commandBuffer); 
+		
+		return true;
 	}
 
 	RenderSystem::RenderSystem()
@@ -417,6 +468,8 @@ namespace R3
 		// Destroy the mesh buffers
 		vmaDestroyBuffer(m_vk->m_allocator, m_vk->m_posColourVertexBuffer.m_buffer, m_vk->m_posColourVertexBuffer.m_allocation);
 
+		// Destroy the sync objects
+		vkDestroyFence(m_vk->m_device, m_vk->m_immediateSubmitFence, nullptr);
 		for (int f = c_maxFramesInFlight - 1; f >= 0; --f)	// destroy sync objects in reverse order
 		{
 			vkDestroyFence(m_vk->m_device, m_vk->m_perFrameData[f].m_inFlightFence, nullptr);
@@ -458,22 +511,43 @@ namespace R3
 		verts[1].m_colour = { 0.f, 1.f, 0.5f };
 		verts[2].m_colour = { 1.f, 0.f, 0.1f };
 
-		m_vk->m_posColourVertexBuffer = CreateBuffer(m_vk->m_allocator, 
-			sizeof(PosColourVertex) * 3, 
-			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 
-			VMA_MEMORY_USAGE_CPU_TO_GPU
+		AllocatedBuffer stagingBuffer = CreateBuffer(m_vk->m_allocator, 
+			sizeof(PosColourVertex) * 3,
+			VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
+			VMA_MEMORY_USAGE_AUTO, 
+			VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT
 		);
-
-		// upload the data
-		if (m_vk->m_posColourVertexBuffer.m_buffer != VK_NULL_HANDLE)
+		m_vk->m_posColourVertexBuffer = CreateBuffer(m_vk->m_allocator,	
+			sizeof(PosColourVertex) * 3,
+			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT
+		);
+		if (m_vk->m_posColourVertexBuffer.m_buffer == VK_NULL_HANDLE || stagingBuffer.m_buffer == VK_NULL_HANDLE)
 		{
-			void* mappedData = nullptr;
-			if (CheckResult(vmaMapMemory(m_vk->m_allocator, m_vk->m_posColourVertexBuffer.m_allocation, &mappedData)))
-			{
-				memcpy(mappedData, verts, 3 * sizeof(PosColourVertex));
-				vmaUnmapMemory(m_vk->m_allocator, m_vk->m_posColourVertexBuffer.m_allocation);
-			}
+			fmt::print("Failed to create buffers");
+			return false;
 		}
+
+		// upload the data to the staging buffer
+		void* mappedData = nullptr;
+		if (CheckResult(vmaMapMemory(m_vk->m_allocator, stagingBuffer.m_allocation, &mappedData)))
+		{
+			memcpy(mappedData, verts, 3 * sizeof(PosColourVertex));
+			vmaUnmapMemory(m_vk->m_allocator, stagingBuffer.m_allocation);
+		}
+
+		// copy from staging to vertex buffer using immediate cmd submit
+		RunCommandsImmediate(m_vk->m_device, m_vk->m_graphicsQueue, m_vk->m_graphicsCommandPool, m_vk->m_immediateSubmitFence,
+			[&](VkCommandBuffer& buf)
+		{
+			VkBufferCopy copyRegion{};
+			copyRegion.srcOffset = 0;
+			copyRegion.dstOffset = 0;
+			copyRegion.size = sizeof(PosColourVertex) * 3;
+			vkCmdCopyBuffer(buf, stagingBuffer.m_buffer, m_vk->m_posColourVertexBuffer.m_buffer, 1, &copyRegion);
+		});
+
+		// done with the staging buffer
+		vmaDestroyBuffer(m_vk->m_allocator, stagingBuffer.m_buffer, stagingBuffer.m_allocation);
 
 		return m_vk->m_posColourVertexBuffer.m_buffer != VK_NULL_HANDLE;
 	}
@@ -688,6 +762,14 @@ namespace R3
 				fmt::print("Failed to create fence");
 				return false;
 			}
+		}
+
+		VkFenceCreateInfo fenceInfoNotSignalled = fenceInfo;
+		fenceInfoNotSignalled.flags = 0;
+		if (!CheckResult(vkCreateFence(m_vk->m_device, &fenceInfoNotSignalled, nullptr, &m_vk->m_immediateSubmitFence)))
+		{
+			fmt::print("Failed to create immediate submit fence");
+			return false;
 		}
 
 		return true;

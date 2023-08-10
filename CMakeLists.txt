@@ -15,11 +15,12 @@ find_package(fmt REQUIRED)
 find_package(SDL2 REQUIRED)
 find_package(sol2 REQUIRED)
 find_package(glm REQUIRED)
-find_package(unofficial-vulkan-memory-allocator REQUIRED)
 
 # external libs not from vcpkg
 find_package(Optick REQUIRED)
 find_package(Vulkan REQUIRED)
+# must be found after Vulkan
+find_package(VulkanMemoryAllocator REQUIRED)
 
 add_subdirectory(source/core)
 add_subdirectory(source/engine)

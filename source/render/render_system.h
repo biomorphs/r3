@@ -2,6 +2,7 @@
 #include "engine/systems.h"
 
 struct VkExtensionProperties;
+struct VkCommandBuffer_T;
 namespace R3
 {
 	class Window;
@@ -34,7 +35,6 @@ namespace R3
 		void DestroySwapchain();
 		bool RecreateSwapchainAndFramebuffers();
 		void OnSystemEvent(void* ev);
-
 		bool m_isWindowMinimised = false;
 		bool m_recreateSwapchain = false;
 		std::unique_ptr<Window> m_mainWindow;
