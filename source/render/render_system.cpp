@@ -24,6 +24,7 @@ namespace R3
 
 	struct FrameData
 	{
+		VkCommandPool m_graphicsCommandPool;	// allocates graphics queue command buffers
 		VkCommandBuffer m_graphicsCmdBuffer;	// graphics queue cmds
 		VkSemaphore m_imageAvailableSemaphore;	// signalled when new swap chain image available
 		VkSemaphore m_renderFinishedSemaphore;	// signalled when m_graphicsCmdBuffer has been fully submitted to a queue
@@ -74,7 +75,7 @@ namespace R3
 		std::vector<VkImageView> m_swapChainImageViews;
 		std::vector<VkFramebuffer> m_swapChainFramebuffers; // references the swap chain image views
 		VmaAllocator m_allocator;	// vma
-		VkCommandPool m_graphicsCommandPool;	// allocates graphics queue command buffers
+		
 		FrameData m_perFrameData[c_maxFramesInFlight];	// contains per frame cmd buffers, sync objects
 		int m_currentFrame = 0;
 		VkFence m_immediateSubmitFence;
@@ -162,53 +163,6 @@ namespace R3
 			fmt::print("Failed to create buffer of size {} bytes", sizeBytes);
 		}
 		return newBuffer;
-	}
-
-	bool RunCommandsImmediate(VkDevice d, VkQueue cmdQueue, VkCommandPool cmdPool, VkFence waitFence, std::function<void(VkCommandBuffer&)> fn)
-	{
-		// create a temporary cmd buffer from the pool
-		VkCommandBufferAllocateInfo allocInfo = { 0 };
-		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandPool = cmdPool;
-		allocInfo.commandBufferCount = 1;
-
-		VkCommandBuffer commandBuffer;
-		if (!CheckResult(vkAllocateCommandBuffers(d, &allocInfo, &commandBuffer)))
-		{
-			fmt::print("Failed to create cmd buffer\n");
-			return false;
-		}
-
-		VkCommandBufferBeginInfo beginInfo = { 0 };
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;	// we will only submit this buffer once
-		if (!CheckResult(vkBeginCommandBuffer(commandBuffer, &beginInfo)))
-		{
-			fmt::print("Failed to begin cmd buffer\n");
-			return false;
-		}
-
-		// run the passed fs
-		fn(commandBuffer);
-
-		CheckResult(vkEndCommandBuffer(commandBuffer));
-
-		// submit the cmd buffer to the queue, passing the immediate fence
-		VkSubmitInfo submitInfo = { 0 };
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &commandBuffer;
-
-		// Submit + wait for the fence
-		CheckResult(vkQueueSubmit(cmdQueue, 1, &submitInfo, waitFence));
-		CheckResult(vkWaitForFences(d, 1, &waitFence, true, 9999999999));
-		CheckResult(vkResetFences(d, 1, &waitFence));
-
-		// We can free the cmd buffer
-		vkFreeCommandBuffers(d, cmdPool, 1, &commandBuffer);
-
-		return true;
 	}
 
 	RenderSystem::RenderSystem()
@@ -436,15 +390,15 @@ namespace R3
 			return false;
 		}
 
-		if (!CreateCommandPool())
+		if (!CreateCommandPools())
 		{
-			fmt::print("Failed to create command pool\n");
+			fmt::print("Failed to create command pools\n");
 			return false;
 		}
 
 		if (!CreateCommandBuffers())
 		{
-			fmt::print("Failed to create command buffer\n");
+			fmt::print("Failed to create command buffers\n");
 			return false;
 		}
 
@@ -494,7 +448,10 @@ namespace R3
 		}
 
 		//cmd buffers do not need to be destroyed, removing the pool is enough
-		vkDestroyCommandPool(m_vk->m_device, m_vk->m_graphicsCommandPool, nullptr);
+		for (int f = c_maxFramesInFlight - 1; f >= 0; --f)	// destroy sync objects in reverse order
+		{
+			vkDestroyCommandPool(m_vk->m_device, m_vk->m_perFrameData[f].m_graphicsCommandPool, nullptr);
+		}
 
 		// destroy pipelines + layouts
 		vkDestroyPipelineLayout(m_vk->m_device, m_vk->m_simpleLayoutWithPushConstant, nullptr);
@@ -554,15 +511,14 @@ namespace R3
 		}
 
 		// copy from staging to vertex buffer using immediate cmd submit
-		RunCommandsImmediate(m_vk->m_device, m_vk->m_graphicsQueue, m_vk->m_graphicsCommandPool, m_vk->m_immediateSubmitFence,
-			[&](VkCommandBuffer& buf)
-			{
+		VulkanHelpers::RunCommandsImmediate(m_vk->m_device, m_vk->m_graphicsQueue, m_vk->ThisFrameData().m_graphicsCommandPool, m_vk->m_immediateSubmitFence,
+			[&](VkCommandBuffer& buf) {
 				VkBufferCopy copyRegion{};
 				copyRegion.srcOffset = 0;
 				copyRegion.dstOffset = 0;
 				copyRegion.size = sizeof(PosColourVertex) * 3;
 				vkCmdCopyBuffer(buf, stagingBuffer.m_buffer, m_vk->m_posColourVertexBuffer.m_buffer, 1, &copyRegion);
-			});
+		});
 
 		// done with the staging buffer
 		vmaDestroyBuffer(m_vk->m_allocator, stagingBuffer.m_buffer, stagingBuffer.m_allocation);
@@ -894,45 +850,44 @@ namespace R3
 	bool RenderSystem::CreateCommandBuffers()
 	{
 		R3_PROF_EVENT();
-		// allocate the graphics cmd buffer from the graphics cmd pool
-		VkCommandBufferAllocateInfo allocInfo = {};
-		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.commandPool = m_vk->m_graphicsCommandPool;
-		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;	// primary = can be submitted to queue, can't be called from other buffers
-															// secondary = can't be directly submitted, can be called from other primary buffers
-		allocInfo.commandBufferCount = c_maxFramesInFlight;
-		std::vector<VkCommandBuffer> cmdBuffers(c_maxFramesInFlight);
-		if (!CheckResult(vkAllocateCommandBuffers(m_vk->m_device, &allocInfo, cmdBuffers.data())))
-		{
-			fmt::print("failed to allocate command buffers!\n");
-			return false;
-		}
 
+		// per-frame cmd buffers
 		for (int f = 0; f < c_maxFramesInFlight; ++f)
 		{
-			m_vk->m_perFrameData[f].m_graphicsCmdBuffer = cmdBuffers[f];
+			VkCommandBufferAllocateInfo allocInfo = {};
+			allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+			allocInfo.commandPool = m_vk->m_perFrameData[f].m_graphicsCommandPool;	// allocate from this frame's pool
+			allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;		// primary = can be submitted to queue, can't be called from other buffers
+																	// secondary = can't be directly submitted, can be called from other primary buffers
+			allocInfo.commandBufferCount = 1;
+			if (!CheckResult(vkAllocateCommandBuffers(m_vk->m_device, &allocInfo, &m_vk->m_perFrameData[f].m_graphicsCmdBuffer)))
+			{
+				fmt::print("failed to allocate command buffer!\n");
+				return false;
+			}
 		}
 
 		return true;
 	}
 
-	bool RenderSystem::CreateCommandPool()
+	bool RenderSystem::CreateCommandPools()
 	{
 		R3_PROF_EVENT();
 		// find a graphics queue
 		QueueFamilyIndices queueFamilyIndices = FindQueueFamilyIndices(m_vk->m_physicalDevice, m_vk->m_mainSurface);
-
-		// create
 		VkCommandPoolCreateInfo poolInfo = {};
 		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;	// - allow individual buffers to be re-recorded
 																			// // VK_COMMAND_POOL_CREATE_TRANSIENT_BIT - hint that buffers are re-recorded often
 		poolInfo.queueFamilyIndex = queueFamilyIndices.m_graphicsIndex;		// graphics queue pls
 
-		if (!CheckResult(vkCreateCommandPool(m_vk->m_device, &poolInfo, nullptr, &m_vk->m_graphicsCommandPool)))
+		for (int frame = 0; frame < c_maxFramesInFlight; ++frame)
 		{
-			fmt::print("failed to create command pool!");
-			return false;
+			if (!CheckResult(vkCreateCommandPool(m_vk->m_device, &poolInfo, nullptr, &m_vk->m_perFrameData[frame].m_graphicsCommandPool)))
+			{
+				fmt::print("failed to create command pool!");
+				return false;
+			}
 		}
 
 		return true;

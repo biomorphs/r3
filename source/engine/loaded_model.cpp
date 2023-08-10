@@ -9,7 +9,7 @@
 namespace R3
 {
 	// no idea if this is correct
-	glm::mat4 ToVulkanMatrix(const aiMatrix4x4& m)
+	glm::mat4 ToGlmMatrix(const aiMatrix4x4& m)
 	{
 		return {
 			m.a1, m.b1, m.c1, m.d1,
@@ -99,34 +99,11 @@ namespace R3
 		// Process materials
 		if (mesh->mMaterialIndex >= 0)
 		{
-			LoadedMeshMaterial newMaterial;
-			const aiMaterial* sceneMat = scene->mMaterials[mesh->mMaterialIndex];
-
-			// diffuse
-			uint32_t diffuseTextureCount = sceneMat->GetTextureCount(aiTextureType_DIFFUSE);
-			for (uint32_t t = 0; t < diffuseTextureCount; ++t)
-			{
-				aiString texturePath;
-				sceneMat->GetTexture(aiTextureType_DIFFUSE, t, &texturePath);
-				newMaterial.m_diffuseMaps.push_back(texturePath.C_Str());
-			}
-
-			// normal maps
-			uint32_t normalTextureCount = sceneMat->GetTextureCount(aiTextureType_NORMALS);
-			for (uint32_t t = 0; t < normalTextureCount; ++t)
-			{
-				aiString texturePath;
-				sceneMat->GetTexture(aiTextureType_NORMALS, t, &texturePath);
-				newMaterial.m_normalMaps.push_back(texturePath.C_Str());
-			}
-
-			aiColor3D diffuseColour(0.f, 0.f, 0.f);
-			float opacity = 1.0f;
-			sceneMat->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColour);
-			sceneMat->Get(AI_MATKEY_OPACITY, opacity);
-			newMaterial.m_diffuseColour = { diffuseColour.r,diffuseColour.g,diffuseColour.b };
-			newMaterial.m_opacity = opacity;
-			newMesh.m_material = std::move(newMaterial);
+			newMesh.m_materialIndex = mesh->mMaterialIndex;
+		}
+		else
+		{
+			newMesh.m_materialIndex = -1;
 		}
 
 		model.m_meshes.push_back(std::move(newMesh));
@@ -134,7 +111,7 @@ namespace R3
 
 	void ParseSceneNode(const aiScene* scene, const aiNode* node, LoadedModel& model, glm::mat4 parentTransform)
 	{
-		glm::mat4 nodeTransform = ToVulkanMatrix(node->mTransformation) * parentTransform;
+		glm::mat4 nodeTransform = ToGlmMatrix(node->mTransformation) * parentTransform;
 
 		for (uint32_t meshIndex = 0; meshIndex < node->mNumMeshes; ++meshIndex)
 		{
@@ -146,6 +123,43 @@ namespace R3
 		{
 			ParseSceneNode(scene, node->mChildren[childIndex], model, nodeTransform);
 		}
+	}
+
+	bool ParseMaterials(const aiScene* scene, LoadedModel& result)
+	{
+		if (scene->HasMaterials())
+		{
+			result.m_materials.reserve(scene->mNumMaterials);
+			for (int i = 0; i < scene->mNumMaterials; ++i)
+			{
+				LoadedMeshMaterial newMaterial;
+				const aiMaterial* sceneMat = scene->mMaterials[i];
+				uint32_t diffuseTextureCount = sceneMat->GetTextureCount(aiTextureType_DIFFUSE);	// diffuse
+				for (uint32_t t = 0; t < diffuseTextureCount; ++t)
+				{
+					aiString texturePath;
+					sceneMat->GetTexture(aiTextureType_DIFFUSE, t, &texturePath);
+					newMaterial.m_diffuseMaps.push_back(texturePath.C_Str());
+				}
+				// normal maps
+				uint32_t normalTextureCount = sceneMat->GetTextureCount(aiTextureType_NORMALS);
+				for (uint32_t t = 0; t < normalTextureCount; ++t)
+				{
+					aiString texturePath;
+					sceneMat->GetTexture(aiTextureType_NORMALS, t, &texturePath);
+					newMaterial.m_normalMaps.push_back(texturePath.C_Str());
+				}
+
+				aiColor3D diffuseColour(0.f, 0.f, 0.f);
+				float opacity = 1.0f;
+				sceneMat->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColour);
+				sceneMat->Get(AI_MATKEY_OPACITY, opacity);
+				newMaterial.m_diffuseColour = { diffuseColour.r,diffuseColour.g,diffuseColour.b };
+				newMaterial.m_opacity = opacity;
+				result.m_materials.push_back(std::move(newMaterial));
+			}
+		}
+		return true;
 	}
 
 	bool LoadModel(std::string_view filePath, LoadedModel& result, bool flattenMeshes)
@@ -170,7 +184,8 @@ namespace R3
 			return false;
 		}
 
-		glm::mat4 nodeTransform = ToVulkanMatrix(scene->mRootNode->mTransformation);
+		glm::mat4 nodeTransform = ToGlmMatrix(scene->mRootNode->mTransformation);
+		ParseMaterials(scene, result);
 		ParseSceneNode(scene, scene->mRootNode, result, nodeTransform);
 		CalculateAABB(result, result.m_boundsMin, result.m_boundsMax);
 

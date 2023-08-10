@@ -1,8 +1,6 @@
 #pragma once
 #include "engine/systems.h"
 
-struct VkExtensionProperties;
-struct VkCommandBuffer_T;
 namespace R3
 {
 	class Window;
@@ -28,7 +26,7 @@ namespace R3
 		bool CreateRenderPass();
 		bool CreateFramebuffers();
 		bool CreateSimpleTriPipelines();
-		bool CreateCommandPool();
+		bool CreateCommandPools();
 		bool CreateCommandBuffers();
 		bool RecordCommandBuffer(int swapImageIndex);
 		bool CreateSyncObjects();

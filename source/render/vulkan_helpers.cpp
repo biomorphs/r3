@@ -22,6 +22,53 @@ namespace R3
 			return !r;
 		}
 
+		bool RunCommandsImmediate(VkDevice d, VkQueue cmdQueue, VkCommandPool cmdPool, VkFence waitFence, std::function<void(VkCommandBuffer&)> fn)
+		{
+			// create a temporary cmd buffer from the pool
+			VkCommandBufferAllocateInfo allocInfo = { 0 };
+			allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+			allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+			allocInfo.commandPool = cmdPool;
+			allocInfo.commandBufferCount = 1;
+
+			VkCommandBuffer commandBuffer;
+			if (!CheckResult(vkAllocateCommandBuffers(d, &allocInfo, &commandBuffer)))
+			{
+				fmt::print("Failed to create cmd buffer\n");
+				return false;
+			}
+
+			VkCommandBufferBeginInfo beginInfo = { 0 };
+			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;	// we will only submit this buffer once
+			if (!CheckResult(vkBeginCommandBuffer(commandBuffer, &beginInfo)))
+			{
+				fmt::print("Failed to begin cmd buffer\n");
+				return false;
+			}
+
+			// run the passed fs
+			fn(commandBuffer);
+
+			CheckResult(vkEndCommandBuffer(commandBuffer));
+
+			// submit the cmd buffer to the queue, passing the immediate fence
+			VkSubmitInfo submitInfo = { 0 };
+			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+			submitInfo.commandBufferCount = 1;
+			submitInfo.pCommandBuffers = &commandBuffer;
+
+			// Submit + wait for the fence
+			CheckResult(vkQueueSubmit(cmdQueue, 1, &submitInfo, waitFence));
+			CheckResult(vkWaitForFences(d, 1, &waitFence, true, 9999999999));
+			CheckResult(vkResetFences(d, 1, &waitFence));
+
+			// We can free the cmd buffer
+			vkFreeCommandBuffers(d, cmdPool, 1, &commandBuffer);
+
+			return true;
+		}
+
 		VkShaderModule CreateShaderModule(VkDevice device, const std::vector<uint8_t>& srcSpirv)
 		{
 			R3_PROF_EVENT();

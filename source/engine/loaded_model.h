@@ -1,6 +1,7 @@
 #pragma once
 
 /////////////////////////////////////////////////
+// A render-agnostic model containing a flat list of meshes to draw
 // BLENDER FBX EXPORT SETTINGS
 // PATH MODE - RELATIVE
 // Apply scalings - FBX all
@@ -39,15 +40,15 @@ namespace R3
 	{
 		std::vector<LoadedMeshVertex> m_vertices;	// verts are in mesh space
 		std::vector<uint32_t> m_indices;
-		LoadedMeshMaterial m_material;
+		int m_materialIndex;		// -1 = no material
 		glm::mat4 m_transform;		// relative to the model
 		glm::vec3 m_boundsMin;		// bounds are in mesh space
 		glm::vec3 m_boundsMax;
 	};
 
-	// A render-agnostic model containing a flat list of meshes to draw
 	struct LoadedModel
 	{
+		std::vector<LoadedMeshMaterial> m_materials;
 		std::vector<LoadedMesh> m_meshes;
 		glm::vec3 m_boundsMin;
 		glm::vec3 m_boundsMax;
