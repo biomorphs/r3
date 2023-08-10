@@ -10,6 +10,8 @@
 #include <vulkan/vulkan.h>
 #include <vulkan/vk_enum_string_helper.h>
 #include <vk_mem_alloc.h>
+#include <imgui_impl_vulkan.h>
+#include <imgui_impl_sdl2.h>
 #include <SDL.h>
 #include <SDL_events.h>
 #include <SDL_vulkan.h>
@@ -59,6 +61,11 @@ namespace R3
 		uint32_t m_presentIndex = -1;
 	};
 
+	struct ImGuiVkStuff
+	{
+		VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
+	};
+
 	struct RenderSystem::VkStuff
 	{
 		VkInstance m_vkInstance;
@@ -87,6 +94,8 @@ namespace R3
 		AllocatedBuffer m_posColourVertexBuffer;
 		VkPipelineLayout m_simplePipelineLayout;	// no descriptors, nada
 		VkPipelineLayout m_simpleLayoutWithPushConstant;
+
+		ImGuiVkStuff m_imgui;
 
 		// helpers
 		FrameData& ThisFrameData()
@@ -180,12 +189,32 @@ namespace R3
 		R3_PROF_EVENT();
 		RegisterTick("Render::DrawFrame", [this]() {
 			return DrawFrame();
-			});
+		});
+		RegisterTick("Render::ShowGui", [this]() {
+			return ShowGui();
+		});
+	}
+
+	bool RenderSystem::ShowGui()
+	{
+		if (ImGui::Begin("Render System"))
+		{
+			fmt::print("Swap chain extents: {}x{}", m_vk->m_swapChainExtents.width, m_vk->m_swapChainExtents.height);
+			auto str = fmt::format("Swap chain extents: {}x{}", m_vk->m_swapChainExtents.width, m_vk->m_swapChainExtents.height);
+			ImGui::Text(str.c_str());
+			str = fmt::format("Swap chain images: {}", m_vk->m_swapChainImages.size());
+			ImGui::Text(str.c_str());
+			ImGui::End();
+		}
+		return true;
 	}
 
 	bool RenderSystem::DrawFrame()
 	{
 		R3_PROF_EVENT();
+
+		// Always 'render' the ImGui frame so we can begin the next one, even if we wont actually draw anything
+		ImGui::Render();	
 
 		if (m_isWindowMinimised)
 		{
@@ -435,6 +464,10 @@ namespace R3
 		// Wait for rendering to finish before shutting down
 		CheckResult(vkDeviceWaitIdle(m_vk->m_device));
 
+		// Clean up ImGui
+		vkDestroyDescriptorPool(m_vk->m_device, m_vk->m_imgui.m_descriptorPool, nullptr);
+		ImGui_ImplVulkan_Shutdown();
+
 		// Destroy the mesh buffers
 		vmaDestroyBuffer(m_vk->m_allocator, m_vk->m_posColourVertexBuffer.m_buffer, m_vk->m_posColourVertexBuffer.m_allocation);
 
@@ -472,6 +505,77 @@ namespace R3
 		vkDestroySurfaceKHR(m_vk->m_vkInstance, m_vk->m_mainSurface, nullptr);
 		vkDestroyInstance(m_vk->m_vkInstance, nullptr);
 		m_mainWindow = nullptr;
+	}
+
+	void RenderSystem::ImGuiNewFrame()
+	{
+		// does order matter? can ImgGui::NewFrame go in imgui system instead?
+		ImGui_ImplVulkan_NewFrame();
+		ImGui_ImplSDL2_NewFrame(m_mainWindow->GetHandle());
+		ImGui::NewFrame();
+	}
+
+	bool RenderSystem::InitImGui()
+	{
+		// create a descriptor pool for imgui
+		VkDescriptorPoolSize pool_sizes[] =		// this is way bigger than it needs to be!
+		{
+			{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+			{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+		};
+		VkDescriptorPoolCreateInfo pool_info = {};
+		pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;	// allows us to free individual descriptor sets
+		pool_info.maxSets = 1000;												// way bigger than needed!
+		pool_info.poolSizeCount = std::size(pool_sizes);
+		pool_info.pPoolSizes = pool_sizes;
+		if (!CheckResult(vkCreateDescriptorPool(m_vk->m_device, &pool_info, nullptr, &m_vk->m_imgui.m_descriptorPool)))
+		{
+			fmt::print("Failed to create descriptor pool for imgui\n");
+			return false;
+		}
+
+		// initialise imgui for SDL
+		if (!ImGui_ImplSDL2_InitForVulkan(m_mainWindow->GetHandle()))
+		{
+			fmt::print("Failed to init imgui for SDL/Vulkan\n");
+			return false;
+		}
+
+		// initialise for Vulkan
+		//this initializes imgui for Vulkan
+		ImGui_ImplVulkan_InitInfo init_info = {0};
+		init_info.Instance = m_vk->m_vkInstance;
+		init_info.PhysicalDevice = m_vk->m_physicalDevice.m_device;
+		init_info.Device = m_vk->m_device;
+		init_info.Queue = m_vk->m_graphicsQueue;
+		init_info.DescriptorPool = m_vk->m_imgui.m_descriptorPool;
+		init_info.MinImageCount = m_vk->m_swapChainImages.size();	// ??
+		init_info.ImageCount = m_vk->m_swapChainImages.size();		// ????!
+		init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+		if (!ImGui_ImplVulkan_Init(&init_info, m_vk->m_mainRenderPass))	// note it is tied to a render pass!
+		{
+			fmt::print("Failed to init imgui for Vulkan\n");
+			return false;
+		}
+
+		// upload the imgui font textures via immediate graphics cmd
+		VulkanHelpers::RunCommandsImmediate(m_vk->m_device, m_vk->m_graphicsQueue, 
+			m_vk->ThisFrameData().m_graphicsCommandPool, m_vk->m_immediateSubmitFence, [&](VkCommandBuffer cmd) {
+			ImGui_ImplVulkan_CreateFontsTexture(cmd);
+		});
+		ImGui_ImplVulkan_DestroyFontUploadObjects();	// destroy the font data once it is uploaded
+
+		return true;
 	}
 
 	bool RenderSystem::CreateMesh()
@@ -834,6 +938,9 @@ namespace R3
 
 		// draw one triangle made of 3 verts
 		vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
+
+		// draw imgui
+		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuffer);
 
 		// end render pass
 		vkCmdEndRenderPass(cmdBuffer);

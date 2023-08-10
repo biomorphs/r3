@@ -4,6 +4,7 @@
 #include "systems/time_system.h"
 #include "systems/event_system.h"
 #include "systems/input_system.h"
+#include "systems/imgui_system.h"
 #include "render/render_system.h"
 #include "core/platform.h"
 #include "core/random.h"
@@ -22,6 +23,7 @@ namespace R3
 		s.RegisterSystem<EventSystem>();
 		s.RegisterSystem<InputSystem>();
 		s.RegisterSystem<RenderSystem>();
+		s.RegisterSystem<ImGuiSystem>();
 	}
 
 	// the default frame graph of the engine describes the entire frame structure
@@ -33,6 +35,7 @@ namespace R3
 			frameStart.AddFn("Time::FrameStart");
 			frameStart.AddFn("Events::FrameStart");
 			frameStart.AddFn("Input::FrameStart");
+			frameStart.AddFn("ImGui::FrameStart");
 		}
 		{
 			auto& fixedUpdate = fg.m_root.AddFixedUpdateSequence("FixedUpdate");
@@ -40,6 +43,10 @@ namespace R3
 		}
 		{
 			auto& varUpdate = fg.m_root.AddSequence("VariableUpdate");
+		}
+		{
+			auto& guiUpdate = fg.m_root.AddSequence("ImGui");
+			guiUpdate.AddFn("Render::ShowGui");
 		}
 		{
 			auto& render = fg.m_root.AddSequence("Render");
@@ -51,6 +58,8 @@ namespace R3
 	int Run(std::string_view fullCmdLine, RegisterSystemsFn systemCreation, BuildFrameGraphFn frameGraphBuildCb)
 	{
 		R3_PROF_EVENT();
+
+		auto test = fmt::format("what:");
 
 		auto result = R3::Platform::Initialise(fullCmdLine);
 		assert(result == R3::Platform::InitOK);

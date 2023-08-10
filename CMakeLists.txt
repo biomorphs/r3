@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.8)
 
 # Setup vcpkg script with CMake (note: should be placed before project() call)
 set(CMAKE_TOOLCHAIN_FILE ../vcpkg/scripts/buildsystems/vcpkg.cmake CACHE STRING "Vcpkg toolchain file")
@@ -8,14 +8,14 @@ project(R3
   DESCRIPTION "C++/Lua engine V3"
   LANGUAGES CXX)
   
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 # vcpkg dependencies
-find_package(fmt REQUIRED)
 find_package(SDL2 REQUIRED)
 find_package(sol2 REQUIRED)
 find_package(glm REQUIRED)
 find_package(assimp REQUIRED)
+find_package(imgui REQUIRED)
 
 # external libs not from vcpkg
 find_package(Optick REQUIRED)

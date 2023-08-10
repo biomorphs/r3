@@ -13,7 +13,12 @@ namespace R3
 		virtual void RegisterTickFns();
 		virtual bool Init();
 		virtual void Shutdown();
+
+		// Called from imgui system
+		bool InitImGui();
+		void ImGuiNewFrame();
 	private:
+		bool ShowGui();
 		bool CreateMesh();
 		bool DrawFrame();
 		bool InitialiseVMA();
