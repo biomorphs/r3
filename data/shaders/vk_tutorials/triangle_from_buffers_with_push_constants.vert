@@ -7,6 +7,7 @@ layout(location = 1) in vec3 inColour;
 // push constants
 layout(push_constant) uniform constants
 {
+	vec4 m_colour;
 	mat4 m_matrix;
 } PushConstants;
 
@@ -14,5 +15,5 @@ layout(location = 0) out vec3 fragColor;
 
 void main() {
     gl_Position = vec4(inPosition, 0.0, 1.0) * PushConstants.m_matrix;
-    fragColor = inColour;
+    fragColor = inColour * vec3(PushConstants.m_colour);
 }

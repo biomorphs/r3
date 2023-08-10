@@ -123,7 +123,8 @@ namespace R3
 		}
 	};
 
-	struct TransformPushConstant {
+	struct PushConstant {
+		glm::vec4 m_colour;
 		glm::mat4 m_transform;
 	};
 
@@ -860,11 +861,12 @@ namespace R3
 		vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &m_vk->m_posColourVertexBuffer.m_buffer, &offset);
 
 		// push constants
-		TransformPushConstant transform;
+		PushConstant constants;
 		static double angle = 0.0;
 		angle += GetSystem<TimeSystem>()->GetVariableDeltaTime();
-		transform.m_transform = glm::translate(glm::vec3(sin(angle), sin(angle), sin(angle)));
-		vkCmdPushConstants(cmdBuffer, m_vk->m_simpleLayoutWithPushConstant, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(transform), &transform);
+		constants.m_colour = {sin(angle), cos(angle), 1.0f, 1.0f};
+		constants.m_transform = glm::translate(glm::vec3(sin(angle), sin(angle), sin(angle)));
+		vkCmdPushConstants(cmdBuffer, m_vk->m_simpleLayoutWithPushConstant, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(constants), &constants);
 
 		// draw one triangle made of 3 verts
 		vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
@@ -1038,7 +1040,7 @@ namespace R3
 		// constants specified as byte ranges, bound to specific shader stages
 		VkPushConstantRange constantRange;
 		constantRange.offset = 0;	// needs to match in the shader if >0!
-		constantRange.size = sizeof(TransformPushConstant);
+		constantRange.size = sizeof(PushConstant);
 		constantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 		pipelineLayoutInfo.pushConstantRangeCount = 1;
 		pipelineLayoutInfo.pPushConstantRanges = &constantRange;
