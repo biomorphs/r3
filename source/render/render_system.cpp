@@ -3,6 +3,7 @@
 #include "core/file_io.h"
 #include "core/profiler.h"
 #include "engine/systems/event_system.h"
+#include "engine/systems/time_system.h"
 #include "vulkan_helpers.h"
 #include "pipeline_builder.h"
 #include <vulkan/vulkan.h>
@@ -80,8 +81,10 @@ namespace R3
 		VkRenderPass m_mainRenderPass;
 		VkPipeline m_simpleTriPipeline;
 		VkPipeline m_simpleTriFromBuffersPipeline;
+		VkPipeline m_simpleTriFromBuffersPushConstantPipeline;
 		AllocatedBuffer m_posColourVertexBuffer;
 		VkPipelineLayout m_simplePipelineLayout;	// no descriptors, nada
+		VkPipelineLayout m_simpleLayoutWithPushConstant;
 
 		// helpers
 		FrameData& ThisFrameData()
@@ -94,30 +97,34 @@ namespace R3
 		glm::vec2 m_position;
 		glm::vec3 m_colour;
 
-		static VkVertexInputBindingDescription GetInputBindingDescription() 
+		static VkVertexInputBindingDescription GetInputBindingDescription()
 		{
 			// we just want to bind a single buffer
-			VkVertexInputBindingDescription bindingDesc = {0};
+			VkVertexInputBindingDescription bindingDesc = { 0 };
 			bindingDesc.binding = 0;
 			bindingDesc.stride = sizeof(PosColourVertex);
 			bindingDesc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 			return bindingDesc;
 		}
 
-		static std::array<VkVertexInputAttributeDescription, 2> GetAttributeDescriptions() 
+		static std::array<VkVertexInputAttributeDescription, 2> GetAttributeDescriptions()
 		{
 			// 2 attributes, position and colour stored in buffer 0
-			std::array<VkVertexInputAttributeDescription, 2> attributes {};
+			std::array<VkVertexInputAttributeDescription, 2> attributes{};
 			attributes[0].binding = 0;
 			attributes[0].location = 0;	// location visible from shader
 			attributes[0].format = VK_FORMAT_R32G32_SFLOAT;	// pos = vec2
 			attributes[0].offset = offsetof(PosColourVertex, m_position);
 			attributes[1].binding = 0;
-			attributes[1].location = 1;	
+			attributes[1].location = 1;
 			attributes[1].format = VK_FORMAT_R32G32B32_SFLOAT;	// colour = vec3
 			attributes[1].offset = offsetof(PosColourVertex, m_colour);
 			return attributes;
 		}
+	};
+
+	struct TransformPushConstant {
+		glm::mat4 m_transform;
 	};
 
 	bool CheckResult(const VkResult& r)
@@ -133,7 +140,7 @@ namespace R3
 	}
 
 	// prefer using this one!
-	AllocatedBuffer CreateBuffer(VmaAllocator& allocator, uint64_t sizeBytes, VkBufferUsageFlags bufferUsage, 
+	AllocatedBuffer CreateBuffer(VmaAllocator& allocator, uint64_t sizeBytes, VkBufferUsageFlags bufferUsage,
 		VmaMemoryUsage memUsage = VMA_MEMORY_USAGE_AUTO, uint32_t allocFlags = 0)
 	{
 		R3_PROF_EVENT();
@@ -158,7 +165,7 @@ namespace R3
 	bool RunCommandsImmediate(VkDevice d, VkQueue cmdQueue, VkCommandPool cmdPool, VkFence waitFence, std::function<void(VkCommandBuffer&)> fn)
 	{
 		// create a temporary cmd buffer from the pool
-		VkCommandBufferAllocateInfo allocInfo = {0};
+		VkCommandBufferAllocateInfo allocInfo = { 0 };
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		allocInfo.commandPool = cmdPool;
@@ -171,10 +178,10 @@ namespace R3
 			return false;
 		}
 
-		VkCommandBufferBeginInfo beginInfo = {0};
+		VkCommandBufferBeginInfo beginInfo = { 0 };
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;	// we will only submit this buffer once
-		if(!CheckResult(vkBeginCommandBuffer(commandBuffer, &beginInfo)))
+		if (!CheckResult(vkBeginCommandBuffer(commandBuffer, &beginInfo)))
 		{
 			fmt::print("Failed to begin cmd buffer\n");
 			return false;
@@ -197,8 +204,8 @@ namespace R3
 		CheckResult(vkResetFences(d, 1, &waitFence));
 
 		// We can free the cmd buffer
-		vkFreeCommandBuffers(d, cmdPool, 1, &commandBuffer); 
-		
+		vkFreeCommandBuffers(d, cmdPool, 1, &commandBuffer);
+
 		return true;
 	}
 
@@ -217,7 +224,7 @@ namespace R3
 		R3_PROF_EVENT();
 		RegisterTick("Render::DrawFrame", [this]() {
 			return DrawFrame();
-		});
+			});
 	}
 
 	bool RenderSystem::DrawFrame()
@@ -365,7 +372,7 @@ namespace R3
 		auto events = GetSystem<EventSystem>();
 		events->RegisterEventHandler([this](void* event) {
 			OnSystemEvent(event);
-		});
+			});
 
 		if (!CreateWindow())
 		{
@@ -476,14 +483,16 @@ namespace R3
 			vkDestroySemaphore(m_vk->m_device, m_vk->m_perFrameData[f].m_renderFinishedSemaphore, nullptr);
 			vkDestroySemaphore(m_vk->m_device, m_vk->m_perFrameData[f].m_imageAvailableSemaphore, nullptr);
 		}
-		
+
 		//cmd buffers do not need to be destroyed, removing the pool is enough
 		vkDestroyCommandPool(m_vk->m_device, m_vk->m_graphicsCommandPool, nullptr);
 
 		// destroy pipelines + layouts
-		vkDestroyPipeline(m_vk->m_device, m_vk->m_simpleTriFromBuffersPipeline, nullptr);
-		vkDestroyPipeline(m_vk->m_device, m_vk->m_simpleTriPipeline, nullptr);
+		vkDestroyPipelineLayout(m_vk->m_device, m_vk->m_simpleLayoutWithPushConstant, nullptr);
 		vkDestroyPipelineLayout(m_vk->m_device, m_vk->m_simplePipelineLayout, nullptr);
+		vkDestroyPipeline(m_vk->m_device, m_vk->m_simpleTriFromBuffersPipeline, nullptr);
+		vkDestroyPipeline(m_vk->m_device, m_vk->m_simpleTriFromBuffersPushConstantPipeline, nullptr);
+		vkDestroyPipeline(m_vk->m_device, m_vk->m_simpleTriPipeline, nullptr);
 
 		// render passes
 		vkDestroyRenderPass(m_vk->m_device, m_vk->m_mainRenderPass, nullptr);
@@ -511,13 +520,13 @@ namespace R3
 		verts[1].m_colour = { 0.f, 1.f, 0.5f };
 		verts[2].m_colour = { 1.f, 0.f, 0.1f };
 
-		AllocatedBuffer stagingBuffer = CreateBuffer(m_vk->m_allocator, 
+		AllocatedBuffer stagingBuffer = CreateBuffer(m_vk->m_allocator,
 			sizeof(PosColourVertex) * 3,
-			VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
-			VMA_MEMORY_USAGE_AUTO, 
+			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VMA_MEMORY_USAGE_AUTO,
 			VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT
 		);
-		m_vk->m_posColourVertexBuffer = CreateBuffer(m_vk->m_allocator,	
+		m_vk->m_posColourVertexBuffer = CreateBuffer(m_vk->m_allocator,
 			sizeof(PosColourVertex) * 3,
 			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT
 		);
@@ -538,13 +547,13 @@ namespace R3
 		// copy from staging to vertex buffer using immediate cmd submit
 		RunCommandsImmediate(m_vk->m_device, m_vk->m_graphicsQueue, m_vk->m_graphicsCommandPool, m_vk->m_immediateSubmitFence,
 			[&](VkCommandBuffer& buf)
-		{
-			VkBufferCopy copyRegion{};
-			copyRegion.srcOffset = 0;
-			copyRegion.dstOffset = 0;
-			copyRegion.size = sizeof(PosColourVertex) * 3;
-			vkCmdCopyBuffer(buf, stagingBuffer.m_buffer, m_vk->m_posColourVertexBuffer.m_buffer, 1, &copyRegion);
-		});
+			{
+				VkBufferCopy copyRegion{};
+				copyRegion.srcOffset = 0;
+				copyRegion.dstOffset = 0;
+				copyRegion.size = sizeof(PosColourVertex) * 3;
+				vkCmdCopyBuffer(buf, stagingBuffer.m_buffer, m_vk->m_posColourVertexBuffer.m_buffer, 1, &copyRegion);
+			});
 
 		// done with the staging buffer
 		vmaDestroyBuffer(m_vk->m_allocator, stagingBuffer.m_buffer, stagingBuffer.m_allocation);
@@ -556,7 +565,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		//initialize the memory allocator
-		VmaAllocatorCreateInfo allocatorInfo = {0};
+		VmaAllocatorCreateInfo allocatorInfo = { 0 };
 		allocatorInfo.physicalDevice = m_vk->m_physicalDevice.m_device;
 		allocatorInfo.device = m_vk->m_device;
 		allocatorInfo.instance = m_vk->m_vkInstance;
@@ -601,7 +610,7 @@ namespace R3
 		return true;
 	}
 
-	std::vector<VkExtensionProperties> GetSupportedInstanceExtensions() 
+	std::vector<VkExtensionProperties> GetSupportedInstanceExtensions()
 	{
 		R3_PROF_EVENT();
 		std::vector<VkExtensionProperties> results;
@@ -630,7 +639,7 @@ namespace R3
 		return true;
 	}
 
-	std::vector<const char*> GetSDLRequiredInstanceExtensions(SDL_Window* w) 
+	std::vector<const char*> GetSDLRequiredInstanceExtensions(SDL_Window* w)
 	{
 		R3_PROF_EVENT();
 		std::vector<const char*> results;
@@ -649,7 +658,7 @@ namespace R3
 		return results;
 	}
 
-	std::vector<VkLayerProperties> GetSupportedLayers() 
+	std::vector<VkLayerProperties> GetSupportedLayers()
 	{
 		R3_PROF_EVENT();
 		std::vector<VkLayerProperties> result;
@@ -739,9 +748,9 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		// semaphores + fences dont have many params
-		VkSemaphoreCreateInfo semaphoreInfo = {0};
+		VkSemaphoreCreateInfo semaphoreInfo = { 0 };
 		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-		VkFenceCreateInfo fenceInfo = {0};
+		VkFenceCreateInfo fenceInfo = { 0 };
 		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;	// create the fence signalled since we wait on it immediately
 		for (int f = 0; f < c_maxFramesInFlight; ++f)
@@ -794,7 +803,7 @@ namespace R3
 		scissor.extent = m_vk->m_swapChainExtents;	// draw the full image
 
 		// start writing
-		VkCommandBufferBeginInfo beginInfo = {0};
+		VkCommandBufferBeginInfo beginInfo = { 0 };
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		if (!CheckResult(vkBeginCommandBuffer(cmdBuffer, &beginInfo)))	// resets the cmd buffer
 		{
@@ -803,7 +812,7 @@ namespace R3
 		}
 
 		// start the render pass 
-		VkRenderPassBeginInfo renderPassInfo = {0};
+		VkRenderPassBeginInfo renderPassInfo = { 0 };
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		renderPassInfo.renderPass = m_vk->m_mainRenderPass;
 		renderPassInfo.framebuffer = m_vk->m_swapChainFramebuffers[swapImageIndex];
@@ -834,8 +843,28 @@ namespace R3
 		vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
 
 		// bind the vertex buffer with offset 0
-		VkDeviceSize offset = 0;
+		constexpr VkDeviceSize offset = 0;
 		vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &m_vk->m_posColourVertexBuffer.m_buffer, &offset);
+
+		// draw one triangle made of 3 verts
+		vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
+
+		// bind the pipeline with push constants
+		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_vk->m_simpleTriFromBuffersPushConstantPipeline);
+
+		// Set pipeline dynamic state
+		vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
+		vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
+
+		// bind the vertex buffer with offset 0
+		vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &m_vk->m_posColourVertexBuffer.m_buffer, &offset);
+
+		// push constants
+		TransformPushConstant transform;
+		static double angle = 0.0;
+		angle += GetSystem<TimeSystem>()->GetVariableDeltaTime();
+		transform.m_transform = glm::translate(glm::vec3(sin(angle), sin(angle), sin(angle)));
+		vkCmdPushConstants(cmdBuffer, m_vk->m_simpleLayoutWithPushConstant, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(transform), &transform);
 
 		// draw one triangle made of 3 verts
 		vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
@@ -906,7 +935,7 @@ namespace R3
 		m_vk->m_swapChainFramebuffers.resize(m_vk->m_swapChainImageViews.size());
 		for (int i = 0; i < m_vk->m_swapChainImageViews.size(); ++i)
 		{
-			VkImageView attachments[] = 
+			VkImageView attachments[] =
 			{
 				m_vk->m_swapChainImageViews[i]
 			};
@@ -920,7 +949,7 @@ namespace R3
 			framebufferInfo.height = m_vk->m_swapChainExtents.height;
 			framebufferInfo.layers = 1;	// no arrays pls
 
-			if (!CheckResult(vkCreateFramebuffer(m_vk->m_device, &framebufferInfo, nullptr, &m_vk->m_swapChainFramebuffers[i]))) 
+			if (!CheckResult(vkCreateFramebuffer(m_vk->m_device, &framebufferInfo, nullptr, &m_vk->m_swapChainFramebuffers[i])))
 			{
 				fmt::print("failed to create framebuffer!");
 				return false;
@@ -965,7 +994,7 @@ namespace R3
 		rpci.pAttachments = &colourDesc;
 		rpci.subpassCount = 1;
 		rpci.pSubpasses = &subpassDesc;
-		if (!CheckResult(vkCreateRenderPass(m_vk->m_device, &rpci, nullptr, &m_vk->m_mainRenderPass))) 
+		if (!CheckResult(vkCreateRenderPass(m_vk->m_device, &rpci, nullptr, &m_vk->m_mainRenderPass)))
 		{
 			fmt::print("failed to create render pass!");
 			return false;
@@ -984,9 +1013,38 @@ namespace R3
 		std::string basePath = "shaders_spirv\\vk_tutorials\\";
 		auto singleTriVertexShader = VulkanHelpers::LoadShaderModule(m_vk->m_device, basePath + "fixed_triangle.vert.spv");
 		auto singleTriFragmentShader = VulkanHelpers::LoadShaderModule(m_vk->m_device, basePath + "fixed_triangle.frag.spv");
-		if (singleTriVertexShader == VK_NULL_HANDLE || singleTriFragmentShader == VK_NULL_HANDLE)
+		auto triBufferVertShader = VulkanHelpers::LoadShaderModule(m_vk->m_device, basePath + "triangle_from_buffers.vert.spv");
+		auto triBufferFragShader = VulkanHelpers::LoadShaderModule(m_vk->m_device, basePath + "triangle_from_buffers.frag.spv");
+		auto triBufferPushConstantVertShader = VulkanHelpers::LoadShaderModule(m_vk->m_device, basePath + "triangle_from_buffers_with_push_constants.vert.spv");
+		if (singleTriVertexShader == VK_NULL_HANDLE || singleTriFragmentShader == VK_NULL_HANDLE
+			|| triBufferVertShader == VK_NULL_HANDLE || triBufferFragShader == VK_NULL_HANDLE
+			|| triBufferPushConstantVertShader == VK_NULL_HANDLE)
 		{
 			fmt::print("Failed to create shader modules");
+			return false;
+		}
+
+		// Create pipeline layouts
+		VkPipelineLayoutCreateInfo pipelineLayoutInfo = { 0 };
+		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		pipelineLayoutInfo.setLayoutCount = 0;
+		pipelineLayoutInfo.pushConstantRangeCount = 0;
+		if (!CheckResult(vkCreatePipelineLayout(m_vk->m_device, &pipelineLayoutInfo, nullptr, &m_vk->m_simplePipelineLayout)))
+		{
+			fmt::print("Failed to create pipeline layout!\n");
+			return false;
+		}
+
+		// constants specified as byte ranges, bound to specific shader stages
+		VkPushConstantRange constantRange;
+		constantRange.offset = 0;	// needs to match in the shader if >0!
+		constantRange.size = sizeof(TransformPushConstant);
+		constantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		pipelineLayoutInfo.pushConstantRangeCount = 1;
+		pipelineLayoutInfo.pPushConstantRanges = &constantRange;
+		if (!CheckResult(vkCreatePipelineLayout(m_vk->m_device, &pipelineLayoutInfo, nullptr, &m_vk->m_simpleLayoutWithPushConstant)))
+		{
+			fmt::print("Failed to create pipeline layout!\n");
 			return false;
 		}
 
@@ -1044,17 +1102,6 @@ namespace R3
 		};
 		pb.m_colourBlendState = VulkanHelpers::CreatePipelineColourBlendState(allAttachments);	// Pipeline also has some global blending state (constants, logical ops enable)
 
-		// Create an empty (for now) pipeline layout to be used later 
-		VkPipelineLayoutCreateInfo pipelineLayoutInfo = {0};
-		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = 0;
-		pipelineLayoutInfo.pushConstantRangeCount = 0;
-		if (!CheckResult(vkCreatePipelineLayout(m_vk->m_device, &pipelineLayoutInfo, nullptr, &m_vk->m_simplePipelineLayout)))
-		{
-			fmt::print("Failed to create pipeline layout!\n");
-			return false;
-		}
-
 		// build the pipeline
 		m_vk->m_simpleTriPipeline = pb.Build(m_vk->m_device, m_vk->m_simplePipelineLayout, m_vk->m_mainRenderPass, 0);
 		if (m_vk->m_simpleTriPipeline == VK_NULL_HANDLE)
@@ -1070,13 +1117,6 @@ namespace R3
 		// build a similar pipeline but with shaders that take vertex data from buffers
 		// also passes buffer descriptors!
 		pb.m_shaderStages.clear();
-		VkShaderModule triBufferVertShader = VulkanHelpers::LoadShaderModule(m_vk->m_device, basePath + "triangle_from_buffers.vert.spv");
-		VkShaderModule triBufferFragShader = VulkanHelpers::LoadShaderModule(m_vk->m_device, basePath + "triangle_from_buffers.frag.spv");
-		if (triBufferVertShader == VK_NULL_HANDLE || triBufferFragShader == VK_NULL_HANDLE)
-		{
-			fmt::print("Failed to load fancier shaders\n");
-			return false;
-		}
 		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_VERTEX_BIT, triBufferVertShader));
 		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_FRAGMENT_BIT, triBufferFragShader));
 
@@ -1094,9 +1134,20 @@ namespace R3
 			fmt::print("Failed to create fancier pipeline!\n");
 			return false;
 		}
-
-		vkDestroyShaderModule(m_vk->m_device, triBufferFragShader, nullptr);
 		vkDestroyShaderModule(m_vk->m_device, triBufferVertShader, nullptr);
+
+		// build pipeline for simple mesh with transform push constant (and push constant layout!!!)
+		pb.m_shaderStages.clear();
+		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_VERTEX_BIT, triBufferPushConstantVertShader));
+		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_FRAGMENT_BIT, triBufferFragShader));
+		m_vk->m_simpleTriFromBuffersPushConstantPipeline = pb.Build(m_vk->m_device, m_vk->m_simpleLayoutWithPushConstant, m_vk->m_mainRenderPass, 0);
+		if (m_vk->m_simpleTriFromBuffersPushConstantPipeline == VK_NULL_HANDLE)
+		{
+			fmt::print("Failed to create fancier pipeline!\n");
+			return false;
+		}
+		vkDestroyShaderModule(m_vk->m_device, triBufferPushConstantVertShader, nullptr);
+		vkDestroyShaderModule(m_vk->m_device, triBufferFragShader, nullptr);
 
 		return true;
 	}
