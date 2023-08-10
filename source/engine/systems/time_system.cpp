@@ -48,9 +48,10 @@ namespace R3
 			m_firstTick = false;
 		}
 
+		m_lastTickTime = m_thisFrameTickTime;
 		m_thisFrameTickTime = R3::Time::HighPerformanceCounterTicks();
 		uint64_t elapsed = m_thisFrameTickTime - m_lastTickTime;
-		m_lastTickTime = m_thisFrameTickTime;
+		
 		m_fixedUpdateCatchup += elapsed;
 
 		return true;
