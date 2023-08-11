@@ -78,6 +78,7 @@ namespace R3
 		VkSurfaceKHR m_mainSurface = nullptr;
 		PhysicalDeviceDescriptor m_physicalDevice;
 		VkDevice m_device = VK_NULL_HANDLE;
+		VmaAllocator m_allocator = nullptr;	// vma
 		VkQueue m_graphicsQueue = VK_NULL_HANDLE;
 		VkQueue m_presentQueue = VK_NULL_HANDLE;
 		VkSwapchainKHR m_swapChain = VK_NULL_HANDLE;
@@ -90,8 +91,6 @@ namespace R3
 		AllocatedImage m_depthBufferImage;	// note the tutorial may be wrong here, we might want one per swap chain image!
 		VkImageView m_depthBufferView;
 		VkFormat m_depthBufferFormat;
-		VmaAllocator m_allocator;	// vma
-		VkCommandPool m_graphicsCommandPool;	// allocates graphics queue command buffers
 		FrameData m_perFrameData[c_maxFramesInFlight];	// contains per frame cmd buffers, sync objects
 		int m_currentFrame = 0;
 		VkFence m_immediateSubmitFence = VK_NULL_HANDLE;
