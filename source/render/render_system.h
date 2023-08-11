@@ -28,6 +28,7 @@ namespace R3
 		bool CreateLogicalDevice();
 		bool CreateSurface();
 		bool CreateSwapchain();
+		bool CreateDepthBuffer();
 		bool CreateRenderPass();
 		bool CreateFramebuffers();
 		bool CreateSimpleTriPipelines();

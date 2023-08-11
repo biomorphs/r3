@@ -55,6 +55,12 @@ namespace R3
 		VkBuffer m_buffer = {};
 	};
 
+	struct AllocatedImage
+	{
+		VkImage m_image;
+		VmaAllocation m_allocation;
+	};
+
 	struct QueueFamilyIndices
 	{
 		uint32_t m_graphicsIndex = -1;
@@ -81,9 +87,12 @@ namespace R3
 		std::vector<VkImage> m_swapChainImages;
 		std::vector<VkImageView> m_swapChainImageViews;
 		std::vector<VkFramebuffer> m_swapChainFramebuffers; // references the swap chain image views
-		VmaAllocator m_allocator = nullptr;	// vma
-		
-		FrameData m_perFrameData[c_maxFramesInFlight] = {};	// contains per frame cmd buffers, sync objects
+		AllocatedImage m_depthBufferImage;	// note the tutorial may be wrong here, we might want one per swap chain image!
+		VkImageView m_depthBufferView;
+		VkFormat m_depthBufferFormat;
+		VmaAllocator m_allocator;	// vma
+		VkCommandPool m_graphicsCommandPool;	// allocates graphics queue command buffers
+		FrameData m_perFrameData[c_maxFramesInFlight];	// contains per frame cmd buffers, sync objects
 		int m_currentFrame = 0;
 		VkFence m_immediateSubmitFence = VK_NULL_HANDLE;
 
@@ -649,16 +658,20 @@ namespace R3
 	void RenderSystem::DestroySwapchain()
 	{
 		R3_PROF_EVENT();
-		for (auto framebuffer : m_vk->m_swapChainFramebuffers) {
+		for (auto framebuffer : m_vk->m_swapChainFramebuffers) 
+		{
 			vkDestroyFramebuffer(m_vk->m_device, framebuffer, nullptr);
 		}
 
-		for (auto imageView : m_vk->m_swapChainImageViews) {
+		vkDestroyImageView(m_vk->m_device, m_vk->m_depthBufferView, nullptr);
+		vmaDestroyImage(m_vk->m_allocator, m_vk->m_depthBufferImage.m_image, m_vk->m_depthBufferImage.m_allocation);
+
+		for (auto imageView : m_vk->m_swapChainImageViews) 
+		{
 			vkDestroyImageView(m_vk->m_device, imageView, nullptr);
 		}
-
 		m_vk->m_swapChainImageViews.clear();
-		m_vk->m_swapChainImages.clear();
+		m_vk->m_swapChainImages.clear();	// destroyed as part of swap chain
 		vkDestroySwapchainKHR(m_vk->m_device, m_vk->m_swapChain, nullptr);
 	}
 
@@ -1296,6 +1309,54 @@ namespace R3
 		return extents;
 	}
 
+	bool RenderSystem::CreateDepthBuffer()
+	{
+		// Create the image first
+		VkImageCreateInfo info = { };
+		info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		info.pNext = nullptr;
+		info.imageType = VK_IMAGE_TYPE_2D;
+		info.format = VK_FORMAT_D32_SFLOAT;
+		info.extent = {
+			m_vk->m_swapChainExtents.width, m_vk->m_swapChainExtents.height, 1 
+		};	// same size as swap chain images
+		info.mipLevels = 1;
+		info.arrayLayers = 1;
+		info.samples = VK_SAMPLE_COUNT_1_BIT;
+		info.tiling = VK_IMAGE_TILING_OPTIMAL;
+		info.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;	// depth-stencil attachment
+
+		// We want the allocation to be in fast gpu memory!
+		VmaAllocationCreateInfo allocInfo = { };
+		allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+		allocInfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		auto r = vmaCreateImage(m_vk->m_allocator, &info, &allocInfo, &m_vk->m_depthBufferImage.m_image, &m_vk->m_depthBufferImage.m_allocation, nullptr);
+		if (!CheckResult(r))
+		{
+			return false;
+		}
+		m_vk->m_depthBufferFormat = info.format;	// is this actually correc? is the requested format what we actually get?
+
+		// Create an ImageView for the depth buffer
+		VkImageViewCreateInfo vci = {};
+		vci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		vci.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		vci.image = m_vk->m_depthBufferImage.m_image;
+		vci.format = m_vk->m_depthBufferFormat;
+		vci.subresourceRange.baseMipLevel = 0;
+		vci.subresourceRange.levelCount = 1;
+		vci.subresourceRange.baseArrayLayer = 0;
+		vci.subresourceRange.layerCount = 1;
+		vci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;	// we want to access the depth data
+		r = vkCreateImageView(m_vk->m_device, &vci, nullptr, &m_vk->m_depthBufferView);
+		if (!CheckResult(r))
+		{
+			return false;
+		}
+
+		return true;
+	}
+
 	bool RenderSystem::CreateSwapchain()
 	{
 		R3_PROF_EVENT();
@@ -1385,7 +1446,7 @@ namespace R3
 			}
 		}
 
-		return true;
+		return CreateDepthBuffer();	// finally create thr depth buffer(s)
 	}
 	
 	bool RenderSystem::CreateWindow()
