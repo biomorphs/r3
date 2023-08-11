@@ -905,9 +905,11 @@ namespace R3
 		renderPassInfo.renderArea.offset = { 0, 0 };			// offset/extents to draw to
 		renderPassInfo.renderArea.extent = m_vk->m_swapChainExtents;
 		// attachment clear op values -  clear colour/depth values go here
-		VkClearValue clearColor = { {{0.1f, 0.0f, 0.0f, 1.0f}} };
-		renderPassInfo.clearValueCount = 1;
-		renderPassInfo.pClearValues = &clearColor;
+		VkClearValue clearColour = { {{0.1f, 0.0f, 0.0f, 1.0f}} };
+		VkClearValue depthClearValue = { { 0.0f,0} };
+		VkClearValue clearValues[] = { clearColour, depthClearValue };
+		renderPassInfo.clearValueCount = static_cast<uint32_t>(std::size(clearValues));
+		renderPassInfo.pClearValues = clearValues;
 		// VK_SUBPASS_CONTENTS_INLINE - commands are all stored in primary buffer
 		vkCmdBeginRenderPass(cmdBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -1026,13 +1028,13 @@ namespace R3
 		{
 			VkImageView attachments[] =
 			{
-				m_vk->m_swapChainImageViews[i]
+				m_vk->m_swapChainImageViews[i], m_vk->m_depthBufferView
 			};
 
 			VkFramebufferCreateInfo framebufferInfo{};
 			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 			framebufferInfo.renderPass = m_vk->m_mainRenderPass;	// frame buffer must be compatible with a pass
-			framebufferInfo.attachmentCount = 1;
+			framebufferInfo.attachmentCount = static_cast<uint32_t>(std::size(attachments));
 			framebufferInfo.pAttachments = attachments;
 			framebufferInfo.width = m_vk->m_swapChainExtents.width;
 			framebufferInfo.height = m_vk->m_swapChainExtents.height;
@@ -1051,38 +1053,74 @@ namespace R3
 	bool RenderSystem::CreateRenderPass()
 	{
 		R3_PROF_EVENT();
-		// Describe all image attachments for the render pass
 
-		// colour attachment from swap chain
-		VkAttachmentDescription colourDesc = {};
+		// Describe all image attachments for the render pass
+		VkAttachmentDescription colourDesc = {};	// colour attachment from swap chain
 		colourDesc.format = m_vk->m_swapChainFormat.format;
 		colourDesc.samples = VK_SAMPLE_COUNT_1_BIT;			// no msaa
 		colourDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;	// clear the contents of the image before this pass
-		colourDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;	// store the contents after this pass
+		colourDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;	// store the contents after the subpasses coimplete
 		colourDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;		// we dont use stencil
 		colourDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;	// ^^
 		colourDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;			// we dont care about initial layout
 		colourDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;		// layout required for swap chain images
+
+		VkAttachmentDescription depthDesc = {};	// // Depth attachment
+		depthDesc.flags = 0;
+		depthDesc.format = m_vk->m_depthBufferFormat;
+		depthDesc.samples = VK_SAMPLE_COUNT_1_BIT;
+		depthDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;	// clear the contents before this pass
+		depthDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;	// store the contents after the sub-passes complete
+		depthDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;	// clear stencil too
+		depthDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;	// we dont care, we dont write it
+		depthDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;			// dont care about initial layout
+		depthDesc.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;	// final layout optimal for depth/stencil read/write
 
 		// Each sub-pass can reference the attachments above with different layouts
 		VkAttachmentReference colorAttachmentRef = {};
 		colorAttachmentRef.attachment = 0;	// colour attachment
 		colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;	// we want the image to be optimal for rendering
 																				// note vulkan will handle this transition for you between sub-passes
+		VkAttachmentReference depthAttachRef = {};
+		depthAttachRef.attachment = 1;
+		depthAttachRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;	// optimal for depth/stencil read/write
 
 		// Setup our single subpass
 		VkSubpassDescription subpassDesc = {};
 		subpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;	// this is a graphics subpass
 		subpassDesc.colorAttachmentCount = 1;	// note the index of the attachments in this array match the layout(location = x) out vec4 gl_colour in the shader!
 		subpassDesc.pColorAttachments = &colorAttachmentRef;
+		subpassDesc.pDepthStencilAttachment = &depthAttachRef;
+
+		// Subpass dependencies
+		VkSubpassDependency colourDependency = {};
+		colourDependency.srcSubpass = VK_SUBPASS_EXTERNAL;	// moving from VK_SUBPASS_EXTERNAL = implicit subpass before this one
+		colourDependency.dstSubpass = 0;						// ... to our only subpass
+		colourDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;	// wait for the swap chain to finish with the image
+		colourDependency.srcAccessMask = 0;
+		colourDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;	// dont transition until after we write colours
+		colourDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;			// when we finish it will be writable???
+
+		VkSubpassDependency depthDependency = {};
+		depthDependency.srcSubpass = VK_SUBPASS_EXTERNAL;	// from 'external' pass 
+		depthDependency.dstSubpass = 0;						// ... to our only subpass
+		// wait until all depth testing happens
+		depthDependency.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+		depthDependency.srcAccessMask = 0;
+		depthDependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+		depthDependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;	// when we finish depth is writable
 
 		// create the full pass!
+		VkAttachmentDescription attachments[] = { colourDesc,depthDesc };
+		VkSubpassDependency dependencies[] = { colourDependency, depthDependency };
 		VkRenderPassCreateInfo rpci = {};
 		rpci.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		rpci.attachmentCount = 1;
-		rpci.pAttachments = &colourDesc;
+		rpci.attachmentCount = static_cast<uint32_t>(std::size(attachments));
+		rpci.pAttachments = attachments;
 		rpci.subpassCount = 1;
 		rpci.pSubpasses = &subpassDesc;
+		rpci.dependencyCount = static_cast<uint32_t>(std::size(dependencies));
+		rpci.pDependencies = dependencies;
 		if (!CheckResult(vkCreateRenderPass(m_vk->m_device, &rpci, nullptr, &m_vk->m_mainRenderPass)))
 		{
 			LogError("failed to create render pass!");
