@@ -28,6 +28,7 @@ namespace Entities
 	private:
 		void RegisterComponentTypeInternal(std::string_view typeName);
 		bool ShowGui();
+		bool RunGC();
 		std::vector<std::unique_ptr<World>> m_worlds;
 	};
 

@@ -43,6 +43,8 @@ namespace Entities
 
 	void EntityBenchmarks(World* w)
 	{
+		R3_PROF_EVENT();
+
 		const auto benchStart = R3::Time::HighPerformanceCounterTicks();
 		const auto freq = R3::Time::HighPerformanceCounterFrequency();
 		constexpr uint32_t test1Repeats = 20;
@@ -126,6 +128,7 @@ namespace Entities
 
 	EntitySystem::EntitySystem()
 	{
+		R3_PROF_EVENT();
 		World* testWorld = CreateWorld("Benchmarks");
 		RegisterComponentType<BenchComponent1>();
 		RegisterComponentType<BenchComponent2>();
@@ -156,8 +159,12 @@ namespace Entities
 
 	void EntitySystem::RegisterTickFns()
 	{
+		R3_PROF_EVENT();
 		RegisterTick("Entities::ShowGui", [this]() {
 			return ShowGui();
+		});
+		RegisterTick("Entities::RunGC", [this]() {
+			return RunGC();
 		});
 	}
 
@@ -169,6 +176,7 @@ namespace Entities
 
 	World* EntitySystem::CreateWorld(std::string_view worldName)
 	{
+		R3_PROF_EVENT();
 		if (GetWorld(worldName) != nullptr)
 		{
 			assert(!"A world already exists with that name");
@@ -183,6 +191,7 @@ namespace Entities
 
 	World* EntitySystem::GetWorld(std::string_view worldName)
 	{
+		R3_PROF_EVENT();
 		auto found = std::find_if(m_worlds.begin(), m_worlds.end(), [worldName](const std::unique_ptr<World>& w) {
 			return w->GetName() == worldName;	// is this a string comparison??? check!
 		});
@@ -191,6 +200,7 @@ namespace Entities
 
 	void EntitySystem::DestroyWorld(std::string_view worldName)
 	{
+		R3_PROF_EVENT();
 		auto found = std::find_if(m_worlds.begin(), m_worlds.end(), [worldName](const std::unique_ptr<World>& w) {
 			return w->GetName() == worldName;	// is this a string comparison??? check!
 		});
@@ -237,6 +247,16 @@ namespace Entities
 			}
 		}
 		ImGui::End();
+		return true;
+	}
+
+	bool EntitySystem::RunGC()
+	{
+		R3_PROF_EVENT();
+		for (auto& w : m_worlds)
+		{
+			w->CollectGarbage();
+		}
 		return true;
 	}
 }
