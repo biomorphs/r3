@@ -12,7 +12,7 @@ namespace R3
 		R3_PROF_EVENT_DYN(debugName);
 		auto timeSys = Systems::GetSystem<TimeSystem>();
 		double startTime = timeSys->GetElapsedTimeReal();
-		const double c_maxUpdateTime = timeSys->GetFixedUpdateDelta() * 1.618;
+		const double c_maxUpdateTime = timeSys->GetFixedUpdateDelta() / 2.0f;
 		while (timeSys->GetFixedUpdateCatchupTime() >= timeSys->GetFixedUpdateDelta() &&
 			(timeSys->GetElapsedTimeReal() - startTime) < c_maxUpdateTime)
 		{

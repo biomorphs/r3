@@ -906,7 +906,7 @@ namespace R3
 		renderPassInfo.renderArea.extent = m_vk->m_swapChainExtents;
 		// attachment clear op values -  clear colour/depth values go here
 		VkClearValue clearColour = { {{0.1f, 0.0f, 0.0f, 1.0f}} };
-		VkClearValue depthClearValue = { { 0.0f,0} };
+		VkClearValue depthClearValue = { { 1.0f, 0} };	// clear depth to 1.0 (max depth)
 		VkClearValue clearValues[] = { clearColour, depthClearValue };
 		renderPassInfo.clearValueCount = static_cast<uint32_t>(std::size(clearValues));
 		renderPassInfo.pClearValues = clearValues;

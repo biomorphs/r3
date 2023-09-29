@@ -24,5 +24,6 @@ find_package(VulkanMemoryAllocator REQUIRED)	# must be found after Vulkan
 
 add_subdirectory(source/core)
 add_subdirectory(source/engine)
+add_subdirectory(source/entities)
 add_subdirectory(source/render)
 add_subdirectory(source/main)

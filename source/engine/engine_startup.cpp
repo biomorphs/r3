@@ -6,6 +6,7 @@
 #include "systems/input_system.h"
 #include "systems/imgui_system.h"
 #include "render/render_system.h"
+#include "entities/systems/entity_system.h"
 #include "core/platform.h"
 #include "core/random.h"
 #include "core/profiler.h"
@@ -24,9 +25,10 @@ namespace R3
 		s.RegisterSystem<InputSystem>();
 		s.RegisterSystem<RenderSystem>();
 		s.RegisterSystem<ImGuiSystem>();
+		s.RegisterSystem<Entities::EntitySystem>();
 	}
 
-	// the default frame graph of the engine describes the entire frame structure
+	// the default frame graph
 	void BuildFrameGraph(FrameGraph& fg)
 	{
 		R3_PROF_EVENT();
@@ -47,6 +49,7 @@ namespace R3
 		{
 			auto& guiUpdate = fg.m_root.AddSequence("ImGui");
 			guiUpdate.AddFn("Render::ShowGui");
+			guiUpdate.AddFn("Entities::ShowGui");
 		}
 		{
 			auto& render = fg.m_root.AddSequence("Render");
@@ -100,10 +103,8 @@ namespace R3
 			running = runFrame.m_root.Run();
 		}
 
-		// Shut down systems
+		// Shut down
 		Systems::GetInstance().Shutdown();
-
-		// Shutdown
 		auto shutdownResult = Platform::Shutdown();
 		assert(shutdownResult == Platform::ShutdownResult::ShutdownOK);
 		return shutdownResult == Platform::ShutdownResult::ShutdownOK ? 0 : 1;
