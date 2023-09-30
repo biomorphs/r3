@@ -11,7 +11,7 @@ namespace Entities
 		return s_instance;
 	}
 
-	void ComponentTypeRegistry::Register(std::string_view typeName)
+	uint32_t ComponentTypeRegistry::Register(std::string_view typeName)
 	{
 		auto found = std::find_if(m_allTypes.begin(), m_allTypes.end(), [typeName](const ComponentTypeRecord& r) {
 			return r.m_name == typeName;
@@ -23,7 +23,9 @@ namespace Entities
 			newTypeRecord.m_name = typeName;
 			newTypeRecord.m_dynamicIndex = static_cast<uint32_t>(m_allTypes.size());
 			m_allTypes.emplace_back(std::move(newTypeRecord));
+			return static_cast<uint32_t>(m_allTypes.size() - 1);
 		}
+		return -1;
 	}
 
 	uint32_t ComponentTypeRegistry::GetTypeIndex(std::string_view typeName) const

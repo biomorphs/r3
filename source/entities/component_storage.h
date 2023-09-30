@@ -15,12 +15,14 @@ namespace Entities
 {
 	class World;
 
-	// Base class used to represent a container of component data
+	// Base class used just so we can have an array of these things
 	class ComponentStorage
 	{
 	public:
 		ComponentStorage(World* w, uint32_t typeIndex) : m_ownerWorld(w), m_typeIndex(typeIndex) { }
 		virtual ~ComponentStorage() {};
+
+		// Base API does not know anything about the underlying component type
 		virtual uint32_t Create(const EntityHandle& e) = 0;	// return index into storage
 		virtual bool Contains(const EntityHandle& e) = 0;
 		virtual void Destroy(const EntityHandle& e) = 0;
@@ -41,9 +43,14 @@ namespace Entities
 		virtual void Destroy(const EntityHandle& e);
 		virtual void DestroyAll();
 
+		// Fastpath API
 		ComponentType* Find(uint32_t entityID);	// find component by entity public ID, does not need a valid handle!
+		ComponentType* GetAtIndex(uint32_t index);	// fastest path, direct random access, but no safety! not even a bounds check in release
 
-		void ForEach(std::function<void(ComponentType&, const EntityHandle&)> fn);
+		// It = bool(const EntityHandle& e, ComponentType& cmp)
+		// Returns early if the iterator returns false
+		template<class It>
+		void ForEach(const It& fn);
 
 	private:
 		std::unordered_map<uint32_t, uint32_t> m_entityToComponent;	// keep? replace?
@@ -54,7 +61,15 @@ namespace Entities
 	};
 
 	template<class ComponentType>
-	void LinearComponentStorage<ComponentType>::ForEach(std::function<void(ComponentType&, const EntityHandle&)> fn)
+	ComponentType* LinearComponentStorage<ComponentType>::GetAtIndex(uint32_t index)
+	{
+		assert(index < m_components.size());
+		return &m_components[index];
+	}
+
+	template<class ComponentType>
+	template<class It>
+	void LinearComponentStorage<ComponentType>::ForEach(const It& fn)
 	{
 		R3_PROF_EVENT();
 
@@ -69,7 +84,8 @@ namespace Entities
 		auto currentActiveComponents = m_components.size();
 		for (int c = 0; c < currentActiveComponents; ++c)
 		{
-			fn(m_components[c], m_owners[c]);
+			if (!fn(m_owners[c], m_components[c]))
+				break;
 		}
 
 		if (storagePtr != m_components.data())

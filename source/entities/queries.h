@@ -9,7 +9,11 @@ namespace Queries
 {
 	// It = bool(const EntityHandle& e, ComponentType& cmp)
 	template<class ComponentType, class It>
-	void ForEach(const World* w, const It&);
+	void ForEach(World* w, const It&);
+
+	// It = bool(const EntityHandle& e, ComponentType1& cmp, ComponentType2& cmp)
+	template<class ComponentType1, class ComponentType2, class It>
+	void ForEach(World* w, const It&);
 }
 }
 }

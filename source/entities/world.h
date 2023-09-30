@@ -13,6 +13,8 @@ namespace R3
 namespace Entities
 {
 	class ComponentStorage;
+	template<class ComponentType> class LinearComponentStorage;
+
 	class World
 	{
 	public:
@@ -27,7 +29,13 @@ namespace Entities
 		bool IsHandleValid(const EntityHandle& h) const;
 
 		// slow path
-		void AddComponent(EntityHandle e, std::string_view componentTypeName);
+		void AddComponent(const EntityHandle& e, std::string_view componentTypeName);
+		
+		// fast path
+		template<class ComponentType>
+		ComponentType* GetComponent(const EntityHandle& e);
+		template<class ComponentType>
+		void AddComponent(EntityHandle e);
 
 		void CollectGarbage();						// destroy all entities pending deletion
 		size_t GetPendingDeleteCount() { return m_pendingDelete.size(); }
@@ -38,8 +46,12 @@ namespace Entities
 		void OnComponentMoved(const EntityHandle& owner, uint32_t typeIndex, uint32_t oldIndex, uint32_t newIndex);
 
 		// Storage accessors
-
+		template<class ComponentType> LinearComponentStorage<ComponentType>* GetStorage();
+		ComponentStorage* GetStorage(std::string_view componentTypeName);
+		
 	private:
+
+		void AddComponentInternal(const EntityHandle& e, uint32_t resolvedTypeIndex);
 		
 		std::string m_name;
 		struct PerEntityData
@@ -56,5 +68,43 @@ namespace Entities
 		std::vector<std::unique_ptr<ComponentStorage>> m_allComponents;	// storage for all components
 		std::vector<EntityHandle> m_pendingDelete;	// all entities to be deleted (these handles should still all be valid)
 	};
+
+	template<class ComponentType>
+	void World::AddComponent(EntityHandle e)
+	{
+		if (IsHandleValid(e))
+		{
+			uint32_t typeIndex = ComponentTypeRegistry::GetTypeIndex<ComponentType>();
+			AddComponentInternal(e, typeIndex);
+		}
+	}
+
+	template<class ComponentType>
+	ComponentType* World::GetComponent(const EntityHandle& e)
+	{
+		if (IsHandleValid(e))
+		{
+			const uint32_t typeIndex = ComponentTypeRegistry::GetTypeIndex<ComponentType>();
+			const PerEntityData& ped = m_allEntities[e.GetPrivateIndex()];
+			const auto testMask = (PerEntityData::ComponentBitsetType)1 << typeIndex;
+			if ((ped.m_ownedComponentBits & testMask) == testMask && ped.m_componentIndices.size() > typeIndex)
+			{
+				LinearComponentStorage<ComponentType>* storage = GetStorage<ComponentType>();
+				return storage->GetAtIndex(ped.m_componentIndices[typeIndex]);
+			}
+		}
+		return nullptr;
+	}
+
+	template<class ComponentType>
+	LinearComponentStorage<ComponentType>* World::GetStorage()
+	{
+		uint32_t typeIndex = ComponentTypeRegistry::GetTypeIndex<ComponentType>();
+		if (typeIndex != -1 && typeIndex < m_allComponents.size())
+		{
+			return static_cast<LinearComponentStorage<ComponentType>*>(m_allComponents[typeIndex].get());
+		}
+		return nullptr;
+	}
 }
 }

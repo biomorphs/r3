@@ -3,11 +3,10 @@
 #include "entities/component_type_registry.h"
 #include "entities/queries.h"
 #include "core/profiler.h"
+#include "core/time.h"
 #include "imgui.h"
 #include <cassert>
 #include <format>
-
-#include "core/time.h"
 
 namespace R3
 {
@@ -106,22 +105,22 @@ namespace Entities
 			for (int j = 0; j < 5000; ++j)
 			{
 				EntityHandle e = w->AddEntity();
-				w->AddComponent(e, "BenchComponent1");
+				w->AddComponent<BenchComponent1>(e);
 			}
 			auto cmp1 = R3::Time::HighPerformanceCounterTicks();
 			LogInfo("Add 5000 entities with cmp 1 took {}s", (cmp1 - testStart) / (double)freq);
 			for (int j = 0; j < 5000; ++j)
 			{
 				EntityHandle e = w->AddEntity();
-				w->AddComponent(e, "BenchComponent2");
+				w->AddComponent<BenchComponent2>(e);
 			}
 			auto cmp2 = R3::Time::HighPerformanceCounterTicks();
 			LogInfo("Add 5000 entities with cmp 2 took {}s", (cmp2 - cmp1) / (double)freq);
 			for (int j = 0; j < 5000; ++j)
 			{
 				EntityHandle e = w->AddEntity();
-				w->AddComponent(e, "BenchComponent1");
-				w->AddComponent(e, "BenchComponent2");
+				w->AddComponent<BenchComponent1>(e);
+				w->AddComponent<BenchComponent2>(e);
 			}
 			auto cmp12 = R3::Time::HighPerformanceCounterTicks();
 			LogInfo("Add 5000 entities with cmp 1 + 2 took {}s", (cmp12 - cmp2) / (double)freq);
@@ -133,16 +132,13 @@ namespace Entities
 			auto testStart = R3::Time::HighPerformanceCounterTicks();
 			int foundCount = 0;
 
-			auto fn = [&foundCount](const EntityHandle& e, BenchComponent1& cmp)
+			auto fn = [&foundCount](const EntityHandle& e, BenchComponent1& cmp1, BenchComponent2& cmp2)
 			{
 				foundCount++;
+				return true;	// return false = stop iteration
 			};
-			Entities::Queries::ForEach<BenchComponent1>(w, fn);
+			Entities::Queries::ForEach<BenchComponent1, BenchComponent2>(w, fn);
 
-			//World::EntityIterator it = w->MakeIterator<BenchComponent1, BenchComponent2>();
-			//it.ForEach([&foundCount](BenchComponent1& cmp1, BenchComponent2& cmp2, EntityHandle e) {
-			//	++foundCount;
-			//	});
 			auto testEnd = R3::Time::HighPerformanceCounterTicks();
 			LogInfo("Iterate over {} entities with cmp 1 + 2 took {}s", foundCount, (testEnd - testStart) / (double)freq);
 		}
@@ -188,12 +184,6 @@ namespace Entities
 		RegisterTick("Entities::RunGC", [this]() {
 			return RunGC();
 		});
-	}
-
-	void EntitySystem::RegisterComponentTypeInternal(std::string_view typeName)
-	{
-		auto& types = ComponentTypeRegistry::GetInstance();
-		types.Register(typeName);
 	}
 
 	World* EntitySystem::CreateWorld(std::string_view worldName)

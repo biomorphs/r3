@@ -26,7 +26,6 @@ namespace Entities
 		void DestroyWorld(std::string_view worldName);
 
 	private:
-		void RegisterComponentTypeInternal(std::string_view typeName);
 		bool ShowGui();
 		bool RunGC();
 		std::vector<std::unique_ptr<World>> m_worlds;
@@ -35,10 +34,10 @@ namespace Entities
 	template<class ComponentType>
 	void EntitySystem::RegisterComponentType()
 	{
-		RegisterComponentTypeInternal(ComponentType::GetTypeName());
-		uint32_t newTypeIndex = ComponentTypeRegistry::GetInstance().GetTypeIndex(ComponentType::GetTypeName());
-		ComponentTypeRegistry::GetInstance().SetStorageFactory(ComponentType::GetTypeName(), [newTypeIndex](World* w) {
-			return std::make_unique<LinearComponentStorage<ComponentType>>(w, newTypeIndex);
+		auto& typeRegistry = ComponentTypeRegistry::GetInstance();
+		uint32_t newIndex = typeRegistry.Register<ComponentType>();
+		typeRegistry.SetStorageFactory(ComponentType::GetTypeName(), [newIndex](World* w) {
+			return std::make_unique<LinearComponentStorage<ComponentType>>(w, newIndex);
 		});
 	}
 }

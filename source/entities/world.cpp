@@ -85,39 +85,45 @@ namespace Entities
 		}
 	}
 
-	void World::AddComponent(EntityHandle e, std::string_view componentTypeName)
+	void World::AddComponentInternal(const EntityHandle& e, uint32_t resolvedTypeIndex)
 	{
 		R3_PROF_EVENT();
+		if (resolvedTypeIndex != -1)
+		{
+			// do we need to allocate storage for this component type?
+			if (m_allComponents.size() < resolvedTypeIndex + 1)
+			{
+				m_allComponents.resize(resolvedTypeIndex + 1);
+			}
+			if (m_allComponents[resolvedTypeIndex] == nullptr)
+			{
+				const auto& allTypes = ComponentTypeRegistry::GetInstance().AllTypes();
+				m_allComponents[resolvedTypeIndex] = allTypes[resolvedTypeIndex].m_storageFactory(this);	// storage created from factory
+			}
+
+			uint32_t newCmpIndex = m_allComponents[resolvedTypeIndex]->Create(e);
+			auto newBits = (PerEntityData::ComponentBitsetType)1 << resolvedTypeIndex;
+			m_allEntities[e.GetPrivateIndex()].m_ownedComponentBits |= newBits;
+			if (m_allEntities[e.GetPrivateIndex()].m_componentIndices.size() < resolvedTypeIndex + 1)
+			{
+				m_allEntities[e.GetPrivateIndex()].m_componentIndices.resize(resolvedTypeIndex + 1);
+			}
+			m_allEntities[e.GetPrivateIndex()].m_componentIndices[resolvedTypeIndex] = newCmpIndex;
+		}
+	}
+
+	void World::AddComponent(const EntityHandle& e, std::string_view componentTypeName)
+	{
 		if (IsHandleValid(e))
 		{
 			uint32_t componentTypeIndex = ComponentTypeRegistry::GetInstance().GetTypeIndex(componentTypeName);
-			assert(componentTypeIndex != -1);
-			if (componentTypeIndex != -1)
-			{
-				// do we need to allocate storage for this component type?
-				if (m_allComponents.size() < componentTypeIndex + 1)
-				{
-					m_allComponents.resize(componentTypeIndex + 1);
-				}
-				if (m_allComponents[componentTypeIndex] == nullptr)
-				{
-					const auto& allTypes = ComponentTypeRegistry::GetInstance().AllTypes();
-					m_allComponents[componentTypeIndex] = allTypes[componentTypeIndex].m_storageFactory(this);	// storage created from factory
-				}
-				uint32_t newCmpIndex = m_allComponents[componentTypeIndex]->Create(e);
-				auto newBits = (PerEntityData::ComponentBitsetType)1 << componentTypeIndex;
-				m_allEntities[e.GetPrivateIndex()].m_ownedComponentBits |= newBits;
-				if (m_allEntities[e.GetPrivateIndex()].m_componentIndices.size() < componentTypeIndex + 1)
-				{
-					m_allEntities[e.GetPrivateIndex()].m_componentIndices.resize(componentTypeIndex + 1);
-				}
-				m_allEntities[e.GetPrivateIndex()].m_componentIndices[componentTypeIndex] = newCmpIndex;
-			}
+			AddComponentInternal(e, componentTypeIndex);
 		}
 	}
 
 	void World::CollectGarbage()
 	{
+		R3_PROF_EVENT();
 		for (auto toDelete : m_pendingDelete)
 		{
 			for (auto& components : m_allComponents)
@@ -142,6 +148,7 @@ namespace Entities
 
 	void World::OnComponentMoved(const EntityHandle& owner, uint32_t typeIndex, uint32_t oldIndex, uint32_t newIndex)
 	{
+		R3_PROF_EVENT();
 		assert(IsHandleValid(owner));
 		if (IsHandleValid(owner) && typeIndex != -1 && oldIndex != -1 && newIndex != -1)
 		{
@@ -150,6 +157,15 @@ namespace Entities
 			assert(theEntity.m_componentIndices[typeIndex] == oldIndex);
 			theEntity.m_componentIndices[typeIndex] = newIndex;
 		}
+	}
+	ComponentStorage* World::GetStorage(std::string_view componentTypeName)
+	{
+		const uint32_t typeIndex = ComponentTypeRegistry::GetInstance().GetTypeIndex(componentTypeName);
+		if (typeIndex == -1 || m_allComponents.size() < typeIndex)
+		{
+			return nullptr;
+		}
+		return m_allComponents[typeIndex].get();
 	}
 }
 }
