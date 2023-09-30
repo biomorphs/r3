@@ -1,6 +1,7 @@
 #include "entity_system.h"
 #include "entities/world.h"
 #include "entities/component_type_registry.h"
+#include "entities/queries.h"
 #include "core/profiler.h"
 #include "imgui.h"
 #include <cassert>
@@ -28,13 +29,13 @@ namespace Entities
 
 	struct BenchComponent1
 	{
-		static std::string_view GetTypeName() { return "BenchmarkComponent1"; }
+		static std::string_view GetTypeName() { return "BenchComponent1"; }
 		uint64_t m_someData = 5;
 	};
 
 	struct BenchComponent2
 	{
-		static std::string_view GetTypeName() { return "BenchmarkComponent2"; }
+		static std::string_view GetTypeName() { return "BenchComponent2"; }
 		uint64_t m_someData1 = 10;
 		uint64_t m_someData2 = 20;
 		uint64_t m_someData3 = 30;
@@ -49,19 +50,20 @@ namespace Entities
 		const auto freq = R3::Time::HighPerformanceCounterFrequency();
 		constexpr uint32_t test1Repeats = 20;
 		constexpr uint32_t test2Repeats = 20;
-		constexpr uint32_t test3Repeats = 200;
+		constexpr uint32_t test3Repeats = 30;
+		constexpr uint32_t test4Repeats = 100;
 
 		// test 1, add 10k empty entities multiple times
 		for (int i = 0; i < test1Repeats; ++i)
 		{
 			auto testStart = R3::Time::HighPerformanceCounterTicks();
-			for (int i = 0; i < 10000; ++i)
+			for (int j = 0; j < 10000; ++j)
 			{
 				w->AddEntity();
 			}
 			auto testEnd = R3::Time::HighPerformanceCounterTicks();
 			double taken = (testEnd - testStart) / (double)freq;
-			R3::LogInfo("Add 10k entities took {}s", taken);
+			LogInfo("Add 10k entities took {}s", taken);
 		}
 
 		// test 2, add a bunch of entities, delete every 3rd one
@@ -70,16 +72,16 @@ namespace Entities
 		for (int i = 0; i < test2Repeats; ++i)
 		{
 			auto testStart = R3::Time::HighPerformanceCounterTicks();
-			for (int i = 0; i < 10000; ++i)
+			for (int j = 0; j < 10000; ++j)
 			{
 				EntityHandle e = w->AddEntity();
-				if ((i % 3) == 0)
+				if ((j % 3) == 0)
 				{
 					toDelete.emplace_back(e);
 				}
 			}
 			auto addEnd = R3::Time::HighPerformanceCounterTicks();
-			R3::LogInfo("Add 10k entities took {}s", (addEnd - testStart) / (double)freq);
+			LogInfo("Add 10k entities took {}s", (addEnd - testStart) / (double)freq);
 
 			auto delStart = R3::Time::HighPerformanceCounterTicks();
 			for (int d = 0; d < toDelete.size(); ++d)
@@ -87,12 +89,12 @@ namespace Entities
 				w->RemoveEntity(toDelete[d]);
 			}
 			auto testEnd = R3::Time::HighPerformanceCounterTicks();
-			R3::LogInfo("Remove entities took {}s", (testEnd - delStart) / (double)freq);
+			LogInfo("Remove entities took {}s", (delStart - testStart) / (double)freq);
 
 			auto gcStart = R3::Time::HighPerformanceCounterTicks();
 			w->CollectGarbage();
 			auto gcEnd = R3::Time::HighPerformanceCounterTicks();
-			R3::LogInfo("GC took {}s", (gcEnd - gcStart) / (double)freq);
+			LogInfo("GC took {}s", (gcEnd - gcStart) / (double)freq);
 
 			toDelete.clear();
 		}
@@ -101,28 +103,48 @@ namespace Entities
 		for (int i = 0; i < test3Repeats; ++i)
 		{
 			auto testStart = R3::Time::HighPerformanceCounterTicks();
-			for (int i = 0; i < 5000; ++i)
+			for (int j = 0; j < 5000; ++j)
 			{
 				EntityHandle e = w->AddEntity();
-				w->AddComponent(e, "BenchmarkComponent1");
+				w->AddComponent(e, "BenchComponent1");
 			}
 			auto cmp1 = R3::Time::HighPerformanceCounterTicks();
-			R3::LogInfo("Add 5000 entities with cmp 1 took {}s", (cmp1 - testStart) / (double)freq);
-			for (int i = 0; i < 5000; ++i)
+			LogInfo("Add 5000 entities with cmp 1 took {}s", (cmp1 - testStart) / (double)freq);
+			for (int j = 0; j < 5000; ++j)
 			{
 				EntityHandle e = w->AddEntity();
-				w->AddComponent(e, "BenchmarkComponent2");
+				w->AddComponent(e, "BenchComponent2");
 			}
 			auto cmp2 = R3::Time::HighPerformanceCounterTicks();
-			R3::LogInfo("Add 5000 entities with cmp 2 took {}s", (cmp2 - cmp1) / (double)freq);
-			for (int i = 0; i < 5000; ++i)
+			LogInfo("Add 5000 entities with cmp 2 took {}s", (cmp2 - cmp1) / (double)freq);
+			for (int j = 0; j < 5000; ++j)
 			{
 				EntityHandle e = w->AddEntity();
-				w->AddComponent(e, "BenchmarkComponent1");
-				w->AddComponent(e, "BenchmarkComponent2");
+				w->AddComponent(e, "BenchComponent1");
+				w->AddComponent(e, "BenchComponent2");
 			}
 			auto cmp12 = R3::Time::HighPerformanceCounterTicks();
-			R3::LogInfo("Add 5000 entities with cmp 1 + 2 took {}s", (cmp12 - cmp2) / (double)freq);
+			LogInfo("Add 5000 entities with cmp 1 + 2 took {}s", (cmp12 - cmp2) / (double)freq);
+		}
+
+		// test 4 iterate entities with pair of components
+		for (int i = 0; i < test4Repeats; ++i)
+		{
+			auto testStart = R3::Time::HighPerformanceCounterTicks();
+			int foundCount = 0;
+
+			auto fn = [&foundCount](const EntityHandle& e, BenchComponent1& cmp)
+			{
+				foundCount++;
+			};
+			Entities::Queries::ForEach<BenchComponent1>(w, fn);
+
+			//World::EntityIterator it = w->MakeIterator<BenchComponent1, BenchComponent2>();
+			//it.ForEach([&foundCount](BenchComponent1& cmp1, BenchComponent2& cmp2, EntityHandle e) {
+			//	++foundCount;
+			//	});
+			auto testEnd = R3::Time::HighPerformanceCounterTicks();
+			LogInfo("Iterate over {} entities with cmp 1 + 2 took {}s", foundCount, (testEnd - testStart) / (double)freq);
 		}
 	}
 

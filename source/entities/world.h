@@ -1,10 +1,12 @@
 #pragma once 
 #include "entity_handle.h"
+#include "component_type_registry.h"
 #include <string_view>
 #include <vector>
 #include <deque>
 #include <memory>
 #include <unordered_map>
+#include <functional>
 
 namespace R3
 {
@@ -34,6 +36,8 @@ namespace Entities
 
 		// Called from component storage if a component moves in memory
 		void OnComponentMoved(const EntityHandle& owner, uint32_t typeIndex, uint32_t oldIndex, uint32_t newIndex);
+
+		// Storage accessors
 
 	private:
 		

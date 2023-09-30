@@ -43,6 +43,8 @@ namespace Entities
 
 		ComponentType* Find(uint32_t entityID);	// find component by entity public ID, does not need a valid handle!
 
+		void ForEach(std::function<void(ComponentType&, const EntityHandle&)> fn);
+
 	private:
 		std::unordered_map<uint32_t, uint32_t> m_entityToComponent;	// keep? replace?
 		std::vector<EntityHandle> m_owners;	// these are entity IDs
@@ -50,6 +52,35 @@ namespace Entities
 		int32_t m_iterationDepth = 0;	// this is a safety net to catch if we delete during iteration
 		uint64_t m_generation = 1;		// increases every time the existing pointers/storage are changed 
 	};
+
+	template<class ComponentType>
+	void LinearComponentStorage<ComponentType>::ForEach(std::function<void(ComponentType&, const EntityHandle&)> fn)
+	{
+		R3_PROF_EVENT();
+
+		// We need to ensure the integrity of the list during iterations
+		// You can safely add components during iteration, but you CANNOT delete them!
+		++m_iterationDepth;
+		assert(m_owners.size() == m_components.size() && m_entityToComponent.size() == m_owners.size());
+
+		// more safety nets, ensure storage doesn't move
+		void* storagePtr = m_components.data();
+
+		auto currentActiveComponents = m_components.size();
+		for (int c = 0; c < currentActiveComponents; ++c)
+		{
+			fn(m_components[c], m_owners[c]);
+		}
+
+		if (storagePtr != m_components.data())
+		{
+			LogError("NO! Storage ptr was changed during iteration!");
+			assert(!"NO! Storage ptr was changed during iteration!");
+			*((int*)0x0) = 3;	// force crash
+		}
+
+		--m_iterationDepth;
+	}
 
 	template<class ComponentType>
 	ComponentType* LinearComponentStorage<ComponentType>::Find(uint32_t entityID)

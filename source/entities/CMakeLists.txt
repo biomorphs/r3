@@ -9,6 +9,8 @@ set(EntitiesLib_SourceFiles
 	entity_handle.cpp
 	world.h
 	world.cpp
+	queries.h
+	queries.inl
 )
 
 add_library(Entities ${EntitiesLib_SourceFiles})
