@@ -5,16 +5,14 @@
 #include <vector>
 #include <deque>
 #include <memory>
-#include <unordered_map>
-#include <functional>
 
 namespace R3
 {
+class JsonSerialiser;
 namespace Entities
 {
 	class ComponentStorage;
 	template<class ComponentType> class LinearComponentStorage;
-
 	class World
 	{
 	public:
@@ -51,6 +49,9 @@ namespace Entities
 		template<class ComponentType> LinearComponentStorage<ComponentType>* GetStorage();
 		template<class ComponentType> LinearComponentStorage<ComponentType>* GetStorageFast(uint32_t typeIndex);	// danger! no validation
 		ComponentStorage* GetStorage(std::string_view componentTypeName);	// slowpath
+
+		// Pass a vector of handles to serialise a specific set of entities
+		JsonSerialiser SerialiseEntities(std::vector<EntityHandle> e = {});
 		
 	private:
 		void AddComponentInternal(const EntityHandle& e, uint32_t resolvedTypeIndex);

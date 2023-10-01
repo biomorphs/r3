@@ -26,6 +26,7 @@ namespace Entities
 		virtual uint32_t Create(const EntityHandle& e) = 0;	// return index into storage
 		virtual void Destroy(const EntityHandle& e, uint32_t index) = 0;	// you must know the index to destroy a component (for speed)
 		virtual void DestroyAll() = 0;
+		virtual void Serialise(const EntityHandle& e, uint32_t index, JsonSerialiser& s) = 0;
 	protected:
 		World* m_ownerWorld = nullptr;
 		uint32_t m_typeIndex = -1;
@@ -40,6 +41,7 @@ namespace Entities
 		virtual uint32_t Create(const EntityHandle& e);
 		virtual void Destroy(const EntityHandle& e, uint32_t index);
 		virtual void DestroyAll();
+		virtual void Serialise(const EntityHandle& e, uint32_t index, JsonSerialiser& s);
 
 		// Fastpath API
 		ComponentType* GetAtIndex(uint32_t index);	// fastest path, direct random access, but no safety! not even a bounds check in release
@@ -58,6 +60,22 @@ namespace Entities
 		int32_t m_iterationDepth = 0;	// this is a safety net to catch if we delete during iteration
 		uint64_t m_generation = 1;		// increases every time the existing pointers/storage are changed 
 	};
+
+	template<class ComponentType>
+	void LinearComponentStorage<ComponentType>::Serialise(const EntityHandle& e, uint32_t index, JsonSerialiser& s)
+	{
+		if (index == -1 || index >= m_owners.size() || e.GetID() == -1 || e.GetPrivateIndex() == -1)
+		{
+			return;
+		}
+
+		// ensure the handle + index match up
+		assert(m_owners[index] == e);
+		if (m_owners[index] == e)
+		{
+			s(ComponentType::GetTypeName(), *GetAtIndex(index));
+		}
+	}
 
 	template<class ComponentType>
 	ComponentType* LinearComponentStorage<ComponentType>::GetAtIndex(uint32_t index)

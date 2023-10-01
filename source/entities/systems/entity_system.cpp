@@ -52,14 +52,20 @@ namespace R3
 	struct TestComponent1
 	{
 		static std::string_view GetTypeName() { return "TestComponent1"; }
-
+		void SerialiseJson(JsonSerialiser& s)
+		{
+			s("text", m_text);
+		}
 		std::string m_text = "Hello";
 	};
 
 	struct TestComponent2
 	{
 		static std::string_view GetTypeName() { return "TestComponent2"; }
-
+		void SerialiseJson(JsonSerialiser& s)
+		{
+			s("text", m_text);
+		}
 		std::string m_text = "Yo";
 	};
 
@@ -69,6 +75,12 @@ namespace R3
 		uint64_t m_someData = 5;
 	};
 
+	template<> void SerialiseJson(BenchComponent1& t, JsonSerialiser& s)
+	{
+		s.TypeName("Test2");
+		s("SomeData", t.m_someData);
+	}
+
 	struct BenchComponent2
 	{
 		static std::string_view GetTypeName() { return "BenchComponent2"; }
@@ -77,6 +89,15 @@ namespace R3
 		uint64_t m_someData3 = 30;
 		uint64_t m_someData4 = 40;
 	};
+
+	template<> void SerialiseJson(BenchComponent2& t, JsonSerialiser& s)
+	{
+		s.TypeName("Test2");
+		s("SomeData1", t.m_someData1);
+		s("SomeData2", t.m_someData2);
+		s("SomeData3", t.m_someData3);
+		s("SomeData4", t.m_someData4);
+	}
 
 namespace Entities
 {
@@ -138,6 +159,7 @@ namespace Entities
 		constexpr uint32_t test2Repeats = 20;
 		constexpr uint32_t test3Repeats = 30;
 		constexpr uint32_t test4Repeats = 100;
+		constexpr uint32_t test5Repeats = 10;
 
 		// test 1, add 10k empty entities multiple times
 		for (int i = 0; i < test1Repeats; ++i)
@@ -229,6 +251,15 @@ namespace Entities
 			auto testEnd = R3::Time::HighPerformanceCounterTicks();
 			LogInfo("Iterate over {} entities with cmp 1 + 2 took {}s", foundCount, (testEnd - testStart) / (double)freq);
 		}
+
+		// test 5, serialisation
+		for (int i = 0; i < test5Repeats; ++i)
+		{
+			auto testStart = R3::Time::HighPerformanceCounterTicks();
+			auto worldJson = w->SerialiseEntities();
+			auto testEnd = R3::Time::HighPerformanceCounterTicks();			
+			LogInfo("Serialise to JSON took {}s", (testEnd - testStart) / (double)freq);
+		}
 	}
 
 	EntitySystem::EntitySystem()
@@ -256,6 +287,9 @@ namespace Entities
 
 		auto e4 = editWorld->AddEntity();
 		editWorld->AddComponent(e4, "TestComponent2");
+
+		auto worldJson = editWorld->SerialiseEntities();
+		LogInfo("{}", worldJson.c_str());
 	}
 
 	EntitySystem::~EntitySystem()

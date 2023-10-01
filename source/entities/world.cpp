@@ -1,6 +1,7 @@
 #include "world.h"
 #include "core/profiler.h"
 #include "core/log.h"
+#include "engine/serialiser.h"
 #include "component_storage.h"
 #include "component_type_registry.h"
 #include "entity_handle.h"
@@ -18,10 +19,59 @@ namespace Entities
 	{
 	}
 
+	JsonSerialiser World::SerialiseEntities(std::vector<EntityHandle> handles)
+	{
+		JsonSerialiser json(JsonSerialiser::Mode::Write);
+		if (handles.size() == 0)	// collect all the entity handles first
+		{
+			handles.resize(m_allEntities.size());
+			for (int i = 0; i < m_allEntities.size(); ++i)
+			{
+				handles[i] = EntityHandle(m_allEntities[i].m_publicID, i);
+			}
+		}
+		std::vector<uint32_t> entityIDs;
+		entityIDs.resize(handles.size());
+		for (int i = 0; i < handles.size(); ++i)
+		{
+			entityIDs[i] = handles[i].GetID();
+		}
+		auto entityCount = entityIDs.size();
+		json("EntityCount", entityCount);
+		json("EntityIDs", entityIDs);	// needs to be available to build remapping table
+
+		std::vector<nlohmann::json> allEntitiesJson;
+		JsonSerialiser entityJson(JsonSerialiser::Mode::Write);
+		for (int h = 0; h < handles.size(); ++h)
+		{			
+			if (IsHandleValid(handles[h]))
+			{
+				const auto& ped = m_allEntities[handles[h].GetPrivateIndex()];
+				for (int typeIndex = 0; typeIndex < ped.m_componentIndices.size(); ++typeIndex)
+				{
+					auto typeMask = (PerEntityData::ComponentBitsetType)1 << typeIndex;
+					if ((ped.m_ownedComponentBits & typeMask) == typeMask && ped.m_componentIndices[typeIndex] != -1)
+					{
+						m_allComponents[typeIndex]->Serialise(handles[h], ped.m_componentIndices[typeIndex], entityJson);
+					}
+				}
+				if (!entityJson.GetJson().empty())	// only write entity data if there are components
+				{
+					entityJson("ID", entityIDs[h]);
+					allEntitiesJson.push_back(std::move(entityJson.GetJson()));
+				}
+				entityJson.GetJson().clear();
+			}
+		}
+		json.GetJson()["AllEntities"] = std::move(allEntitiesJson);
+
+		return json;
+	}
+
 	EntityHandle World::AddEntity()
 	{
 		R3_PROF_EVENT();
-		auto newId = m_entityIDCounter++;
+		auto newId = m_entityIDCounter++;	// note we are not checking for duplicates here!
 		auto toDelete = std::find_if(m_pendingDelete.begin(), m_pendingDelete.end(), [newId](const EntityHandle& p) {
 			return p.GetID() == newId;
 		});
@@ -31,7 +81,7 @@ namespace Entities
 			return {};	// the old entity didn't clean up fully yet
 		}
 		uint32_t newIndex = -1;
-		if (m_freeEntityIndices.size() > 0)
+		if (m_freeEntityIndices.size() > 0)		// pop from free list
 		{
 			newIndex = m_freeEntityIndices[0];
 			m_freeEntityIndices.pop_front();
@@ -39,7 +89,6 @@ namespace Entities
 			assert(m_allEntities[newIndex].m_ownedComponentBits == 0);
 			assert(m_allEntities[newIndex].m_componentIndices.size() == 0);
 			m_allEntities[newIndex].m_publicID = newId;
-			
 		}
 		else
 		{

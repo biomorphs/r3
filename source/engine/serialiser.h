@@ -41,7 +41,7 @@ namespace R3
 		};
 		std::string c_str() { return m_json.dump(2); }
 		void LoadFromString(std::string_view jsonData);
-
+		nlohmann::json& GetJson() { return m_json; }
 		JsonSerialiser(Mode m) : m_mode(m)
 		{
 		}
