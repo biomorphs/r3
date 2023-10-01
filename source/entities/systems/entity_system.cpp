@@ -5,37 +5,45 @@
 #include "engine/serialiser.h"
 #include "core/profiler.h"
 #include "core/time.h"
+#include "core/glm_headers.h"
 #include "imgui.h"
 #include <cassert>
 #include <format>
 
-
-
 namespace R3
 {
+	// vec3 serialiser
+	template<> void SerialiseJson(glm::vec3& t, JsonSerialiser& s)
+	{
+		s("X", t.x);
+		s("Y", t.y);
+		s("Z", t.z);
+	}
+
 	struct test
 	{
 		int m_x = 3;
 		int m_y = 7;
 		int m_z = 10;
 		std::string m_str = "Hello";
-	};
 
-	template<> void SerialiseJson(test& t, R3::JsonSerialiser& s)
-	{
-		s.TypeName("test");
-		s("X", t.m_x);
-		s("Y", t.m_y);
-		s("Z", t.m_z);
-		s("Str", t.m_str);
-	}
+		// member serialiser
+		void SerialiseJson(JsonSerialiser& s)
+		{
+			s.TypeName("test");
+			s("X", m_x);
+			s("Y", m_y);
+			s("Z", m_z);
+			s("Str", m_str);
+		}
+	};
 
 	struct Test2
 	{
 		int m_x = 12;
 	};
 
-	template<> void SerialiseJson(Test2& t, R3::JsonSerialiser& s)
+	template<> void SerialiseJson(Test2& t, JsonSerialiser& s)
 	{
 		s.TypeName("Test2");
 		s("X", t.m_x);
@@ -79,10 +87,12 @@ namespace Entities
 		std::string s = "Yo";
 		float y = 2.0f;
 		bool doSomething = true;
+		glm::vec3 v0(1, 2, 3);
 		JsonSerialiser json(JsonSerialiser::Write);
 		json("X", x);
 		json("S", s);
 		json("Y", y);
+		json("V", v0);
 		json("doSomething", doSomething);
 		
 		test t;
@@ -118,6 +128,9 @@ namespace Entities
 		std::vector<Test2> loadTest2s;
 		loadJson("someTest2s", loadTest2s);
 		LogInfo("{} loaded", loadTest2s.size());
+
+		glm::vec3 loadV0;
+		loadJson("V", loadV0);
 
 		const auto benchStart = R3::Time::HighPerformanceCounterTicks();
 		const auto freq = R3::Time::HighPerformanceCounterFrequency();

@@ -14,11 +14,24 @@ namespace R3
 	// vectors of the above
 
 	// To serialise a custom type, specialise the SerialiseJson template in the R3 namespace
+	// Or you can add a SerialiseJson(T&, class JsonSerialiser&) member function to your objects
 	// call TypeName() in serialiser to append a type name to data that will be tested on load
+
 	template<class T> void SerialiseJson(T&, class JsonSerialiser&)
 	{
 		assert(!"You need to define a SerialiseJson function!");
 	}
+
+	template <typename T>		// SFINAE trick to detect Serialise member fn
+	class HasSerialiser
+	{
+		typedef char one;
+		typedef long two;
+		template <typename C> static one test(decltype(&C::SerialiseJson));
+		template <typename C> static two test(...);
+	public:
+		enum { value = sizeof(test<T>(0)) == sizeof(char) };
+	};
 
 	class JsonSerialiser
 	{
@@ -60,6 +73,7 @@ namespace R3
 			constexpr bool isInt = std::is_integral<ValueType>::value;
 			constexpr bool isFloat = std::is_floating_point<ValueType>::value;
 			constexpr bool isString = (std::is_same<ValueType, std::string>::value);
+			constexpr bool hasSerialiserMember = HasSerialiser<ValueType>::value;
 			try
 			{
 				if (m_mode == Mode::Read)
@@ -72,7 +86,14 @@ namespace R3
 					{
 						json objectJson = m_json[name];
 						JsonSerialiser js(m_mode, std::move(objectJson));
-						SerialiseJson(t, js);
+						if constexpr (hasSerialiserMember)
+						{
+							t.SerialiseJson(js);
+						}
+						else
+						{
+							SerialiseJson(t, js);
+						}
 					}
 				}
 				else
@@ -84,7 +105,14 @@ namespace R3
 					else
 					{
 						JsonSerialiser js(m_mode);
-						SerialiseJson(t, js);
+						if constexpr (hasSerialiserMember)
+						{
+							t.SerialiseJson(js);
+						}
+						else
+						{
+							SerialiseJson(t, js);
+						}
 						m_json[name] = std::move(js.m_json);
 					}
 				}
@@ -102,6 +130,7 @@ namespace R3
 			constexpr bool isInt = std::is_integral<ValueType>::value;
 			constexpr bool isFloat = std::is_floating_point<ValueType>::value;
 			constexpr bool isString = (std::is_same<ValueType, std::string>::value);
+			constexpr bool hasSerialiserMember = HasSerialiser<ValueType>::value;
 			try
 			{
 				if (m_mode == Mode::Read)
@@ -117,7 +146,14 @@ namespace R3
 						{
 							JsonSerialiser js(m_mode, std::move(listJson[i]));
 							ValueType newVal;
-							SerialiseJson(newVal,js);
+							if constexpr (hasSerialiserMember)
+							{
+								newVal.SerialiseJson(js);
+							}
+							else
+							{
+								SerialiseJson(newVal, js);
+							}
 							v.emplace_back(std::move(newVal));
 						}
 					}
@@ -134,7 +170,14 @@ namespace R3
 						else
 						{
 							JsonSerialiser js(m_mode);
-							SerialiseJson(v[i], js);
+							if constexpr (hasSerialiserMember)
+							{
+								v[i].SerialiseJson(js);
+							}
+							else
+							{
+								SerialiseJson(v[i], js);
+							}
 							listJson.push_back(std::move(js.m_json));
 						}
 					}
