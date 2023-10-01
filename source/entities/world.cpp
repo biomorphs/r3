@@ -22,12 +22,6 @@ namespace Entities
 	{
 		R3_PROF_EVENT();
 		auto newId = m_entityIDCounter++;
-		auto found = m_entityIdToIndex.find(newId);
-		if (found != m_entityIdToIndex.end())
-		{
-			LogError("Entity '%d' already exists!", newId);
-			return {};	// an entity already exists with that ID
-		}
 		auto toDelete = std::find_if(m_pendingDelete.begin(), m_pendingDelete.end(), [newId](const EntityHandle& p) {
 			return p.GetID() == newId;
 		});
@@ -54,7 +48,6 @@ namespace Entities
 			m_allEntities.push_back(newEntityData);
 			newIndex = static_cast<uint32_t>(m_allEntities.size() - 1);
 		}
-		m_entityIdToIndex[newId] = newIndex;
 		return EntityHandle(newId, newIndex);
 	}
 
@@ -68,8 +61,7 @@ namespace Entities
 		{
 			auto& theEntity = m_allEntities[h.GetPrivateIndex()];
 			theEntity.m_ownedComponentBits = 0;	// component checks will fail from this point
-			// we keep around the component indices for later
-			m_pendingDelete.push_back(h);
+			m_pendingDelete.push_back(h);	// we keep around the component indices for later
 		}
 	}
 
@@ -106,7 +98,7 @@ namespace Entities
 			m_allEntities[e.GetPrivateIndex()].m_ownedComponentBits |= newBits;
 			if (m_allEntities[e.GetPrivateIndex()].m_componentIndices.size() < resolvedTypeIndex + 1)
 			{
-				m_allEntities[e.GetPrivateIndex()].m_componentIndices.resize(resolvedTypeIndex + 1);
+				m_allEntities[e.GetPrivateIndex()].m_componentIndices.resize(resolvedTypeIndex + 1, -1);
 			}
 			m_allEntities[e.GetPrivateIndex()].m_componentIndices[resolvedTypeIndex] = newCmpIndex;
 		}
@@ -126,21 +118,22 @@ namespace Entities
 		R3_PROF_EVENT();
 		for (auto toDelete : m_pendingDelete)
 		{
-			for (auto& components : m_allComponents)
+			if (IsHandleValid(toDelete))
 			{
-				if (components.get() != nullptr)
+				// use the entity component indices to destroy the objects
+				auto& theEntity = m_allEntities[toDelete.GetPrivateIndex()];
+				for (int cmpType = 0; cmpType < theEntity.m_componentIndices.size(); ++cmpType)
 				{
-					components->Destroy(toDelete);
+					if (theEntity.m_componentIndices[cmpType] != -1)
+					{
+						m_allComponents[cmpType]->Destroy(toDelete, theEntity.m_componentIndices[cmpType]);
+					}
 				}
-			}
-			auto found = m_entityIdToIndex.find(toDelete.GetID());
-			if (found != m_entityIdToIndex.end())
-			{
-				uint32_t oldIndex = found->second;
-				m_allEntities[oldIndex].m_publicID = -1;
-				m_allEntities[oldIndex].m_componentIndices.clear();	// clear out the old values but keep the memory around
-				m_freeEntityIndices.push_back(oldIndex);
-				m_entityIdToIndex.erase(toDelete.GetID());
+
+				// reset + push the entity to the free list
+				theEntity.m_publicID = -1;
+				theEntity.m_componentIndices.clear();	// clear out the old values but keep the memory around
+				m_freeEntityIndices.push_back(toDelete.GetPrivateIndex());
 			}
 		}
 		m_pendingDelete.clear();
@@ -150,14 +143,12 @@ namespace Entities
 	{
 		R3_PROF_EVENT();
 		assert(IsHandleValid(owner));
-		if (IsHandleValid(owner) && typeIndex != -1 && oldIndex != -1 && newIndex != -1)
-		{
-			auto& theEntity = m_allEntities[owner.GetPrivateIndex()];
-			assert(typeIndex < theEntity.m_componentIndices.size());
-			assert(theEntity.m_componentIndices[typeIndex] == oldIndex);
-			theEntity.m_componentIndices[typeIndex] = newIndex;
-		}
+		auto& theEntity = m_allEntities[owner.GetPrivateIndex()];
+		assert(typeIndex < theEntity.m_componentIndices.size());
+		assert(theEntity.m_componentIndices[typeIndex] == oldIndex);
+		theEntity.m_componentIndices[typeIndex] = newIndex;
 	}
+
 	ComponentStorage* World::GetStorage(std::string_view componentTypeName)
 	{
 		const uint32_t typeIndex = ComponentTypeRegistry::GetInstance().GetTypeIndex(componentTypeName);
