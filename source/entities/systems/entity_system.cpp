@@ -5,21 +5,12 @@
 #include "engine/serialiser.h"
 #include "core/profiler.h"
 #include "core/time.h"
-#include "core/glm_headers.h"
 #include "imgui.h"
 #include <cassert>
 #include <format>
 
 namespace R3
 {
-	// vec3 serialiser
-	template<> void SerialiseJson(glm::vec3& t, JsonSerialiser& s)
-	{
-		s("X", t.x);
-		s("Y", t.y);
-		s("Z", t.z);
-	}
-
 	struct test
 	{
 		int m_x = 3;

@@ -1,5 +1,6 @@
 #pragma once
 #include "core/log.h"
+#include "core/glm_headers.h"
 #include <nlohmann/json.hpp>
 #include <string_view>
 #include <type_traits>
@@ -9,12 +10,12 @@
 namespace R3
 {
 	// serialiser knows about 
-	// ints, floats, bools, strings
+	// ints, floats, bools, strings, vec2, vec3, vec4
 	// objects (that have a Serialise function)
 	// vectors of the above
 
 	// To serialise a custom type, specialise the SerialiseJson template in the R3 namespace
-	// Or you can add a SerialiseJson(T&, class JsonSerialiser&) member function to your objects
+	// Or you can add a SerialiseJson(JsonSerialiser&) member function to your objects
 	// call TypeName() in serialiser to append a type name to data that will be tested on load
 
 	template<class T> void SerialiseJson(T&, class JsonSerialiser&)
@@ -195,4 +196,25 @@ namespace R3
 		Mode m_mode = Write;
 		json m_json;
 	};
+
+	template<> inline void SerialiseJson(glm::vec2& t, JsonSerialiser& s)
+	{
+		s("X", t.x);
+		s("Y", t.y);
+	}
+
+	template<> inline void SerialiseJson(glm::vec3& t, JsonSerialiser& s)
+	{
+		s("X", t.x);
+		s("Y", t.y);
+		s("Z", t.z);
+	}
+
+	template<> inline void SerialiseJson(glm::vec4& t, JsonSerialiser& s)
+	{
+		s("X", t.x);
+		s("Y", t.y);
+		s("Z", t.z);
+		s("W", t.w);
+	}
 }
