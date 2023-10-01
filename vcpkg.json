@@ -14,6 +14,7 @@
     "sol2",
     "glm",
 	"assimp",
-	"vulkan-memory-allocator"
+	"vulkan-memory-allocator",
+	"nlohmann-json"
   ]
 }

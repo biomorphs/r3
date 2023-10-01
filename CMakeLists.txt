@@ -10,12 +10,16 @@ project(R3
   
 set(CMAKE_CXX_STANDARD 20)
 
+#Disable implicit conversions when using json lib
+set(nlohmann-json_IMPLICIT_CONVERSIONS OFF)
+
 # vcpkg dependencies
 find_package(SDL2 REQUIRED)
 find_package(sol2 REQUIRED)
 find_package(glm REQUIRED)
 find_package(assimp REQUIRED)
 find_package(imgui REQUIRED)
+find_package(nlohmann_json REQUIRED)
 
 # external libs not from vcpkg
 find_package(Optick REQUIRED)

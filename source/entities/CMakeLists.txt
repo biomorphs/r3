@@ -16,4 +16,4 @@ set(EntitiesLib_SourceFiles
 add_library(Entities ${EntitiesLib_SourceFiles})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/../ FILES ${EntitiesLib_SourceFiles})
 target_include_directories(Entities PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../)
-target_link_libraries(Entities PRIVATE Core Optick::OptickCore glm::glm imgui::imgui) 
+target_link_libraries(Entities PRIVATE Core Optick::OptickCore glm::glm imgui::imgui nlohmann_json::nlohmann_json) 

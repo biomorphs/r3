@@ -2,14 +2,44 @@
 #include "entities/world.h"
 #include "entities/component_type_registry.h"
 #include "entities/queries.h"
+#include "engine/serialiser.h"
 #include "core/profiler.h"
 #include "core/time.h"
 #include "imgui.h"
 #include <cassert>
 #include <format>
 
+
+
 namespace R3
 {
+	struct test
+	{
+		int m_x = 3;
+		int m_y = 7;
+		int m_z = 10;
+		std::string m_str = "Hello";
+	};
+
+	template<> void SerialiseJson(test& t, R3::JsonSerialiser& s)
+	{
+		s.TypeName("test");
+		s("X", t.m_x);
+		s("Y", t.m_y);
+		s("Z", t.m_z);
+		s("Str", t.m_str);
+	}
+
+	struct Test2
+	{
+		int m_x = 0;
+	};
+
+	template<> void SerialiseJson(Test2& t, R3::JsonSerialiser& s)
+	{
+		s.TypeName("Test2");
+		s("X", t.m_x);
+	}
 namespace Entities
 {
 	struct TestComponent1
@@ -41,9 +71,35 @@ namespace Entities
 		uint64_t m_someData4 = 40;
 	};
 
+	
+
 	void EntityBenchmarks(World* w)
 	{
 		R3_PROF_EVENT();
+		int x = 1;
+		std::string s = "Yo";
+		float y = 2.0f;
+		JsonSerialiser json(JsonSerialiser::Write);
+		json("X", x);
+		json("S", s);
+		json("Y", y);
+		
+		test t;
+		t.m_str = "Whut";
+		json("test", t);
+
+		Test2 t2;
+		json("test2", t2);
+
+		std::vector<uint32_t> someInts = { 1,2,3,4,5 };
+		json("someInts", someInts);
+
+		std::vector<Test2> someTest2s = {
+			{ 1 }, { 5 }, { 7 }
+		};
+		json("someTest2s", someTest2s);
+
+		LogInfo("Serialised data: \n{}", json.c_str());
 
 		const auto benchStart = R3::Time::HighPerformanceCounterTicks();
 		const auto freq = R3::Time::HighPerformanceCounterFrequency();

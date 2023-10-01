@@ -4,7 +4,6 @@
 #include "entities/component_storage.h"
 #include <memory>
 
-
 namespace R3
 {
 namespace Entities

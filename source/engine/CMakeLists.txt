@@ -8,6 +8,8 @@ set(EngineLib_SourceFiles
 	systems.cpp
 	frame_graph.h
 	frame_graph.cpp
+	serialiser.h
+	serialiser.cpp
 	systems/time_system.h
 	systems/time_system.cpp
 	systems/event_system.h
