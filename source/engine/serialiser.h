@@ -60,47 +60,38 @@ namespace R3
 			constexpr bool isInt = std::is_integral<ValueType>::value;
 			constexpr bool isFloat = std::is_floating_point<ValueType>::value;
 			constexpr bool isString = (std::is_same<ValueType, std::string>::value);
-			if (m_mode == Mode::Read)
+			try
 			{
-				if constexpr (isInt || isFloat || isString)
+				if (m_mode == Mode::Read)
 				{
-					try
+					if constexpr (isInt || isFloat || isString)
 					{
 						t = m_json[name];
 					}
-					catch (std::exception e)
+					else
 					{
-						LogError("Failed to serialise {} - ", name, e.what());
+						json objectJson = m_json[name];
+						JsonSerialiser js(m_mode, std::move(objectJson));
+						SerialiseJson(t, js);
 					}
 				}
 				else
 				{
-					json currentJson = std::move(m_json);
-					m_json = currentJson[name];
-					SerialiseJson(t, *this);
-					m_json = std::move(currentJson);
-				}
-			}
-			else
-			{
-				if constexpr (isInt || isFloat || isString)
-				{
-					try
+					if constexpr (isInt || isFloat || isString)
 					{
 						m_json[name] = t;
 					}
-					catch (std::exception e)
+					else
 					{
-						LogError("Failed to serialise {} - ", name, e.what());
+						JsonSerialiser js(m_mode);
+						SerialiseJson(t, js);
+						m_json[name] = std::move(js.m_json);
 					}
 				}
-				else
-				{
-					json currentJson = std::move(m_json);
-					SerialiseJson(t, *this);
-					currentJson[name] = m_json;
-					m_json = std::move(currentJson);
-				}
+			}
+			catch (std::exception e)
+			{
+				LogError("Failed to serialise {} - ", name, e.what());
 			}
 		}
 
@@ -111,9 +102,9 @@ namespace R3
 			constexpr bool isInt = std::is_integral<ValueType>::value;
 			constexpr bool isFloat = std::is_floating_point<ValueType>::value;
 			constexpr bool isString = (std::is_same<ValueType, std::string>::value);
-			if (m_mode == Mode::Read)
+			try
 			{
-				try
+				if (m_mode == Mode::Read)
 				{
 					std::vector<json> listJson = m_json[name];
 					for (int i = 0; i < listJson.size(); ++i)
@@ -124,42 +115,40 @@ namespace R3
 						}
 						else
 						{
-							json currentJson = std::move(m_json);
-							m_json = std::move(listJson[i]);
+							JsonSerialiser js(m_mode, std::move(listJson[i]));
 							ValueType newVal;
-							SerialiseJson(newVal, *this);
+							SerialiseJson(newVal,js);
 							v.emplace_back(std::move(newVal));
-							m_json = std::move(currentJson);
 						}
 					}
 				}
-				catch (std::exception e)
+				else
 				{
-					LogError("Failed to serialise {} - {}", name, e.what());
+					std::vector<json> listJson;
+					for (int i = 0; i < v.size(); ++i)
+					{
+						if constexpr (isInt || isFloat || isString)
+						{
+							listJson.push_back(v[i]);
+						}
+						else
+						{
+							JsonSerialiser js(m_mode);
+							SerialiseJson(v[i], js);
+							listJson.push_back(std::move(js.m_json));
+						}
+					}
+					m_json[name] = listJson;
 				}
 			}
-			else
+			catch (std::exception e)
 			{
-				std::vector<json> listJson;
-				for (int i = 0; i < v.size(); ++i)
-				{
-					if constexpr (isInt || isFloat || isString)
-					{
-						listJson.push_back(v[i]);
-					}
-					else
-					{
-						json currentJson = std::move(m_json);
-						SerialiseJson(v[i], *this);
-						listJson.push_back(std::move(m_json));
-						m_json = std::move(currentJson);
-					}
-				}
-				m_json[name] = listJson;
+				LogError("Failed to serialise {} - {}", name, e.what());
 			}
 		}
 	private:
 		using json = nlohmann::json;
+		JsonSerialiser(Mode m, json&& j) : m_mode(m), m_json(std::move(j)) {}
 		Mode m_mode = Write;
 		json m_json;
 	};
