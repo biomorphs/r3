@@ -77,7 +77,6 @@ namespace R3
 
 	template<> void SerialiseJson(BenchComponent1& t, JsonSerialiser& s)
 	{
-		s.TypeName("Test2");
 		s("SomeData", t.m_someData);
 	}
 
@@ -92,7 +91,6 @@ namespace R3
 
 	template<> void SerialiseJson(BenchComponent2& t, JsonSerialiser& s)
 	{
-		s.TypeName("Test2");
 		s("SomeData1", t.m_someData1);
 		s("SomeData2", t.m_someData2);
 		s("SomeData3", t.m_someData3);
@@ -159,7 +157,7 @@ namespace Entities
 		constexpr uint32_t test2Repeats = 20;
 		constexpr uint32_t test3Repeats = 30;
 		constexpr uint32_t test4Repeats = 100;
-		constexpr uint32_t test5Repeats = 10;
+		constexpr uint32_t test5Repeats = 5;
 
 		// test 1, add 10k empty entities multiple times
 		for (int i = 0; i < test1Repeats; ++i)

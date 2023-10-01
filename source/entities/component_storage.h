@@ -23,6 +23,7 @@ namespace Entities
 		virtual ~ComponentStorage() {};
 
 		// Base API does not know anything about the underlying component type
+		virtual uint32_t GetTotalCount() = 0;
 		virtual uint32_t Create(const EntityHandle& e) = 0;	// return index into storage
 		virtual void Destroy(const EntityHandle& e, uint32_t index) = 0;	// you must know the index to destroy a component (for speed)
 		virtual void DestroyAll() = 0;
@@ -38,6 +39,7 @@ namespace Entities
 	{
 	public:
 		LinearComponentStorage(World* w, uint32_t typeIndex) : ComponentStorage(w, typeIndex) {}
+		virtual uint32_t GetTotalCount() { return static_cast<uint32_t>(m_owners.size()); }
 		virtual uint32_t Create(const EntityHandle& e);
 		virtual void Destroy(const EntityHandle& e, uint32_t index);
 		virtual void DestroyAll();
