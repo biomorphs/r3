@@ -32,7 +32,7 @@ namespace R3
 
 	struct Test2
 	{
-		int m_x = 0;
+		int m_x = 12;
 	};
 
 	template<> void SerialiseJson(Test2& t, R3::JsonSerialiser& s)
@@ -40,8 +40,7 @@ namespace R3
 		s.TypeName("Test2");
 		s("X", t.m_x);
 	}
-namespace Entities
-{
+
 	struct TestComponent1
 	{
 		static std::string_view GetTypeName() { return "TestComponent1"; }
@@ -71,18 +70,20 @@ namespace Entities
 		uint64_t m_someData4 = 40;
 	};
 
-	
-
+namespace Entities
+{
 	void EntityBenchmarks(World* w)
 	{
 		R3_PROF_EVENT();
 		int x = 1;
 		std::string s = "Yo";
 		float y = 2.0f;
+		bool doSomething = true;
 		JsonSerialiser json(JsonSerialiser::Write);
 		json("X", x);
 		json("S", s);
 		json("Y", y);
+		json("doSomething", doSomething);
 		
 		test t;
 		t.m_str = "Whut";
@@ -100,6 +101,23 @@ namespace Entities
 		json("someTest2s", someTest2s);
 
 		LogInfo("Serialised data: \n{}", json.c_str());
+
+		JsonSerialiser loadJson(JsonSerialiser::Read);
+		loadJson.LoadFromString(json.c_str());
+
+		std::vector<uint32_t> loadSomeInts;
+		loadJson("someInts", loadSomeInts);
+		for (int s = 0; s < loadSomeInts.size(); ++s)
+		{
+			LogInfo("Loaded int: {}", loadSomeInts[s]);
+		}
+		
+		Test2 loadTest2 = { 25 };
+		loadJson("test2", loadTest2);
+
+		std::vector<Test2> loadTest2s;
+		loadJson("someTest2s", loadTest2s);
+		LogInfo("{} loaded", loadTest2s.size());
 
 		const auto benchStart = R3::Time::HighPerformanceCounterTicks();
 		const auto freq = R3::Time::HighPerformanceCounterFrequency();

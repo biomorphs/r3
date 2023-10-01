@@ -8,25 +8,18 @@
 
 namespace R3
 {
-	class JsonSerialiser;
-}
-
-
-namespace R3
-{
 	// serialiser knows about 
 	// ints, floats, bools, strings
 	// objects (that have a Serialise function)
-	// arrays of the above
-	// key->value containers of the above (within reason, strings/ints as keys only)
+	// vectors of the above
 
 	// To serialise a custom type, specialise the SerialiseJson template in the R3 namespace
-	template<class T> void SerialiseJson(T&, R3::JsonSerialiser&)
+	// call TypeName() in serialiser to append a type name to data that will be tested on load
+	template<class T> void SerialiseJson(T&, class JsonSerialiser&)
 	{
 		assert(!"You need to define a SerialiseJson function!");
 	}
 
-	class JsonSerialiser;
 	class JsonSerialiser
 	{
 	public:
@@ -34,6 +27,7 @@ namespace R3
 			Read, Write
 		};
 		std::string c_str() { return m_json.dump(2); }
+		void LoadFromString(std::string_view jsonData);
 
 		JsonSerialiser(Mode m) : m_mode(m)
 		{
@@ -59,6 +53,7 @@ namespace R3
 			}
 		}
 
+		// Main serialisation operator
 		template<class ValueType>
 		void operator()(std::string_view name, ValueType& t)
 		{
@@ -69,24 +64,39 @@ namespace R3
 			{
 				if constexpr (isInt || isFloat || isString)
 				{
-					t = m_json[name];
+					try
+					{
+						t = m_json[name];
+					}
+					catch (std::exception e)
+					{
+						LogError("Failed to serialise {} - ", name, e.what());
+					}
 				}
 				else
 				{
+					json currentJson = std::move(m_json);
+					m_json = currentJson[name];
 					SerialiseJson(t, *this);
+					m_json = std::move(currentJson);
 				}
 			}
 			else
 			{
 				if constexpr (isInt || isFloat || isString)
 				{
-					m_json[name] = t;
+					try
+					{
+						m_json[name] = t;
+					}
+					catch (std::exception e)
+					{
+						LogError("Failed to serialise {} - ", name, e.what());
+					}
 				}
 				else
 				{
-					// this is gross
 					json currentJson = std::move(m_json);
-					m_json = {};
 					SerialiseJson(t, *this);
 					currentJson[name] = m_json;
 					m_json = std::move(currentJson);
@@ -98,7 +108,55 @@ namespace R3
 		template<class ValueType>
 		void operator()(std::string_view name, std::vector<ValueType>& v)
 		{
-			LogInfo("Printing a vector of ValueType");
+			constexpr bool isInt = std::is_integral<ValueType>::value;
+			constexpr bool isFloat = std::is_floating_point<ValueType>::value;
+			constexpr bool isString = (std::is_same<ValueType, std::string>::value);
+			if (m_mode == Mode::Read)
+			{
+				try
+				{
+					std::vector<json> listJson = m_json[name];
+					for (int i = 0; i < listJson.size(); ++i)
+					{
+						if constexpr (isInt || isFloat || isString)
+						{
+							v.emplace_back(listJson[i]);
+						}
+						else
+						{
+							json currentJson = std::move(m_json);
+							m_json = std::move(listJson[i]);
+							ValueType newVal;
+							SerialiseJson(newVal, *this);
+							v.emplace_back(std::move(newVal));
+							m_json = std::move(currentJson);
+						}
+					}
+				}
+				catch (std::exception e)
+				{
+					LogError("Failed to serialise {} - {}", name, e.what());
+				}
+			}
+			else
+			{
+				std::vector<json> listJson;
+				for (int i = 0; i < v.size(); ++i)
+				{
+					if constexpr (isInt || isFloat || isString)
+					{
+						listJson.push_back(v[i]);
+					}
+					else
+					{
+						json currentJson = std::move(m_json);
+						SerialiseJson(v[i], *this);
+						listJson.push_back(std::move(m_json));
+						m_json = std::move(currentJson);
+					}
+				}
+				m_json[name] = listJson;
+			}
 		}
 	private:
 		using json = nlohmann::json;
