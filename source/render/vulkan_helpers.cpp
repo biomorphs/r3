@@ -99,11 +99,10 @@ namespace R3
 		{
 			R3_PROF_EVENT();
 			VkShaderModule result = VK_NULL_HANDLE;
-			std::string fullPath = std::string(R3::FileIO::GetBasePath()) + filePath.data();
 			std::vector<uint8_t> spirv;
-			if (!R3::FileIO::LoadBinaryFile(fullPath, spirv))
+			if (!R3::FileIO::LoadBinaryFile(filePath, spirv))
 			{
-				LogError("Failed to load spirv file {}", fullPath);
+				LogError("Failed to load spirv file {}", filePath);
 			}
 			else
 			{

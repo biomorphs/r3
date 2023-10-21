@@ -39,6 +39,7 @@ namespace R3
 		{
 			Internal::g_fullCmdLine = fullCmdLine;
 			R3::FileIO::InitialisePaths();
+			R3::FileIO::AddBasePath("common");
 
 			ProcessCommandLine();
 
