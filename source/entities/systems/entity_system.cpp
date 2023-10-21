@@ -2,6 +2,7 @@
 #include "entities/world.h"
 #include "entities/component_type_registry.h"
 #include "entities/queries.h"
+#include "engine/entity_list_widget.h"
 #include "engine/serialiser.h"
 #include "core/profiler.h"
 #include "core/time.h"
@@ -336,6 +337,10 @@ namespace Entities
 	bool EntitySystem::ShowGui()
 	{
 		R3_PROF_EVENT();
+
+		static EntityListWidget w;
+		w.Update(*GetWorld("Benchmarks"));
+
 		const auto& allCmpTypes = ComponentTypeRegistry::GetInstance().AllTypes();
 		ImGui::Begin("Entity System");
 		{

@@ -21,6 +21,7 @@ namespace Entities
 
 	JsonSerialiser World::SerialiseEntities(std::vector<EntityHandle> handles)
 	{
+		R3_PROF_EVENT();
 		JsonSerialiser json(JsonSerialiser::Mode::Write);
 		if (handles.size() == 0)	// collect all the entity handles first
 		{
@@ -66,6 +67,54 @@ namespace Entities
 		json.GetJson()["AllEntities"] = std::move(allEntitiesJson);
 
 		return json;
+	}
+
+	std::string World::GetEntityDisplayName(const EntityHandle& h) const
+	{
+		if (IsHandleValid(h))
+		{
+			return std::format("Entity {}", h.GetID());
+		}
+		else
+		{
+			return "<INVALID>";	// is it small enough for small string optimisation?
+		}
+	}
+
+	std::vector<EntityHandle> World::GetActiveEntities(uint32_t startIndex, uint32_t endIndex) const
+	{
+		R3_PROF_EVENT();
+		assert(endIndex >= startIndex);
+		
+		const uint32_t totalCount = static_cast<uint32_t>(m_allEntities.size());
+		const uint32_t maxCount = (endIndex == -1) ? totalCount - startIndex : endIndex - startIndex;
+		std::vector<EntityHandle> entities;
+		entities.reserve(maxCount);
+
+		if (m_freeEntityIndices.size() == 0)	// fast path if all slots are allocated
+		{
+			for (uint32_t i = startIndex; i < endIndex; ++i)
+			{
+				entities.emplace_back(m_allEntities[i].m_publicID, i);
+			}
+		}
+		else
+		{
+			uint32_t thisIndex = 0;
+			for (uint32_t i = 0; i < totalCount && entities.size() < maxCount; ++i)
+			{
+				const uint32_t& id = m_allEntities[i].m_publicID;
+				if (id != -1)
+				{
+					if (thisIndex++ >= startIndex)
+					{
+						entities.emplace_back(id, i);
+					}
+				}
+			}
+		}
+		
+		return entities;
 	}
 
 	EntityHandle World::AddEntity()
@@ -151,6 +200,22 @@ namespace Entities
 			}
 			m_allEntities[e.GetPrivateIndex()].m_componentIndices[resolvedTypeIndex] = newCmpIndex;
 		}
+	}
+
+	bool World::HasComponent(const EntityHandle& e, std::string_view componentTypeName)
+	{
+		const uint32_t componentTypeIndex = ComponentTypeRegistry::GetInstance().GetTypeIndex(componentTypeName);
+		assert(componentTypeIndex != -1);
+		if (IsHandleValid(e) && componentTypeIndex != -1)
+		{
+			const auto testMask = (PerEntityData::ComponentBitsetType)1 << componentTypeIndex;
+			const PerEntityData& ped = m_allEntities[e.GetPrivateIndex()];
+			if ((ped.m_ownedComponentBits & testMask) == testMask && ped.m_componentIndices.size() > componentTypeIndex)
+			{
+				return ped.m_componentIndices[componentTypeIndex] != -1;
+			}
+		}
+		return false;
 	}
 
 	void World::AddComponent(const EntityHandle& e, std::string_view componentTypeName)

@@ -10,6 +10,8 @@ set(EngineLib_SourceFiles
 	frame_graph.cpp
 	serialiser.h
 	serialiser.cpp
+	entity_list_widget.h
+	entity_list_widget.cpp
 	systems/time_system.h
 	systems/time_system.cpp
 	systems/event_system.h

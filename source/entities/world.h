@@ -26,13 +26,16 @@ namespace Entities
 		EntityHandle AddEntity();
 		void RemoveEntity(const EntityHandle& h);	// defers actual deletion until CollectGarbage() called
 		bool IsHandleValid(const EntityHandle& h) const;
+		std::vector<EntityHandle> GetActiveEntities(uint32_t startIndex=0, uint32_t endIndex=-1) const;	// slow! only for editor/tools/debugging
+		std::string GetEntityDisplayName(const EntityHandle& h) const;
 
 		// Components slow path
 		void AddComponent(const EntityHandle& e, std::string_view componentTypeName);
-		
+		bool HasComponent(const EntityHandle& e, std::string_view componentTypeName);
+
 		// fast path
 		template<class ComponentType>
-		void AddComponent(EntityHandle e);
+		void AddComponent(const EntityHandle& e);
 		template<class ComponentType>
 		ComponentType* GetComponent(const EntityHandle& e);
 		template<class ComponentType>
@@ -73,7 +76,7 @@ namespace Entities
 	};
 
 	template<class ComponentType>
-	void World::AddComponent(EntityHandle e)
+	void World::AddComponent(const EntityHandle& e)
 	{
 		if (IsHandleValid(e))
 		{
