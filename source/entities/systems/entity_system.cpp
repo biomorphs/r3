@@ -148,7 +148,7 @@ namespace Entities
 		constexpr uint32_t test2Repeats = 20;
 		constexpr uint32_t test3Repeats = 30;
 		constexpr uint32_t test4Repeats = 100;
-		constexpr uint32_t test5Repeats = 5;
+		constexpr uint32_t test5Repeats = 1;
 
 		// test 1, add 10k empty entities multiple times
 		for (int i = 0; i < test1Repeats; ++i)
@@ -336,6 +336,7 @@ namespace Entities
 	bool EntitySystem::ShowGui()
 	{
 		R3_PROF_EVENT();
+		const auto& allCmpTypes = ComponentTypeRegistry::GetInstance().AllTypes();
 		ImGui::Begin("Entity System");
 		{
 			auto str = std::format("All Worlds({})", m_worlds.size());
@@ -347,18 +348,26 @@ namespace Entities
 					str = std::format("{} ({} active entities)", world.GetName(), world.GetActiveEntityCount());
 					if (ImGui::TreeNode(str.c_str()))
 					{
+						for (int t = 0; t < allCmpTypes.size(); ++t)
+						{
+							auto storage = world.GetStorage(allCmpTypes[t].m_name);
+							if (storage && storage->GetTotalCount() > 0)
+							{
+								auto str = std::format("{}: {} instances", allCmpTypes[t].m_name, storage->GetTotalCount());
+								ImGui::Text(str.c_str());
+							}							
+						}
 						ImGui::TreePop();
 					}
 				}
 				ImGui::TreePop();
 			}
-			const auto& allTypes = ComponentTypeRegistry::GetInstance().AllTypes();
-			str = std::format("All Component Types({})", allTypes.size());
+			str = std::format("All Component Types({})", allCmpTypes.size());
 			if (ImGui::TreeNode(str.c_str()))
 			{
-				for (int t = 0; t < allTypes.size(); ++t)
+				for (int t = 0; t < allCmpTypes.size(); ++t)
 				{
-					auto& type = allTypes[t];
+					auto& type = allCmpTypes[t];
 					str = std::format("{} ({})", type.m_name, type.m_dynamicIndex);
 					if (ImGui::TreeNode(str.c_str()))
 					{

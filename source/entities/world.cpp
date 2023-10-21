@@ -201,7 +201,7 @@ namespace Entities
 	ComponentStorage* World::GetStorage(std::string_view componentTypeName)
 	{
 		const uint32_t typeIndex = ComponentTypeRegistry::GetInstance().GetTypeIndex(componentTypeName);
-		if (typeIndex == -1 || m_allComponents.size() < typeIndex)
+		if (typeIndex == -1 || typeIndex >= m_allComponents.size() )
 		{
 			return nullptr;
 		}

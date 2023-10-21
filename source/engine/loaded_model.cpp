@@ -169,9 +169,15 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 
+		std::vector<uint8_t> rawData;
+		if (!FileIO::LoadBinaryFile(filePath, rawData))
+		{
+			LogWarn("Failed to load model file {}", filePath);
+			return false;
+		}
+
 		Assimp::Importer importer;
-		std::string fullPath = std::string(FileIO::GetBasePath()) + std::string(filePath);
-		const aiScene* scene = importer.ReadFile(fullPath,
+		const aiScene* scene = importer.ReadFileFromMemory(rawData.data(), rawData.size(),
 			aiProcess_CalcTangentSpace |
 			aiProcess_GenNormals |	// only if no normals in data
 			aiProcess_Triangulate |

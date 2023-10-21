@@ -7,7 +7,7 @@ namespace R3
 	public:
 		Mutex();
 		Mutex(const Mutex& other) = delete;
-		Mutex(Mutex&& other);
+		Mutex(Mutex&& other) noexcept;
 		~Mutex();
 
 		void Lock();

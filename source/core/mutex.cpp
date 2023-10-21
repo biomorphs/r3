@@ -8,7 +8,7 @@ namespace R3
 		m_mutex = SDL_CreateMutex();
 	}
 
-	Mutex::Mutex(Mutex&& other)
+	Mutex::Mutex(Mutex&& other) noexcept
 	{
 		m_mutex = other.m_mutex;
 		other.m_mutex = nullptr;
