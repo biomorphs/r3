@@ -1,6 +1,7 @@
 #include "entity_list_widget.h"
 #include "entities/world.h"
 #include "entities/component_type_registry.h"
+#include "core/profiler.h"
 #include "imgui.h"
 #include <format>
 
@@ -20,14 +21,20 @@ namespace R3
 
 	bool EntityListWidget::DisplaySingleEntity(Entities::World& w, const Entities::EntityHandle& h)
 	{
-		std::string entityName = w.GetEntityDisplayName(h);
+		char entityName[256] = "";
+		char displayName[512] = "";
+		w.GetEntityDisplayName(h, entityName, sizeof(entityName));
 		if (m_options.m_showInternalIndex)
 		{
-			entityName = std::format("{} (#{})", entityName, h.GetPrivateIndex());
+			sprintf_s(displayName, "%s (#%d)", entityName, h.GetPrivateIndex());
+		}
+		else
+		{
+			sprintf_s(displayName, "%s", entityName);
 		}
 		if (m_options.m_canExpandEntities)
 		{
-			if (ImGui::TreeNode(entityName.c_str()))
+			if (ImGui::TreeNode(displayName))
 			{
 				DisplayEntityExtended(w, h);
 				ImGui::TreePop();
@@ -35,26 +42,52 @@ namespace R3
 		}
 		else
 		{
-			ImGui::Selectable(entityName.c_str());
+			ImGui::Selectable(displayName);
 		}
 		
 		return true;
 	}
 
+	bool EntityListWidget::IsFilterActive()
+	{
+		if (m_options.m_filter == FilterType::ByName && m_filterText.size() > 0)
+		{
+			return true;
+		}
+		return false;
+	}
+
 	void EntityListWidget::DisplayFlatList(Entities::World& w)
 	{
+		R3_PROF_EVENT();
+
 		// use a clipper to limit the rows we need to display in a large list
 		ImGuiListClipper clipper;
-		clipper.Begin(static_cast<int>(w.GetActiveEntityCount()), ImGui::GetTextLineHeightWithSpacing());
-		while (clipper.Step())
+		if (IsFilterActive())
 		{
-			std::vector<Entities::EntityHandle> allEntities = w.GetActiveEntities(clipper.DisplayStart, clipper.DisplayEnd);
-			for (int i = 0; i < allEntities.size(); ++i)
+			clipper.Begin(static_cast<int>(m_filteredEntities.size()), ImGui::GetTextLineHeightWithSpacing());
+			while (clipper.Step())
 			{
-				DisplaySingleEntity(w, allEntities[i]);
+				for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
+				{
+					DisplaySingleEntity(w, m_filteredEntities[i]);
+				}
 			}
+			clipper.End();
 		}
-		clipper.End();
+		else
+		{
+			clipper.Begin(static_cast<int>(w.GetActiveEntityCount()), ImGui::GetTextLineHeightWithSpacing());
+			while (clipper.Step())
+			{
+				std::vector<Entities::EntityHandle> all = w.GetActiveEntities(clipper.DisplayStart, clipper.DisplayEnd);
+				for (int i = 0; i < all.size(); ++i)
+				{
+					DisplaySingleEntity(w, all[i]);
+				}
+			}
+			clipper.End();
+		}
 	}
 
 	void EntityListWidget::DisplayOptionsBar()
@@ -72,15 +105,51 @@ namespace R3
 		}
 	}
 
+	void EntityListWidget::DisplayFilter()
+	{
+		if (m_options.m_filter == FilterType::ByName && m_filterText.size() < 256)
+		{
+			char filterBuffer[256] = { '\0' };
+			strcpy_s(filterBuffer, m_filterText.c_str());
+			if (ImGui::InputTextWithHint("##filter", "Filter by name", filterBuffer, sizeof(filterBuffer)))
+			{
+				m_filterText = filterBuffer;
+			}
+		}
+	}
+
+	void EntityListWidget::FilterEntities(Entities::World& w)
+	{
+		R3_PROF_EVENT();
+		m_filteredEntities.clear();
+		if (m_options.m_filter == FilterType::ByName && !m_filterText.empty())
+		{
+			char entityName[256] = "";
+			auto filterEntity = [&](const Entities::EntityHandle& e) {
+				w.GetEntityDisplayName(e, entityName, sizeof(entityName));
+				if (strstr(entityName, m_filterText.c_str()) != nullptr)
+				{
+					m_filteredEntities.emplace_back(e);
+				}
+				return true;
+			};
+			w.ForEachActiveEntity(filterEntity);
+		}
+	}
+
 	void EntityListWidget::Update(Entities::World& w)
 	{
+		R3_PROF_EVENT();
+		FilterEntities(w);
 		std::string txt = "Entities in '" + std::string(w.GetName()) + "'";
 		if (ImGui::Begin(txt.c_str()))
 		{
 			DisplayOptionsBar();
+			ImGui::SameLine();
+			DisplayFilter();
 
 			ImGuiWindowFlags window_flags = 0;
-			ImGui::BeginChild("AllEntitiesList", ImGui::GetContentRegionAvail(), false, window_flags);
+			ImGui::BeginChild("AllEntitiesList", ImGui::GetContentRegionAvail(), true, window_flags);
 			if (m_options.m_layout == LayoutMode::FlatList)
 			{
 				DisplayFlatList(w);

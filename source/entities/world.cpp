@@ -69,15 +69,16 @@ namespace Entities
 		return json;
 	}
 
-	std::string World::GetEntityDisplayName(const EntityHandle& h) const
+	size_t World::GetEntityDisplayName(const EntityHandle& h, char* nameBuffer, size_t maxLength) const
 	{
 		if (IsHandleValid(h))
 		{
-			return std::format("Entity {}", h.GetID());
+			return snprintf(nameBuffer, maxLength, "Entity %d", h.GetID());
 		}
 		else
 		{
-			return "<INVALID>";	// is it small enough for small string optimisation?
+			nameBuffer[0] = '\0';
+			return 0;	// is it small enough for small string optimisation?
 		}
 	}
 
@@ -93,7 +94,8 @@ namespace Entities
 
 		if (m_freeEntityIndices.size() == 0)	// fast path if all slots are allocated
 		{
-			for (uint32_t i = startIndex; i < endIndex; ++i)
+			uint32_t actualEnd = startIndex + maxCount;
+			for (uint32_t i = startIndex; i < actualEnd; ++i)
 			{
 				entities.emplace_back(m_allEntities[i].m_publicID, i);
 			}

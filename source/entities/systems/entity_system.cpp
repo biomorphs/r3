@@ -338,6 +338,8 @@ namespace Entities
 	{
 		R3_PROF_EVENT();
 
+		ImGui::ShowDemoWindow();
+
 		static EntityListWidget w;
 		w.Update(*GetWorld("Benchmarks"));
 

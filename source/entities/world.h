@@ -27,7 +27,9 @@ namespace Entities
 		void RemoveEntity(const EntityHandle& h);	// defers actual deletion until CollectGarbage() called
 		bool IsHandleValid(const EntityHandle& h) const;
 		std::vector<EntityHandle> GetActiveEntities(uint32_t startIndex=0, uint32_t endIndex=-1) const;	// slow! only for editor/tools/debugging
-		std::string GetEntityDisplayName(const EntityHandle& h) const;
+		size_t GetEntityDisplayName(const EntityHandle& h, char* nameBuffer, size_t maxLength) const;	// returns size of string written to nameBuffer
+		template<class It>	// bool(const EntityHandle& e)
+		void ForEachActiveEntity(const It&);	// slow! tools/debug only
 
 		// Components slow path
 		void AddComponent(const EntityHandle& e, std::string_view componentTypeName);
@@ -74,6 +76,35 @@ namespace Entities
 		std::vector<std::unique_ptr<ComponentStorage>> m_allComponents;	// storage for all components
 		std::vector<EntityHandle> m_pendingDelete;	// all entities to be deleted (these handles should still all be valid)
 	};
+
+	template<class It>	// bool(const EntityHandle& e)
+	void World::ForEachActiveEntity(const It& it)
+	{
+		if (m_freeEntityIndices.size() == 0)	// fast path if all slots are allocated
+		{
+			for (uint32_t i = 0; i < m_allEntities.size(); ++i)
+			{
+				if (!it(EntityHandle(m_allEntities[i].m_publicID, i)))
+				{
+					return;
+				}
+			}
+		}
+		else
+		{
+			for (uint32_t i = 0; i < m_allEntities.size(); ++i)
+			{
+				const uint32_t& id = m_allEntities[i].m_publicID;
+				if (id != -1)
+				{
+					if (!it(EntityHandle(id, i)))
+					{
+						return;
+					}
+				}
+			}
+		}
+	}
 
 	template<class ComponentType>
 	void World::AddComponent(const EntityHandle& e)
