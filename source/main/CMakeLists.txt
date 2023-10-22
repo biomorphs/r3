@@ -12,6 +12,7 @@ target_link_libraries(R3 PRIVATE
 	Engine
 	Entities
 	Render
+	Editor
 	Optick::OptickCore
 	sol2
 	SDL2::SDL2 

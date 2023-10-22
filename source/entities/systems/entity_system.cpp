@@ -4,6 +4,7 @@
 #include "entities/queries.h"
 #include "engine/entity_list_widget.h"
 #include "engine/serialiser.h"
+#include "editor/world_info_widget.h"
 #include "core/profiler.h"
 #include "core/time.h"
 #include "imgui.h"
@@ -337,6 +338,9 @@ namespace Entities
 	bool EntitySystem::ShowGui()
 	{
 		R3_PROF_EVENT();
+
+		static WorldInfoWidget wi;
+		wi.Update(*GetWorld("Benchmarks"));
 
 		static EntityListWidget w1, w2;
 		w1.m_options.m_showInternalIndex = false;

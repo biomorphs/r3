@@ -572,7 +572,7 @@ namespace R3
 		}
 
 		// initialise for Vulkan
-		//this initializes imgui for Vulkan
+		// this initializes imgui for Vulkan
 		ImGui_ImplVulkan_InitInfo init_info = {0};
 		init_info.Instance = m_vk->m_vkInstance;
 		init_info.PhysicalDevice = m_vk->m_physicalDevice.m_device;
