@@ -42,7 +42,9 @@ namespace Entities
 		ComponentType* GetComponent(const EntityHandle& e);
 		template<class ComponentType>
 		ComponentType* GetComponentFast(const EntityHandle& e, uint32_t typeIndex);	// danger! no validation on handle, index assumed to be ok
-		
+		bool HasAnyComponents(const EntityHandle& e, uint64_t typeBits) const;			// returns true if entity compoonent bitset matches any of the bits
+		bool HasAllComponents(const EntityHandle& e, uint64_t typeBits) const;			// returns true if entity compoonent bitset contains all of the bits
+
 		// Called from component storage if a component moves in memory
 		void OnComponentMoved(const EntityHandle& owner, uint32_t typeIndex, uint32_t oldIndex, uint32_t newIndex);
 

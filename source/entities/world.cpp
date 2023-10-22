@@ -204,6 +204,26 @@ namespace Entities
 		}
 	}
 
+	bool World::HasAnyComponents(const EntityHandle& e, uint64_t typeBits) const
+	{
+		if (IsHandleValid(e))
+		{
+			const PerEntityData& ped = m_allEntities[e.GetPrivateIndex()];
+			return (ped.m_ownedComponentBits & typeBits) != 0;
+		}
+		return false;
+	}
+
+	bool World::HasAllComponents(const EntityHandle& e, uint64_t typeBits) const
+	{
+		if (IsHandleValid(e))
+		{
+			const PerEntityData& ped = m_allEntities[e.GetPrivateIndex()];
+			return (ped.m_ownedComponentBits & typeBits) == typeBits;
+		}
+		return false;
+	}
+
 	bool World::HasComponent(const EntityHandle& e, std::string_view componentTypeName)
 	{
 		const uint32_t componentTypeIndex = ComponentTypeRegistry::GetInstance().GetTypeIndex(componentTypeName);

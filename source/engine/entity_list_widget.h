@@ -16,14 +16,10 @@ namespace R3
 	{
 	public:
 		// How the entities are layed out (flat list, tree view, etc)
-		enum class LayoutMode {
-			FlatList,
-		};
 		enum class FilterType {
-			ByName,
+			ByName,ByComponent
 		};
 		struct Options {
-			LayoutMode m_layout = LayoutMode::FlatList;
 			FilterType m_filter = FilterType::ByName;
 			bool m_showInternalIndex = true;
 			bool m_canExpandEntities = true;
@@ -33,12 +29,14 @@ namespace R3
 	private:
 		bool IsFilterActive();
 		void FilterEntities(Entities::World& w);
+		void DisplayFilterContextMenu();
 		void DisplayFilter();
 		void DisplayOptionsBar();
 		void DisplayFlatList(Entities::World& w);
 		bool DisplaySingleEntity(Entities::World& w, const Entities::EntityHandle& h);
 		void DisplayEntityExtended(Entities::World& w, const Entities::EntityHandle& h);	// called if an entity is further expanded
 		std::string m_filterText = "";
+		uint64_t m_filterTypes = 0;	// mask of component types to filter
 		std::vector<Entities::EntityHandle> m_filteredEntities;
 	};
 }

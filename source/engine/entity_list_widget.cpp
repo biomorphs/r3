@@ -48,15 +48,6 @@ namespace R3
 		return true;
 	}
 
-	bool EntityListWidget::IsFilterActive()
-	{
-		if (m_options.m_filter == FilterType::ByName && m_filterText.size() > 0)
-		{
-			return true;
-		}
-		return false;
-	}
-
 	void EntityListWidget::DisplayFlatList(Entities::World& w)
 	{
 		R3_PROF_EVENT();
@@ -105,17 +96,80 @@ namespace R3
 		}
 	}
 
+	void EntityListWidget::DisplayFilterContextMenu()
+	{
+		if (ImGui::BeginPopupContextItem()) // <-- uses last item id as popup id
+		{
+			if (ImGui::Selectable("Filter by name"))
+			{
+				m_options.m_filter = FilterType::ByName;
+				ImGui::CloseCurrentPopup();
+			}
+			if (ImGui::Selectable("Filter by component"))
+			{
+				m_options.m_filter = FilterType::ByComponent;
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
+		}
+	}
+
 	void EntityListWidget::DisplayFilter()
 	{
 		if (m_options.m_filter == FilterType::ByName && m_filterText.size() < 256)
 		{
 			char filterBuffer[256] = { '\0' };
 			strcpy_s(filterBuffer, m_filterText.c_str());
-			if (ImGui::InputTextWithHint("##filter", "Filter by name", filterBuffer, sizeof(filterBuffer)))
+			bool textEntered = false;
+			ImGui::PushItemWidth(-1);
+			textEntered = ImGui::InputTextWithHint("##filter", "Filter by name", filterBuffer, sizeof(filterBuffer));
+			ImGui::PopItemWidth();
+			DisplayFilterContextMenu();
+			if(textEntered)
 			{
 				m_filterText = filterBuffer;
 			}
 		}
+		else if (m_options.m_filter == FilterType::ByComponent)
+		{
+			std::string filterTextSummary = "All Components";
+			if (ImGui::Button(filterTextSummary.c_str(), { -1,0 }))	// -1,0 = fill horizontal
+			{
+				ImGui::OpenPopup("ComponentSelectPopup");
+			}
+			if (ImGui::BeginPopup("ComponentSelectPopup"))
+			{
+				auto& types = Entities::ComponentTypeRegistry::GetInstance();
+				for (int tIndex = 0; tIndex < types.AllTypes().size(); ++tIndex)
+				{
+					bool isSelected = (m_filterTypes & ((uint64_t)1 << tIndex)) != 0;
+					ImGui::Checkbox(types.AllTypes()[tIndex].m_name.c_str(), &isSelected);
+					if (isSelected)
+					{
+						m_filterTypes |= ((uint64_t)1 << tIndex);
+					}
+					else
+					{
+						m_filterTypes &= ~((uint64_t)1 << tIndex);
+					}
+				}
+				ImGui::EndPopup();
+			}
+			DisplayFilterContextMenu();
+		}
+	}
+
+	bool EntityListWidget::IsFilterActive()
+	{
+		if (m_options.m_filter == FilterType::ByName && m_filterText.size() > 0)
+		{
+			return true;
+		}
+		else if (m_options.m_filter == FilterType::ByComponent && m_filterTypes != 0)
+		{
+			return true;
+		}
+		return false;
 	}
 
 	void EntityListWidget::FilterEntities(Entities::World& w)
@@ -128,6 +182,17 @@ namespace R3
 			auto filterEntity = [&](const Entities::EntityHandle& e) {
 				w.GetEntityDisplayName(e, entityName, sizeof(entityName));
 				if (strstr(entityName, m_filterText.c_str()) != nullptr)
+				{
+					m_filteredEntities.emplace_back(e);
+				}
+				return true;
+			};
+			w.ForEachActiveEntity(filterEntity);
+		}
+		else if (m_options.m_filter == FilterType::ByComponent && m_filterTypes != 0)
+		{
+			auto filterEntity = [&](const Entities::EntityHandle& e) {
+				if (w.HasAllComponents(e, m_filterTypes))
 				{
 					m_filteredEntities.emplace_back(e);
 				}
@@ -150,10 +215,7 @@ namespace R3
 
 			ImGuiWindowFlags window_flags = 0;
 			ImGui::BeginChild("AllEntitiesList", ImGui::GetContentRegionAvail(), true, window_flags);
-			if (m_options.m_layout == LayoutMode::FlatList)
-			{
-				DisplayFlatList(w);
-			}
+			DisplayFlatList(w);
 			ImGui::EndChild();
 			ImGui::End();
 		}
