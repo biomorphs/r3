@@ -3,6 +3,7 @@
 #include "render/render_system.h"
 #include "core/log.h"
 #include "core/profiler.h"
+#include "core/file_io.h"
 #include <imgui.h>
 #include <imgui_impl_sdl2.h>
 
@@ -20,6 +21,19 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		ImGui_ImplSDL2_ProcessEvent(static_cast<SDL_Event*>(e));
+	}
+
+	void ImGuiSystem::LoadFonts()
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		io.Fonts->Clear();
+		//io.Fonts->AddFontDefault();
+
+		std::vector<uint8_t> ttfBuffer;
+		if (FileIO::LoadBinaryFile("fonts\\Open_Sans\\OpenSans-VariableFont_wdth,wght.ttf", ttfBuffer))
+		{
+			io.Fonts->AddFontFromMemoryTTF(ttfBuffer.data(), static_cast<int>(ttfBuffer.size()), 17);
+		}
 	}
 
 	bool ImGuiSystem::OnFrameStart()

@@ -8,6 +8,7 @@ namespace R3
 	public:
 		static std::string_view GetName() { return "ImGui"; }
 		virtual void RegisterTickFns();
+		void LoadFonts();	// called by render system when imgui is initialised
 	private:
 		void OnSystemEvent(void*);
 		bool OnFrameStart();

@@ -5,6 +5,7 @@
 #include "core/log.h"
 #include "engine/systems/event_system.h"
 #include "engine/systems/time_system.h"
+#include "engine/systems/imgui_system.h"
 #include "engine/loaded_model.h"
 #include "vulkan_helpers.h"
 #include "pipeline_builder.h"
@@ -562,6 +563,12 @@ namespace R3
 		{
 			LogError("Failed to init imgui for SDL/Vulkan");
 			return false;
+		}
+
+		// Load custom fonts now
+		if (GetSystem<ImGuiSystem>())
+		{
+			GetSystem<ImGuiSystem>()->LoadFonts();
 		}
 
 		// initialise for Vulkan
