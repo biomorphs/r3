@@ -4,6 +4,7 @@
 #include "core/log.h"
 #include "core/profiler.h"
 #include "core/file_io.h"
+#include "external/Fork-awesome/IconsForkAwesome.h"
 #include <imgui.h>
 #include <imgui_impl_sdl2.h>
 
@@ -27,12 +28,24 @@ namespace R3
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		io.Fonts->Clear();
-		//io.Fonts->AddFontDefault();
 
-		std::vector<uint8_t> ttfBuffer;
-		if (FileIO::LoadBinaryFile("fonts\\Open_Sans\\OpenSans-VariableFont_wdth,wght.ttf", ttfBuffer))
+		// OpenSans as default font
+		auto fontPath = FileIO::FindAbsolutePath("fonts\\Open_Sans\\OpenSans-VariableFont_wdth,wght.ttf");
+		if (fontPath.size() > 0)
 		{
-			io.Fonts->AddFontFromMemoryTTF(ttfBuffer.data(), static_cast<int>(ttfBuffer.size()), 17);
+			io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 18);
+		}
+
+		// Fork-awesome 6 for icons
+		std::string forkAwesomePath = "fonts\\Fork-awesome\\" + std::string(FONT_ICON_FILE_NAME_FK);
+		static const ImWchar icons_ranges[] = { ICON_MIN_FK, ICON_MAX_FK, 0 };
+		ImFontConfig icons_config; 
+		icons_config.MergeMode = true; 
+		icons_config.PixelSnapH = true;
+		fontPath = FileIO::FindAbsolutePath(forkAwesomePath);
+		if (fontPath.size() > 0)
+		{
+			io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 18.0f, &icons_config, icons_ranges);
 		}
 	}
 
