@@ -132,14 +132,26 @@ namespace R3
 		}
 		else if (m_options.m_filter == FilterType::ByComponent)
 		{
-			std::string filterTextSummary = "All Components";
+			auto& types = Entities::ComponentTypeRegistry::GetInstance();
+			std::string filterTextSummary = m_filterTypes == 0 ? "All Components" : "";
+			if (m_filterTypes != 0)
+			{
+				for (int tIndex = 0; tIndex < types.AllTypes().size(); ++tIndex)
+				{
+					bool isSelected = (m_filterTypes & ((uint64_t)1 << tIndex)) != 0;
+					if (isSelected)
+					{
+						filterTextSummary += types.AllTypes()[tIndex].m_name + ", ";
+					}
+				}
+			}
 			if (ImGui::Button(filterTextSummary.c_str(), { -1,0 }))	// -1,0 = fill horizontal
 			{
 				ImGui::OpenPopup("ComponentSelectPopup");
 			}
 			if (ImGui::BeginPopup("ComponentSelectPopup"))
 			{
-				auto& types = Entities::ComponentTypeRegistry::GetInstance();
+				
 				for (int tIndex = 0; tIndex < types.AllTypes().size(); ++tIndex)
 				{
 					bool isSelected = (m_filterTypes & ((uint64_t)1 << tIndex)) != 0;

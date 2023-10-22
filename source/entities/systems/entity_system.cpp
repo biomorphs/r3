@@ -338,53 +338,12 @@ namespace Entities
 	{
 		R3_PROF_EVENT();
 
-		ImGui::ShowDemoWindow();
+		static EntityListWidget w1, w2;
+		w1.m_options.m_showInternalIndex = false;
+		w2.m_options.m_canExpandEntities = false;
+		w1.Update(*GetWorld("Benchmarks"));
+		w2.Update(*GetWorld("EditorWorld"));
 
-		static EntityListWidget w;
-		w.Update(*GetWorld("Benchmarks"));
-
-		const auto& allCmpTypes = ComponentTypeRegistry::GetInstance().AllTypes();
-		ImGui::Begin("Entity System");
-		{
-			auto str = std::format("All Worlds({})", m_worlds.size());
-			if (ImGui::TreeNode(str.c_str()))
-			{
-				for (int w = 0; w < m_worlds.size(); ++w)
-				{
-					auto& world = *m_worlds[w].get();
-					str = std::format("{} ({} active entities)", world.GetName(), world.GetActiveEntityCount());
-					if (ImGui::TreeNode(str.c_str()))
-					{
-						for (int t = 0; t < allCmpTypes.size(); ++t)
-						{
-							auto storage = world.GetStorage(allCmpTypes[t].m_name);
-							if (storage && storage->GetTotalCount() > 0)
-							{
-								auto str = std::format("{}: {} instances", allCmpTypes[t].m_name, storage->GetTotalCount());
-								ImGui::Text(str.c_str());
-							}							
-						}
-						ImGui::TreePop();
-					}
-				}
-				ImGui::TreePop();
-			}
-			str = std::format("All Component Types({})", allCmpTypes.size());
-			if (ImGui::TreeNode(str.c_str()))
-			{
-				for (int t = 0; t < allCmpTypes.size(); ++t)
-				{
-					auto& type = allCmpTypes[t];
-					str = std::format("{} ({})", type.m_name, type.m_dynamicIndex);
-					if (ImGui::TreeNode(str.c_str()))
-					{
-						ImGui::TreePop();
-					}
-				}
-				ImGui::TreePop();
-			}
-		}
-		ImGui::End();
 		return true;
 	}
 
