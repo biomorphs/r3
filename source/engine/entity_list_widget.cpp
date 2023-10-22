@@ -214,21 +214,32 @@ namespace R3
 		}
 	}
 
-	void EntityListWidget::Update(Entities::World& w)
+	void EntityListWidget::Update(Entities::World& w, bool embedAsChild)
 	{
 		R3_PROF_EVENT();
 		FilterEntities(w);
 		std::string txt = "Entities in '" + std::string(w.GetName()) + "'";
-		if (ImGui::Begin(txt.c_str()))
+		bool isOpen = embedAsChild ? ImGui::BeginChild(txt.c_str(), { 0,0 }, true) : ImGui::Begin(txt.c_str());
+		if (isOpen)
 		{
-			DisplayOptionsBar();
-			ImGui::SameLine();
+			if (m_options.m_showOptionsButton)
+			{
+				DisplayOptionsBar();
+				ImGui::SameLine();
+			}
 			DisplayFilter();
-
-			ImGuiWindowFlags window_flags = 0;
-			ImGui::BeginChild("AllEntitiesList", ImGui::GetContentRegionAvail(), true, window_flags);
-			DisplayFlatList(w);
+			if (ImGui::BeginChild("AllEntitiesList", ImGui::GetContentRegionAvail(), true))
+			{
+				DisplayFlatList(w);
+			}
 			ImGui::EndChild();
+		}
+		if (embedAsChild)
+		{
+			ImGui::EndChild();
+		}
+		else
+		{
 			ImGui::End();
 		}
 	}

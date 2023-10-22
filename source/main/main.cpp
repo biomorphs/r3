@@ -1,5 +1,7 @@
 #include "core/platform.h"
 #include "engine/engine_startup.h"
+#include "engine/frame_graph.h"
+#include "editor/systems/editor_system.h"
 
 std::string FullCmdLine(int argc, char** args)
 {
@@ -17,5 +19,25 @@ std::string FullCmdLine(int argc, char** args)
 int main(int argc, char** args)
 {
 	std::string fullCmdLine = FullCmdLine(argc, args);
-	return R3::Run(fullCmdLine);
+
+	bool runEditor = fullCmdLine.find("-editor") != std::string::npos;
+	if (runEditor)
+	{
+		auto registerEditor = []() {
+			auto& s = R3::Systems::GetInstance();
+			s.RegisterSystem<R3::EditorSystem>();
+		};
+		auto setupFrameGraph = [](R3::FrameGraph& fg) {
+			auto guiUpdateRoot = fg.m_root.FindFirst("Sequence - ImGuiUpdate");
+			if (guiUpdateRoot)
+			{
+				guiUpdateRoot->AddFn("EditorSystem::ShowGui");
+			}
+		};
+		return R3::Run(fullCmdLine, registerEditor, setupFrameGraph);
+	}
+	else
+	{
+		return R3::Run(fullCmdLine);
+	}
 }

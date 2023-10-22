@@ -11,6 +11,6 @@ namespace R3
 	class WorldInfoWidget
 	{
 	public:
-		void Update(Entities::World& w);
+		void Update(Entities::World& w, bool embedAsChild=false);
 	};
 }

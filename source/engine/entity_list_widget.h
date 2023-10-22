@@ -23,8 +23,9 @@ namespace R3
 			FilterType m_filter = FilterType::ByName;
 			bool m_showInternalIndex = true;
 			bool m_canExpandEntities = true;
+			bool m_showOptionsButton = false;
 		};
-		void Update(Entities::World& w);
+		void Update(Entities::World& w, bool embedAsChild = false);
 		Options m_options;
 	private:
 		bool IsFilterActive();

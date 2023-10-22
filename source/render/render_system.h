@@ -1,5 +1,6 @@
 #pragma once
 #include "engine/systems.h"
+#include "core/glm_headers.h"
 
 namespace R3
 {
@@ -13,6 +14,7 @@ namespace R3
 		virtual void RegisterTickFns();
 		virtual bool Init();
 		virtual void Shutdown();
+		glm::vec2 GetWindowExtents();
 
 		// Called from imgui system
 		bool InitImGui();

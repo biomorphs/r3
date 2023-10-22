@@ -146,10 +146,10 @@ namespace Entities
 
 		const auto benchStart = R3::Time::HighPerformanceCounterTicks();
 		const auto freq = R3::Time::HighPerformanceCounterFrequency();
-		constexpr uint32_t test1Repeats = 20;
-		constexpr uint32_t test2Repeats = 20;
-		constexpr uint32_t test3Repeats = 30;
-		constexpr uint32_t test4Repeats = 100;
+		constexpr uint32_t test1Repeats = 10;
+		constexpr uint32_t test2Repeats = 10;
+		constexpr uint32_t test3Repeats = 15;
+		constexpr uint32_t test4Repeats = 50;
 		constexpr uint32_t test5Repeats = 1;
 
 		// test 1, add 10k empty entities multiple times
@@ -338,16 +338,6 @@ namespace Entities
 	bool EntitySystem::ShowGui()
 	{
 		R3_PROF_EVENT();
-
-		static WorldInfoWidget wi;
-		wi.Update(*GetWorld("Benchmarks"));
-
-		static EntityListWidget w1, w2;
-		w1.m_options.m_showInternalIndex = false;
-		w2.m_options.m_canExpandEntities = false;
-		w1.Update(*GetWorld("Benchmarks"));
-		w2.Update(*GetWorld("EditorWorld"));
-
 		return true;
 	}
 

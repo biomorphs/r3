@@ -1,6 +1,11 @@
 set(EditorLib_SourceFiles
 	world_info_widget.h
 	world_info_widget.cpp
+	editor_window.h
+	world_editor_window.h
+	world_editor_window.cpp
+	systems/editor_system.h
+	systems/editor_system.cpp
 )
 
 add_library(Editor ${EditorLib_SourceFiles})

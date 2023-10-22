@@ -30,10 +30,10 @@ namespace R3
 		io.Fonts->Clear();
 
 		// OpenSans as default font
-		auto fontPath = FileIO::FindAbsolutePath("fonts\\Open_Sans\\OpenSans-VariableFont_wdth,wght.ttf");
+		auto fontPath = FileIO::FindAbsolutePath("fonts\\Open_Sans\\static\\OpenSans-Medium.ttf");
 		if (fontPath.size() > 0)
 		{
-			io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 18);
+			io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 17);
 		}
 
 		// Fork-awesome 6 for icons
@@ -45,7 +45,7 @@ namespace R3
 		fontPath = FileIO::FindAbsolutePath(forkAwesomePath);
 		if (fontPath.size() > 0)
 		{
-			io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 18.0f, &icons_config, icons_ranges);
+			io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 17.0f, &icons_config, icons_ranges);
 		}
 	}
 

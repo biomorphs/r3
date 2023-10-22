@@ -48,7 +48,7 @@ namespace R3
 			varUpdate.AddFn("Entities::RunGC");
 		}
 		{
-			auto& guiUpdate = fg.m_root.AddSequence("ImGui");
+			auto& guiUpdate = fg.m_root.AddSequence("ImGuiUpdate");
 			guiUpdate.AddFn("Render::ShowGui");
 			guiUpdate.AddFn("Entities::ShowGui");
 		}

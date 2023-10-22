@@ -193,6 +193,11 @@ namespace R3
 		m_vk = nullptr;
 	}
 
+	glm::vec2 RenderSystem::GetWindowExtents()
+	{
+		return { m_vk->m_swapChainExtents.width, m_vk->m_swapChainExtents.height };
+	}
+
 	void RenderSystem::RegisterTickFns()
 	{
 		R3_PROF_EVENT();

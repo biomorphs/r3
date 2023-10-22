@@ -12,6 +12,8 @@ set(EngineLib_SourceFiles
 	serialiser.cpp
 	entity_list_widget.h
 	entity_list_widget.cpp
+	imgui_menubar_helper.h
+	imgui_menubar_helper.cpp
 	systems/time_system.h
 	systems/time_system.cpp
 	systems/event_system.h
