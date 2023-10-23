@@ -14,6 +14,7 @@ namespace Queries
 	template<class ComponentType, class It>
 	void ForEach(World* w, const It& fn)
 	{
+		R3_PROF_EVENT();
 		LinearComponentStorage<ComponentType>* storage = w->GetStorage<ComponentType>();
 		if (storage != nullptr)
 		{
@@ -24,6 +25,7 @@ namespace Queries
 	template<class ComponentType1, class ComponentType2, class It>
 	void ForEach(World* w, const It& fn)
 	{
+		R3_PROF_EVENT();
 		// choose which component type to iterate on based on smallest total count
 		if (w->GetStorage<ComponentType1>()->GetTotalCount() < w->GetStorage<ComponentType2>()->GetTotalCount())
 		{

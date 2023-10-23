@@ -1,5 +1,6 @@
 #include "entity_inspector_widget.h"
 #include "engine/value_inspector.h"
+#include "core/profiler.h"
 #include "entities/world.h"
 #include "entities/entity_handle.h"
 #include "entities/component_type_registry.h"
@@ -9,6 +10,7 @@ namespace R3
 {
 	void EntityInspectorWidget::Update(const Entities::EntityHandle& h, Entities::World& w, ValueInspector& v, bool embedAsChild)
 	{
+		R3_PROF_EVENT();
 		std::string entityName = ">Invalid handle!<";
 		if (w.IsHandleValid(h))
 		{

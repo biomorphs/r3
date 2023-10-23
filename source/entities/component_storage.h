@@ -121,6 +121,7 @@ namespace Entities
 	template<class ComponentType>
 	ComponentType* LinearComponentStorage<ComponentType>::Find(uint32_t entityID)
 	{
+		R3_PROF_EVENT();
 		auto found = std::find_if(m_owners.begin(), m_owners.end(), [entityID](const EntityHandle& e) {
 			return e.GetID() == entityID;
 		});

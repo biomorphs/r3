@@ -214,6 +214,7 @@ namespace R3
 
 	void RenderSystem::ProcessEnvironmentSettings()
 	{
+		R3_PROF_EVENT();
 		auto entities = GetSystem<Entities::EntitySystem>();
 		// todo, get active world(s)?
 		auto w = entities->GetWorld("Benchmarks");
