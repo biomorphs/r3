@@ -257,7 +257,7 @@ namespace Entities
 	EntitySystem::EntitySystem()
 	{
 		R3_PROF_EVENT();
-		World* testWorld = CreateWorld("Benchmarks");
+		World* testWorld = CreateWorld("Benchmarks", "Benchmarks");
 		RegisterComponentType<BenchComponent1>();
 		RegisterComponentType<BenchComponent2>();
 		EntityBenchmarks(testWorld);
@@ -269,7 +269,7 @@ namespace Entities
 		auto envSettings = testWorld->AddEntity();
 		testWorld->AddComponent<EnvironmentSettingsComponent>(envSettings);
 		
-		World* editWorld = CreateWorld("EditorWorld");
+		World* editWorld = CreateWorld("EditorWorld", "EditorWorld");
 		auto e1 = editWorld->AddEntity();
 		editWorld->AddComponent(e1, "TestComponent1");
 		editWorld->AddComponent(e1, "TestComponent2");
@@ -303,41 +303,32 @@ namespace Entities
 		});
 	}
 
-	World* EntitySystem::CreateWorld(std::string_view worldName)
+	World* EntitySystem::CreateWorld(const std::string& id, std::string_view worldName)
 	{
 		R3_PROF_EVENT();
-		if (GetWorld(worldName) != nullptr)
+		if (GetWorld(id) != nullptr)
 		{
-			assert(!"A world already exists with that name");
+			assert(!"A world already exists with that ID");
 			return nullptr;
 		}
 		auto newWorld = std::make_unique<World>();
 		newWorld->SetName(worldName);
 		World* worldPtr = newWorld.get();
-		m_worlds.emplace_back(std::move(newWorld));
+		m_worlds[id] = std::move(newWorld);
 		return worldPtr;
 	}
 
-	World* EntitySystem::GetWorld(std::string_view worldName)
+	World* EntitySystem::GetWorld(const std::string& id)
 	{
 		R3_PROF_EVENT();
-		auto found = std::find_if(m_worlds.begin(), m_worlds.end(), [worldName](const std::unique_ptr<World>& w) {
-			return w->GetName() == worldName;	// is this a string comparison??? check!
-		});
-		return found != m_worlds.end() ? found->get() : nullptr;;
+		auto found = m_worlds.find(id);
+		return (found != m_worlds.end()) ? found->second.get() : nullptr;
 	}
 
-	void EntitySystem::DestroyWorld(std::string_view worldName)
+	void EntitySystem::DestroyWorld(const std::string& id)
 	{
 		R3_PROF_EVENT();
-		auto found = std::find_if(m_worlds.begin(), m_worlds.end(), [worldName](const std::unique_ptr<World>& w) {
-			return w->GetName() == worldName;	// is this a string comparison??? check!
-		});
-		assert(found != m_worlds.end());
-		if (found != m_worlds.end())
-		{
-			m_worlds.erase(found);
-		}
+		m_worlds.erase(id);
 	}
 
 	bool EntitySystem::ShowGui()
@@ -351,7 +342,7 @@ namespace Entities
 		R3_PROF_EVENT();
 		for (auto& w : m_worlds)
 		{
-			w->CollectGarbage();
+			w.second->CollectGarbage();
 		}
 		return true;
 	}

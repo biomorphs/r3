@@ -4,6 +4,7 @@
 #include "engine/basic_value_inspector.h"
 #include "engine/entity_list_widget.h"
 #include "engine/entity_inspector_widget.h"
+#include "engine/imgui_menubar_helper.h"
 #include "entities/systems/entity_system.h"
 #include "render/render_system.h"
 #include "imgui.h"
@@ -26,6 +27,11 @@ namespace R3
 
 	WorldEditorWindow::~WorldEditorWindow()
 	{
+		auto* entities = Systems::GetSystem<Entities::EntitySystem>();
+		if (entities)
+		{
+			entities->DestroyWorld(m_worldIdentifier);
+		}
 	}
 
 	void WorldEditorWindow::DrawSideBarRight(Entities::World* w)
@@ -45,6 +51,17 @@ namespace R3
 		ImGui::End();
 		m_sidebarRightWidth = glm::max(newWidth, windowFullExtents.x * 0.05f);
 		m_sidebarRightWidth = glm::min(m_sidebarRightWidth, windowFullExtents.x * 0.45f);
+	}
+
+	void WorldEditorWindow::UpdateMainMenu()
+	{
+		auto& fileMenu = MenuBar::MainMenu().GetSubmenu("File");
+		fileMenu.AddItemAfter("Save World", "Open World", []() {
+		});
+		fileMenu.AddItemAfter("Save World As", "Save World", []() {
+		});
+		fileMenu.AddItemAfter("Close World", "Save World As", []() {
+		});
 	}
 
 	void WorldEditorWindow::DrawSideBarLeft(Entities::World* w)
@@ -70,13 +87,16 @@ namespace R3
 
 	std::string_view WorldEditorWindow::GetWindowTitle()
 	{
+		auto entities = Systems::GetInstance().GetSystem<Entities::EntitySystem>();
+		std::string worldName(entities->GetWorld(m_worldIdentifier)->GetName());
+
 		if (m_filePath.empty())
 		{
-			m_titleString = std::format("World '{}'", m_worldIdentifier);
+			m_titleString = std::format("World '{}'", worldName);
 		}
 		else
 		{
-			m_titleString = std::format("World '{}' ({})", m_worldIdentifier, m_filePath.c_str());
+			m_titleString = std::format("World '{}' ({})", worldName, m_filePath.c_str());
 		}
 		
 		return m_titleString;
@@ -84,12 +104,49 @@ namespace R3
 
 	void WorldEditorWindow::Update()
 	{
+		R3_PROF_EVENT();
+		UpdateMainMenu();
 		auto* entities = Systems::GetSystem<Entities::EntitySystem>();
 		if (entities)
 		{
 			Entities::World* thisWorld = entities->GetWorld(m_worldIdentifier);
 			DrawSideBarLeft(thisWorld);
 			DrawSideBarRight(thisWorld);
+		}
+	}
+
+	EditorWindow::CloseStatus WorldEditorWindow::PrepareToClose()
+	{
+		bool shouldCloseWindow = false;
+		bool shouldCancelRequest = false;
+		ImGui::OpenPopup("Close window?");
+		if (ImGui::BeginPopupModal("Close window?"))
+		{
+			ImGui::Text("Close current window?");
+			if (ImGui::Button("Yes"))
+			{
+				shouldCloseWindow = true;
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("No"))
+			{
+				shouldCancelRequest = true;
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
+		}
+		if (shouldCloseWindow)
+		{
+			return EditorWindow::CloseStatus::ReadyToClose;
+		}
+		else if (shouldCancelRequest)
+		{
+			return EditorWindow::CloseStatus::Cancel;
+		}
+		else
+		{
+			return EditorWindow::CloseStatus::NotReady;
 		}
 	}
 }

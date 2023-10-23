@@ -20,8 +20,13 @@ namespace R3
 	class MenuBar	// contains a heirarchy of MenuBar children
 	{
 	public:
-		void AddItem(std::string name, std::function<void()> onSelected, std::string shortcut = "");
-		MenuBar& GetSubmenu(std::string label);		// creates one if it doesn't exist
+		static MenuBar& MainMenu();	// main menu singleton for convenience
+
+		void AddItemAfter(std::string_view itemName, std::string_view afterItemName, std::function<void()> onSelected, std::string shortcut = "");
+		void AddItemBefore(std::string_view itemName, std::string_view beforeItemName, std::function<void()> onSelected, std::string shortcut = "");
+		void AddItem(std::string_view name, std::function<void()> onSelected, std::string shortcut = "");
+		
+		MenuBar& GetSubmenu(std::string_view label);		// creates one if it doesn't exist
 		void Display(bool appendToMainMenu=false);	// menu can be attached to current window or main menu, item callbacks will fire here on selection
 
 		std::string m_label;

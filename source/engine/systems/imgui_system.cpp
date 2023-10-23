@@ -4,6 +4,7 @@
 #include "core/log.h"
 #include "core/profiler.h"
 #include "core/file_io.h"
+#include "engine/imgui_menubar_helper.h"
 #include "external/Fork-awesome/IconsForkAwesome.h"
 #include <imgui.h>
 #include <imgui_impl_sdl2.h>
@@ -69,6 +70,10 @@ namespace R3
 		}
 
 		r->ImGuiNewFrame();
+
+		// display the main menu singleton + reset state for next frame
+		MenuBar::MainMenu().Display(true);
+		MenuBar::MainMenu() = {};
 
 		return true;
 	}

@@ -3,6 +3,7 @@
 #include "entities/component_type_registry.h"
 #include "entities/component_storage.h"
 #include <memory>
+#include <unordered_map>
 
 namespace R3
 {
@@ -21,14 +22,14 @@ namespace Entities
 		template<class ComponentType>
 		void RegisterComponentType();
 
-		World* CreateWorld(std::string_view worldName);
-		World* GetWorld(std::string_view worldName);
-		void DestroyWorld(std::string_view worldName);
+		World* CreateWorld(const std::string& id, std::string_view worldName="New World");
+		World* GetWorld(const std::string& id);
+		void DestroyWorld(const std::string& id);
 
 	private:
 		bool ShowGui();
 		bool RunGC();
-		std::vector<std::unique_ptr<World>> m_worlds;
+		std::unordered_map<std::string, std::unique_ptr<World>> m_worlds;
 	};
 
 	template <typename T>		// SFINAE trick to detect Inspect member fn

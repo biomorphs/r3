@@ -20,7 +20,9 @@ namespace R3
 		virtual ~WorldEditorWindow();
 		virtual std::string_view GetWindowTitle();
 		virtual void Update();
+		virtual CloseStatus PrepareToClose();
 	private:
+		void UpdateMainMenu();
 		void DrawSideBarLeft(Entities::World* w);
 		void DrawSideBarRight(Entities::World* w);
 		float m_sidebarLeftWidth = 200.0f;
