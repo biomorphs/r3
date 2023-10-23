@@ -2,6 +2,7 @@
 #include "entities/world.h"
 #include "entities/component_type_registry.h"
 #include "core/profiler.h"
+#include "external/Fork-awesome/IconsForkAwesome.h"
 #include "imgui.h"
 #include <format>
 
@@ -23,6 +24,7 @@ namespace R3
 	{
 		char entityName[256] = "";
 		char displayName[512] = "";
+		bool wasSelected = false;
 		w.GetEntityDisplayName(h, entityName, sizeof(entityName));
 		if (m_options.m_showInternalIndex)
 		{
@@ -38,11 +40,20 @@ namespace R3
 			{
 				DisplayEntityExtended(w, h);
 				ImGui::TreePop();
+				wasSelected = true;
 			}
 		}
 		else
 		{
-			ImGui::Selectable(displayName);
+			if (ImGui::Selectable(displayName))
+			{
+				wasSelected = true;
+			}
+		}
+
+		if (wasSelected && m_options.m_onSelected)
+		{
+			m_options.m_onSelected(h);
 		}
 		
 		return true;
@@ -83,7 +94,7 @@ namespace R3
 
 	void EntityListWidget::DisplayOptionsBar()
 	{
-		if(ImGui::Button("Options"))
+		if(ImGui::Button((const char*)ICON_FK_COG))
 		{
 			ImGui::OpenPopup("EntityListWidgetOptions");
 		}
@@ -94,6 +105,7 @@ namespace R3
 			ImGui::Checkbox("Show Indices", &m_options.m_showInternalIndex);
 			ImGui::EndPopup();
 		}
+		ImGui::SameLine();
 	}
 
 	void EntityListWidget::DisplayFilterContextMenu()

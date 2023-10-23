@@ -1,7 +1,9 @@
 #include "world_editor_window.h"
 #include "world_info_widget.h"
 #include "engine/systems.h"
+#include "engine/basic_value_inspector.h"
 #include "engine/entity_list_widget.h"
+#include "engine/entity_inspector_widget.h"
 #include "entities/systems/entity_system.h"
 #include "render/render_system.h"
 #include "imgui.h"
@@ -15,10 +17,34 @@ namespace R3
 		m_allEntitiesWidget = std::make_unique<EntityListWidget>();
 		m_allEntitiesWidget->m_options.m_canExpandEntities = false;
 		m_allEntitiesWidget->m_options.m_showInternalIndex = false;
+		m_allEntitiesWidget->m_options.m_onSelected = [this](const Entities::EntityHandle& e) {
+			m_selectedEntity = e;
+		};
+		m_inspectEntityWidget = std::make_unique<EntityInspectorWidget>();
+		m_valueInspector = std::make_unique<BasicValueInspector>();
 	}
 
 	WorldEditorWindow::~WorldEditorWindow()
 	{
+	}
+
+	void WorldEditorWindow::DrawSideBarRight(Entities::World* w)
+	{
+		uint32_t sidebarFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove;
+		auto windowFullExtents = Systems::GetSystem<RenderSystem>()->GetWindowExtents();
+		ImGui::SetNextWindowPos({ windowFullExtents.x - m_sidebarRightWidth,ImGui::GetTextLineHeightWithSpacing() * 3 });
+		ImGui::SetNextWindowSize(ImVec2(m_sidebarRightWidth, windowFullExtents.y - ImGui::GetTextLineHeightWithSpacing() * 3));
+		if (ImGui::Begin("EntitiesSidebarRight", nullptr, sidebarFlags))
+		{
+			if (w)
+			{
+				m_inspectEntityWidget->Update(m_selectedEntity, *w, *m_valueInspector, true);
+			}
+		}
+		float newWidth = ImGui::GetWindowWidth();
+		ImGui::End();
+		m_sidebarRightWidth = glm::max(newWidth, windowFullExtents.x * 0.05f);
+		m_sidebarRightWidth = glm::min(m_sidebarRightWidth, windowFullExtents.x * 0.45f);
 	}
 
 	void WorldEditorWindow::DrawSideBarLeft(Entities::World* w)
@@ -63,6 +89,7 @@ namespace R3
 		{
 			Entities::World* thisWorld = entities->GetWorld(m_worldIdentifier);
 			DrawSideBarLeft(thisWorld);
+			DrawSideBarRight(thisWorld);
 		}
 	}
 }

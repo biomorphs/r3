@@ -14,6 +14,11 @@ set(EngineLib_SourceFiles
 	entity_list_widget.cpp
 	imgui_menubar_helper.h
 	imgui_menubar_helper.cpp
+	value_inspector.h
+	entity_inspector_widget.h
+	entity_inspector_widget.cpp
+	basic_value_inspector.h
+	basic_value_inspector.cpp
 	systems/time_system.h
 	systems/time_system.cpp
 	systems/event_system.h
@@ -22,6 +27,8 @@ set(EngineLib_SourceFiles
 	systems/input_system.cpp
 	systems/imgui_system.h
 	systems/imgui_system.cpp
+	components/environment_settings.h
+	components/environment_settings.cpp
 )
 
 add_library(Engine ${EngineLib_SourceFiles})

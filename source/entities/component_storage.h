@@ -4,6 +4,7 @@
 #include "world.h"
 #include "core/profiler.h"
 #include "core/log.h"
+#include "engine/serialiser.h"
 #include <vector>
 #include <unordered_map>
 #include <cassert>

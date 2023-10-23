@@ -7,12 +7,14 @@
 
 namespace R3
 {
+	class ValueInspector;
 namespace Entities
 {
 	// Singleton that tracks all component types + assigns them a runtime unique index
 	// Tracks type IDs via name string or templated by component type
 	class ComponentStorage;
 	class World;
+	class EntityHandle;
 	class ComponentTypeRegistry
 	{
 	public:
@@ -22,7 +24,8 @@ namespace Entities
 		uint32_t GetTypeIndex(std::string_view typeName) const;	// (slowpath) returns -1 if no type found
 		template<class ComponentType> static uint32_t GetTypeIndex();	// fastpath
 
-		using InspectorFn = std::function<void()>;
+		// inspector is used to call the actual inspect member function on the concrete type
+		using InspectorFn = std::function<void(const EntityHandle&, World&, ValueInspector&)>;
 		void SetInspector(std::string_view typeName, InspectorFn fn);
 
 		using StorageFn = std::function<std::unique_ptr<ComponentStorage>(World*)>;

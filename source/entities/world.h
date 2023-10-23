@@ -28,6 +28,7 @@ namespace Entities
 		bool IsHandleValid(const EntityHandle& h) const;
 		std::vector<EntityHandle> GetActiveEntities(uint32_t startIndex=0, uint32_t endIndex=-1) const;	// slow! only for editor/tools/debugging
 		size_t GetEntityDisplayName(const EntityHandle& h, char* nameBuffer, size_t maxLength) const;	// returns size of string written to nameBuffer
+		std::string GetEntityDisplayName(const EntityHandle& h) const;
 		template<class It>	// bool(const EntityHandle& e)
 		void ForEachActiveEntity(const It&);	// slow! tools/debug only
 
@@ -42,8 +43,8 @@ namespace Entities
 		ComponentType* GetComponent(const EntityHandle& e);
 		template<class ComponentType>
 		ComponentType* GetComponentFast(const EntityHandle& e, uint32_t typeIndex);	// danger! no validation on handle, index assumed to be ok
-		bool HasAnyComponents(const EntityHandle& e, uint64_t typeBits) const;			// returns true if entity compoonent bitset matches any of the bits
-		bool HasAllComponents(const EntityHandle& e, uint64_t typeBits) const;			// returns true if entity compoonent bitset contains all of the bits
+		bool HasAnyComponents(const EntityHandle& e, uint64_t typeBits) const;		// returns true if entity compoonent bitset matches any of the bits
+		bool HasAllComponents(const EntityHandle& e, uint64_t typeBits) const;		// returns true if entity compoonent bitset contains all of the bits
 
 		// Called from component storage if a component moves in memory
 		void OnComponentMoved(const EntityHandle& owner, uint32_t typeIndex, uint32_t oldIndex, uint32_t newIndex);

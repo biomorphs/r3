@@ -2,6 +2,7 @@
 #include "entities/entity_handle.h"
 #include <string>
 #include <vector>
+#include <functional>
 
 namespace R3
 {
@@ -15,6 +16,9 @@ namespace R3
 	class EntityListWidget
 	{
 	public:
+		// Selection Callbacks
+		using OnSelectedFn = std::function<void(const Entities::EntityHandle&)>;
+
 		// How the entities are layed out (flat list, tree view, etc)
 		enum class FilterType {
 			ByName,ByComponent
@@ -22,8 +26,9 @@ namespace R3
 		struct Options {
 			FilterType m_filter = FilterType::ByName;
 			bool m_showInternalIndex = true;
-			bool m_canExpandEntities = true;
-			bool m_showOptionsButton = false;
+			bool m_canExpandEntities = false;
+			bool m_showOptionsButton = true;
+			OnSelectedFn m_onSelected;
 		};
 		void Update(Entities::World& w, bool embedAsChild = false);
 		Options m_options;

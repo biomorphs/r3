@@ -20,6 +20,7 @@ namespace R3
 		bool InitImGui();
 		void ImGuiNewFrame();
 	private:
+		void ProcessEnvironmentSettings();
 		bool ShowGui();
 		bool CreateMesh();
 		bool DrawFrame();
@@ -46,5 +47,6 @@ namespace R3
 		std::unique_ptr<Window> m_mainWindow;
 		struct VkStuff;
 		std::unique_ptr<VkStuff> m_vk;
+		glm::vec4 m_mainPassClearColour = { 0,0,0,1 };
 	};
 }

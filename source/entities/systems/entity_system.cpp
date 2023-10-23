@@ -5,6 +5,7 @@
 #include "engine/entity_list_widget.h"
 #include "engine/serialiser.h"
 #include "editor/world_info_widget.h"
+#include "engine/components/environment_settings.h"		// tempshit
 #include "core/profiler.h"
 #include "core/time.h"
 #include "imgui.h"
@@ -263,6 +264,10 @@ namespace Entities
 
 		RegisterComponentType<TestComponent1>();
 		RegisterComponentType<TestComponent2>();
+		RegisterComponentType<EnvironmentSettingsComponent>();
+
+		auto envSettings = testWorld->AddEntity();
+		testWorld->AddComponent<EnvironmentSettingsComponent>(envSettings);
 		
 		World* editWorld = CreateWorld("EditorWorld");
 		auto e1 = editWorld->AddEntity();

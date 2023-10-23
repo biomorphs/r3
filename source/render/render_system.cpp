@@ -6,6 +6,9 @@
 #include "engine/systems/event_system.h"
 #include "engine/systems/time_system.h"
 #include "engine/systems/imgui_system.h"
+#include "entities/systems/entity_system.h"
+#include "entities/queries.h"
+#include "engine/components/environment_settings.h"
 #include "engine/loaded_model.h"
 #include "vulkan_helpers.h"
 #include "pipeline_builder.h"
@@ -209,6 +212,21 @@ namespace R3
 		});
 	}
 
+	void RenderSystem::ProcessEnvironmentSettings()
+	{
+		auto entities = GetSystem<Entities::EntitySystem>();
+		// todo, get active world(s)?
+		auto w = entities->GetWorld("Benchmarks");
+		if (w)
+		{
+			auto getClearColour = [this](const Entities::EntityHandle& e, EnvironmentSettingsComponent& cmp) {
+				m_mainPassClearColour = cmp.m_clearColour;
+				return true;
+			};
+			Entities::Queries::ForEach<EnvironmentSettingsComponent>(w, getClearColour);
+		}
+	}
+
 	bool RenderSystem::ShowGui()
 	{
 		R3_PROF_EVENT();
@@ -229,6 +247,8 @@ namespace R3
 	bool RenderSystem::DrawFrame()
 	{
 		R3_PROF_EVENT();
+
+		ProcessEnvironmentSettings();
 
 		// Always 'render' the ImGui frame so we can begin the next one, even if we wont actually draw anything
 		ImGui::Render();	
@@ -917,7 +937,7 @@ namespace R3
 		renderPassInfo.renderArea.offset = { 0, 0 };			// offset/extents to draw to
 		renderPassInfo.renderArea.extent = m_vk->m_swapChainExtents;
 		// attachment clear op values -  clear colour/depth values go here
-		VkClearValue clearColour = { {{0.1f, 0.0f, 0.0f, 1.0f}} };
+		VkClearValue clearColour = { {{m_mainPassClearColour.x, m_mainPassClearColour.y, m_mainPassClearColour.z, m_mainPassClearColour.w }} };
 		VkClearValue depthClearValue = { { 1.0f, 0} };	// clear depth to 1.0 (max depth)
 		VkClearValue clearValues[] = { clearColour, depthClearValue };
 		renderPassInfo.clearValueCount = static_cast<uint32_t>(std::size(clearValues));

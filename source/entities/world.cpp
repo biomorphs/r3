@@ -82,6 +82,13 @@ namespace Entities
 		}
 	}
 
+	std::string World::GetEntityDisplayName(const EntityHandle& h) const
+	{
+		char nameBuffer[256] = "";
+		GetEntityDisplayName(h, nameBuffer, sizeof(nameBuffer));
+		return std::string(nameBuffer);
+	}
+
 	std::vector<EntityHandle> World::GetActiveEntities(uint32_t startIndex, uint32_t endIndex) const
 	{
 		R3_PROF_EVENT();
