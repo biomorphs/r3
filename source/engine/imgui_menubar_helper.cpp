@@ -10,7 +10,7 @@ namespace R3
 		return s_mainMenu;
 	}
 
-	void MenuBar::AddItemBefore(std::string_view itemName, std::string_view beforeItemName, std::function<void()> onSelected, std::string shortcut)
+	void MenuBar::AddItemBefore(std::string_view beforeItemName, std::string_view itemName, std::function<void()> onSelected, std::string shortcut)
 	{
 		auto foundBefore = std::find_if(m_menuItems.begin(), m_menuItems.end(), [&beforeItemName](const MenuItem& m) {
 			return m.m_label == beforeItemName;
@@ -27,7 +27,7 @@ namespace R3
 		m_menuItems.insert(foundBefore, mi);
 	}
 
-	void MenuBar::AddItemAfter(std::string_view itemName, std::string_view afterItemName, std::function<void()> onSelected, std::string shortcut)
+	void MenuBar::AddItemAfter(std::string_view afterItemName, std::string_view itemName, std::function<void()> onSelected, std::string shortcut)
 	{
 		auto foundAfter = std::find_if(m_menuItems.begin(), m_menuItems.end(), [&afterItemName](const MenuItem& m) {
 			return m.m_label == afterItemName;

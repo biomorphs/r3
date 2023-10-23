@@ -60,6 +60,7 @@ namespace Entities
 
 		// Pass a vector of handles to serialise a specific set of entities
 		JsonSerialiser SerialiseEntities(std::vector<EntityHandle> e = {});
+		bool Save(std::string_view path);
 		
 	private:
 		void AddComponentInternal(const EntityHandle& e, uint32_t resolvedTypeIndex);

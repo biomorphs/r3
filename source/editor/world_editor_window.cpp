@@ -1,5 +1,7 @@
 #include "world_editor_window.h"
 #include "world_info_widget.h"
+#include "editor_command_list.h"
+#include "editor/commands/world_editor_save_cmd.h"
 #include "engine/systems.h"
 #include "engine/basic_value_inspector.h"
 #include "engine/entity_list_widget.h"
@@ -23,6 +25,7 @@ namespace R3
 		};
 		m_inspectEntityWidget = std::make_unique<EntityInspectorWidget>();
 		m_valueInspector = std::make_unique<BasicValueInspector>();
+		m_cmds = std::make_unique<EditorCommandList>();
 	}
 
 	WorldEditorWindow::~WorldEditorWindow()
@@ -46,6 +49,7 @@ namespace R3
 			{
 				m_inspectEntityWidget->Update(m_selectedEntity, *w, *m_valueInspector, true);
 			}
+			m_cmds->ShowWidget(true);
 		}
 		float newWidth = ImGui::GetWindowWidth();
 		ImGui::End();
@@ -56,11 +60,15 @@ namespace R3
 	void WorldEditorWindow::UpdateMainMenu()
 	{
 		auto& fileMenu = MenuBar::MainMenu().GetSubmenu("File");
-		fileMenu.AddItemAfter("Save World", "Open World", []() {
+		fileMenu.AddItemAfter("Open World", "Save World", [this]() {
+			m_cmds->Push(std::make_unique<WorldEditorSaveCmd>(this, m_filePath));
 		});
-		fileMenu.AddItemAfter("Save World As", "Save World", []() {
+		fileMenu.AddItemAfter("Save World", "Save World As", [this]() {
+			m_cmds->Push(std::make_unique<WorldEditorSaveCmd>(this, ""));
 		});
-		fileMenu.AddItemAfter("Close World", "Save World As", []() {
+		auto& settingsMenu = MenuBar::MainMenu().GetSubmenu("Settings");
+		settingsMenu.AddItem("Open Command List Window", [this]() {
+			m_showCommandsWindow = true;
 		});
 	}
 
@@ -113,6 +121,11 @@ namespace R3
 			DrawSideBarLeft(thisWorld);
 			DrawSideBarRight(thisWorld);
 		}
+		if (m_showCommandsWindow)
+		{
+			m_showCommandsWindow = m_cmds->ShowWidget();
+		}
+		m_cmds->RunNext();
 	}
 
 	EditorWindow::CloseStatus WorldEditorWindow::PrepareToClose()
@@ -148,5 +161,23 @@ namespace R3
 		{
 			return EditorWindow::CloseStatus::NotReady;
 		}
+	}
+
+	bool WorldEditorWindow::SaveWorld(std::string_view path)
+	{
+		auto* entities = Systems::GetSystem<Entities::EntitySystem>();
+		if (entities)
+		{
+			Entities::World* thisWorld = entities->GetWorld(m_worldIdentifier);
+			if (thisWorld)
+			{
+				if (thisWorld->Save(path))
+				{
+					m_filePath = path;
+					return true;
+				}
+			}
+		}		
+		return false;
 	}
 }

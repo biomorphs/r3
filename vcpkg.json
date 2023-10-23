@@ -15,6 +15,7 @@
     "glm",
 	"assimp",
 	"vulkan-memory-allocator",
-	"nlohmann-json"
+	"nlohmann-json",
+	"nativefiledialog"
   ]
 }

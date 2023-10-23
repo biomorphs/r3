@@ -4,8 +4,13 @@ set(EditorLib_SourceFiles
 	editor_window.h
 	world_editor_window.h
 	world_editor_window.cpp
+	editor_command.h
+	editor_command_list.h
+	editor_command_list.cpp
 	systems/editor_system.h
 	systems/editor_system.cpp
+	commands/world_editor_save_cmd.h
+	commands/world_editor_save_cmd.cpp
 )
 
 add_library(Editor ${EditorLib_SourceFiles})

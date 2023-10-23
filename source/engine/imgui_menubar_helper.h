@@ -22,8 +22,8 @@ namespace R3
 	public:
 		static MenuBar& MainMenu();	// main menu singleton for convenience
 
-		void AddItemAfter(std::string_view itemName, std::string_view afterItemName, std::function<void()> onSelected, std::string shortcut = "");
-		void AddItemBefore(std::string_view itemName, std::string_view beforeItemName, std::function<void()> onSelected, std::string shortcut = "");
+		void AddItemAfter(std::string_view afterItemName, std::string_view itemName, std::function<void()> onSelected, std::string shortcut = "");
+		void AddItemBefore(std::string_view beforeItemName, std::string_view itemName, std::function<void()> onSelected, std::string shortcut = "");
 		void AddItem(std::string_view name, std::function<void()> onSelected, std::string shortcut = "");
 		
 		MenuBar& GetSubmenu(std::string_view label);		// creates one if it doesn't exist

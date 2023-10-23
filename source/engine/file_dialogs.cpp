@@ -1,0 +1,24 @@
+#include "file_dialogs.h"
+#include "core/file_io.h"
+#include "core/log.h"
+#include <nfd.h>
+
+namespace R3
+{
+	std::string FileSaveDialog(std::string_view initialPath, std::string_view filter)
+	{
+        std::string realInitialPath = initialPath.empty() ? std::string(FileIO::GetBasePath()) : FileIO::FindAbsolutePath(initialPath);
+
+        nfdchar_t* savePath = NULL;
+        nfdresult_t result = NFD_SaveDialog(filter.data(), realInitialPath.data(), &savePath);
+        if (result == NFD_OKAY)
+        {
+            return savePath;
+        }
+        else if (result == NFD_ERROR)
+        {
+            LogError("Error when selecting file - {}", NFD_GetError());
+        }
+		return std::string();
+	}
+}

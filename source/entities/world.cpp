@@ -1,6 +1,7 @@
 #include "world.h"
 #include "core/profiler.h"
 #include "core/log.h"
+#include "core/file_io.h"
 #include "engine/serialiser.h"
 #include "component_storage.h"
 #include "component_type_registry.h"
@@ -23,6 +24,7 @@ namespace Entities
 	{
 		R3_PROF_EVENT();
 		JsonSerialiser json(JsonSerialiser::Mode::Write);
+		json("WorldName", m_name);
 		if (handles.size() == 0)	// collect all the entity handles first
 		{
 			handles.resize(m_allEntities.size());
@@ -31,15 +33,6 @@ namespace Entities
 				handles[i] = EntityHandle(m_allEntities[i].m_publicID, i);
 			}
 		}
-		std::vector<uint32_t> entityIDs;
-		entityIDs.resize(handles.size());
-		for (int i = 0; i < handles.size(); ++i)
-		{
-			entityIDs[i] = handles[i].GetID();
-		}
-		auto entityCount = entityIDs.size();
-		json("EntityCount", entityCount);
-		json("EntityIDs", entityIDs);	// needs to be available to build remapping table
 
 		std::vector<nlohmann::json> allEntitiesJson;
 		JsonSerialiser entityJson(JsonSerialiser::Mode::Write);
@@ -47,6 +40,9 @@ namespace Entities
 		{			
 			if (IsHandleValid(handles[h]))
 			{
+				auto entityID = handles[h].GetID();
+				entityJson("ID", entityID);
+
 				const auto& ped = m_allEntities[handles[h].GetPrivateIndex()];
 				for (int typeIndex = 0; typeIndex < ped.m_componentIndices.size(); ++typeIndex)
 				{
@@ -56,17 +52,21 @@ namespace Entities
 						m_allComponents[typeIndex]->Serialise(handles[h], ped.m_componentIndices[typeIndex], entityJson);
 					}
 				}
-				if (!entityJson.GetJson().empty())	// only write entity data if there are components
-				{
-					entityJson("ID", entityIDs[h]);
-					allEntitiesJson.push_back(std::move(entityJson.GetJson()));
-				}
+				allEntitiesJson.emplace_back(std::move(entityJson.GetJson()));
 				entityJson.GetJson().clear();
 			}
 		}
 		json.GetJson()["AllEntities"] = std::move(allEntitiesJson);
 
 		return json;
+	}
+
+	bool World::Save(std::string_view path)
+	{
+		R3_PROF_EVENT();
+		CollectGarbage();	// ensure any entities pending delete are removed before saving
+		JsonSerialiser allJson = SerialiseEntities();
+		return FileIO::SaveTextToFile(path, allJson.GetJson().dump(1));
 	}
 
 	size_t World::GetEntityDisplayName(const EntityHandle& h, char* nameBuffer, size_t maxLength) const

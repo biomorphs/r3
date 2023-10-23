@@ -19,6 +19,8 @@ set(EngineLib_SourceFiles
 	entity_inspector_widget.cpp
 	basic_value_inspector.h
 	basic_value_inspector.cpp
+	file_dialogs.h
+	file_dialogs.cpp
 	systems/time_system.h
 	systems/time_system.cpp
 	systems/event_system.h
@@ -35,4 +37,4 @@ add_library(Engine ${EngineLib_SourceFiles})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/../ FILES ${EngineLib_SourceFiles})
 target_include_directories(Engine PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../)
 target_include_directories(Engine PRIVATE ${Vulkan_INCLUDE_DIRS})
-target_link_libraries(Engine PRIVATE Core Optick::OptickCore SDL2::SDL2 glm::glm assimp::assimp imgui::imgui) 
+target_link_libraries(Engine PRIVATE Core Optick::OptickCore SDL2::SDL2 glm::glm assimp::assimp imgui::imgui unofficial::nativefiledialog::nfd) 
