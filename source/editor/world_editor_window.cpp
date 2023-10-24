@@ -135,15 +135,12 @@ namespace R3
 			m_cmds->Push(std::make_unique<WorldEditorSaveCmd>(this, ""));
 		});
 		auto& editMenu = MenuBar::MainMenu().GetSubmenu("Edit");
-		if (m_cmds->CanUndo())
-		{
-			editMenu.AddItem("Undo", [this]() {
-				m_cmds->Undo();
-			});
-			editMenu.AddItem("Redo", [this]() {
-				m_cmds->Redo();
-			});
-		}
+		editMenu.AddItem("Undo", [this]() {
+			m_cmds->Undo();
+		}, "", m_cmds->CanUndo());
+		editMenu.AddItem("Redo", [this]() {
+			m_cmds->Redo();
+		}, "", m_cmds->CanRedo());
 		auto& settingsMenu = MenuBar::MainMenu().GetSubmenu("Settings");
 		settingsMenu.AddItem("Show Command List", [this]() {
 			m_showCommandsWindow = true;

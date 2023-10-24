@@ -22,11 +22,10 @@ namespace R3
 	public:
 		static MenuBar& MainMenu();	// main menu singleton for convenience
 
-		void AddItemAfter(std::string_view afterItemName, std::string_view itemName, std::function<void()> onSelected, std::string shortcut = "");
-		void AddItemBefore(std::string_view beforeItemName, std::string_view itemName, std::function<void()> onSelected, std::string shortcut = "");
-		void AddItem(std::string_view name, std::function<void()> onSelected, std::string shortcut = "");
+		void AddItemAfter(std::string_view afterItemName, std::string_view itemName, std::function<void()> onSelected, std::string shortcut = "", bool enabled = true);
+		void AddItem(std::string_view name, std::function<void()> onSelected, std::string shortcut = "", bool enabled = true);
 		
-		MenuBar& GetSubmenu(std::string_view label);		// creates one if it doesn't exist
+		MenuBar& GetSubmenu(std::string_view label, bool enabled = true);	// creates one if it doesn't exist, enabled flag will ovewrite old value
 		void Display(bool appendToMainMenu=false);			// menu can be attached to current window or main menu, item callbacks will fire here on selection
 		void DisplayContextMenu();
 

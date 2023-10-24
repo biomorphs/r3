@@ -10,24 +10,7 @@ namespace R3
 		return s_mainMenu;
 	}
 
-	void MenuBar::AddItemBefore(std::string_view beforeItemName, std::string_view itemName, std::function<void()> onSelected, std::string shortcut)
-	{
-		auto foundBefore = std::find_if(m_menuItems.begin(), m_menuItems.end(), [&beforeItemName](const MenuItem& m) {
-			return m.m_label == beforeItemName;
-		});
-		if (foundBefore != m_menuItems.end() && foundBefore != m_menuItems.begin())
-		{
-			foundBefore--;
-		}
-
-		MenuItem mi;
-		mi.m_label = itemName;
-		mi.m_shortcut = shortcut;
-		mi.m_onSelected = onSelected;
-		m_menuItems.insert(foundBefore, mi);
-	}
-
-	void MenuBar::AddItemAfter(std::string_view afterItemName, std::string_view itemName, std::function<void()> onSelected, std::string shortcut)
+	void MenuBar::AddItemAfter(std::string_view afterItemName, std::string_view itemName, std::function<void()> onSelected, std::string shortcut, bool enabled)
 	{
 		auto foundAfter = std::find_if(m_menuItems.begin(), m_menuItems.end(), [&afterItemName](const MenuItem& m) {
 			return m.m_label == afterItemName;
@@ -41,31 +24,35 @@ namespace R3
 		mi.m_label = itemName;
 		mi.m_shortcut = shortcut;
 		mi.m_onSelected = onSelected;
+		mi.m_enabled = enabled;
 		m_menuItems.insert(foundAfter, mi);
 	}
 
-	void MenuBar::AddItem(std::string_view name, std::function<void()> onSelected, std::string shortcut)
+	void MenuBar::AddItem(std::string_view name, std::function<void()> onSelected, std::string shortcut, bool enabled)
 	{
 		MenuItem mi;
 		mi.m_label = name;
 		mi.m_shortcut = shortcut;
 		mi.m_onSelected = onSelected;
+		mi.m_enabled = enabled;
 		m_menuItems.push_back(mi);
 	}
 
-	MenuBar& MenuBar::GetSubmenu(std::string_view label)
+	MenuBar& MenuBar::GetSubmenu(std::string_view label, bool enabled)
 	{
 		auto found = std::find_if(m_subMenus.begin(), m_subMenus.end(), [&label](const MenuBar& m) {
 			return m.m_label == label;
 		});
 		if (found != m_subMenus.end())
 		{
+			found->m_enabled = enabled;
 			return (*found);
 		}
 		else
 		{
 			MenuBar newMenu;
 			newMenu.m_label = label;
+			newMenu.m_enabled = enabled;
 			m_subMenus.push_back(newMenu);
 			return m_subMenus.back();
 		}
