@@ -23,7 +23,9 @@ namespace R3
 		virtual void Update();
 		virtual CloseStatus PrepareToClose();
 		virtual void OnFocusGained();
+
 		bool SaveWorld(std::string_view path);
+		Entities::World* GetWorld() const;
 
 		const std::vector<Entities::EntityHandle>& GetSelectedEntities() { return m_selectedEntities; }
 		void SelectEntities(const std::vector<Entities::EntityHandle>& h);
@@ -33,7 +35,6 @@ namespace R3
 		void SelectAll();
 		void DeleteSelected();
 	private:
-		void AddEmptyEntity(bool selectEntity);
 		void UpdateMainContextMenu();
 		void UpdateMainMenu();
 		void DrawSideBarLeft(Entities::World* w);

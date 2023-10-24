@@ -3,6 +3,8 @@
 #include "editor_command_list.h"
 #include "editor/commands/world_editor_save_cmd.h"
 #include "editor/commands/world_editor_select_entities_cmd.h"
+#include "editor/commands/world_editor_add_empty_entity_cmd.h"
+#include "editor/commands/world_editor_delete_entities_cmd.h"
 #include "engine/systems.h"
 #include "engine/basic_value_inspector.h"
 #include "engine/entity_list_widget.h"
@@ -50,23 +52,9 @@ namespace R3
 		}
 	}
 
-	void WorldEditorWindow::AddEmptyEntity(bool selectEntity)
-	{
-		auto* entities = Systems::GetSystem<Entities::EntitySystem>();
-		if (entities)
-		{
-			auto newHandle = entities->GetWorld(m_worldIdentifier)->AddEntity();
-			if (selectEntity)
-			{
-				SelectEntity(newHandle);
-			}
-		}
-	}
-
 	void WorldEditorWindow::DeleteSelected()
 	{
-		auto entities = Systems::GetInstance().GetSystem<Entities::EntitySystem>();
-		auto world = entities->GetWorld(m_worldIdentifier);
+		auto world = GetWorld();
 		for (int s = 0; s < m_selectedEntities.size(); ++s)
 		{
 			world->RemoveEntity(m_selectedEntities[s]);
@@ -76,11 +64,12 @@ namespace R3
 
 	void WorldEditorWindow::UpdateMainContextMenu()
 	{
+		auto world = GetWorld();
+
 		MenuBar contextMenu;
 		auto& addEntityMenu = contextMenu.GetSubmenu("Add Entity");
-		addEntityMenu.AddItem("Empty Entity", [this]() {
-			DeselectAll();	// todo
-			AddEmptyEntity(true);
+		addEntityMenu.AddItem("Empty Entity", [this, world]() {
+			m_cmds->Push(std::make_unique<WorldEditorAddEmptyEntityCommand>(this));
 		});
 		contextMenu.AddItem("Select all", [this]() {
 			auto selectCmd = std::make_unique<WorldEditorSelectEntitiesCommand>(this);
@@ -96,7 +85,9 @@ namespace R3
 			});
 			std::string deleteStr = m_selectedEntities.size() == 1 ? "Deleted selected entity" : "Delete selected entities";
 			contextMenu.AddItem(deleteStr, [this]() {
-				DeleteSelected();
+				auto deleteCmd = std::make_unique<WorldEditorDeleteEntitiesCmd>(this);
+				deleteCmd->m_deleteAllSelected = true;
+				m_cmds->Push(std::move(deleteCmd));
 			});
 		}
 		contextMenu.DisplayContextMenu();
@@ -170,9 +161,7 @@ namespace R3
 
 	std::string_view WorldEditorWindow::GetWindowTitle()
 	{
-		auto entities = Systems::GetInstance().GetSystem<Entities::EntitySystem>();
-		std::string worldName(entities->GetWorld(m_worldIdentifier)->GetName());
-
+		std::string worldName(GetWorld()->GetName());
 		if (m_filePath.empty())
 		{
 			m_titleString = std::format("World '{}'", worldName);
@@ -181,27 +170,22 @@ namespace R3
 		{
 			m_titleString = std::format("World '{}' ({})", worldName, m_filePath.c_str());
 		}
-		
 		return m_titleString;
 	}
 
 	void WorldEditorWindow::Update()
 	{
 		R3_PROF_EVENT();
+		auto theWorld = GetWorld();
 		UpdateMainMenu();
-		auto* entities = Systems::GetSystem<Entities::EntitySystem>();
-		if (entities)
-		{
-			Entities::World* thisWorld = entities->GetWorld(m_worldIdentifier);
-			DrawSideBarLeft(thisWorld);
-			DrawSideBarRight(thisWorld);
-		}
+		DrawSideBarLeft(theWorld);
+		DrawSideBarRight(theWorld);
+		UpdateMainContextMenu();
 		if (m_showCommandsWindow)
 		{
 			m_showCommandsWindow = m_cmds->ShowWidget();
 		}
 		m_cmds->RunNext();
-		UpdateMainContextMenu();
 	}
 
 	EditorWindow::CloseStatus WorldEditorWindow::PrepareToClose()
@@ -242,26 +226,28 @@ namespace R3
 	void WorldEditorWindow::OnFocusGained()
 	{
 		auto* entities = Systems::GetSystem<Entities::EntitySystem>();
-		LogInfo("Setting active world '{}'", m_worldIdentifier);
 		entities->SetActiveWorld(m_worldIdentifier);
 	}
 
 	bool WorldEditorWindow::SaveWorld(std::string_view path)
 	{
+		Entities::World* thisWorld = GetWorld();
+		if (thisWorld && thisWorld->Save(path))
+		{
+			m_filePath = path;
+			return true;
+		}	
+		return false;
+	}
+
+	Entities::World* WorldEditorWindow::GetWorld() const
+	{
 		auto* entities = Systems::GetSystem<Entities::EntitySystem>();
 		if (entities)
 		{
-			Entities::World* thisWorld = entities->GetWorld(m_worldIdentifier);
-			if (thisWorld)
-			{
-				if (thisWorld->Save(path))
-				{
-					m_filePath = path;
-					return true;
-				}
-			}
-		}		
-		return false;
+			return entities->GetWorld(m_worldIdentifier);
+		}
+		return nullptr;
 	}
 
 	void WorldEditorWindow::SelectEntities(const std::vector<Entities::EntityHandle>& h)
@@ -310,7 +296,10 @@ namespace R3
 	void WorldEditorWindow::SelectAll()
 	{
 		R3_PROF_EVENT();
-		auto* entities = Systems::GetSystem<Entities::EntitySystem>();
-		m_selectedEntities = entities->GetWorld(m_worldIdentifier)->GetActiveEntities();
+		Entities::World* thisWorld = GetWorld();
+		if (thisWorld)
+		{
+			m_selectedEntities = thisWorld->GetActiveEntities();
+		}
 	}
 }
