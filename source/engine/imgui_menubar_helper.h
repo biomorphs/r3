@@ -17,7 +17,7 @@ namespace R3
 		bool m_enabled = true;
 	};
 
-	class MenuBar	// contains a heirarchy of MenuBar children
+	class MenuBar	// contains a heirarchy of MenuBar children, can be used either as a window menu or as a context menu (i.e. right click)
 	{
 	public:
 		static MenuBar& MainMenu();	// main menu singleton for convenience
@@ -27,7 +27,8 @@ namespace R3
 		void AddItem(std::string_view name, std::function<void()> onSelected, std::string shortcut = "");
 		
 		MenuBar& GetSubmenu(std::string_view label);		// creates one if it doesn't exist
-		void Display(bool appendToMainMenu=false);	// menu can be attached to current window or main menu, item callbacks will fire here on selection
+		void Display(bool appendToMainMenu=false);			// menu can be attached to current window or main menu, item callbacks will fire here on selection
+		void DisplayContextMenu();
 
 		std::string m_label;
 		bool m_enabled = true;

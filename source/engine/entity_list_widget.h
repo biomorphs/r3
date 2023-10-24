@@ -18,6 +18,7 @@ namespace R3
 	public:
 		// Selection Callbacks
 		using OnSelectedFn = std::function<void(const Entities::EntityHandle&)>;
+		using OnDeselectedFn = std::function<void(const Entities::EntityHandle&)>;
 
 		// How the entities are layed out (flat list, tree view, etc)
 		enum class FilterType {
@@ -29,8 +30,9 @@ namespace R3
 			bool m_canExpandEntities = false;
 			bool m_showOptionsButton = true;
 			OnSelectedFn m_onSelected;
+			OnDeselectedFn m_onDeselected;
 		};
-		void Update(Entities::World& w, bool embedAsChild = false);
+		void Update(Entities::World& w, const std::vector<Entities::EntityHandle>& selectedEntities, bool embedAsChild = false);
 		Options m_options;
 	private:
 		bool IsFilterActive();
@@ -38,9 +40,9 @@ namespace R3
 		void DisplayFilterContextMenu();
 		void DisplayFilter();
 		void DisplayOptionsBar();
-		void DisplayFlatList(Entities::World& w);
-		bool DisplaySingleEntity(Entities::World& w, const Entities::EntityHandle& h);
-		void DisplayEntityExtended(Entities::World& w, const Entities::EntityHandle& h);	// called if an entity is further expanded
+		void DisplayFlatList(Entities::World& w, const std::vector<Entities::EntityHandle>& selectedEntities);
+		bool DisplaySingleEntity(Entities::World& w, const Entities::EntityHandle& h, bool isSelected);
+		void DisplayEntityExtended(Entities::World& w, const Entities::EntityHandle& h, bool isSelected);	// called if an entity is further expanded
 		std::string m_filterText = "";
 		uint64_t m_filterTypes = 0;	// mask of component types to filter
 		std::vector<Entities::EntityHandle> m_filteredEntities;

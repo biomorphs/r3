@@ -14,6 +14,8 @@
 
 namespace R3
 {
+	constexpr size_t c_maxEntitiesToInspect = 64;	// imgui struggles with too many child windows
+
 	WorldEditorWindow::WorldEditorWindow(std::string worldIdentifier, std::string filePath)
 		: m_worldIdentifier(worldIdentifier)
 		, m_filePath(filePath)
@@ -22,8 +24,12 @@ namespace R3
 		m_allEntitiesWidget->m_options.m_canExpandEntities = false;
 		m_allEntitiesWidget->m_options.m_showInternalIndex = false;
 		m_allEntitiesWidget->m_options.m_onSelected = [this](const Entities::EntityHandle& e) {
-			m_selectedEntity = e;
+			SelectEntity(e);
 		};
+		m_allEntitiesWidget->m_options.m_onDeselected = [this](const Entities::EntityHandle& e) {
+			DeselectEntity(e);
+		};
+
 		m_inspectEntityWidget = std::make_unique<EntityInspectorWidget>();
 		m_valueInspector = std::make_unique<BasicValueInspector>();
 		m_cmds = std::make_unique<EditorCommandList>();
@@ -38,6 +44,54 @@ namespace R3
 		}
 	}
 
+	void WorldEditorWindow::AddEmptyEntity(bool selectEntity)
+	{
+		auto* entities = Systems::GetSystem<Entities::EntitySystem>();
+		if (entities)
+		{
+			auto newHandle = entities->GetWorld(m_worldIdentifier)->AddEntity();
+			if (selectEntity)
+			{
+				SelectEntity(newHandle);
+			}
+		}
+	}
+
+	void WorldEditorWindow::DeleteSelected()
+	{
+		auto entities = Systems::GetInstance().GetSystem<Entities::EntitySystem>();
+		auto world = entities->GetWorld(m_worldIdentifier);
+		for (int s = 0; s < m_selectedEntities.size(); ++s)
+		{
+			world->RemoveEntity(m_selectedEntities[s]);
+		}
+		m_selectedEntities.clear();
+	}
+
+	void WorldEditorWindow::UpdateMainContextMenu()
+	{
+		MenuBar contextMenu;
+		auto& addEntityMenu = contextMenu.GetSubmenu("Add Entity");
+		addEntityMenu.AddItem("Empty Entity", [this]() {
+			DeselectAll();
+			AddEmptyEntity(true);
+		});
+		contextMenu.AddItem("Select all", [this]() {
+			SelectAll();
+		});
+		if (m_selectedEntities.size() > 0)
+		{
+			contextMenu.AddItem("Deselect all", [this]() {
+				DeselectAll();
+			});
+			std::string deleteStr = m_selectedEntities.size() == 1 ? "Deleted selected entity" : "Delete selected entities";
+			contextMenu.AddItem(deleteStr, [this]() {
+				DeleteSelected();
+			});
+		}
+		contextMenu.DisplayContextMenu();
+	}
+
 	void WorldEditorWindow::DrawSideBarRight(Entities::World* w)
 	{
 		uint32_t sidebarFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove;
@@ -48,7 +102,11 @@ namespace R3
 		{
 			if (w)
 			{
-				m_inspectEntityWidget->Update(m_selectedEntity, *w, *m_valueInspector, true);
+				auto startIndex = m_selectedEntities.size() - glm::min(m_selectedEntities.size(), c_maxEntitiesToInspect);
+				for (size_t i = startIndex; i < m_selectedEntities.size(); ++i)
+				{
+					m_inspectEntityWidget->Update(m_selectedEntities[i], *w, *m_valueInspector, true);
+				}
 			}
 		}
 		float newWidth = ImGui::GetWindowWidth();
@@ -84,7 +142,7 @@ namespace R3
 			{
 				WorldInfoWidget wi;
 				wi.Update(*w, true);
-				m_allEntitiesWidget->Update(*w, true);
+				m_allEntitiesWidget->Update(*w, m_selectedEntities, true);
 			}
 		}
 		float newWidth = ImGui::GetWindowWidth();
@@ -126,6 +184,7 @@ namespace R3
 			m_showCommandsWindow = m_cmds->ShowWidget();
 		}
 		m_cmds->RunNext();
+		UpdateMainContextMenu();
 	}
 
 	EditorWindow::CloseStatus WorldEditorWindow::PrepareToClose()
@@ -186,5 +245,38 @@ namespace R3
 			}
 		}		
 		return false;
+	}
+
+	void WorldEditorWindow::SelectEntity(const Entities::EntityHandle& h)
+	{
+		R3_PROF_EVENT();
+		auto foundIt = std::find(m_selectedEntities.begin(), m_selectedEntities.end(), h);
+		if (foundIt == m_selectedEntities.end())
+		{
+			m_selectedEntities.push_back(h);
+		}
+	}
+
+	void WorldEditorWindow::DeselectEntity(const Entities::EntityHandle& h)
+	{
+		R3_PROF_EVENT();
+		auto foundIt = std::find(m_selectedEntities.begin(), m_selectedEntities.end(), h);
+		if (foundIt != m_selectedEntities.end())
+		{
+			m_selectedEntities.erase(foundIt);
+		}
+	}
+
+	void WorldEditorWindow::DeselectAll()
+	{
+		R3_PROF_EVENT();
+		m_selectedEntities.clear();
+	}
+
+	void WorldEditorWindow::SelectAll()
+	{
+		R3_PROF_EVENT();
+		auto* entities = Systems::GetSystem<Entities::EntitySystem>();
+		m_selectedEntities = entities->GetWorld(m_worldIdentifier)->GetActiveEntities();
 	}
 }

@@ -90,6 +90,15 @@ namespace R3
 		}
 	}
 
+	void MenuBar::DisplayContextMenu()
+	{
+		if (ImGui::BeginPopupContextVoid())
+		{
+			DoSubMenu(*this);
+			ImGui::EndPopup();
+		}
+	}
+
 	void MenuBar::Display(bool appendToMainMenu)
 	{
 		R3_PROF_EVENT();

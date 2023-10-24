@@ -24,7 +24,15 @@ namespace R3
 		virtual CloseStatus PrepareToClose();
 		virtual void OnFocusGained();
 		bool SaveWorld(std::string_view path);
+
+		void SelectEntity(const Entities::EntityHandle& h);
+		void DeselectEntity(const Entities::EntityHandle& h);
+		void DeselectAll();
+		void SelectAll();
+		void DeleteSelected();
 	private:
+		void AddEmptyEntity(bool selectEntity);
+		void UpdateMainContextMenu();
 		void UpdateMainMenu();
 		void DrawSideBarLeft(Entities::World* w);
 		void DrawSideBarRight(Entities::World* w);
@@ -38,6 +46,6 @@ namespace R3
 		std::unique_ptr<EntityInspectorWidget> m_inspectEntityWidget;
 		std::unique_ptr<ValueInspector> m_valueInspector;
 		std::unique_ptr<EditorCommandList> m_cmds;
-		Entities::EntityHandle m_selectedEntity;	// tempshit
+		std::vector<Entities::EntityHandle> m_selectedEntities;
 	};
 }

@@ -7,6 +7,7 @@
 #include "component_type_registry.h"
 #include "entity_handle.h"
 #include <cassert>
+#include <bit>
 
 namespace R3
 {
@@ -306,6 +307,16 @@ namespace Entities
 			return (ped.m_ownedComponentBits & typeBits) != 0;
 		}
 		return false;
+	}
+
+	uint32_t World::GetOwnedComponentCount(const EntityHandle& e)
+	{
+		if (IsHandleValid(e))
+		{
+			const PerEntityData& ped = m_allEntities[e.GetPrivateIndex()];
+			return std::popcount(ped.m_ownedComponentBits);
+		}
+		return 0;
 	}
 
 	bool World::HasAllComponents(const EntityHandle& e, uint64_t typeBits) const

@@ -8,7 +8,7 @@
 
 namespace R3
 {
-	void EntityListWidget::DisplayEntityExtended(Entities::World& w, const Entities::EntityHandle& h)
+	void EntityListWidget::DisplayEntityExtended(Entities::World& w, const Entities::EntityHandle& h, bool isSelected)
 	{
 		const auto& allCmpTypes = Entities::ComponentTypeRegistry::GetInstance().AllTypes();
 		for (int i = 0; i < allCmpTypes.size(); ++i)
@@ -20,11 +20,11 @@ namespace R3
 		}
 	}
 
-	bool EntityListWidget::DisplaySingleEntity(Entities::World& w, const Entities::EntityHandle& h)
+	bool EntityListWidget::DisplaySingleEntity(Entities::World& w, const Entities::EntityHandle& h, bool isSelected)
 	{
 		char entityName[256] = "";
 		char displayName[512] = "";
-		bool wasSelected = false;
+		bool selectionChanged = false;
 		w.GetEntityDisplayName(h, entityName, sizeof(entityName));
 		if (m_options.m_showInternalIndex)
 		{
@@ -36,30 +36,42 @@ namespace R3
 		}
 		if (m_options.m_canExpandEntities)
 		{
-			if (ImGui::TreeNode(displayName))
+			if (ImGui::TreeNodeEx(displayName, isSelected ? ImGuiTreeNodeFlags_Selected : 0))
 			{
-				DisplayEntityExtended(w, h);
+				DisplayEntityExtended(w, h, isSelected);
 				ImGui::TreePop();
-				wasSelected = true;
+				selectionChanged = !isSelected;
+			}
+			else
+			{
+				selectionChanged = isSelected;
 			}
 		}
 		else
 		{
-			if (ImGui::Selectable(displayName))
+			if (ImGui::Selectable(displayName, isSelected))
 			{
-				wasSelected = true;
+				selectionChanged = true;
 			}
 		}
 
-		if (wasSelected && m_options.m_onSelected)
+		if (selectionChanged)
 		{
-			m_options.m_onSelected(h);
+			if (!isSelected && m_options.m_onSelected)
+			{
+				m_options.m_onSelected(h);
+			}
+
+			if (isSelected && m_options.m_onDeselected)
+			{
+				m_options.m_onDeselected(h);
+			}
 		}
 		
 		return true;
 	}
 
-	void EntityListWidget::DisplayFlatList(Entities::World& w)
+	void EntityListWidget::DisplayFlatList(Entities::World& w, const std::vector<Entities::EntityHandle>& selectedEntities)
 	{
 		R3_PROF_EVENT();
 
@@ -72,7 +84,8 @@ namespace R3
 			{
 				for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
 				{
-					DisplaySingleEntity(w, m_filteredEntities[i]);
+					bool isSelected = std::find(selectedEntities.begin(), selectedEntities.end(), m_filteredEntities[i]) != selectedEntities.end();
+					DisplaySingleEntity(w, m_filteredEntities[i], isSelected);
 				}
 			}
 			clipper.End();
@@ -85,7 +98,8 @@ namespace R3
 				std::vector<Entities::EntityHandle> all = w.GetActiveEntities(clipper.DisplayStart, clipper.DisplayEnd);
 				for (int i = 0; i < all.size(); ++i)
 				{
-					DisplaySingleEntity(w, all[i]);
+					bool isSelected = std::find(selectedEntities.begin(), selectedEntities.end(), all[i]) != selectedEntities.end();
+					DisplaySingleEntity(w, all[i], isSelected);
 				}
 			}
 			clipper.End();
@@ -226,7 +240,7 @@ namespace R3
 		}
 	}
 
-	void EntityListWidget::Update(Entities::World& w, bool embedAsChild)
+	void EntityListWidget::Update(Entities::World& w, const std::vector<Entities::EntityHandle>& selectedEntities, bool embedAsChild)
 	{
 		R3_PROF_EVENT();
 		FilterEntities(w);
@@ -242,7 +256,7 @@ namespace R3
 			DisplayFilter();
 			if (ImGui::BeginChild("AllEntitiesList", ImGui::GetContentRegionAvail(), true))
 			{
-				DisplayFlatList(w);
+				DisplayFlatList(w, selectedEntities);
 			}
 			ImGui::EndChild();
 		}
