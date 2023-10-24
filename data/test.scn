@@ -1,0 +1,20 @@
+{
+ "AllEntities": [
+  {
+   "ID": 3,
+   "TestComponent2": {
+    "text": "Yo"
+   }
+  },
+  {
+   "ID": 1
+  },
+  {
+   "ID": 2,
+   "TestComponent1": {
+    "text": "Hello"
+   }
+  }
+ ],
+ "WorldName": "EditorWorld"
+}

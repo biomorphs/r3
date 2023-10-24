@@ -70,45 +70,29 @@ namespace Entities
 		return allJson;
 	}
 
-	bool World::Load(std::string_view path)
+	std::vector<EntityHandle> World::SerialiseEntities(const JsonSerialiser& json)
 	{
-		R3_PROF_EVENT();
-
-		JsonSerialiser loadedJson(JsonSerialiser::Read);
-		{
-			std::string loadedJsonData;
-			if (FileIO::LoadTextFromFile(path, loadedJsonData))
-			{
-				loadedJson.LoadFromString(loadedJsonData);
-			}
-			else
-			{
-				LogError("Failed to load world file '{}'", path);
-				return false;
-			}
-		}
-		loadedJson("WorldName", m_name);
-
 		// We first create entities for each one in the json, and store a mapping of old id in json -> new id in world
 		// Then during serialisation, when any entity handle is encountered, we patch the old handle with this new one
 		std::unordered_map<uint32_t, EntityHandle> oldEntityToNewEntity;
+		std::vector<EntityHandle> allCreatedHandles;
+		try
 		{
-			R3_PROF_EVENT("AddEntities");
-			try
+			R3_PROF_EVENT();
+			oldEntityToNewEntity.reserve(json.GetJson().size());
+			allCreatedHandles.reserve(json.GetJson().size());
+			for (int e = 0; e < json.GetJson().size(); ++e)
 			{
-				auto& allEntityJson = loadedJson.GetJson()["AllEntities"];
-				for (int e = 0; e < allEntityJson.size(); ++e)
-				{
-					uint32_t id = allEntityJson[e]["ID"];
-					EntityHandle newEntity = AddEntity();
-					oldEntityToNewEntity[id] = newEntity;
-				}
+				uint32_t id = json.GetJson()[e]["ID"];
+				EntityHandle newEntity = AddEntity();
+				oldEntityToNewEntity[id] = newEntity;
+				allCreatedHandles.push_back(newEntity);
 			}
-			catch (std::exception e)
-			{
-				LogError("Failed to load an entity ID - {}", e.what());
-				return false;
-			}
+		}
+		catch (std::exception e)
+		{
+			LogError("Failed to load an entity ID - {}", e.what());
+			return allCreatedHandles;
 		}
 
 		auto RecreateHandle = [&](EntityHandle& e)
@@ -126,13 +110,12 @@ namespace Entities
 		EntityHandle::SetOnLoadFinishCallback(RecreateHandle);
 		try
 		{
-			auto& allEntityJson = loadedJson.GetJson()["AllEntities"];
 			JsonSerialiser childSerialiser(JsonSerialiser::Read);
-			for (int e = 0; e < allEntityJson.size(); ++e)	// for each entity
+			for (int e = 0; e < json.GetJson().size(); ++e)	// for each entity
 			{
-				uint32_t oldID = allEntityJson[e]["ID"];
-				const EntityHandle actualHandle = oldEntityToNewEntity[oldID];
-				childSerialiser.GetJson() = std::move(allEntityJson[e]);
+				const uint32_t oldID = json.GetJson()[e]["ID"];
+				const EntityHandle& actualHandle = oldEntityToNewEntity[oldID];
+				childSerialiser.GetJson() = std::move(json.GetJson()[e]);
 				for (auto childJson = childSerialiser.GetJson().begin(); childJson != childSerialiser.GetJson().end(); childJson++)
 				{
 					if (childJson.key() != "ID")
@@ -150,9 +133,42 @@ namespace Entities
 		catch (std::exception e)
 		{
 			LogError("Something went wrong while loading entities! - {}", e.what());
-			return false;
 		}
 		EntityHandle::SetOnLoadFinishCallback(nullptr);
+
+		return allCreatedHandles;
+	}
+
+	bool World::Load(std::string_view path)
+	{
+		R3_PROF_EVENT();
+
+		JsonSerialiser loadedJson(JsonSerialiser::Read);
+		{
+			R3_PROF_EVENT("LoadFile");
+			std::string loadedJsonData;
+			if (FileIO::LoadTextFromFile(path, loadedJsonData))
+			{
+				loadedJson.LoadFromString(loadedJsonData);
+			}
+			else
+			{
+				LogError("Failed to load world file '{}'", path);
+				return false;
+			}
+		}
+		loadedJson("WorldName", m_name);
+
+		try
+		{
+			JsonSerialiser entityJson(JsonSerialiser::Read, std::move(loadedJson.GetJson()["AllEntities"]));
+			SerialiseEntities(entityJson);
+		}
+		catch (std::exception e)
+		{
+			LogError("Failed to serialise entities - {}", e.what());
+			return false;
+		}
 
 		return true;
 	}

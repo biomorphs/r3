@@ -62,6 +62,7 @@ namespace Entities
 		// Pass a vector of handles to serialise a specific set of entities
 		JsonSerialiser SerialiseEntities();
 		JsonSerialiser SerialiseEntities(const std::vector<EntityHandle>& e);
+		std::vector<EntityHandle> SerialiseEntities(const JsonSerialiser& json);
 		bool Load(std::string_view path);
 		bool Save(std::string_view path);
 		
