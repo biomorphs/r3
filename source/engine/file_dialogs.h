@@ -10,4 +10,5 @@ namespace R3
 	// 'bmp, jpg;fbx;mp4,wmv'
 
 	std::string FileSaveDialog(std::string_view initialPath, std::string_view filter);	// returns a valid absolute path or an empty string
+	std::string FileLoadDialog(std::string_view initialPath, std::string_view filter);	// returns a valid absolute path or an empty string
 }

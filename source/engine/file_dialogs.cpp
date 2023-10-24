@@ -5,6 +5,23 @@
 
 namespace R3
 {
+    std::string FileLoadDialog(std::string_view initialPath, std::string_view filter)
+    {
+        std::string realInitialPath = initialPath.empty() ? std::string(FileIO::GetBasePath()) : FileIO::FindAbsolutePath(initialPath);
+
+        nfdchar_t* newPath = NULL;
+        nfdresult_t result = NFD_OpenDialog(filter.data(), realInitialPath.data(), &newPath);
+        if (result == NFD_OKAY)
+        {
+            return newPath;
+        }
+        else if (result == NFD_ERROR)
+        {
+            LogError("Error when selecting file - {}", NFD_GetError());
+        }
+        return std::string();
+    }
+
 	std::string FileSaveDialog(std::string_view initialPath, std::string_view filter)
 	{
         std::string realInitialPath = initialPath.empty() ? std::string(FileIO::GetBasePath()) : FileIO::FindAbsolutePath(initialPath);

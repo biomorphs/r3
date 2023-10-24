@@ -14,8 +14,9 @@
 
 namespace R3
 {
-	WorldEditorWindow::WorldEditorWindow(std::string worldIdentifier)
+	WorldEditorWindow::WorldEditorWindow(std::string worldIdentifier, std::string filePath)
 		: m_worldIdentifier(worldIdentifier)
+		, m_filePath(filePath)
 	{
 		m_allEntitiesWidget = std::make_unique<EntityListWidget>();
 		m_allEntitiesWidget->m_options.m_canExpandEntities = false;
@@ -49,7 +50,6 @@ namespace R3
 			{
 				m_inspectEntityWidget->Update(m_selectedEntity, *w, *m_valueInspector, true);
 			}
-			m_cmds->ShowWidget(true);
 		}
 		float newWidth = ImGui::GetWindowWidth();
 		ImGui::End();
@@ -161,6 +161,13 @@ namespace R3
 		{
 			return EditorWindow::CloseStatus::NotReady;
 		}
+	}
+
+	void WorldEditorWindow::OnFocusGained()
+	{
+		auto* entities = Systems::GetSystem<Entities::EntitySystem>();
+		LogInfo("Setting active world '{}'", m_worldIdentifier);
+		entities->SetActiveWorld(m_worldIdentifier);
 	}
 
 	bool WorldEditorWindow::SaveWorld(std::string_view path)

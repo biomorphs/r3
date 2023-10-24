@@ -26,10 +26,14 @@ namespace Entities
 		World* GetWorld(const std::string& id);
 		void DestroyWorld(const std::string& id);
 
+		void SetActiveWorld(const std::string& id) { m_activeWorldId = id; }
+		World* GetActiveWorld();
+
 	private:
 		bool ShowGui();
 		bool RunGC();
 		std::unordered_map<std::string, std::unique_ptr<World>> m_worlds;
+		std::string m_activeWorldId;
 	};
 
 	template <typename T>		// SFINAE trick to detect Inspect member fn

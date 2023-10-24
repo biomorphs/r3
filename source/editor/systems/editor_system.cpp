@@ -1,11 +1,14 @@
 #include "editor_system.h"
 #include "editor/world_editor_window.h"
 #include "engine/imgui_menubar_helper.h"
+#include "engine/systems/event_system.h"
+#include "engine/file_dialogs.h"
 #include "entities/systems/entity_system.h"
 #include "render/render_system.h"
 #include "core/profiler.h"
 #include "imgui.h"
 #include <format>
+#include <SDL_events.h>
 
 namespace R3
 {
@@ -23,6 +26,21 @@ namespace R3
 
 		m_allWindows.push_back(std::make_unique<WorldEditorWindow>("Benchmarks"));
 		m_allWindows.push_back(std::make_unique<WorldEditorWindow>("EditorWorld"));
+
+		// the editor will handle shutdown events
+		auto events = GetSystem<EventSystem>();
+		if (events)
+		{	
+			events->SetCloseImmediate(false);
+			events->RegisterEventHandler([this](void* theEvent) {
+				SDL_Event* actualEvent = static_cast<SDL_Event*>(theEvent);
+				if (actualEvent->type == SDL_QUIT)
+				{
+					CloseAllWindows();
+					m_quitRequested = true;
+				}
+			});
+		}
 
 		return true;
 	}
@@ -57,13 +75,35 @@ namespace R3
 		}
 	}
 
+	void EditorSystem::OnOpenWorld()
+	{
+		std::string fileToOpen = FileLoadDialog("", "scn");
+		if (!fileToOpen.empty())
+		{
+			auto entities = GetSystem<Entities::EntitySystem>();
+			int newWorldNameId = m_worldInternalNameCounter++;
+			std::string worldInternalName = std::format("EditorWorld_{}", newWorldNameId);
+			Entities::World* newWorld = entities->CreateWorld(worldInternalName);
+			if (newWorld && newWorld->Load(fileToOpen))
+			{
+				m_allWindows.push_back(std::make_unique<WorldEditorWindow>(worldInternalName, fileToOpen));
+			}
+			else
+			{
+				LogError("Failed to load world file '{}'", fileToOpen);
+				entities->DestroyWorld(worldInternalName);
+			}
+		}
+	}
+
 	void EditorSystem::ShowMainMenu()
 	{
 		auto& fileMenu = MenuBar::MainMenu().GetSubmenu("File");
 		fileMenu.AddItem("New World", [this]() {
 			OnNewWorld();
 		});
-		fileMenu.AddItem("Open World", []() {
+		fileMenu.AddItem("Open World", [this]() {
+			OnOpenWorld();
 		});
 		fileMenu.AddItem("Exit", [this]() {
 			CloseAllWindows();
@@ -150,7 +190,8 @@ namespace R3
 				if (m_allWindows[w].get() == destroyedWindows[i])
 				{
 					m_allWindows.erase(m_allWindows.begin() + w);
-					m_selectedWindowTab = 0;
+					m_selectedWindowTab = -1;
+					m_activeWindowIndex = -1;	// ensures focus gained/lost called correctly
 					break;
 				}
 			}

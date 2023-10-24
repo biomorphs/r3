@@ -18,6 +18,7 @@ namespace R3
 		void CloseAllWindows();
 		void ProcessClosingWindows();
 		void OnNewWorld();
+		void OnOpenWorld();
 		void ShowMainMenu();
 		void ShowWindowTabs();
 		bool ShowGui();

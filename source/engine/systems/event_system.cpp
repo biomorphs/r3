@@ -27,7 +27,7 @@ namespace R3
 			{
 				it(&event);
 			}
-			if (event.type == SDL_QUIT)
+			if (m_closeImmediately && event.type == SDL_QUIT)
 			{
 				return false;
 			}

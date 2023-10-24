@@ -13,6 +13,7 @@ namespace R3
 			NotReady,		// don't close yet, ask again next frame
 			Cancel			// cancel closing this window
 		};
+		virtual ~EditorWindow() {}
 		virtual std::string_view GetWindowTitle() { return "Editor Window"; }
 		virtual CloseStatus PrepareToClose() { return CloseStatus::ReadyToClose; }
 		virtual void OnFocusGained() {};	// called once when the window is made active

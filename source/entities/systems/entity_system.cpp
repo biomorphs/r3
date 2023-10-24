@@ -331,6 +331,11 @@ namespace Entities
 		m_worlds.erase(id);
 	}
 
+	World* EntitySystem::GetActiveWorld()
+	{
+		return GetWorld(m_activeWorldId);
+	}
+
 	bool EntitySystem::ShowGui()
 	{
 		R3_PROF_EVENT();

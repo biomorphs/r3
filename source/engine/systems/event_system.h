@@ -12,8 +12,13 @@ namespace R3
 
 		using EventHandler = std::function<void(void*)>;
 		void RegisterEventHandler(EventHandler);
+
+		// if set, OnFrameStart will return false (and the app will close) if quit event is processed
+		void SetCloseImmediate(bool b) { m_closeImmediately = b; }
+
 	private:
 		std::vector<EventHandler> m_handlers;
 		bool OnFrameStart();
+		bool m_closeImmediately = true;	
 	};
 }

@@ -61,6 +61,93 @@ namespace Entities
 		return json;
 	}
 
+	bool World::Load(std::string_view path)
+	{
+		R3_PROF_EVENT();
+
+		JsonSerialiser loadedJson(JsonSerialiser::Read);
+		{
+			std::string loadedJsonData;
+			if (FileIO::LoadTextFromFile(path, loadedJsonData))
+			{
+				loadedJson.LoadFromString(loadedJsonData);
+			}
+			else
+			{
+				LogError("Failed to load world file '{}'", path);
+				return false;
+			}
+		}
+		loadedJson("WorldName", m_name);
+
+		// We first create entities for each one in the json, and store a mapping of old id in json -> new id in world
+		// Then during serialisation, when any entity handle is encountered, we patch the old handle with this new one
+		std::unordered_map<uint32_t, EntityHandle> oldEntityToNewEntity;
+		{
+			R3_PROF_EVENT("AddEntities");
+			try
+			{
+				auto& allEntityJson = loadedJson.GetJson()["AllEntities"];
+				for (int e = 0; e < allEntityJson.size(); ++e)
+				{
+					uint32_t id = allEntityJson[e]["ID"];
+					EntityHandle newEntity = AddEntity();
+					oldEntityToNewEntity[id] = newEntity;
+				}
+			}
+			catch (std::exception e)
+			{
+				LogError("Failed to load an entity ID - {}", e.what());
+				return false;
+			}
+		}
+
+		auto RecreateHandle = [&](EntityHandle& e)
+		{
+			auto foundRemap = oldEntityToNewEntity.find(e.GetID());
+			if (foundRemap != oldEntityToNewEntity.end())
+			{
+				e = foundRemap->second;
+			}
+			else
+			{
+				LogError("Entity handle references ID ({}) that doesn't exist in the loaded world!", e.GetID());
+			}
+		};
+		EntityHandle::SetOnLoadFinishCallback(RecreateHandle);
+		try
+		{
+			auto& allEntityJson = loadedJson.GetJson()["AllEntities"];
+			for (int e = 0; e < allEntityJson.size(); ++e)
+			{
+				uint32_t oldID = allEntityJson[e]["ID"];
+				const EntityHandle actualHandle = oldEntityToNewEntity[oldID];
+				JsonSerialiser childSerialiser(JsonSerialiser::Read, allEntityJson[e]);
+				for (auto childJson = allEntityJson[e].begin(); childJson != allEntityJson[e].end(); childJson++)
+				{
+					std::string cmpTypeStr = childJson.key();
+					if (cmpTypeStr != "ID")
+					{
+						if (AddComponent(actualHandle, cmpTypeStr))
+						{
+							uint32_t cmpTypeIndex = ComponentTypeRegistry::GetInstance().GetTypeIndex(cmpTypeStr);	// we need the type index to lookup the storage
+							const auto& ped = m_allEntities[actualHandle.GetPrivateIndex()];	// we need the new component index from the entity data
+							m_allComponents[cmpTypeIndex]->Serialise(actualHandle, ped.m_componentIndices[cmpTypeIndex], childSerialiser);
+						}
+					}
+				}
+			}
+		}
+		catch (std::exception e)
+		{
+			LogError("Something went wrong while loading entities! - {}", e.what());
+			return false;
+		}
+		EntityHandle::SetOnLoadFinishCallback(nullptr);
+
+		return true;
+	}
+
 	bool World::Save(std::string_view path)
 	{
 		R3_PROF_EVENT();
@@ -71,6 +158,7 @@ namespace Entities
 
 	size_t World::GetEntityDisplayName(const EntityHandle& h, char* nameBuffer, size_t maxLength) const
 	{
+		// annoyingly, good old printf is still way faster than std::format 
 		if (IsHandleValid(h))
 		{
 			return snprintf(nameBuffer, maxLength, "Entity %d", h.GetID());
@@ -187,28 +275,27 @@ namespace Entities
 	void World::AddComponentInternal(const EntityHandle& e, uint32_t resolvedTypeIndex)
 	{
 		R3_PROF_EVENT();
-		if (resolvedTypeIndex != -1)
-		{
-			// do we need to allocate storage for this component type?
-			if (m_allComponents.size() < resolvedTypeIndex + 1)
-			{
-				m_allComponents.resize(resolvedTypeIndex + 1);
-			}
-			if (m_allComponents[resolvedTypeIndex] == nullptr)
-			{
-				const auto& allTypes = ComponentTypeRegistry::GetInstance().AllTypes();
-				m_allComponents[resolvedTypeIndex] = allTypes[resolvedTypeIndex].m_storageFactory(this);	// storage created from factory
-			}
+		assert(resolvedTypeIndex != -1);
 
-			uint32_t newCmpIndex = m_allComponents[resolvedTypeIndex]->Create(e);
-			auto newBits = (PerEntityData::ComponentBitsetType)1 << resolvedTypeIndex;
-			m_allEntities[e.GetPrivateIndex()].m_ownedComponentBits |= newBits;
-			if (m_allEntities[e.GetPrivateIndex()].m_componentIndices.size() < resolvedTypeIndex + 1)
-			{
-				m_allEntities[e.GetPrivateIndex()].m_componentIndices.resize(resolvedTypeIndex + 1, -1);
-			}
-			m_allEntities[e.GetPrivateIndex()].m_componentIndices[resolvedTypeIndex] = newCmpIndex;
+		// do we need to allocate storage for this component type?
+		if (m_allComponents.size() < resolvedTypeIndex + 1)
+		{
+			m_allComponents.resize(resolvedTypeIndex + 1);
 		}
+		if (m_allComponents[resolvedTypeIndex] == nullptr)
+		{
+			const auto& allTypes = ComponentTypeRegistry::GetInstance().AllTypes();
+			m_allComponents[resolvedTypeIndex] = allTypes[resolvedTypeIndex].m_storageFactory(this);	// storage created from factory
+		}
+
+		uint32_t newCmpIndex = m_allComponents[resolvedTypeIndex]->Create(e);
+		auto newBits = (PerEntityData::ComponentBitsetType)1 << resolvedTypeIndex;
+		m_allEntities[e.GetPrivateIndex()].m_ownedComponentBits |= newBits;
+		if (m_allEntities[e.GetPrivateIndex()].m_componentIndices.size() < resolvedTypeIndex + 1)
+		{
+			m_allEntities[e.GetPrivateIndex()].m_componentIndices.resize(resolvedTypeIndex + 1, -1);
+		}
+		m_allEntities[e.GetPrivateIndex()].m_componentIndices[resolvedTypeIndex] = newCmpIndex;
 	}
 
 	bool World::HasAnyComponents(const EntityHandle& e, uint64_t typeBits) const
@@ -247,13 +334,23 @@ namespace Entities
 		return false;
 	}
 
-	void World::AddComponent(const EntityHandle& e, std::string_view componentTypeName)
+	bool World::AddComponent(const EntityHandle& e, std::string_view componentTypeName)
 	{
 		if (IsHandleValid(e))
 		{
 			uint32_t componentTypeIndex = ComponentTypeRegistry::GetInstance().GetTypeIndex(componentTypeName);
-			AddComponentInternal(e, componentTypeIndex);
+			assert(componentTypeIndex != -1);
+			if (componentTypeIndex != -1)
+			{
+				AddComponentInternal(e, componentTypeIndex);
+				return true;
+			}
+			else
+			{
+				LogError("Failed to add unknown component type '{}' to entity {}. Did you forget to register it?", componentTypeName, e.GetID());
+			}
 		}
+		return false;
 	}
 
 	void World::CollectGarbage()

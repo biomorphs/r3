@@ -216,8 +216,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		auto entities = GetSystem<Entities::EntitySystem>();
-		// todo, get active world(s)?
-		auto w = entities->GetWorld("Benchmarks");
+		auto w = entities->GetActiveWorld();
 		if (w)
 		{
 			auto getClearColour = [this](const Entities::EntityHandle& e, EnvironmentSettingsComponent& cmp) {

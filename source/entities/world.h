@@ -33,7 +33,7 @@ namespace Entities
 		void ForEachActiveEntity(const It&);	// slow! tools/debug only
 
 		// Components slow path
-		void AddComponent(const EntityHandle& e, std::string_view componentTypeName);
+		bool AddComponent(const EntityHandle& e, std::string_view componentTypeName);
 		bool HasComponent(const EntityHandle& e, std::string_view componentTypeName);
 
 		// fast path
@@ -60,6 +60,7 @@ namespace Entities
 
 		// Pass a vector of handles to serialise a specific set of entities
 		JsonSerialiser SerialiseEntities(std::vector<EntityHandle> e = {});
+		bool Load(std::string_view path);
 		bool Save(std::string_view path);
 		
 	private:
@@ -116,7 +117,11 @@ namespace Entities
 		if (IsHandleValid(e))
 		{
 			uint32_t typeIndex = ComponentTypeRegistry::GetTypeIndex<ComponentType>();
-			AddComponentInternal(e, typeIndex);
+			assert(typeIndex != -1);
+			if (typeIndex != -1)
+			{
+				AddComponentInternal(e, typeIndex);
+			}
 		}
 	}
 

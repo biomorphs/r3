@@ -43,9 +43,11 @@ namespace R3
 		std::string c_str() { return m_json.dump(2); }
 		void LoadFromString(std::string_view jsonData);
 		nlohmann::json& GetJson() { return m_json; }
-		JsonSerialiser(Mode m) : m_mode(m)
-		{
-		}
+		Mode GetMode() { return m_mode; }
+
+		JsonSerialiser(Mode m) : m_mode(m) { }
+		JsonSerialiser(Mode m, const nlohmann::json& j) : m_mode(m), m_json(j) {}
+		JsonSerialiser(Mode m, nlohmann::json&& j) : m_mode(m), m_json(std::move(j)) {}
 
 		// (optional-ish) call this at the start of a custom serialiser
 		// the name will be written along with the class data + validated when reading
@@ -85,8 +87,7 @@ namespace R3
 					}
 					else
 					{
-						json objectJson = m_json[name];
-						JsonSerialiser js(m_mode, std::move(objectJson));
+						JsonSerialiser js(m_mode, m_json[name]);
 						if constexpr (hasSerialiserMember)
 						{
 							t.SerialiseJson(js);
@@ -192,7 +193,6 @@ namespace R3
 		}
 	private:
 		using json = nlohmann::json;
-		JsonSerialiser(Mode m, json&& j) : m_mode(m), m_json(std::move(j)) {}
 		Mode m_mode = Write;
 		json m_json;
 	};

@@ -17,11 +17,12 @@ namespace R3
 	class WorldEditorWindow : public EditorWindow
 	{
 	public:
-		WorldEditorWindow(std::string worldIdentifier);
+		WorldEditorWindow(std::string worldIdentifier, std::string filePath="");
 		virtual ~WorldEditorWindow();
 		virtual std::string_view GetWindowTitle();
 		virtual void Update();
 		virtual CloseStatus PrepareToClose();
+		virtual void OnFocusGained();
 		bool SaveWorld(std::string_view path);
 	private:
 		void UpdateMainMenu();
