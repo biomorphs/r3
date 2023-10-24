@@ -60,11 +60,13 @@ namespace Entities
 		ComponentStorage* GetStorage(std::string_view componentTypeName);	// slowpath
 
 		// Pass a vector of handles to serialise a specific set of entities
-		JsonSerialiser SerialiseEntities(std::vector<EntityHandle> e = {});
+		JsonSerialiser SerialiseEntities();
+		JsonSerialiser SerialiseEntities(const std::vector<EntityHandle>& e);
 		bool Load(std::string_view path);
 		bool Save(std::string_view path);
 		
 	private:
+		void SerialiseEntity(const EntityHandle& e, JsonSerialiser& target);	// warning, assumes valid handle
 		void AddComponentInternal(const EntityHandle& e, uint32_t resolvedTypeIndex);
 		struct PerEntityData
 		{

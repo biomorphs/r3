@@ -21,45 +21,53 @@ namespace Entities
 	{
 	}
 
-	JsonSerialiser World::SerialiseEntities(std::vector<EntityHandle> handles)
+	void World::SerialiseEntity(const EntityHandle& e, JsonSerialiser& target)
+	{
+		assert(IsHandleValid(e));
+		auto entityID = e.GetID();
+		target("ID", entityID);
+
+		const auto& ped = m_allEntities[e.GetPrivateIndex()];
+		for (int typeIndex = 0; typeIndex < ped.m_componentIndices.size(); ++typeIndex)
+		{
+			auto typeMask = (PerEntityData::ComponentBitsetType)1 << typeIndex;
+			if ((ped.m_ownedComponentBits & typeMask) == typeMask && ped.m_componentIndices[typeIndex] != -1)
+			{
+				m_allComponents[typeIndex]->Serialise(e, ped.m_componentIndices[typeIndex], target);
+			}
+		}
+	}
+
+	JsonSerialiser World::SerialiseEntities()
 	{
 		R3_PROF_EVENT();
-		JsonSerialiser json(JsonSerialiser::Mode::Write);
-		json("WorldName", m_name);
-		if (handles.size() == 0)	// collect all the entity handles first
+		JsonSerialiser allJson(JsonSerialiser::Mode::Write);
+		JsonSerialiser entityJson(JsonSerialiser::Mode::Write);
+		for (int h = 0; h < m_allEntities.size(); ++h)
 		{
-			handles.resize(m_allEntities.size());
-			for (int i = 0; i < m_allEntities.size(); ++i)
+			if (m_allEntities[h].m_publicID != -1)
 			{
-				handles[i] = EntityHandle(m_allEntities[i].m_publicID, i);
+				SerialiseEntity(EntityHandle(m_allEntities[h].m_publicID, h), entityJson);
+				allJson.GetJson().emplace_back(std::move(entityJson.GetJson()));
 			}
 		}
+		return allJson;
+	}
 
-		std::vector<nlohmann::json> allEntitiesJson;
+	JsonSerialiser World::SerialiseEntities(const std::vector<EntityHandle>& handles)
+	{
+		R3_PROF_EVENT();
+		JsonSerialiser allJson(JsonSerialiser::Mode::Write);
 		JsonSerialiser entityJson(JsonSerialiser::Mode::Write);
 		for (int h = 0; h < handles.size(); ++h)
-		{			
+		{
 			if (IsHandleValid(handles[h]))
 			{
-				auto entityID = handles[h].GetID();
-				entityJson("ID", entityID);
-
-				const auto& ped = m_allEntities[handles[h].GetPrivateIndex()];
-				for (int typeIndex = 0; typeIndex < ped.m_componentIndices.size(); ++typeIndex)
-				{
-					auto typeMask = (PerEntityData::ComponentBitsetType)1 << typeIndex;
-					if ((ped.m_ownedComponentBits & typeMask) == typeMask && ped.m_componentIndices[typeIndex] != -1)
-					{
-						m_allComponents[typeIndex]->Serialise(handles[h], ped.m_componentIndices[typeIndex], entityJson);
-					}
-				}
-				allEntitiesJson.emplace_back(std::move(entityJson.GetJson()));
-				entityJson.GetJson().clear();
+				SerialiseEntity(handles[h], entityJson);
+				allJson.GetJson().emplace_back(std::move(entityJson.GetJson()));
 			}
 		}
-		json.GetJson()["AllEntities"] = std::move(allEntitiesJson);
-
-		return json;
+		return allJson;
 	}
 
 	bool World::Load(std::string_view path)
@@ -119,19 +127,19 @@ namespace Entities
 		try
 		{
 			auto& allEntityJson = loadedJson.GetJson()["AllEntities"];
-			for (int e = 0; e < allEntityJson.size(); ++e)
+			JsonSerialiser childSerialiser(JsonSerialiser::Read);
+			for (int e = 0; e < allEntityJson.size(); ++e)	// for each entity
 			{
 				uint32_t oldID = allEntityJson[e]["ID"];
 				const EntityHandle actualHandle = oldEntityToNewEntity[oldID];
-				JsonSerialiser childSerialiser(JsonSerialiser::Read, allEntityJson[e]);
-				for (auto childJson = allEntityJson[e].begin(); childJson != allEntityJson[e].end(); childJson++)
+				childSerialiser.GetJson() = std::move(allEntityJson[e]);
+				for (auto childJson = childSerialiser.GetJson().begin(); childJson != childSerialiser.GetJson().end(); childJson++)
 				{
-					std::string cmpTypeStr = childJson.key();
-					if (cmpTypeStr != "ID")
+					if (childJson.key() != "ID")
 					{
-						if (AddComponent(actualHandle, cmpTypeStr))
+						if (AddComponent(actualHandle, childJson.key()))
 						{
-							uint32_t cmpTypeIndex = ComponentTypeRegistry::GetInstance().GetTypeIndex(cmpTypeStr);	// we need the type index to lookup the storage
+							uint32_t cmpTypeIndex = ComponentTypeRegistry::GetInstance().GetTypeIndex(childJson.key());	// we need the type index to lookup the storage
 							const auto& ped = m_allEntities[actualHandle.GetPrivateIndex()];	// we need the new component index from the entity data
 							m_allComponents[cmpTypeIndex]->Serialise(actualHandle, ped.m_componentIndices[cmpTypeIndex], childSerialiser);
 						}
@@ -153,8 +161,11 @@ namespace Entities
 	{
 		R3_PROF_EVENT();
 		CollectGarbage();	// ensure any entities pending delete are removed before saving
-		JsonSerialiser allJson = SerialiseEntities();
-		return FileIO::SaveTextToFile(path, allJson.GetJson().dump(1));
+		JsonSerialiser worldJson(JsonSerialiser::Write);
+		worldJson("WorldName", m_name);
+		JsonSerialiser entityJson = SerialiseEntities();
+		worldJson.GetJson()["AllEntities"] = std::move(entityJson.GetJson());
+		return FileIO::SaveTextToFile(path, worldJson.GetJson().dump(1));
 	}
 
 	size_t World::GetEntityDisplayName(const EntityHandle& h, char* nameBuffer, size_t maxLength) const
