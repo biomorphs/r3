@@ -25,6 +25,8 @@ namespace R3
 		virtual void OnFocusGained();
 		bool SaveWorld(std::string_view path);
 
+		const std::vector<Entities::EntityHandle>& GetSelectedEntities() { return m_selectedEntities; }
+		void SelectEntities(const std::vector<Entities::EntityHandle>& h);
 		void SelectEntity(const Entities::EntityHandle& h);
 		void DeselectEntity(const Entities::EntityHandle& h);
 		void DeselectAll();

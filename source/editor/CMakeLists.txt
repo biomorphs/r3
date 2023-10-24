@@ -11,6 +11,8 @@ set(EditorLib_SourceFiles
 	systems/editor_system.cpp
 	commands/world_editor_save_cmd.h
 	commands/world_editor_save_cmd.cpp
+	commands/world_editor_select_entities_cmd.h
+	commands/world_editor_select_entities_cmd.cpp
 )
 
 add_library(Editor ${EditorLib_SourceFiles})

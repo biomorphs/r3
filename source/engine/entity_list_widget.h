@@ -17,7 +17,7 @@ namespace R3
 	{
 	public:
 		// Selection Callbacks
-		using OnSelectedFn = std::function<void(const Entities::EntityHandle&)>;
+		using OnSelectedFn = std::function<void(const Entities::EntityHandle&, bool)>;	// handle, append to selection
 		using OnDeselectedFn = std::function<void(const Entities::EntityHandle&)>;
 
 		// How the entities are layed out (flat list, tree view, etc)

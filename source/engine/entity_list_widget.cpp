@@ -59,7 +59,7 @@ namespace R3
 		{
 			if (!isSelected && m_options.m_onSelected)
 			{
-				m_options.m_onSelected(h);
+				m_options.m_onSelected(h, ImGui::GetIO().KeyCtrl);	// append if ctrl pushed
 			}
 
 			if (isSelected && m_options.m_onDeselected)

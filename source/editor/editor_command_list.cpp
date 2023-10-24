@@ -54,6 +54,15 @@ namespace R3
 			: ImGui::Begin("Editor Commands", &shouldKeepOpen);
 		if (isOpen)
 		{
+			if (ImGui::Button("Undo"))
+			{
+				Undo();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Redo"))
+			{
+				Redo();
+			}
 			if (ImGui::TreeNodeEx("Current Commands", ImGuiTreeNodeFlags_DefaultOpen))
 			{
 				for (const auto& cmd : m_commandsToRun)

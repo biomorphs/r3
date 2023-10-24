@@ -2,6 +2,7 @@
 #include "world_info_widget.h"
 #include "editor_command_list.h"
 #include "editor/commands/world_editor_save_cmd.h"
+#include "editor/commands/world_editor_select_entities_cmd.h"
 #include "engine/systems.h"
 #include "engine/basic_value_inspector.h"
 #include "engine/entity_list_widget.h"
@@ -23,11 +24,16 @@ namespace R3
 		m_allEntitiesWidget = std::make_unique<EntityListWidget>();
 		m_allEntitiesWidget->m_options.m_canExpandEntities = false;
 		m_allEntitiesWidget->m_options.m_showInternalIndex = false;
-		m_allEntitiesWidget->m_options.m_onSelected = [this](const Entities::EntityHandle& e) {
-			SelectEntity(e);
+		m_allEntitiesWidget->m_options.m_onSelected = [this](const Entities::EntityHandle& e, bool append) {
+			auto selectCmd = std::make_unique<WorldEditorSelectEntitiesCommand>(this);
+			selectCmd->m_appendToSelection = append;
+			selectCmd->m_toSelect.push_back(e);
+			m_cmds->Push(std::move(selectCmd));
 		};
 		m_allEntitiesWidget->m_options.m_onDeselected = [this](const Entities::EntityHandle& e) {
-			DeselectEntity(e);
+			auto selectCmd = std::make_unique<WorldEditorSelectEntitiesCommand>(this);
+			selectCmd->m_toDeselect.push_back(e);
+			m_cmds->Push(std::move(selectCmd));
 		};
 
 		m_inspectEntityWidget = std::make_unique<EntityInspectorWidget>();
@@ -73,16 +79,20 @@ namespace R3
 		MenuBar contextMenu;
 		auto& addEntityMenu = contextMenu.GetSubmenu("Add Entity");
 		addEntityMenu.AddItem("Empty Entity", [this]() {
-			DeselectAll();
+			DeselectAll();	// todo
 			AddEmptyEntity(true);
 		});
 		contextMenu.AddItem("Select all", [this]() {
-			SelectAll();
+			auto selectCmd = std::make_unique<WorldEditorSelectEntitiesCommand>(this);
+			selectCmd->m_selectAll = true;
+			m_cmds->Push(std::move(selectCmd));
 		});
 		if (m_selectedEntities.size() > 0)
 		{
 			contextMenu.AddItem("Deselect all", [this]() {
-				DeselectAll();
+				auto selectCmd = std::make_unique<WorldEditorSelectEntitiesCommand>(this);
+				selectCmd->m_deselectAll = true;
+				m_cmds->Push(std::move(selectCmd));
 			});
 			std::string deleteStr = m_selectedEntities.size() == 1 ? "Deleted selected entity" : "Delete selected entities";
 			contextMenu.AddItem(deleteStr, [this]() {
@@ -124,8 +134,18 @@ namespace R3
 		fileMenu.AddItemAfter("Save World", "Save World As", [this]() {
 			m_cmds->Push(std::make_unique<WorldEditorSaveCmd>(this, ""));
 		});
+		auto& editMenu = MenuBar::MainMenu().GetSubmenu("Edit");
+		if (m_cmds->CanUndo())
+		{
+			editMenu.AddItem("Undo", [this]() {
+				m_cmds->Undo();
+			});
+			editMenu.AddItem("Redo", [this]() {
+				m_cmds->Redo();
+			});
+		}
 		auto& settingsMenu = MenuBar::MainMenu().GetSubmenu("Settings");
-		settingsMenu.AddItem("Open Command List Window", [this]() {
+		settingsMenu.AddItem("Show Command List", [this]() {
 			m_showCommandsWindow = true;
 		});
 	}
@@ -245,6 +265,23 @@ namespace R3
 			}
 		}		
 		return false;
+	}
+
+	void WorldEditorWindow::SelectEntities(const std::vector<Entities::EntityHandle>& h)
+	{
+		R3_PROF_EVENT();
+
+		size_t insertIndex = m_selectedEntities.size();
+
+		// compare the list against the previously selected entities
+		for (const auto& toAdd : h)
+		{
+			auto foundIt = std::find(m_selectedEntities.begin(), m_selectedEntities.begin() + insertIndex, toAdd);
+			if (foundIt == m_selectedEntities.begin() + insertIndex)
+			{
+				m_selectedEntities.push_back(toAdd);
+			}
+		}
 	}
 
 	void WorldEditorWindow::SelectEntity(const Entities::EntityHandle& h)

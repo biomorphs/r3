@@ -1,6 +1,7 @@
 #include "world_editor_save_cmd.h"
 #include "editor/world_editor_window.h"
 #include "engine/file_dialogs.h"
+#include "core/profiler.h"
 
 namespace R3
 {
@@ -12,6 +13,7 @@ namespace R3
 
 	EditorCommand::Result WorldEditorSaveCmd::Execute()
 	{
+		R3_PROF_EVENT();
 		std::string savePath = m_targetPath.empty() ? FileSaveDialog(m_targetPath, "scn") : m_targetPath;
 		if (savePath != "")
 		{
