@@ -17,6 +17,8 @@ set(EditorLib_SourceFiles
 	commands/world_editor_add_empty_entity_cmd.cpp
 	commands/world_editor_delete_entities_cmd.h
 	commands/world_editor_delete_entities_cmd.cpp
+	commands/world_editor_add_component_cmd.h
+	commands/world_editor_add_component_cmd.cpp
 )
 
 add_library(Editor ${EditorLib_SourceFiles})

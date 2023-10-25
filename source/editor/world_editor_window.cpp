@@ -5,6 +5,7 @@
 #include "editor/commands/world_editor_select_entities_cmd.h"
 #include "editor/commands/world_editor_add_empty_entity_cmd.h"
 #include "editor/commands/world_editor_delete_entities_cmd.h"
+#include "editor/commands/world_editor_add_component_cmd.h"
 #include "engine/systems.h"
 #include "engine/basic_value_inspector.h"
 #include "engine/entity_list_widget.h"
@@ -39,6 +40,13 @@ namespace R3
 		};
 
 		m_inspectEntityWidget = std::make_unique<EntityInspectorWidget>();
+		m_inspectEntityWidget->m_onAddComponent = [this](const Entities::EntityHandle& h, std::string_view typeName) {
+			auto addComponent = std::make_unique<WorldEditorAddComponentCommand>(this);
+			addComponent->m_targetEntities.push_back(h);
+			addComponent->m_componentType = typeName;
+			m_cmds->Push(std::move(addComponent));
+		};
+
 		m_valueInspector = std::make_unique<BasicValueInspector>();
 		m_cmds = std::make_unique<EditorCommandList>();
 	}
@@ -86,7 +94,6 @@ namespace R3
 			std::string deleteStr = m_selectedEntities.size() == 1 ? "Deleted selected entity" : "Delete selected entities";
 			contextMenu.AddItem(deleteStr, [this]() {
 				auto deleteCmd = std::make_unique<WorldEditorDeleteEntitiesCmd>(this);
-				deleteCmd->m_deleteAllSelected = true;
 				m_cmds->Push(std::move(deleteCmd));
 			});
 		}
@@ -248,6 +255,20 @@ namespace R3
 			return entities->GetWorld(m_worldIdentifier);
 		}
 		return nullptr;
+	}
+
+	void WorldEditorWindow::OnEntityRestored(const Entities::EntityHandle& oldHandle, const Entities::EntityHandle& newHandle)
+	{
+		// patch the selected entity list
+		for (auto& it : m_selectedEntities)
+		{
+			if (it == oldHandle)
+			{
+				it = newHandle;
+			}
+		}
+
+		// patch handles in the command list
 	}
 
 	void WorldEditorWindow::SelectEntities(const std::vector<Entities::EntityHandle>& h)

@@ -12,6 +12,10 @@ namespace R3
 {
 	void EntityInspectorWidget::UpdateEntityContextMenu(std::string_view name, const Entities::EntityHandle& h, Entities::World& w)
 	{
+		if (!m_onAddComponent)
+		{
+			return;
+		}
 		Entities::ComponentTypeRegistry& cti = Entities::ComponentTypeRegistry::GetInstance();
 		MenuBar contextMenu;
 		auto& addComponent = contextMenu.GetSubmenu("Add Component");
@@ -19,8 +23,8 @@ namespace R3
 		{
 			if (!w.HasComponent(h, cti.AllTypes()[cmpTypeIndex].m_name))
 			{
-				addComponent.AddItem(cti.AllTypes()[cmpTypeIndex].m_name, [&h, &w, &cti, cmpTypeIndex]() {
-					w.AddComponent(h, cti.AllTypes()[cmpTypeIndex].m_name);
+				addComponent.AddItem(cti.AllTypes()[cmpTypeIndex].m_name, [&h, &w, &cti, cmpTypeIndex, this]() {
+					m_onAddComponent(h, cti.AllTypes()[cmpTypeIndex].m_name);
 				});
 			}
 		}

@@ -372,6 +372,27 @@ namespace Entities
 		return false;
 	}
 
+	void World::RemoveComponent(const EntityHandle& e, std::string_view componentTypeName)
+	{
+		if (IsHandleValid(e))
+		{
+			const uint32_t typeIndex = ComponentTypeRegistry::GetInstance().GetTypeIndex(componentTypeName);
+			if (typeIndex == -1 || typeIndex >= m_allComponents.size())
+			{
+				return;	// no type registered or we dont have storage for it yet
+			}
+			PerEntityData& ped = m_allEntities[e.GetPrivateIndex()];
+			const auto testMask = (PerEntityData::ComponentBitsetType)1 << typeIndex;
+			if ((ped.m_ownedComponentBits & testMask) == testMask && ped.m_componentIndices.size() > typeIndex)
+			{
+				const auto oldIndex = ped.m_componentIndices[typeIndex];
+				ped.m_ownedComponentBits &= ~testMask;	// turn off the type bit
+				ped.m_componentIndices[typeIndex] = -1;	// reset before calling Destroy
+				m_allComponents[typeIndex]->Destroy(e, oldIndex);
+			}
+		}
+	}
+
 	bool World::AddComponent(const EntityHandle& e, std::string_view componentTypeName)
 	{
 		if (IsHandleValid(e))

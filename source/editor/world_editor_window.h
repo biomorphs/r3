@@ -28,6 +28,7 @@ namespace R3
 		Entities::World* GetWorld() const;
 
 		const std::vector<Entities::EntityHandle>& GetSelectedEntities() { return m_selectedEntities; }
+		void OnEntityRestored(const Entities::EntityHandle& oldHandle, const Entities::EntityHandle& newHandle);	// used to patch handles to re-created entities
 		void SelectEntities(const std::vector<Entities::EntityHandle>& h);
 		void SelectEntity(const Entities::EntityHandle& h);
 		void DeselectEntity(const Entities::EntityHandle& h);

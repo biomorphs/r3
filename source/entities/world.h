@@ -35,6 +35,7 @@ namespace Entities
 		// Components slow path
 		bool AddComponent(const EntityHandle& e, std::string_view componentTypeName);
 		bool HasComponent(const EntityHandle& e, std::string_view componentTypeName);
+		void RemoveComponent(const EntityHandle& e, std::string_view componentTypeName);
 
 		// fast path
 		template<class ComponentType>
