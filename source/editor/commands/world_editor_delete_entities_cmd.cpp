@@ -1,9 +1,6 @@
 #include "world_editor_delete_entities_cmd.h"
 #include "editor/world_editor_window.h"
-#include "engine/systems/imgui_system.h"
 #include "entities/world.h"
-#include "external/Fork-awesome/IconsForkAwesome.h"
-#include "imgui.h"
 
 namespace R3
 {
@@ -14,37 +11,34 @@ namespace R3
 
 	EditorCommand::Result WorldEditorDeleteEntitiesCmd::Execute()
 	{
-		EditorCommand::Result result = Result::Waiting;
-		auto imSys = Systems::GetSystem<ImGuiSystem>();
-	    const char* popupTitle = (const char*)(ICON_FK_TRASH " Deleting entities can not be undone! " ICON_FK_TRASH);
-		if (!m_openedPopup)
+		auto world = m_window->GetWorld();
+		m_deletedEntities = m_window->GetSelectedEntities();
+		m_window->DeselectAll();
+		JsonSerialiser json = world->SerialiseEntities(m_deletedEntities);
+		m_serialisedEntities = json.GetJson().dump();
+		for (int i = 0; i < m_deletedEntities.size(); ++i)
 		{
-			ImGui::OpenPopup(popupTitle);
-			m_openedPopup = true;
+			world->RemoveEntity(m_deletedEntities[i], true);	// true = reserve this handle/slot for later
 		}
-		if (ImGui::BeginPopupModal(popupTitle))
-		{
-			imSys->PushLargeFont();
-			ImGui::Text("!!! Warning !!!");
-			ImGui::PopFont();
-			imSys->PushBoldFont();
-			ImGui::Text("Deleting entities cannot be undone! Are you sure?");
-			ImGui::PopFont();
-			if (ImGui::Button("Yes, delete them!"))
-			{
-				m_window->DeleteSelected();
-				ImGui::CloseCurrentPopup();
-				result = Result::Succeeded;
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("No!"))
-			{
-				ImGui::CloseCurrentPopup();
-				result = Result::Failed;
-			}
-			ImGui::EndPopup();
-		}
+		return Result::Succeeded;
+	}
 
-		return result;
+	EditorCommand::Result WorldEditorDeleteEntitiesCmd::Undo()
+	{
+		auto world = m_window->GetWorld();
+		JsonSerialiser json(JsonSerialiser::Read);
+		json.LoadFromString(m_serialisedEntities);
+		if (json.GetJson().size() != m_deletedEntities.size())
+		{
+			return Result::Failed;
+		}
+		world->SerialiseEntities(json, m_deletedEntities);	// this will restore the old handles (or fail!)
+		m_window->SelectEntities(m_deletedEntities);
+
+		return Result::Succeeded;
+	}
+	EditorCommand::Result WorldEditorDeleteEntitiesCmd::Redo()
+	{
+		return Execute();
 	}
 }

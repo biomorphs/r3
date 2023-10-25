@@ -8,7 +8,14 @@ namespace R3
 	{
 		auto world = m_window->GetWorld();
 		m_oldSelection = m_window->GetSelectedEntities();
-		m_createdEntity = world->AddEntity();
+		if (m_createdEntity.GetID() != -1)
+		{
+			m_createdEntity = world->AddEntityFromHandle(m_createdEntity);
+		}
+		else
+		{
+			m_createdEntity = world->AddEntity();
+		}
 		m_window->DeselectAll();
 		m_window->SelectEntity(m_createdEntity);
 		return EditorCommand::Result::Succeeded;
@@ -17,8 +24,7 @@ namespace R3
 	EditorCommand::Result WorldEditorAddEmptyEntityCommand::Undo()
 	{
 		auto world = m_window->GetWorld();
-		world->RemoveEntity(m_createdEntity);
-		m_createdEntity = {};
+		world->RemoveEntity(m_createdEntity, true);	// true = reserve the handle/slot in case we need to restore it
 		m_window->DeselectAll();
 		m_window->SelectEntities(m_oldSelection);
 		return EditorCommand::Result::Succeeded;

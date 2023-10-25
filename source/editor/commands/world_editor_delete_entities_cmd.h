@@ -7,20 +7,20 @@ namespace R3
 {
 	class WorldEditorWindow;
 
-	// There is basically no clean way to recreate identical entity handles after they are deleted
-	// As a result, deleting an entity invalidates all handles to that entity, This includes handles in other commands!
-	// We cannot force the exact handle recreation since another entity may now be using that index
-	// (we could try to restore all the handles anyway but it is error-prone and unpredictable)
-	// It is also a massive pain to repatch all the handles, so screw it. No undo/redo for entities
+	// When an entity is deleted, its slot is reserved
+	// on undo, we restore the previously reserved handles
 	class WorldEditorDeleteEntitiesCmd : public EditorCommand
 	{
 	public:
 		WorldEditorDeleteEntitiesCmd(WorldEditorWindow* w);
 		virtual std::string_view GetName() { return "Delete entities"; }
 		virtual Result Execute();
-		virtual bool CanUndoRedo() { return false; }
+		virtual bool CanUndoRedo() { return true; }
+		virtual Result Undo();
+		virtual Result Redo();
 	private:
+		std::vector<Entities::EntityHandle> m_deletedEntities;	// keep the handles around for restoration
+		std::string m_serialisedEntities;		// the serialised state of the entities we deleted
 		WorldEditorWindow* m_window = nullptr;
-		bool m_openedPopup = false;
 	};
 }

@@ -69,11 +69,11 @@ namespace Entities
 		R3_PROF_EVENT();
 		const auto benchStart = R3::Time::HighPerformanceCounterTicks();
 		const auto freq = R3::Time::HighPerformanceCounterFrequency();
-		constexpr uint32_t test1Repeats = 10;
-		constexpr uint32_t test2Repeats = 10;
-		constexpr uint32_t test3Repeats = 15;
-		constexpr uint32_t test4Repeats = 50;
-		constexpr uint32_t test5Repeats = 1;
+		constexpr uint32_t test1Repeats = 50;
+		constexpr uint32_t test2Repeats = 50;
+		constexpr uint32_t test3Repeats = 55;
+		constexpr uint32_t test4Repeats = 20;
+		constexpr uint32_t test5Repeats = 0;
 
 		// test 1, add 10k empty entities multiple times
 		for (int i = 0; i < test1Repeats; ++i)
@@ -184,7 +184,7 @@ namespace Entities
 		RegisterComponentType<TestComponent1>();
 		RegisterComponentType<TestComponent2>();
 		RegisterComponentType<EnvironmentSettingsComponent>();
-		// EntityBenchmarks(CreateWorld("Benchmarks", "Benchmarks"));
+		EntityBenchmarks(CreateWorld("Benchmarks", "Benchmarks"));
 	}
 
 	EntitySystem::~EntitySystem()

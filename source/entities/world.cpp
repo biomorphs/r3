@@ -70,9 +70,11 @@ namespace Entities
 		return allJson;
 	}
 
-	std::vector<EntityHandle> World::SerialiseEntities(const JsonSerialiser& json)
+	std::vector<EntityHandle> World::SerialiseEntities(const JsonSerialiser& json, const std::vector<EntityHandle>& restoreHandles)
 	{
-		// We first create entities for each one in the json, and store a mapping of old id in json -> new id in world
+		assert(restoreHandles.size() == 0 || restoreHandles.size() == json.GetJson().size());
+
+		// We first create entities for each one in the json, and store a mapping of old id in json -> new handle in world
 		// Then during serialisation, when any entity handle is encountered, we patch the old handle with this new one
 		std::unordered_map<uint32_t, EntityHandle> oldEntityToNewEntity;
 		std::vector<EntityHandle> allCreatedHandles;
@@ -81,12 +83,30 @@ namespace Entities
 			R3_PROF_EVENT();
 			oldEntityToNewEntity.reserve(json.GetJson().size());
 			allCreatedHandles.reserve(json.GetJson().size());
-			for (int e = 0; e < json.GetJson().size(); ++e)
+			if (restoreHandles.size() > 0)
 			{
-				uint32_t id = json.GetJson()[e]["ID"];
-				EntityHandle newEntity = AddEntity();
-				oldEntityToNewEntity[id] = newEntity;
-				allCreatedHandles.push_back(newEntity);
+				for (int e = 0; e < json.GetJson().size(); ++e)
+				{
+					uint32_t id = json.GetJson()[e]["ID"];
+					EntityHandle newEntity = AddEntityFromHandle(restoreHandles[e]);
+					assert(IsHandleValid(newEntity));
+					if (!IsHandleValid(newEntity))
+					{
+						LogError("Failed to restore entity handle {}/{}", restoreHandles[e].GetID(), restoreHandles[e].GetPrivateIndex());
+					}
+					oldEntityToNewEntity[id] = newEntity;
+					allCreatedHandles.push_back(newEntity);
+				}
+			}
+			else
+			{
+				for (int e = 0; e < json.GetJson().size(); ++e)
+				{
+					uint32_t id = json.GetJson()[e]["ID"];
+					EntityHandle newEntity = AddEntity();
+					oldEntityToNewEntity[id] = newEntity;
+					allCreatedHandles.push_back(newEntity);
+				}
 			}
 		}
 		catch (std::exception e)
@@ -230,7 +250,7 @@ namespace Entities
 		std::vector<EntityHandle> entities;
 		entities.reserve(maxCount);
 
-		if (m_freeEntityIndices.size() == 0)	// fast path if all slots are allocated
+		if (m_freeEntityIndices.size() == 0 && m_reservedSlots.size() == 0)	// fast path if all slots are allocated
 		{
 			uint32_t actualEnd = startIndex + maxCount;
 			for (uint32_t i = startIndex; i < actualEnd; ++i)
@@ -261,12 +281,12 @@ namespace Entities
 	{
 		R3_PROF_EVENT();
 		auto newId = m_entityIDCounter++;	// note we are not checking for duplicates here!
-		auto toDelete = std::find_if(m_pendingDelete.begin(), m_pendingDelete.end(), [newId](const EntityHandle& p) {
-			return p.GetID() == newId;
+		auto toDelete = std::find_if(m_pendingDelete.begin(), m_pendingDelete.end(), [newId](const PendingDeleteEntity& pde) {
+			return pde.m_handle.GetID() == newId;
 		});
 		if (toDelete != m_pendingDelete.end())
 		{
-			LogError("Entity '%d' already existed and is being destroyed!", newId);
+			LogError("Entity '{}' already existed and is being destroyed!", newId);
 			return {};	// the old entity didn't clean up fully yet
 		}
 		uint32_t newIndex = -1;
@@ -289,7 +309,37 @@ namespace Entities
 		return EntityHandle(newId, newIndex);
 	}
 
-	void World::RemoveEntity(const EntityHandle& h)
+	EntityHandle World::AddEntityFromHandle(const EntityHandle& handleToRestore)
+	{
+		auto toDelete = std::find_if(m_pendingDelete.begin(), m_pendingDelete.end(), [handleToRestore](const PendingDeleteEntity& pde) {
+			return pde.m_handle == handleToRestore;
+		});
+		if (toDelete != m_pendingDelete.end())
+		{
+			LogError("Entity '{}' already existed and is being destroyed!", handleToRestore.GetID());
+			return {};	// the old entity didn't clean up fully yet
+		}
+
+		auto reservation = m_reservedSlots.find(handleToRestore.GetID());
+		assert(reservation != m_reservedSlots.end());
+		if (reservation != m_reservedSlots.end())	// do we have a reservation for this public id
+		{
+			auto reservedIndex = reservation->second;
+			assert(reservedIndex == handleToRestore.GetPrivateIndex());
+			if (reservedIndex == handleToRestore.GetPrivateIndex())	// does the slot match?
+			{
+				assert(m_allEntities[reservedIndex].m_publicID == -1);
+				assert(m_allEntities[reservedIndex].m_ownedComponentBits == 0);
+				assert(m_allEntities[reservedIndex].m_componentIndices.size() == 0);
+				m_allEntities[reservedIndex].m_publicID = handleToRestore.GetID();
+				m_reservedSlots.erase(reservation);
+				return handleToRestore;
+			}
+		}
+		return {};
+	}
+
+	void World::RemoveEntity(const EntityHandle& h, bool reserveHandle)
 	{
 		R3_PROF_EVENT();
 		assert(h.GetID() != -1);
@@ -298,8 +348,8 @@ namespace Entities
 		if (IsHandleValid(h))
 		{
 			auto& theEntity = m_allEntities[h.GetPrivateIndex()];
-			theEntity.m_ownedComponentBits = 0;	// component checks will fail from this point
-			m_pendingDelete.push_back(h);	// we keep around the component indices for later
+			theEntity.m_ownedComponentBits = 0;	// we keep the component indices for later, just reset the mask
+			m_pendingDelete.push_back({ h, reserveHandle });
 		}
 	}
 
@@ -430,24 +480,31 @@ namespace Entities
 	void World::CollectGarbage()
 	{
 		R3_PROF_EVENT();
-		for (auto toDelete : m_pendingDelete)
+		for (const auto& toDelete : m_pendingDelete)
 		{
-			if (IsHandleValid(toDelete))
+			if (IsHandleValid(toDelete.m_handle))
 			{
 				// use the entity component indices to destroy the objects
-				auto& theEntity = m_allEntities[toDelete.GetPrivateIndex()];
+				auto& theEntity = m_allEntities[toDelete.m_handle.GetPrivateIndex()];
 				for (int cmpType = 0; cmpType < theEntity.m_componentIndices.size(); ++cmpType)
 				{
 					if (theEntity.m_componentIndices[cmpType] != -1)
 					{
-						m_allComponents[cmpType]->Destroy(toDelete, theEntity.m_componentIndices[cmpType]);
+						m_allComponents[cmpType]->Destroy(toDelete.m_handle, theEntity.m_componentIndices[cmpType]);
 					}
 				}
-
-				// reset + push the entity to the free list
+				// reset + push the entity to the free or reserved list
 				theEntity.m_publicID = -1;
 				theEntity.m_componentIndices.clear();	// clear out the old values but keep the memory around
-				m_freeEntityIndices.push_back(toDelete.GetPrivateIndex());
+				if (toDelete.m_reserveHandle)
+				{
+					assert(m_reservedSlots.find(toDelete.m_handle.GetID()) == m_reservedSlots.end());	// shouldnt be possible, but eh
+					m_reservedSlots[toDelete.m_handle.GetID()] = toDelete.m_handle.GetPrivateIndex();
+				}
+				else
+				{
+					m_freeEntityIndices.push_back(toDelete.m_handle.GetPrivateIndex());
+				}
 			}
 		}
 		m_pendingDelete.clear();

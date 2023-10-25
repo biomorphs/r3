@@ -22,9 +22,13 @@ namespace Entities
 		void SetName(std::string_view name) { m_name = name; }
 		std::string_view GetName() const { return m_name; }
 
-		// Entity stuff
+		// Entity stuff. EntityHandle is essentially an opaque-ish ID
 		EntityHandle AddEntity();
-		void RemoveEntity(const EntityHandle& h);	// defers actual deletion until CollectGarbage() called
+		EntityHandle AddEntityFromHandle(const EntityHandle& handleToRestore);	// restore a previously deleted reserved entity handle. only for tools
+		// RemoveEntity defers deletion until CollectGarbage() called.
+		// reserveHandle = dont add this entity handle to the free list, this slot is reserved until the exact same handle is recreated
+		// only useful for editors to recreate deleted entities while preserving references
+		void RemoveEntity(const EntityHandle& h, bool reserveHandle = false);	
 		bool IsHandleValid(const EntityHandle& h) const;
 		std::vector<EntityHandle> GetActiveEntities(uint32_t startIndex=0, uint32_t endIndex=-1) const;	// slow! only for editor/tools/debugging
 		size_t GetEntityDisplayName(const EntityHandle& h, char* nameBuffer, size_t maxLength) const;	// returns size of string written to nameBuffer
@@ -63,7 +67,8 @@ namespace Entities
 		// Pass a vector of handles to serialise a specific set of entities
 		JsonSerialiser SerialiseEntities();
 		JsonSerialiser SerialiseEntities(const std::vector<EntityHandle>& e);
-		std::vector<EntityHandle> SerialiseEntities(const JsonSerialiser& json);
+		// restoreHandles (optional) - expects exact match between handles and data
+		std::vector<EntityHandle> SerialiseEntities(const JsonSerialiser& json, const std::vector<EntityHandle>& restoreHandles = {});	
 		void SerialiseComponent(const EntityHandle& e, std::string_view componentType, JsonSerialiser& json);		// helper for serialising individual components
 		bool Load(std::string_view path);
 		bool Save(std::string_view path);
@@ -78,14 +83,19 @@ namespace Entities
 			ComponentBitsetType m_ownedComponentBits = 0;	// each bit represents a component type that this entity owns/contains
 			std::vector<uint32_t> m_componentIndices;		// index into component storage per type. take care!
 		};
+		struct PendingDeleteEntity 
+		{
+			EntityHandle m_handle;
+			bool m_reserveHandle;
+		};
 
 		std::string m_name;
 		uint32_t m_entityIDCounter = 0;
-		std::unordered_map<uint32_t, uint32_t> m_entityIdToIndex;	// used for faster lookups when only ID is known
 		std::vector<PerEntityData> m_allEntities;
+		std::unordered_map<uint32_t, uint32_t> m_reservedSlots;	// public ID -> free slot index. stores all reserved slots with their public ID
 		std::deque<uint32_t> m_freeEntityIndices;			// free list of entity data
 		std::vector<std::unique_ptr<ComponentStorage>> m_allComponents;	// storage for all components
-		std::vector<EntityHandle> m_pendingDelete;	// all entities to be deleted (these handles should still all be valid)
+		std::vector<PendingDeleteEntity> m_pendingDelete;	// all entities to be deleted (these handles should still all be valid)
 	};
 
 	template<class It>	// bool(const EntityHandle& e)
