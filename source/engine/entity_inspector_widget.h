@@ -15,9 +15,12 @@ namespace R3
 	class EntityInspectorWidget
 	{
 	public:
-		using OnAddComponent = std::function<void(const Entities::EntityHandle& h, std::string_view typeName)>;
 		void Update(const Entities::EntityHandle& h, Entities::World& w, ValueInspector& v, bool embedAsChild = false);
+		
+		using OnAddComponent = std::function<void(const Entities::EntityHandle& h, std::string_view typeName)>;
+		using OnRemoveComponent = std::function<void(const Entities::EntityHandle& h, std::string_view typeName)>;
 		OnAddComponent m_onAddComponent;
+		OnRemoveComponent m_onRemoveComponent;
 	private:
 		bool ShowEntityHeader(std::string_view name, const Entities::EntityHandle& h, Entities::World& w);
 		void UpdateEntityContextMenu(std::string_view name, const Entities::EntityHandle& h, Entities::World& w);

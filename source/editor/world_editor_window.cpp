@@ -46,6 +46,9 @@ namespace R3
 			addComponent->m_componentType = typeName;
 			m_cmds->Push(std::move(addComponent));
 		};
+		m_inspectEntityWidget->m_onRemoveComponent = [this](const Entities::EntityHandle& h, std::string_view typeName) {
+			
+		};
 
 		m_valueInspector = std::make_unique<BasicValueInspector>();
 		m_cmds = std::make_unique<EditorCommandList>();

@@ -10,10 +10,10 @@ namespace R3
 		static std::string_view GetName() { return "ImGui"; }
 		virtual void RegisterTickFns();
 		void LoadFonts();	// called by render system when imgui is initialised
-		void PushDefaultFont();
-		void PushBoldFont();
-		void PushItalicFont();
-		void PushLargeFont();
+		void PushDefaultFont();		// call ImGui::PopFont(); when finished
+		void PushBoldFont();		// call ImGui::PopFont(); when finished
+		void PushItalicFont();		// call ImGui::PopFont(); when finished
+		void PushLargeFont();		// call ImGui::PopFont(); when finished
 	private:
 		void OnSystemEvent(void*);
 		bool OnFrameStart();

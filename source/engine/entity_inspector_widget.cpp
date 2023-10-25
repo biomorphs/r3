@@ -12,10 +12,6 @@ namespace R3
 {
 	void EntityInspectorWidget::UpdateEntityContextMenu(std::string_view name, const Entities::EntityHandle& h, Entities::World& w)
 	{
-		if (!m_onAddComponent)
-		{
-			return;
-		}
 		Entities::ComponentTypeRegistry& cti = Entities::ComponentTypeRegistry::GetInstance();
 		MenuBar contextMenu;
 		auto& addComponent = contextMenu.GetSubmenu("Add Component");
@@ -38,7 +34,10 @@ namespace R3
 		ImGui::Text(name.data());
 		ImGui::PopID();
 		ImGui::PopFont();
-		UpdateEntityContextMenu(name, h, w);
+		if (m_onAddComponent)
+		{
+			UpdateEntityContextMenu(name, h, w);
+		}
 		return true;
 	}
 
@@ -95,7 +94,17 @@ namespace R3
 	{
 		Entities::ComponentTypeRegistry& cti = Entities::ComponentTypeRegistry::GetInstance();
 		auto& cmpTypeData = cti.AllTypes()[cmpTypeIndex];
-		if (ImGui::CollapsingHeader(cmpTypeData.m_name.c_str()))
+		bool headerOpen = ImGui::CollapsingHeader(cmpTypeData.m_name.c_str());
+		if (m_onRemoveComponent)
+		{
+			MenuBar contextMenu;
+			std::string txt = "Remove " + cmpTypeData.m_name;
+			contextMenu.AddItem(txt, [&, this]() {
+				m_onRemoveComponent(h, cmpTypeData.m_name);
+			});
+			contextMenu.DisplayContextMenu(false, cmpTypeData.m_name.c_str());
+		}
+		if (headerOpen)
 		{
 			const auto& inspectFn = cti.AllTypes()[cmpTypeIndex].m_inspectFn;
 			if (inspectFn)
