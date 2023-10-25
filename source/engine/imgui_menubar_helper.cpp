@@ -77,9 +77,10 @@ namespace R3
 		}
 	}
 
-	void MenuBar::DisplayContextMenu()
+	void MenuBar::DisplayContextMenu(bool isGlobal, const char* id)
 	{
-		if (ImGui::BeginPopupContextVoid())
+		bool isOpen = isGlobal ? ImGui::BeginPopupContextVoid(id) : ImGui::BeginPopupContextItem(id);
+		if(isOpen)
 		{
 			DoSubMenu(*this);
 			ImGui::EndPopup();

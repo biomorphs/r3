@@ -27,27 +27,63 @@ namespace R3
 
 	void ImGuiSystem::LoadFonts()
 	{
-		ImGuiIO& io = ImGui::GetIO();
-		io.Fonts->Clear();
+		const float defaultSizePx = 17.0f;
+		const float largeSizePx = 22.0f;
 
 		// OpenSans as default font
-		auto fontPath = FileIO::FindAbsolutePath("fonts\\Open_Sans\\static\\OpenSans-Medium.ttf");
-		if (fontPath.size() > 0)
-		{
-			io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 17);
-		}
+		auto mediumPath = FileIO::FindAbsolutePath("fonts\\Open_Sans\\static\\OpenSans-Medium.ttf");
+		auto boldPath = FileIO::FindAbsolutePath("fonts\\Open_Sans\\static\\OpenSans-Bold.ttf");
+		auto italicPath = FileIO::FindAbsolutePath("fonts\\Open_Sans\\static\\OpenSans-MediumItalic.ttf");
 
 		// Fork-awesome 6 for icons
-		std::string forkAwesomePath = "fonts\\Fork-awesome\\" + std::string(FONT_ICON_FILE_NAME_FK);
-		static const ImWchar icons_ranges[] = { ICON_MIN_FK, ICON_MAX_FK, 0 };
-		ImFontConfig icons_config; 
-		icons_config.MergeMode = true; 
-		icons_config.PixelSnapH = true;
-		fontPath = FileIO::FindAbsolutePath(forkAwesomePath);
-		if (fontPath.size() > 0)
+		auto forkAwesomePath = FileIO::FindAbsolutePath("fonts\\Fork-awesome\\" + std::string(FONT_ICON_FILE_NAME_FK));
+		static const ImWchar icons_ranges[] = { ICON_MIN_FK, ICON_MAX_FK, 0 };	// this MUST be static
+
+		ImGuiIO& io = ImGui::GetIO();
+		io.Fonts->Clear();
+		if (mediumPath.size() > 0)		// always load default font first
 		{
-			io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 17.0f, &icons_config, icons_ranges);
+			m_defaultFont = io.Fonts->AddFontFromFileTTF(mediumPath.c_str(), defaultSizePx);		
 		}
+		ImFontConfig icons_config;
+		icons_config.MergeMode = true;	// merge fork-awesome icons into the previous (default font) only
+		icons_config.PixelSnapH = true;	// align glyphs to edge
+		if (forkAwesomePath.size() > 0)
+		{
+			io.Fonts->AddFontFromFileTTF(forkAwesomePath.c_str(), defaultSizePx, &icons_config, icons_ranges);
+		}
+		if (mediumPath.size() > 0)
+		{
+			m_largeFont = io.Fonts->AddFontFromFileTTF(mediumPath.c_str(), largeSizePx);
+		}
+		if (boldPath.size() > 0)
+		{
+			m_boldFont = io.Fonts->AddFontFromFileTTF(boldPath.c_str(), defaultSizePx);
+		}
+		if (italicPath.size() > 0)
+		{
+			m_italicFont = io.Fonts->AddFontFromFileTTF(italicPath.c_str(), defaultSizePx);
+		}
+	}
+
+	void ImGuiSystem::PushDefaultFont()
+	{
+		ImGui::PushFont(m_defaultFont);
+	}
+
+	void ImGuiSystem::PushBoldFont()
+	{
+		ImGui::PushFont(m_boldFont);
+	}
+
+	void ImGuiSystem::PushItalicFont()
+	{
+		ImGui::PushFont(m_italicFont);
+	}
+
+	void ImGuiSystem::PushLargeFont()
+	{
+		ImGui::PushFont(m_largeFont);
 	}
 
 	bool ImGuiSystem::OnFrameStart()

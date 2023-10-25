@@ -20,7 +20,7 @@ namespace R3
 		bool m_deleteAllSelected = false;
 	private:
 		std::vector<Entities::EntityHandle> m_oldSelection;
-		JsonSerialiser m_deletedEntityData;
+		std::string m_serialisedEntityData;	// represents the deleted entities as json
 		WorldEditorWindow* m_window = nullptr;
 	};
 }

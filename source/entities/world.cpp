@@ -194,7 +194,7 @@ namespace Entities
 		else
 		{
 			nameBuffer[0] = '\0';
-			return 0;	// is it small enough for small string optimisation?
+			return 0;	
 		}
 	}
 

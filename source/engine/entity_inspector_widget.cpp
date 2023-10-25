@@ -1,5 +1,7 @@
 #include "entity_inspector_widget.h"
 #include "engine/value_inspector.h"
+#include "engine/imgui_menubar_helper.h"
+#include "engine/systems/imgui_system.h"	// for fonts
 #include "core/profiler.h"
 #include "entities/world.h"
 #include "entities/entity_handle.h"
@@ -8,6 +10,34 @@
 
 namespace R3
 {
+	void EntityInspectorWidget::UpdateEntityContextMenu(std::string_view name, const Entities::EntityHandle& h, Entities::World& w)
+	{
+		Entities::ComponentTypeRegistry& cti = Entities::ComponentTypeRegistry::GetInstance();
+		MenuBar contextMenu;
+		auto& addComponent = contextMenu.GetSubmenu("Add Component");
+		for (int cmpTypeIndex = 0; cmpTypeIndex < cti.AllTypes().size(); ++cmpTypeIndex)
+		{
+			if (!w.HasComponent(h, cti.AllTypes()[cmpTypeIndex].m_name))
+			{
+				addComponent.AddItem(cti.AllTypes()[cmpTypeIndex].m_name, [&h, &w, &cti, cmpTypeIndex]() {
+					w.AddComponent(h, cti.AllTypes()[cmpTypeIndex].m_name);
+				});
+			}
+		}
+		contextMenu.DisplayContextMenu(false, name.data());
+	}
+
+	bool EntityInspectorWidget::ShowEntityHeader(std::string_view name, const Entities::EntityHandle& h, Entities::World& w)
+	{
+		Systems::GetSystem<ImGuiSystem>()->PushLargeFont();
+		ImGui::PushID(name.data());	// Imgui::Text needs a ID for context menu to work
+		ImGui::Text(name.data());
+		ImGui::PopID();
+		ImGui::PopFont();
+		UpdateEntityContextMenu(name, h, w);
+		return true;
+	}
+
 	void EntityInspectorWidget::Update(const Entities::EntityHandle& h, Entities::World& w, ValueInspector& v, bool embedAsChild)
 	{
 		R3_PROF_EVENT();
@@ -33,13 +63,15 @@ namespace R3
 		bool isOpen = embedAsChild ? ImGui::BeginChild(entityName.c_str(), {0,actualChildSize }, true) : ImGui::Begin(entityName.c_str());
 		if (isOpen && w.IsHandleValid(h))
 		{
-			ImGui::Text(entityName.c_str());
-			Entities::ComponentTypeRegistry& cti = Entities::ComponentTypeRegistry::GetInstance();
-			for (int cmpTypeIndex = 0; cmpTypeIndex < cti.AllTypes().size(); ++cmpTypeIndex)
+			if (ShowEntityHeader(entityName, h, w))
 			{
-				if (w.HasComponent(h, cti.AllTypes()[cmpTypeIndex].m_name))
+				Entities::ComponentTypeRegistry& cti = Entities::ComponentTypeRegistry::GetInstance();
+				for (int cmpTypeIndex = 0; cmpTypeIndex < cti.AllTypes().size(); ++cmpTypeIndex)
 				{
-					DisplayComponent(h, w, v, cmpTypeIndex);
+					if (w.HasComponent(h, cti.AllTypes()[cmpTypeIndex].m_name))
+					{
+						DisplayComponent(h, w, v, cmpTypeIndex);
+					}
 				}
 			}
 		}

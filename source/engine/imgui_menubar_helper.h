@@ -27,7 +27,10 @@ namespace R3
 		
 		MenuBar& GetSubmenu(std::string_view label, bool enabled = true);	// creates one if it doesn't exist, enabled flag will ovewrite old value
 		void Display(bool appendToMainMenu=false);			// menu can be attached to current window or main menu, item callbacks will fire here on selection
-		void DisplayContextMenu();
+
+		// isGlobal = attach to 'void', otherwise attach to previous imgui widget
+		// attachID = attach the menu to a previous widget
+		void DisplayContextMenu(bool isGlobal = true, const char* attachID="");		
 
 		std::string m_label;
 		bool m_enabled = true;

@@ -5,7 +5,7 @@
 namespace R3
 {
 	WorldEditorDeleteEntitiesCmd::WorldEditorDeleteEntitiesCmd(WorldEditorWindow* w)
-		: m_window(w), m_deletedEntityData(JsonSerialiser::Write)
+		: m_window(w)
 	{
 	}
 
@@ -15,7 +15,8 @@ namespace R3
 		m_oldSelection = m_window->GetSelectedEntities();
 		if (m_deleteAllSelected)
 		{
-			m_deletedEntityData = world->SerialiseEntities(m_oldSelection);
+			auto deletedEntityJson = world->SerialiseEntities(m_oldSelection);
+			m_serialisedEntityData = deletedEntityJson.GetJson().dump();
 			m_window->DeleteSelected();
 		}
 		return Result::Succeeded;
@@ -23,7 +24,9 @@ namespace R3
 
 	EditorCommand::Result WorldEditorDeleteEntitiesCmd::Undo()
 	{
-		std::vector<Entities::EntityHandle> restoredHandles = m_window->GetWorld()->SerialiseEntities(m_deletedEntityData);
+		auto serialiser = JsonSerialiser(JsonSerialiser::Read);
+		serialiser.LoadFromString(m_serialisedEntityData);
+		std::vector<Entities::EntityHandle> restoredHandles = m_window->GetWorld()->SerialiseEntities(serialiser);
 		if (m_deleteAllSelected)
 		{
 			m_window->SelectEntities(restoredHandles);
