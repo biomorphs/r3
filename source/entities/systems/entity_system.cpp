@@ -14,35 +14,6 @@
 
 namespace R3
 {
-	struct test
-	{
-		int m_x = 3;
-		int m_y = 7;
-		int m_z = 10;
-		std::string m_str = "Hello";
-
-		// member serialiser
-		void SerialiseJson(JsonSerialiser& s)
-		{
-			s.TypeName("test");
-			s("X", m_x);
-			s("Y", m_y);
-			s("Z", m_z);
-			s("Str", m_str);
-		}
-	};
-
-	struct Test2
-	{
-		int m_x = 12;
-	};
-
-	template<> void SerialiseJson(Test2& t, JsonSerialiser& s)
-	{
-		s.TypeName("Test2");
-		s("X", t.m_x);
-	}
-
 	struct TestComponent1
 	{
 		static std::string_view GetTypeName() { return "TestComponent1"; }
@@ -96,55 +67,6 @@ namespace Entities
 	void EntityBenchmarks(World* w)
 	{
 		R3_PROF_EVENT();
-		int x = 1;
-		std::string s = "Yo";
-		float y = 2.0f;
-		bool doSomething = true;
-		glm::vec3 v0(1, 2, 3);
-		JsonSerialiser json(JsonSerialiser::Write);
-		json("X", x);
-		json("S", s);
-		json("Y", y);
-		json("V", v0);
-		json("doSomething", doSomething);
-		
-		test t;
-		t.m_str = "Whut";
-		json("test", t);
-
-		Test2 t2;
-		json("test2", t2);
-
-		std::vector<uint32_t> someInts = { 1,2,3,4,5 };
-		json("someInts", someInts);
-
-		std::vector<Test2> someTest2s = {
-			{ 1 }, { 5 }, { 7 }
-		};
-		json("someTest2s", someTest2s);
-
-		LogInfo("Serialised data: \n{}", json.c_str());
-
-		JsonSerialiser loadJson(JsonSerialiser::Read);
-		loadJson.LoadFromString(json.c_str());
-
-		std::vector<uint32_t> loadSomeInts;
-		loadJson("someInts", loadSomeInts);
-		for (int s = 0; s < loadSomeInts.size(); ++s)
-		{
-			LogInfo("Loaded int: {}", loadSomeInts[s]);
-		}
-		
-		Test2 loadTest2 = { 25 };
-		loadJson("test2", loadTest2);
-
-		std::vector<Test2> loadTest2s;
-		loadJson("someTest2s", loadTest2s);
-		LogInfo("{} loaded", loadTest2s.size());
-
-		glm::vec3 loadV0;
-		loadJson("V", loadV0);
-
 		const auto benchStart = R3::Time::HighPerformanceCounterTicks();
 		const auto freq = R3::Time::HighPerformanceCounterFrequency();
 		constexpr uint32_t test1Repeats = 10;
@@ -257,35 +179,12 @@ namespace Entities
 	EntitySystem::EntitySystem()
 	{
 		R3_PROF_EVENT();
-		World* testWorld = CreateWorld("Benchmarks", "Benchmarks");
 		RegisterComponentType<BenchComponent1>();
 		RegisterComponentType<BenchComponent2>();
-		EntityBenchmarks(testWorld);
-
 		RegisterComponentType<TestComponent1>();
 		RegisterComponentType<TestComponent2>();
 		RegisterComponentType<EnvironmentSettingsComponent>();
-
-		auto envSettings = testWorld->AddEntity();
-		testWorld->AddComponent<EnvironmentSettingsComponent>(envSettings);
-		
-		World* editWorld = CreateWorld("EditorWorld", "EditorWorld");
-		auto e1 = editWorld->AddEntity();
-		editWorld->AddComponent(e1, "TestComponent1");
-		editWorld->AddComponent(e1, "TestComponent2");
-
-		auto e2 = editWorld->AddEntity();
-		auto e3 = editWorld->AddEntity();
-		editWorld->AddComponent(e3, "TestComponent1");
-
-		editWorld->RemoveEntity(e1);
-		editWorld->CollectGarbage();
-
-		auto e4 = editWorld->AddEntity();
-		editWorld->AddComponent(e4, "TestComponent2");
-
-		auto worldJson = editWorld->SerialiseEntities();
-		LogInfo("{}", worldJson.c_str());
+		// EntityBenchmarks(CreateWorld("Benchmarks", "Benchmarks"));
 	}
 
 	EntitySystem::~EntitySystem()

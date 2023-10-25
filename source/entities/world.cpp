@@ -139,6 +139,21 @@ namespace Entities
 		return allCreatedHandles;
 	}
 
+	void World::SerialiseComponent(const EntityHandle& e, std::string_view componentType, JsonSerialiser& json)
+	{
+		if (IsHandleValid(e))
+		{
+			const uint32_t componentTypeIndex = ComponentTypeRegistry::GetInstance().GetTypeIndex(componentType);
+			assert(componentTypeIndex != -1);
+			const auto& ped = m_allEntities[e.GetPrivateIndex()];
+			auto typeMask = (PerEntityData::ComponentBitsetType)1 << componentTypeIndex;
+			if ((ped.m_ownedComponentBits & typeMask) == typeMask && ped.m_componentIndices[componentTypeIndex] != -1)
+			{
+				m_allComponents[componentTypeIndex]->Serialise(e, ped.m_componentIndices[componentTypeIndex], json);
+			}
+		}
+	}
+
 	bool World::Load(std::string_view path)
 	{
 		R3_PROF_EVENT();

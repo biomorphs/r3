@@ -24,9 +24,6 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 
-		m_allWindows.push_back(std::make_unique<WorldEditorWindow>("Benchmarks"));
-		m_allWindows.push_back(std::make_unique<WorldEditorWindow>("EditorWorld"));
-
 		// the editor will handle shutdown events
 		auto events = GetSystem<EventSystem>();
 		if (events)
@@ -41,6 +38,8 @@ namespace R3
 				}
 			});
 		}
+
+		OnNewWorld();
 
 		return true;
 	}

@@ -6,6 +6,7 @@
 #include "editor/commands/world_editor_add_empty_entity_cmd.h"
 #include "editor/commands/world_editor_delete_entities_cmd.h"
 #include "editor/commands/world_editor_add_component_cmd.h"
+#include "editor/commands/world_editor_delete_component_cmd.h"
 #include "engine/systems.h"
 #include "engine/basic_value_inspector.h"
 #include "engine/entity_list_widget.h"
@@ -47,7 +48,10 @@ namespace R3
 			m_cmds->Push(std::move(addComponent));
 		};
 		m_inspectEntityWidget->m_onRemoveComponent = [this](const Entities::EntityHandle& h, std::string_view typeName) {
-			
+			auto deleteCmd = std::make_unique<WorldEditorDeleteComponentCommand>(this);
+			deleteCmd->m_targetEntities.push_back(h);
+			deleteCmd->m_componentType = typeName;
+			m_cmds->Push(std::move(deleteCmd));
 		};
 
 		m_valueInspector = std::make_unique<BasicValueInspector>();

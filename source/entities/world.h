@@ -64,6 +64,7 @@ namespace Entities
 		JsonSerialiser SerialiseEntities();
 		JsonSerialiser SerialiseEntities(const std::vector<EntityHandle>& e);
 		std::vector<EntityHandle> SerialiseEntities(const JsonSerialiser& json);
+		void SerialiseComponent(const EntityHandle& e, std::string_view componentType, JsonSerialiser& json);		// helper for serialising individual components
 		bool Load(std::string_view path);
 		bool Save(std::string_view path);
 		
