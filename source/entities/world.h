@@ -30,9 +30,10 @@ namespace Entities
 		// only useful for editors to recreate deleted entities while preserving references
 		void RemoveEntity(const EntityHandle& h, bool reserveHandle = false);	
 		bool IsHandleValid(const EntityHandle& h) const;
-		std::vector<EntityHandle> GetActiveEntities(uint32_t startIndex=0, uint32_t endIndex=-1) const;	// slow! only for editor/tools/debugging
-		size_t GetEntityDisplayName(const EntityHandle& h, char* nameBuffer, size_t maxLength) const;	// returns size of string written to nameBuffer
 		std::string GetEntityDisplayName(const EntityHandle& h) const;
+		size_t GetEntityDisplayName(const EntityHandle& h, char* nameBuffer, size_t maxLength) const;	// returns size of string written to nameBuffer
+
+		std::vector<EntityHandle> GetActiveEntities(uint32_t startIndex=0, uint32_t endIndex=-1) const;	// slow! only for editor/tools/debugging
 		template<class It>	// bool(const EntityHandle& e)
 		void ForEachActiveEntity(const It&);	// slow! tools/debug only
 
@@ -50,14 +51,15 @@ namespace Entities
 		ComponentType* GetComponentFast(const EntityHandle& e, uint32_t typeIndex);	// danger! no validation on handle, index assumed to be ok
 		bool HasAnyComponents(const EntityHandle& e, uint64_t typeBits) const;		// returns true if entity compoonent bitset matches any of the bits
 		bool HasAllComponents(const EntityHandle& e, uint64_t typeBits) const;		// returns true if entity compoonent bitset contains all of the bits
-		uint32_t GetOwnedComponentCount(const EntityHandle& e);
+		uint32_t GetOwnedComponentCount(const EntityHandle& e);						// returns how many components an entity owns
 
 		// Called from component storage if a component moves in memory
 		void OnComponentMoved(const EntityHandle& owner, uint32_t typeIndex, uint32_t oldIndex, uint32_t newIndex);
 
 		void CollectGarbage();		// destroy all entities pending deletion
 		size_t GetPendingDeleteCount() { return m_pendingDelete.size(); }
-		size_t GetActiveEntityCount() { return m_allEntities.size() - m_freeEntityIndices.size(); }
+		size_t GetReservedHandleCount() { return m_reservedSlots.size(); }
+		size_t GetActiveEntityCount() { return m_allEntities.size() - m_freeEntityIndices.size() - m_reservedSlots.size(); }
 
 		// Storage accessors
 		template<class ComponentType> LinearComponentStorage<ComponentType>* GetStorage();
@@ -67,9 +69,10 @@ namespace Entities
 		// Pass a vector of handles to serialise a specific set of entities
 		JsonSerialiser SerialiseEntities();
 		JsonSerialiser SerialiseEntities(const std::vector<EntityHandle>& e);
-		// restoreHandles (optional) - expects exact match between handles and data
+		// restoreHandles (optional) - serialise entities while restoring previous handles (expects vector to match json exactly)
 		std::vector<EntityHandle> SerialiseEntities(const JsonSerialiser& json, const std::vector<EntityHandle>& restoreHandles = {});	
 		void SerialiseComponent(const EntityHandle& e, std::string_view componentType, JsonSerialiser& json);		// helper for serialising individual components
+		
 		bool Load(std::string_view path);
 		bool Save(std::string_view path);
 		
@@ -101,7 +104,7 @@ namespace Entities
 	template<class It>	// bool(const EntityHandle& e)
 	void World::ForEachActiveEntity(const It& it)
 	{
-		if (m_freeEntityIndices.size() == 0)	// fast path if all slots are allocated
+		if (m_freeEntityIndices.size() == 0 && m_reservedSlots.size() == 0)	// fast path if all slots are allocated
 		{
 			for (uint32_t i = 0; i < m_allEntities.size(); ++i)
 			{
