@@ -5,6 +5,7 @@ set(EntitiesLib_SourceFiles
 	component_type_registry.cpp
 	component_storage.h
 	component_storage.cpp
+	component_helpers.h
 	entity_handle.h
 	entity_handle.cpp
 	world.h

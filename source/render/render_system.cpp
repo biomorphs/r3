@@ -230,14 +230,14 @@ namespace R3
 	bool RenderSystem::ShowGui()
 	{
 		R3_PROF_EVENT();
-		ImGui::Begin("Render System");
+		ImGui::Begin("Render System", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
 		{
 			auto str = std::format("Swap chain extents: {}x{}", m_vk->m_swapChainExtents.width, m_vk->m_swapChainExtents.height);
 			ImGui::Text(str.c_str());
 			str = std::format("Swap chain images: {}", m_vk->m_swapChainImages.size());
 			ImGui::Text(str.c_str());
 			auto timeSys = GetSystem<TimeSystem>();
-			str = std::format("FPS/Frame Time: {} / {}ms", 1.0 / timeSys->GetVariableDeltaTime(), timeSys->GetVariableDeltaTime());
+			str = std::format("FPS/Frame Time: {:.1f} / {:.4f}ms", 1.0 / timeSys->GetVariableDeltaTime(), timeSys->GetVariableDeltaTime());
 			ImGui::Text(str.c_str());
 		}
 		ImGui::End();

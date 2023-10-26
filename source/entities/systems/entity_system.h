@@ -63,7 +63,7 @@ namespace Entities
 				auto* actualComponent = w.GetComponent<ComponentType>(e);
 				if (actualComponent)
 				{
-					actualComponent->Inspect(e, w, i);
+					actualComponent->Inspect(e, &w, i);
 				}
 			};
 			typeRegistry.SetInspector(ComponentType::GetTypeName(), std::move(inspectorGlue));

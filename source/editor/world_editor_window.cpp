@@ -1,14 +1,14 @@
 #include "world_editor_window.h"
 #include "world_info_widget.h"
 #include "editor_command_list.h"
-#include "editor/commands/world_editor_save_cmd.h"
-#include "editor/commands/world_editor_select_entities_cmd.h"
-#include "editor/commands/world_editor_add_empty_entity_cmd.h"
-#include "editor/commands/world_editor_delete_entities_cmd.h"
-#include "editor/commands/world_editor_add_component_cmd.h"
-#include "editor/commands/world_editor_delete_component_cmd.h"
+#include "undo_redo_value_inspector.h"
+#include "commands/world_editor_save_cmd.h"
+#include "commands/world_editor_select_entities_cmd.h"
+#include "commands/world_editor_add_empty_entity_cmd.h"
+#include "commands/world_editor_delete_entities_cmd.h"
+#include "commands/world_editor_add_component_cmd.h"
+#include "commands/world_editor_delete_component_cmd.h"
 #include "engine/systems.h"
-#include "engine/basic_value_inspector.h"
 #include "engine/entity_list_widget.h"
 #include "engine/entity_inspector_widget.h"
 #include "engine/imgui_menubar_helper.h"
@@ -54,8 +54,8 @@ namespace R3
 			m_cmds->Push(std::move(deleteCmd));
 		};
 
-		m_valueInspector = std::make_unique<BasicValueInspector>();
 		m_cmds = std::make_unique<EditorCommandList>();
+		m_valueInspector = std::make_unique<UndoRedoInspector>(*m_cmds);
 	}
 
 	WorldEditorWindow::~WorldEditorWindow()

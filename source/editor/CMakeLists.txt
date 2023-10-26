@@ -7,6 +7,8 @@ set(EditorLib_SourceFiles
 	editor_command.h
 	editor_command_list.h
 	editor_command_list.cpp
+	undo_redo_value_inspector.h
+	undo_redo_value_inspector.cpp
 	systems/editor_system.h
 	systems/editor_system.cpp
 	commands/world_editor_save_cmd.h
@@ -21,6 +23,7 @@ set(EditorLib_SourceFiles
 	commands/world_editor_add_component_cmd.cpp
 	commands/world_editor_delete_component_cmd.h
 	commands/world_editor_delete_component_cmd.cpp
+	commands/set_value_cmd.h
 )
 
 add_library(Editor ${EditorLib_SourceFiles})

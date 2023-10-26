@@ -1,0 +1,36 @@
+#include "undo_redo_value_inspector.h"
+#include "commands/set_value_cmd.h"
+#include "editor/editor_command_list.h"
+#include "imgui.h"
+
+namespace R3
+{
+	bool UndoRedoInspector::Inspect(std::string_view label, int currentValue, std::function<void(int)> setFn, int step, int minv, int maxv)
+	{
+		int val = currentValue;
+		if (ImGui::InputInt(label.data(), &val, step))
+		{
+			val = glm::clamp(val, minv, maxv);
+			if (val != currentValue)
+			{
+				m_cmds.Push(std::make_unique<SetValueCommand<int>>(label, currentValue, val, setFn));
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool UndoRedoInspector::InspectColour(std::string_view label, glm::vec4 currentValue, std::function<void(glm::vec4)> setFn)
+	{
+		glm::vec4 val = currentValue;
+		if (ImGui::ColorEdit4(label.data(), glm::value_ptr(val)))
+		{
+			if (val != currentValue)
+			{
+				m_cmds.Push(std::make_unique<SetValueCommand<glm::vec4>>(label, currentValue, val, setFn));
+				return true;
+			}
+		}
+		return false;
+	}
+}
