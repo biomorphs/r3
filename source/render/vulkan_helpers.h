@@ -7,9 +7,13 @@
 
 namespace R3
 {
+	class Window;
 	// our aim is NOT to abstract away vulkan, just hide the annoying bits
 	namespace VulkanHelpers
 	{
+		// Checks result, outputs any errors, crashes if fatal
+		bool CheckResult(const VkResult& r);
+
 		// Run cmds immediately on a particular queue, wait for the results via fence
 		// Useful for copying data on transfer queues, debugging, etc
 		bool RunCommandsImmediate(VkDevice d, VkQueue cmdQueue, VkCommandPool cmdPool, VkFence waitFence, std::function<void(VkCommandBuffer&)> fn);
@@ -26,5 +30,45 @@ namespace R3
 		VkPipelineRasterizationStateCreateInfo CreatePipelineRasterState(VkPolygonMode polyMode, VkCullModeFlags cullMode, VkFrontFace frontFace);
 		VkPipelineColorBlendAttachmentState CreatePipelineColourBlendAttachment_NoBlending();
 		VkPipelineColorBlendStateCreateInfo CreatePipelineColourBlendState(const std::vector<VkPipelineColorBlendAttachmentState>& attachments);
+
+		// Initialisation helpers
+		struct CreateVkInstanceParams {
+			std::string m_appName = "R3";
+			std::string m_engineName = "R3";
+			uint32_t m_appVersion = VK_MAKE_VERSION(1, 0, 0);
+			uint32_t m_engineVersion = VK_MAKE_VERSION(1, 0, 0);
+			uint32_t m_vulkanApiVersion = VK_API_VERSION_1_0;
+			bool m_enableValidationLayers = true;
+		};
+		VkInstance CreateVkInstance(Window& w, CreateVkInstanceParams& params);
+
+		struct PhysicalDeviceDescriptor
+		{
+			VkPhysicalDevice m_device = VK_NULL_HANDLE;
+			VkPhysicalDeviceProperties m_properties = {};
+			VkPhysicalDeviceFeatures m_features = {};
+			std::vector<VkQueueFamilyProperties> m_queues;
+			std::vector<VkExtensionProperties> m_supportedExtensions;
+		};
+		std::vector<PhysicalDeviceDescriptor> EnumeratePhysicalDevices(VkInstance& instance);
+		int ChooseGraphicsPhysicalDevice(const std::vector<PhysicalDeviceDescriptor>& devices, VkSurfaceKHR surface);	// return -1 if none found
+
+		struct QueueFamilyIndices
+		{
+			uint32_t m_graphicsIndex = -1;
+			uint32_t m_presentIndex = -1;
+		};
+		QueueFamilyIndices FindQueueFamilyIndices(const PhysicalDeviceDescriptor& pdd, VkSurfaceKHR surface);
+
+		VkDevice CreateLogicalDevice(const PhysicalDeviceDescriptor& pdd, VkSurfaceKHR surface, bool enableValidationLayers);
+
+		// Swapchain stuff
+		struct SwapchainDescriptor
+		{
+			VkSurfaceCapabilitiesKHR m_caps = {};
+			std::vector<VkSurfaceFormatKHR> m_formats;
+			std::vector<VkPresentModeKHR> m_presentModes;
+		};
+		SwapchainDescriptor GetMatchingSwapchains(const VkPhysicalDevice& physDevice, VkSurfaceKHR surface);
 	}
 }

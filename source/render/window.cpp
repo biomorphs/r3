@@ -21,10 +21,9 @@ namespace R3
 		{
 			if (props.m_flags & CreateResizable)
 				windowFlags |= SDL_WINDOW_RESIZABLE;
-
 			if (props.m_flags & CreateMinimized)
 				windowFlags |= SDL_WINDOW_MINIMIZED;
-			else if (props.m_flags & CreateResizable)
+			else if (props.m_flags & CreateMaximized)
 				windowFlags |= SDL_WINDOW_MAXIMIZED;
 		}
 

@@ -8,6 +8,8 @@ set(RenderLib_SourceFiles
 	vulkan_helpers.cpp
 	pipeline_builder.h
 	pipeline_builder.cpp
+	device.h
+	device.cpp
 )
 
 add_library(Render ${RenderLib_SourceFiles})

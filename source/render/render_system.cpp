@@ -1,5 +1,6 @@
 #include "render_system.h"
 #include "window.h"
+#include "device.h"
 #include "core/file_io.h"
 #include "core/profiler.h"
 #include "core/log.h"
@@ -27,6 +28,9 @@ namespace R3
 {
 	static constexpr bool c_validationLayersEnabled = true;
 	static constexpr int c_maxFramesInFlight = 2;	// let the cpu get ahead of the gpu by this many frames
+	using VulkanHelpers::CheckResult;				// laziness
+	using VulkanHelpers::FindQueueFamilyIndices;
+	using VulkanHelpers::QueueFamilyIndices;
 
 	struct FrameData
 	{
@@ -35,15 +39,6 @@ namespace R3
 		VkSemaphore m_imageAvailableSemaphore = VK_NULL_HANDLE;	// signalled when new swap chain image available
 		VkSemaphore m_renderFinishedSemaphore = VK_NULL_HANDLE;	// signalled when m_graphicsCmdBuffer has been fully submitted to a queue
 		VkFence m_inFlightFence = VK_NULL_HANDLE;				// signalled when previous cmd buffer finished executing (initialised as signalled)
-	};
-
-	struct PhysicalDeviceDescriptor
-	{
-		VkPhysicalDevice m_device = VK_NULL_HANDLE;
-		VkPhysicalDeviceProperties m_properties = {};
-		VkPhysicalDeviceFeatures m_features = {};
-		std::vector<VkQueueFamilyProperties> m_queues;
-		std::vector<VkExtensionProperties> m_supportedExtensions;
 	};
 
 	struct SwapchainDescriptor
@@ -65,12 +60,6 @@ namespace R3
 		VmaAllocation m_allocation;
 	};
 
-	struct QueueFamilyIndices
-	{
-		uint32_t m_graphicsIndex = -1;
-		uint32_t m_presentIndex = -1;
-	};
-
 	struct ImGuiVkStuff
 	{
 		VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
@@ -78,13 +67,6 @@ namespace R3
 
 	struct RenderSystem::VkStuff
 	{
-		VkInstance m_vkInstance = VK_NULL_HANDLE;
-		VkSurfaceKHR m_mainSurface = nullptr;
-		PhysicalDeviceDescriptor m_physicalDevice;
-		VkDevice m_device = VK_NULL_HANDLE;
-		VmaAllocator m_allocator = nullptr;	// vma
-		VkQueue m_graphicsQueue = VK_NULL_HANDLE;
-		VkQueue m_presentQueue = VK_NULL_HANDLE;
 		VkSwapchainKHR m_swapChain = VK_NULL_HANDLE;
 		VkExtent2D m_swapChainExtents = {};
 		VkSurfaceFormatKHR m_swapChainFormat = {};
@@ -151,20 +133,8 @@ namespace R3
 		glm::mat4 m_transform;
 	};
 
-	bool CheckResult(const VkResult& r)
-	{
-		if (r)
-		{
-			std::string errorString = string_VkResult(r);
-			LogError("Vulkan Error! {}", errorString);
-			int* crashMe = nullptr;
-			*crashMe = 1;
-		}
-		return !r;
-	}
-
 	// prefer using this one!
-	AllocatedBuffer CreateBuffer(VmaAllocator& allocator, uint64_t sizeBytes, VkBufferUsageFlags bufferUsage,
+	AllocatedBuffer CreateBuffer(VmaAllocator allocator, uint64_t sizeBytes, VkBufferUsageFlags bufferUsage,
 		VmaMemoryUsage memUsage = VMA_MEMORY_USAGE_AUTO, uint32_t allocFlags = 0)
 	{
 		R3_PROF_EVENT();
@@ -271,7 +241,7 @@ namespace R3
 		{
 			R3_PROF_STALL("Wait for fence");
 			// wait for the previous frame to finish with infinite timeout (blocking call)
-			CheckResult(vkWaitForFences(m_vk->m_device, 1, &fd.m_inFlightFence, VK_TRUE, UINT64_MAX));
+			CheckResult(vkWaitForFences(m_device->GetVkDevice(), 1, &fd.m_inFlightFence, VK_TRUE, UINT64_MAX));
 		}
 
 		uint32_t swapImageIndex = 0;
@@ -280,7 +250,7 @@ namespace R3
 			// acquire the next swap chain image (blocks with infinite timeout)
 			// m_imageAvailableSemaphore will be signalled when we are able to draw to the image
 			// note that fences can also be passed here
-			auto r = vkAcquireNextImageKHR(m_vk->m_device, m_vk->m_swapChain, UINT64_MAX, fd.m_imageAvailableSemaphore, VK_NULL_HANDLE, &swapImageIndex);
+			auto r = vkAcquireNextImageKHR(m_device->GetVkDevice(), m_vk->m_swapChain, UINT64_MAX, fd.m_imageAvailableSemaphore, VK_NULL_HANDLE, &swapImageIndex);
 			if (r == VK_ERROR_OUT_OF_DATE_KHR)
 			{
 				m_recreateSwapchain = true;
@@ -294,7 +264,7 @@ namespace R3
 		}
 
 		// at this point we are definitely going to draw, so reset the inflight fence
-		CheckResult(vkResetFences(m_vk->m_device, 1, &fd.m_inFlightFence));
+		CheckResult(vkResetFences(m_device->GetVkDevice(), 1, &fd.m_inFlightFence));
 
 		// reset + record the cmd buffer
 		// (its safe since we waited on the inflight fence earlier)
@@ -326,7 +296,7 @@ namespace R3
 		{
 			R3_PROF_EVENT("Submit");
 			// submit the cmd buffer to the queue, the inflight fence will be signalled when execution completes
-			if (!CheckResult(vkQueueSubmit(m_vk->m_graphicsQueue, 1, &submitInfo, fd.m_inFlightFence)))
+			if (!CheckResult(vkQueueSubmit(m_device->GetGraphicsQueue(), 1, &submitInfo, fd.m_inFlightFence)))
 			{
 				LogError("failed to submit draw command buffer!");
 				return false;
@@ -345,7 +315,7 @@ namespace R3
 		presentInfo.pImageIndices = &swapImageIndex;
 		{
 			R3_PROF_EVENT("Present");
-			auto r = vkQueuePresentKHR(m_vk->m_presentQueue, &presentInfo);
+			auto r = vkQueuePresentKHR(m_device->GetPresentQueue(), &presentInfo);
 			if (r == VK_ERROR_OUT_OF_DATE_KHR)
 			{
 				m_recreateSwapchain = true;
@@ -387,6 +357,12 @@ namespace R3
 		}
 	}
 
+	bool RenderSystem::CreateDevice()
+	{
+		m_device = std::make_unique<Device>(m_mainWindow.get());
+		return m_device->Initialise();
+	}
+
 	bool RenderSystem::Init()
 	{
 		R3_PROF_EVENT();
@@ -394,7 +370,7 @@ namespace R3
 		auto events = GetSystem<EventSystem>();
 		events->RegisterEventHandler([this](void* event) {
 			OnSystemEvent(event);
-			});
+		});
 
 		if (!CreateWindow())
 		{
@@ -402,33 +378,9 @@ namespace R3
 			return false;
 		}
 
-		if (!CreateVkInstance())
+		if (!CreateDevice())
 		{
-			LogError("Failed to create VK instance");
-			return false;
-		}
-
-		if (!CreateSurface())
-		{
-			LogError("Failed to create surface");
-			return false;
-		}
-
-		if (!CreatePhysicalDevice())
-		{
-			LogError("Failed to create physical device");
-			return false;
-		}
-
-		if (!CreateLogicalDevice())
-		{
-			LogError("Failed to create logical device");
-			return false;
-		}
-
-		if (!InitialiseVMA())
-		{
-			LogError("Failed to initialise vulkan memory allocator");
+			LogError("Failed to create device!");
 			return false;
 		}
 
@@ -499,48 +451,44 @@ namespace R3
 		m_mainWindow->Hide();
 
 		// Wait for rendering to finish before shutting down
-		CheckResult(vkDeviceWaitIdle(m_vk->m_device));
+		CheckResult(vkDeviceWaitIdle(m_device->GetVkDevice()));
 
 		// Clean up ImGui
-		vkDestroyDescriptorPool(m_vk->m_device, m_vk->m_imgui.m_descriptorPool, nullptr);
+		vkDestroyDescriptorPool(m_device->GetVkDevice(), m_vk->m_imgui.m_descriptorPool, nullptr);
 		ImGui_ImplVulkan_Shutdown();
 
 		// Destroy the mesh buffers
-		vmaDestroyBuffer(m_vk->m_allocator, m_vk->m_posColourVertexBuffer.m_buffer, m_vk->m_posColourVertexBuffer.m_allocation);
+		vmaDestroyBuffer(m_device->GetVMA(), m_vk->m_posColourVertexBuffer.m_buffer, m_vk->m_posColourVertexBuffer.m_allocation);
 
 		// Destroy the sync objects
-		vkDestroyFence(m_vk->m_device, m_vk->m_immediateSubmitFence, nullptr);
+		vkDestroyFence(m_device->GetVkDevice(), m_vk->m_immediateSubmitFence, nullptr);
 		for (int f = c_maxFramesInFlight - 1; f >= 0; --f)	// destroy sync objects in reverse order
 		{
-			vkDestroyFence(m_vk->m_device, m_vk->m_perFrameData[f].m_inFlightFence, nullptr);
-			vkDestroySemaphore(m_vk->m_device, m_vk->m_perFrameData[f].m_renderFinishedSemaphore, nullptr);
-			vkDestroySemaphore(m_vk->m_device, m_vk->m_perFrameData[f].m_imageAvailableSemaphore, nullptr);
+			vkDestroyFence(m_device->GetVkDevice(), m_vk->m_perFrameData[f].m_inFlightFence, nullptr);
+			vkDestroySemaphore(m_device->GetVkDevice(), m_vk->m_perFrameData[f].m_renderFinishedSemaphore, nullptr);
+			vkDestroySemaphore(m_device->GetVkDevice(), m_vk->m_perFrameData[f].m_imageAvailableSemaphore, nullptr);
 		}
 
 		//cmd buffers do not need to be destroyed, removing the pool is enough
 		for (int f = c_maxFramesInFlight - 1; f >= 0; --f)	// destroy sync objects in reverse order
 		{
-			vkDestroyCommandPool(m_vk->m_device, m_vk->m_perFrameData[f].m_graphicsCommandPool, nullptr);
+			vkDestroyCommandPool(m_device->GetVkDevice(), m_vk->m_perFrameData[f].m_graphicsCommandPool, nullptr);
 		}
 
 		// destroy pipelines + layouts
-		vkDestroyPipelineLayout(m_vk->m_device, m_vk->m_simpleLayoutWithPushConstant, nullptr);
-		vkDestroyPipelineLayout(m_vk->m_device, m_vk->m_simplePipelineLayout, nullptr);
-		vkDestroyPipeline(m_vk->m_device, m_vk->m_simpleTriFromBuffersPipeline, nullptr);
-		vkDestroyPipeline(m_vk->m_device, m_vk->m_simpleTriFromBuffersPushConstantPipeline, nullptr);
-		vkDestroyPipeline(m_vk->m_device, m_vk->m_simpleTriPipeline, nullptr);
+		vkDestroyPipelineLayout(m_device->GetVkDevice(), m_vk->m_simpleLayoutWithPushConstant, nullptr);
+		vkDestroyPipelineLayout(m_device->GetVkDevice(), m_vk->m_simplePipelineLayout, nullptr);
+		vkDestroyPipeline(m_device->GetVkDevice(), m_vk->m_simpleTriFromBuffersPipeline, nullptr);
+		vkDestroyPipeline(m_device->GetVkDevice(), m_vk->m_simpleTriFromBuffersPushConstantPipeline, nullptr);
+		vkDestroyPipeline(m_device->GetVkDevice(), m_vk->m_simpleTriPipeline, nullptr);
 
 		// render passes
-		vkDestroyRenderPass(m_vk->m_device, m_vk->m_mainRenderPass, nullptr);
+		vkDestroyRenderPass(m_device->GetVkDevice(), m_vk->m_mainRenderPass, nullptr);
 
 		// swap chain, images, framebuffers
 		DestroySwapchain();
-
-		vmaDestroyAllocator(m_vk->m_allocator);
-
-		vkDestroyDevice(m_vk->m_device, nullptr);
-		vkDestroySurfaceKHR(m_vk->m_vkInstance, m_vk->m_mainSurface, nullptr);
-		vkDestroyInstance(m_vk->m_vkInstance, nullptr);
+		
+		m_device = nullptr;
 		m_mainWindow = nullptr;
 	}
 
@@ -577,7 +525,7 @@ namespace R3
 		pool_info.maxSets = 1000;												// way bigger than needed!
 		pool_info.poolSizeCount = static_cast<uint32_t>(std::size(pool_sizes));
 		pool_info.pPoolSizes = pool_sizes;
-		if (!CheckResult(vkCreateDescriptorPool(m_vk->m_device, &pool_info, nullptr, &m_vk->m_imgui.m_descriptorPool)))
+		if (!CheckResult(vkCreateDescriptorPool(m_device->GetVkDevice(), &pool_info, nullptr, &m_vk->m_imgui.m_descriptorPool)))
 		{
 			LogError("Failed to create descriptor pool for imgui");
 			return false;
@@ -599,10 +547,10 @@ namespace R3
 		// initialise for Vulkan
 		// this initializes imgui for Vulkan
 		ImGui_ImplVulkan_InitInfo init_info = {0};
-		init_info.Instance = m_vk->m_vkInstance;
-		init_info.PhysicalDevice = m_vk->m_physicalDevice.m_device;
-		init_info.Device = m_vk->m_device;
-		init_info.Queue = m_vk->m_graphicsQueue;
+		init_info.Instance = m_device->GetVkInstance();
+		init_info.PhysicalDevice = m_device->GetPhysicalDevice().m_device;
+		init_info.Device = m_device->GetVkDevice();
+		init_info.Queue = m_device->GetGraphicsQueue();
 		init_info.DescriptorPool = m_vk->m_imgui.m_descriptorPool;
 		init_info.MinImageCount = static_cast<uint32_t>(m_vk->m_swapChainImages.size());	// ??
 		init_info.ImageCount = static_cast<uint32_t>(m_vk->m_swapChainImages.size());		// ????!
@@ -614,7 +562,7 @@ namespace R3
 		}
 
 		// upload the imgui font textures via immediate graphics cmd
-		VulkanHelpers::RunCommandsImmediate(m_vk->m_device, m_vk->m_graphicsQueue, 
+		VulkanHelpers::RunCommandsImmediate(m_device->GetVkDevice(), m_device->GetGraphicsQueue(), 
 			m_vk->ThisFrameData().m_graphicsCommandPool, m_vk->m_immediateSubmitFence, [&](VkCommandBuffer cmd) {
 			ImGui_ImplVulkan_CreateFontsTexture(cmd);
 		});
@@ -635,13 +583,13 @@ namespace R3
 		verts[1].m_colour = { 0.f, 1.f, 0.5f };
 		verts[2].m_colour = { 1.f, 0.f, 0.1f };
 
-		AllocatedBuffer stagingBuffer = CreateBuffer(m_vk->m_allocator,
+		AllocatedBuffer stagingBuffer = CreateBuffer(m_device->GetVMA(),
 			sizeof(PosColourVertex) * 3,
 			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 			VMA_MEMORY_USAGE_AUTO,
 			VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT
 		);
-		m_vk->m_posColourVertexBuffer = CreateBuffer(m_vk->m_allocator,
+		m_vk->m_posColourVertexBuffer = CreateBuffer(m_device->GetVMA(),
 			sizeof(PosColourVertex) * 3,
 			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT
 		);
@@ -653,14 +601,14 @@ namespace R3
 
 		// upload the data to the staging buffer
 		void* mappedData = nullptr;
-		if (CheckResult(vmaMapMemory(m_vk->m_allocator, stagingBuffer.m_allocation, &mappedData)))
+		if (CheckResult(vmaMapMemory(m_device->GetVMA(), stagingBuffer.m_allocation, &mappedData)))
 		{
 			memcpy(mappedData, verts, 3 * sizeof(PosColourVertex));
-			vmaUnmapMemory(m_vk->m_allocator, stagingBuffer.m_allocation);
+			vmaUnmapMemory(m_device->GetVMA(), stagingBuffer.m_allocation);
 		}
 
 		// copy from staging to vertex buffer using immediate cmd submit
-		VulkanHelpers::RunCommandsImmediate(m_vk->m_device, m_vk->m_graphicsQueue, m_vk->ThisFrameData().m_graphicsCommandPool, m_vk->m_immediateSubmitFence,
+		VulkanHelpers::RunCommandsImmediate(m_device->GetVkDevice(), m_device->GetGraphicsQueue(), m_vk->ThisFrameData().m_graphicsCommandPool, m_vk->m_immediateSubmitFence,
 			[&](VkCommandBuffer& buf) {
 				VkBufferCopy copyRegion{};
 				copyRegion.srcOffset = 0;
@@ -670,20 +618,9 @@ namespace R3
 		});
 
 		// done with the staging buffer
-		vmaDestroyBuffer(m_vk->m_allocator, stagingBuffer.m_buffer, stagingBuffer.m_allocation);
+		vmaDestroyBuffer(m_device->GetVMA(), stagingBuffer.m_buffer, stagingBuffer.m_allocation);
 
 		return m_vk->m_posColourVertexBuffer.m_buffer != VK_NULL_HANDLE;
-	}
-
-	bool RenderSystem::InitialiseVMA()
-	{
-		R3_PROF_EVENT();
-		//initialize the memory allocator
-		VmaAllocatorCreateInfo allocatorInfo = { 0 };
-		allocatorInfo.physicalDevice = m_vk->m_physicalDevice.m_device;
-		allocatorInfo.device = m_vk->m_device;
-		allocatorInfo.instance = m_vk->m_vkInstance;
-		return CheckResult(vmaCreateAllocator(&allocatorInfo, &m_vk->m_allocator));
 	}
 
 	void RenderSystem::DestroySwapchain()
@@ -691,25 +628,25 @@ namespace R3
 		R3_PROF_EVENT();
 		for (auto framebuffer : m_vk->m_swapChainFramebuffers) 
 		{
-			vkDestroyFramebuffer(m_vk->m_device, framebuffer, nullptr);
+			vkDestroyFramebuffer(m_device->GetVkDevice(), framebuffer, nullptr);
 		}
 
-		vkDestroyImageView(m_vk->m_device, m_vk->m_depthBufferView, nullptr);
-		vmaDestroyImage(m_vk->m_allocator, m_vk->m_depthBufferImage.m_image, m_vk->m_depthBufferImage.m_allocation);
+		vkDestroyImageView(m_device->GetVkDevice(), m_vk->m_depthBufferView, nullptr);
+		vmaDestroyImage(m_device->GetVMA(), m_vk->m_depthBufferImage.m_image, m_vk->m_depthBufferImage.m_allocation);
 
 		for (auto imageView : m_vk->m_swapChainImageViews) 
 		{
-			vkDestroyImageView(m_vk->m_device, imageView, nullptr);
+			vkDestroyImageView(m_device->GetVkDevice(), imageView, nullptr);
 		}
 		m_vk->m_swapChainImageViews.clear();
 		m_vk->m_swapChainImages.clear();	// destroyed as part of swap chain
-		vkDestroySwapchainKHR(m_vk->m_device, m_vk->m_swapChain, nullptr);
+		vkDestroySwapchainKHR(m_device->GetVkDevice(), m_vk->m_swapChain, nullptr);
 	}
 
 	bool RenderSystem::RecreateSwapchainAndFramebuffers()
 	{
 		R3_PROF_EVENT();
-		CheckResult(vkDeviceWaitIdle(m_vk->m_device));
+		CheckResult(vkDeviceWaitIdle(m_device->GetVkDevice()));
 
 		DestroySwapchain();
 
@@ -728,140 +665,6 @@ namespace R3
 		return true;
 	}
 
-	std::vector<VkExtensionProperties> GetSupportedInstanceExtensions()
-	{
-		R3_PROF_EVENT();
-		std::vector<VkExtensionProperties> results;
-		uint32_t extCount = 0;
-		if (CheckResult(vkEnumerateInstanceExtensionProperties(nullptr, &extCount, nullptr)))	// get the extension count
-		{
-			results.resize(extCount);
-			CheckResult(vkEnumerateInstanceExtensionProperties(nullptr, &extCount, results.data()));
-		}
-		return results;
-	}
-
-	bool AreExtensionsSupported(const std::vector<VkExtensionProperties>& allExtensions, std::vector<const char*> wantedExtensions)
-	{
-		R3_PROF_EVENT();
-		for (const auto& r : wantedExtensions)
-		{
-			auto found = std::find_if(allExtensions.begin(), allExtensions.end(), [&r](const VkExtensionProperties& p) {
-				return strcmp(p.extensionName, r) == 0;
-				});
-			if (found == allExtensions.end())
-			{
-				return false;
-			}
-		}
-		return true;
-	}
-
-	std::vector<const char*> GetSDLRequiredInstanceExtensions(SDL_Window* w)
-	{
-		R3_PROF_EVENT();
-		std::vector<const char*> results;
-		uint32_t extensionCount = 0;
-		if (!SDL_Vulkan_GetInstanceExtensions(w, &extensionCount, nullptr))	// first call gets count
-		{
-			LogError("SDL_Vulkan_GetInstanceExtensions failed");
-			return results;
-		}
-		results.resize(extensionCount);
-		if (!SDL_Vulkan_GetInstanceExtensions(w, &extensionCount, results.data()))	// first call gets count
-		{
-			LogError("SDL_Vulkan_GetInstanceExtensions failed");
-			return results;
-		}
-		return results;
-	}
-
-	std::vector<VkLayerProperties> GetSupportedLayers()
-	{
-		R3_PROF_EVENT();
-		std::vector<VkLayerProperties> result;
-		uint32_t count = 0;
-		if (CheckResult(vkEnumerateInstanceLayerProperties(&count, nullptr)))
-		{
-			result.resize(count);
-			CheckResult(vkEnumerateInstanceLayerProperties(&count, result.data()));
-		}
-		return result;
-	}
-
-	bool AreLayersSupported(const std::vector<VkLayerProperties>& allLayers, std::vector<const char*> requestedLayers)
-	{
-		R3_PROF_EVENT();
-		for (const auto& r : requestedLayers)
-		{
-			auto found = std::find_if(allLayers.begin(), allLayers.end(), [&r](const VkLayerProperties& p) {
-				return strcmp(p.layerName, r) == 0;
-				});
-			if (found == allLayers.end())
-			{
-				return false;
-			}
-		}
-		return true;
-	}
-
-	std::vector<PhysicalDeviceDescriptor> GetAllPhysicalDevices(VkInstance& instance)
-	{
-		R3_PROF_EVENT();
-		std::vector<PhysicalDeviceDescriptor> results;
-		uint32_t count = 0;
-		std::vector<VkPhysicalDevice> allDevices;
-		if (CheckResult(vkEnumeratePhysicalDevices(instance, &count, nullptr)))
-		{
-			allDevices.resize(count);
-			CheckResult(vkEnumeratePhysicalDevices(instance, &count, allDevices.data()));
-		}
-		for (const auto it : allDevices)
-		{
-			PhysicalDeviceDescriptor newDesc;
-			newDesc.m_device = it;
-			vkGetPhysicalDeviceProperties(it, &newDesc.m_properties);
-			vkGetPhysicalDeviceFeatures(it, &newDesc.m_features);
-
-			uint32_t queueCount = 0;
-			vkGetPhysicalDeviceQueueFamilyProperties(it, &queueCount, nullptr);
-			newDesc.m_queues.resize(queueCount);
-			vkGetPhysicalDeviceQueueFamilyProperties(it, &queueCount, newDesc.m_queues.data());
-
-			uint32_t extensionCount = 0;
-			vkEnumerateDeviceExtensionProperties(it, nullptr, &extensionCount, nullptr);
-			newDesc.m_supportedExtensions.resize(extensionCount);
-			vkEnumerateDeviceExtensionProperties(it, nullptr, &extensionCount, newDesc.m_supportedExtensions.data());
-
-			results.push_back(newDesc);
-		}
-		return results;
-	}
-
-	// find indices for the queue families we care about
-	QueueFamilyIndices FindQueueFamilyIndices(const PhysicalDeviceDescriptor& pdd, VkSurfaceKHR surface = VK_NULL_HANDLE)
-	{
-		R3_PROF_EVENT();
-		QueueFamilyIndices qfi;
-		for (int q = 0; q < pdd.m_queues.size() && (qfi.m_graphicsIndex == -1 && qfi.m_presentIndex == -1); ++q)
-		{
-			if (pdd.m_queues[q].queueFlags & VK_QUEUE_GRAPHICS_BIT)	// graphics queue?
-			{
-				qfi.m_graphicsIndex = q;
-			}
-			if (surface)	// can it present to the surface?
-			{
-				VkBool32 isSupported = false;
-				VkResult r = vkGetPhysicalDeviceSurfaceSupportKHR(pdd.m_device, q, surface, &isSupported);
-				if (CheckResult(r) && isSupported)
-				{
-					qfi.m_presentIndex = q;
-				}
-			}
-		}
-		return qfi;
-	}
-
 	bool RenderSystem::CreateSyncObjects()
 	{
 		R3_PROF_EVENT();
@@ -874,17 +677,17 @@ namespace R3
 		for (int f = 0; f < c_maxFramesInFlight; ++f)
 		{
 			FrameData& fd = m_vk->m_perFrameData[f];
-			if (!CheckResult(vkCreateSemaphore(m_vk->m_device, &semaphoreInfo, nullptr, &fd.m_imageAvailableSemaphore)))
+			if (!CheckResult(vkCreateSemaphore(m_device->GetVkDevice(), &semaphoreInfo, nullptr, &fd.m_imageAvailableSemaphore)))
 			{
 				LogError("Failed to create semaphore");
 				return false;
 			}
-			if (!CheckResult(vkCreateSemaphore(m_vk->m_device, &semaphoreInfo, nullptr, &fd.m_renderFinishedSemaphore)))
+			if (!CheckResult(vkCreateSemaphore(m_device->GetVkDevice(), &semaphoreInfo, nullptr, &fd.m_renderFinishedSemaphore)))
 			{
 				LogError("Failed to create semaphore");
 				return false;
 			}
-			if (!CheckResult(vkCreateFence(m_vk->m_device, &fenceInfo, nullptr, &fd.m_inFlightFence)))
+			if (!CheckResult(vkCreateFence(m_device->GetVkDevice(), &fenceInfo, nullptr, &fd.m_inFlightFence)))
 			{
 				LogError("Failed to create fence");
 				return false;
@@ -893,7 +696,7 @@ namespace R3
 
 		VkFenceCreateInfo fenceInfoNotSignalled = fenceInfo;
 		fenceInfoNotSignalled.flags = 0;
-		if (!CheckResult(vkCreateFence(m_vk->m_device, &fenceInfoNotSignalled, nullptr, &m_vk->m_immediateSubmitFence)))
+		if (!CheckResult(vkCreateFence(m_device->GetVkDevice(), &fenceInfoNotSignalled, nullptr, &m_vk->m_immediateSubmitFence)))
 		{
 			LogError("Failed to create immediate submit fence");
 			return false;
@@ -1018,7 +821,7 @@ namespace R3
 			allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;		// primary = can be submitted to queue, can't be called from other buffers
 																	// secondary = can't be directly submitted, can be called from other primary buffers
 			allocInfo.commandBufferCount = 1;
-			if (!CheckResult(vkAllocateCommandBuffers(m_vk->m_device, &allocInfo, &m_vk->m_perFrameData[f].m_graphicsCmdBuffer)))
+			if (!CheckResult(vkAllocateCommandBuffers(m_device->GetVkDevice(), &allocInfo, &m_vk->m_perFrameData[f].m_graphicsCmdBuffer)))
 			{
 				LogError("failed to allocate command buffer!");
 				return false;
@@ -1032,7 +835,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		// find a graphics queue
-		QueueFamilyIndices queueFamilyIndices = FindQueueFamilyIndices(m_vk->m_physicalDevice, m_vk->m_mainSurface);
+		QueueFamilyIndices queueFamilyIndices = FindQueueFamilyIndices(m_device->GetPhysicalDevice(), m_device->GetMainSurface());
 		VkCommandPoolCreateInfo poolInfo = {};
 		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;	// - allow individual buffers to be re-recorded
@@ -1041,7 +844,7 @@ namespace R3
 
 		for (int frame = 0; frame < c_maxFramesInFlight; ++frame)
 		{
-			if (!CheckResult(vkCreateCommandPool(m_vk->m_device, &poolInfo, nullptr, &m_vk->m_perFrameData[frame].m_graphicsCommandPool)))
+			if (!CheckResult(vkCreateCommandPool(m_device->GetVkDevice(), &poolInfo, nullptr, &m_vk->m_perFrameData[frame].m_graphicsCommandPool)))
 			{
 				LogError("failed to create command pool!");
 				return false;
@@ -1072,7 +875,7 @@ namespace R3
 			framebufferInfo.height = m_vk->m_swapChainExtents.height;
 			framebufferInfo.layers = 1;	// no arrays pls
 
-			if (!CheckResult(vkCreateFramebuffer(m_vk->m_device, &framebufferInfo, nullptr, &m_vk->m_swapChainFramebuffers[i])))
+			if (!CheckResult(vkCreateFramebuffer(m_device->GetVkDevice(), &framebufferInfo, nullptr, &m_vk->m_swapChainFramebuffers[i])))
 			{
 				LogError("failed to create framebuffer!");
 				return false;
@@ -1153,7 +956,7 @@ namespace R3
 		rpci.pSubpasses = &subpassDesc;
 		rpci.dependencyCount = static_cast<uint32_t>(std::size(dependencies));
 		rpci.pDependencies = dependencies;
-		if (!CheckResult(vkCreateRenderPass(m_vk->m_device, &rpci, nullptr, &m_vk->m_mainRenderPass)))
+		if (!CheckResult(vkCreateRenderPass(m_device->GetVkDevice(), &rpci, nullptr, &m_vk->m_mainRenderPass)))
 		{
 			LogError("failed to create render pass!");
 			return false;
@@ -1170,11 +973,11 @@ namespace R3
 		// Note the shader modules can be destroyed once the pipeline is created
 		// compiled shader state is associated with the pipeline, not the module!
 		std::string basePath = "shaders_spirv\\vk_tutorials\\";
-		auto singleTriVertexShader = VulkanHelpers::LoadShaderModule(m_vk->m_device, basePath + "fixed_triangle.vert.spv");
-		auto singleTriFragmentShader = VulkanHelpers::LoadShaderModule(m_vk->m_device, basePath + "fixed_triangle.frag.spv");
-		auto triBufferVertShader = VulkanHelpers::LoadShaderModule(m_vk->m_device, basePath + "triangle_from_buffers.vert.spv");
-		auto triBufferFragShader = VulkanHelpers::LoadShaderModule(m_vk->m_device, basePath + "triangle_from_buffers.frag.spv");
-		auto triBufferPushConstantVertShader = VulkanHelpers::LoadShaderModule(m_vk->m_device, basePath + "triangle_from_buffers_with_push_constants.vert.spv");
+		auto singleTriVertexShader = VulkanHelpers::LoadShaderModule(m_device->GetVkDevice(), basePath + "fixed_triangle.vert.spv");
+		auto singleTriFragmentShader = VulkanHelpers::LoadShaderModule(m_device->GetVkDevice(), basePath + "fixed_triangle.frag.spv");
+		auto triBufferVertShader = VulkanHelpers::LoadShaderModule(m_device->GetVkDevice(), basePath + "triangle_from_buffers.vert.spv");
+		auto triBufferFragShader = VulkanHelpers::LoadShaderModule(m_device->GetVkDevice(), basePath + "triangle_from_buffers.frag.spv");
+		auto triBufferPushConstantVertShader = VulkanHelpers::LoadShaderModule(m_device->GetVkDevice(), basePath + "triangle_from_buffers_with_push_constants.vert.spv");
 		if (singleTriVertexShader == VK_NULL_HANDLE || singleTriFragmentShader == VK_NULL_HANDLE
 			|| triBufferVertShader == VK_NULL_HANDLE || triBufferFragShader == VK_NULL_HANDLE
 			|| triBufferPushConstantVertShader == VK_NULL_HANDLE)
@@ -1188,7 +991,7 @@ namespace R3
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipelineLayoutInfo.setLayoutCount = 0;
 		pipelineLayoutInfo.pushConstantRangeCount = 0;
-		if (!CheckResult(vkCreatePipelineLayout(m_vk->m_device, &pipelineLayoutInfo, nullptr, &m_vk->m_simplePipelineLayout)))
+		if (!CheckResult(vkCreatePipelineLayout(m_device->GetVkDevice(), &pipelineLayoutInfo, nullptr, &m_vk->m_simplePipelineLayout)))
 		{
 			LogError("Failed to create pipeline layout!");
 			return false;
@@ -1201,7 +1004,7 @@ namespace R3
 		constantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 		pipelineLayoutInfo.pushConstantRangeCount = 1;
 		pipelineLayoutInfo.pPushConstantRanges = &constantRange;
-		if (!CheckResult(vkCreatePipelineLayout(m_vk->m_device, &pipelineLayoutInfo, nullptr, &m_vk->m_simpleLayoutWithPushConstant)))
+		if (!CheckResult(vkCreatePipelineLayout(m_device->GetVkDevice(), &pipelineLayoutInfo, nullptr, &m_vk->m_simpleLayoutWithPushConstant)))
 		{
 			LogError("Failed to create pipeline layout!");
 			return false;
@@ -1262,7 +1065,7 @@ namespace R3
 		pb.m_colourBlendState = VulkanHelpers::CreatePipelineColourBlendState(allAttachments);	// Pipeline also has some global blending state (constants, logical ops enable)
 
 		// build the pipeline
-		m_vk->m_simpleTriPipeline = pb.Build(m_vk->m_device, m_vk->m_simplePipelineLayout, m_vk->m_mainRenderPass, 0);
+		m_vk->m_simpleTriPipeline = pb.Build(m_device->GetVkDevice(), m_vk->m_simplePipelineLayout, m_vk->m_mainRenderPass, 0);
 		if (m_vk->m_simpleTriPipeline == VK_NULL_HANDLE)
 		{
 			LogError("Failed to create pipeline!");
@@ -1270,8 +1073,8 @@ namespace R3
 		}
 
 		// dont need the shader modules any more!
-		vkDestroyShaderModule(m_vk->m_device, singleTriFragmentShader, nullptr);
-		vkDestroyShaderModule(m_vk->m_device, singleTriVertexShader, nullptr);
+		vkDestroyShaderModule(m_device->GetVkDevice(), singleTriFragmentShader, nullptr);
+		vkDestroyShaderModule(m_device->GetVkDevice(), singleTriVertexShader, nullptr);
 
 		// build a similar pipeline but with shaders that take vertex data from buffers
 		// also passes buffer descriptors!
@@ -1287,26 +1090,26 @@ namespace R3
 		pb.m_vertexInputState.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
 		pb.m_vertexInputState.pVertexAttributeDescriptions = attributeDescriptions.data();
 
-		m_vk->m_simpleTriFromBuffersPipeline = pb.Build(m_vk->m_device, m_vk->m_simplePipelineLayout, m_vk->m_mainRenderPass, 0);
+		m_vk->m_simpleTriFromBuffersPipeline = pb.Build(m_device->GetVkDevice(), m_vk->m_simplePipelineLayout, m_vk->m_mainRenderPass, 0);
 		if (m_vk->m_simpleTriFromBuffersPipeline == VK_NULL_HANDLE)
 		{
 			LogError("Failed to create fancier pipeline!");
 			return false;
 		}
-		vkDestroyShaderModule(m_vk->m_device, triBufferVertShader, nullptr);
+		vkDestroyShaderModule(m_device->GetVkDevice(), triBufferVertShader, nullptr);
 
 		// build pipeline for simple mesh with transform push constant (and push constant layout!!!)
 		pb.m_shaderStages.clear();
 		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_VERTEX_BIT, triBufferPushConstantVertShader));
 		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_FRAGMENT_BIT, triBufferFragShader));
-		m_vk->m_simpleTriFromBuffersPushConstantPipeline = pb.Build(m_vk->m_device, m_vk->m_simpleLayoutWithPushConstant, m_vk->m_mainRenderPass, 0);
+		m_vk->m_simpleTriFromBuffersPushConstantPipeline = pb.Build(m_device->GetVkDevice(), m_vk->m_simpleLayoutWithPushConstant, m_vk->m_mainRenderPass, 0);
 		if (m_vk->m_simpleTriFromBuffersPushConstantPipeline == VK_NULL_HANDLE)
 		{
 			LogError("Failed to create fancier pipeline!");
 			return false;
 		}
-		vkDestroyShaderModule(m_vk->m_device, triBufferPushConstantVertShader, nullptr);
-		vkDestroyShaderModule(m_vk->m_device, triBufferFragShader, nullptr);
+		vkDestroyShaderModule(m_device->GetVkDevice(), triBufferPushConstantVertShader, nullptr);
+		vkDestroyShaderModule(m_device->GetVkDevice(), triBufferFragShader, nullptr);
 
 		return true;
 	}
@@ -1399,7 +1202,7 @@ namespace R3
 		VmaAllocationCreateInfo allocInfo = { };
 		allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 		allocInfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		auto r = vmaCreateImage(m_vk->m_allocator, &info, &allocInfo, &m_vk->m_depthBufferImage.m_image, &m_vk->m_depthBufferImage.m_allocation, nullptr);
+		auto r = vmaCreateImage(m_device->GetVMA(), &info, &allocInfo, &m_vk->m_depthBufferImage.m_image, &m_vk->m_depthBufferImage.m_allocation, nullptr);
 		if (!CheckResult(r))
 		{
 			return false;
@@ -1417,7 +1220,7 @@ namespace R3
 		vci.subresourceRange.baseArrayLayer = 0;
 		vci.subresourceRange.layerCount = 1;
 		vci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;	// we want to access the depth data
-		r = vkCreateImageView(m_vk->m_device, &vci, nullptr, &m_vk->m_depthBufferView);
+		r = vkCreateImageView(m_device->GetVkDevice(), &vci, nullptr, &m_vk->m_depthBufferView);
 		if (!CheckResult(r))
 		{
 			return false;
@@ -1430,7 +1233,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		// find what swap chains are supported
-		SwapchainDescriptor swapChainSupport = GetSwapchainInfo(m_vk->m_physicalDevice.m_device, m_vk->m_mainSurface);
+		SwapchainDescriptor swapChainSupport = GetSwapchainInfo(m_device->GetPhysicalDevice().m_device, m_device->GetMainSurface());
 
 		// find a good combination of format/present mode
 		VkSurfaceFormatKHR bestFormat = GetSwapchainSurfaceFormat(swapChainSupport);
@@ -1442,7 +1245,7 @@ namespace R3
 		VkSwapchainCreateInfoKHR scInfo = { 0 };
 		scInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 		scInfo.flags = 0;
-		scInfo.surface = m_vk->m_mainSurface;
+		scInfo.surface = m_device->GetMainSurface();
 		scInfo.minImageCount = imageCount;
 		scInfo.imageFormat = bestFormat.format;
 		scInfo.imageColorSpace = bestFormat.colorSpace;
@@ -1454,7 +1257,7 @@ namespace R3
 		scInfo.presentMode = bestPresentMode;
 		scInfo.clipped = VK_TRUE;		// yes we want clipping
 
-		auto qfi = FindQueueFamilyIndices(m_vk->m_physicalDevice, m_vk->m_mainSurface);
+		auto qfi = FindQueueFamilyIndices(m_device->GetPhysicalDevice(), m_device->GetMainSurface());
 		if (qfi.m_graphicsIndex == qfi.m_presentIndex)	// do we have more than 1 queue?
 		{
 			// An image is owned by one queue family at a time and ownership must be explicitly transferred before using it in another queue family
@@ -1472,7 +1275,7 @@ namespace R3
 			scInfo.pQueueFamilyIndices = reinterpret_cast<const uint32_t*>(&qfi);	// gross
 		}
 
-		VkResult r = vkCreateSwapchainKHR(m_vk->m_device, &scInfo, nullptr, &m_vk->m_swapChain);
+		VkResult r = vkCreateSwapchainKHR(m_device->GetVkDevice(), &scInfo, nullptr, &m_vk->m_swapChain);
 		if (!CheckResult(r))
 		{
 			LogError("Failed to create swap chain");
@@ -1481,9 +1284,9 @@ namespace R3
 
 		// Get all the images created as part of the swapchain
 		uint32_t actualImageCount = 0;
-		CheckResult(vkGetSwapchainImagesKHR(m_vk->m_device, m_vk->m_swapChain, &actualImageCount, nullptr));
+		CheckResult(vkGetSwapchainImagesKHR(m_device->GetVkDevice(), m_vk->m_swapChain, &actualImageCount, nullptr));
 		m_vk->m_swapChainImages.resize(actualImageCount);
-		CheckResult(vkGetSwapchainImagesKHR(m_vk->m_device, m_vk->m_swapChain, &actualImageCount, m_vk->m_swapChainImages.data()));
+		CheckResult(vkGetSwapchainImagesKHR(m_device->GetVkDevice(), m_vk->m_swapChain, &actualImageCount, m_vk->m_swapChainImages.data()));
 		m_vk->m_swapChainExtents = extents;
 		m_vk->m_swapChainFormat = bestFormat;
 		m_vk->m_swapChainPresentMode = bestPresentMode;
@@ -1507,7 +1310,7 @@ namespace R3
 			createView.subresourceRange.levelCount = 1;		// mip count (we only have 1 for swap images)
 			createView.subresourceRange.baseArrayLayer = 0;	// no array textures here
 			createView.subresourceRange.layerCount = 1;		// array texture counts
-			VkResult r = vkCreateImageView(m_vk->m_device, &createView, nullptr, &m_vk->m_swapChainImageViews[i]);
+			VkResult r = vkCreateImageView(m_device->GetVkDevice(), &createView, nullptr, &m_vk->m_swapChainImageViews[i]);
 			if (!CheckResult(r))
 			{
 				LogError("Failed to create image view for swap image {}", i);
@@ -1528,168 +1331,5 @@ namespace R3
 		windowProps.m_flags = Window::CreateResizable;
 		m_mainWindow = std::make_unique<Window>(windowProps);
 		return m_mainWindow != nullptr;
-	}
-
-	bool RenderSystem::CreateSurface()
-	{
-		R3_PROF_EVENT();
-		return SDL_Vulkan_CreateSurface(m_mainWindow->GetHandle(), m_vk->m_vkInstance, &m_vk->m_mainSurface);
-	}
-
-	std::vector<const char*> GetRequiredDeviceExtensions()
-	{
-		return {
-			VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-		};
-	}
-
-	int FindGraphicsPhysicalDevice(std::vector<PhysicalDeviceDescriptor>& allDevices, VkSurfaceKHR surface)
-	{
-		R3_PROF_EVENT();
-		for (int i=0;i<allDevices.size();++i)
-		{
-			// is it discrete?
-			if (allDevices[i].m_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
-			{
-				// does it have a graphics queue and a queue that can present to the surface?
-				QueueFamilyIndices qfi = FindQueueFamilyIndices(allDevices[i], surface);
-				bool hasQueueFamilies = qfi.m_graphicsIndex != -1 && qfi.m_presentIndex != -1;
-				bool extensionsSupported = AreExtensionsSupported(allDevices[i].m_supportedExtensions, GetRequiredDeviceExtensions());
-				if (hasQueueFamilies && extensionsSupported)
-				{
-					// does it support a valid swap chain for the surface?
-					SwapchainDescriptor swapChainSupport = GetSwapchainInfo(allDevices[i].m_device, surface);
-					if (swapChainSupport.m_formats.size() > 0 && swapChainSupport.m_presentModes.size() > 0)
-					{
-						return i;
-					}
-				}
-			}
-		}
-		return -1;
-	}
-
-	bool RenderSystem::CreateLogicalDevice()
-	{
-		R3_PROF_EVENT();
-		std::vector<VkDeviceQueueCreateInfo> queues;	// which queues (and how many) do we want?
-		std::vector<float> priorities;
-
-		// create queues (we only need one per unique family index!)
-		QueueFamilyIndices qfi = FindQueueFamilyIndices(m_vk->m_physicalDevice, m_vk->m_mainSurface);
-		std::set<uint32_t> uniqueFamilies = { qfi.m_graphicsIndex, qfi.m_presentIndex };
-		float queuePriority = 1.0f;
-		for (auto it : uniqueFamilies)
-		{
-			assert(it != -1);
-			VkDeviceQueueCreateInfo queue = { 0 };
-			queue.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-			queue.queueFamilyIndex = it;
-			queue.queueCount = 1;
-			queue.pQueuePriorities = &queuePriority;
-			queues.push_back(queue);
-		}
-
-		// Which device features do we use
-		VkPhysicalDeviceFeatures requiredFeatures {};
-
-		// Create the device
-		VkDeviceCreateInfo deviceCreate = { 0 };
-		deviceCreate.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-		deviceCreate.queueCreateInfoCount = static_cast<uint32_t>(queues.size());
-		deviceCreate.pQueueCreateInfos = queues.data();
-
-		// pass the same validation layers
-		std::vector<const char*> requiredLayers;
-		if constexpr (c_validationLayersEnabled)
-		{
-			LogInfo("Enabling validation layer");
-			requiredLayers.push_back("VK_LAYER_KHRONOS_validation");
-		}
-		deviceCreate.enabledLayerCount = static_cast<uint32_t>(requiredLayers.size());
-		deviceCreate.ppEnabledLayerNames = requiredLayers.data();
-		std::vector<const char*> extensions = GetRequiredDeviceExtensions();
-		deviceCreate.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
-		deviceCreate.ppEnabledExtensionNames = extensions.data();
-		deviceCreate.pEnabledFeatures = &requiredFeatures;
-		VkResult r = vkCreateDevice(m_vk->m_physicalDevice.m_device, &deviceCreate, nullptr, &m_vk->m_device);
-
-		// Get ptrs to the queues now
-		if (CheckResult(r))
-		{
-			vkGetDeviceQueue(m_vk->m_device, qfi.m_graphicsIndex, 0, &m_vk->m_graphicsQueue);
-			vkGetDeviceQueue(m_vk->m_device, qfi.m_presentIndex, 0, &m_vk->m_presentQueue);
-		}
-		return CheckResult(r);
-	}
-
-	bool RenderSystem::CreatePhysicalDevice()
-	{
-		R3_PROF_EVENT();
-		std::vector<PhysicalDeviceDescriptor> allDevices = GetAllPhysicalDevices(m_vk->m_vkInstance);
-		LogInfo("All supported devices:");
-		for (const auto& it : allDevices)
-		{
-			LogInfo("\t{} ({} queues)", it.m_properties.deviceName, it.m_queues.size());
-		}
-		int bestMatchIndex = FindGraphicsPhysicalDevice(allDevices, m_vk->m_mainSurface);
-		if (bestMatchIndex >= 0)
-		{
-			m_vk->m_physicalDevice = allDevices[bestMatchIndex];
-			return true;
-		}
-
-		return false;
-	}
-
-	bool RenderSystem::CreateVkInstance()
-	{
-		R3_PROF_EVENT();
-		VkApplicationInfo appInfo = { 0 };
-		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-		appInfo.pNext = nullptr;
-		appInfo.pApplicationName = "R3";
-		appInfo.pEngineName = "R3";
-		appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-		appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-		appInfo.apiVersion = VK_API_VERSION_1_0;
-
-		// Setup extensions
-		std::vector<const char*> requiredExtensions = GetSDLRequiredInstanceExtensions(m_mainWindow->GetHandle());
-		std::vector<VkExtensionProperties> supportedExtensions = GetSupportedInstanceExtensions();
-		LogInfo("Supported Vulkan Extensions:");
-		for (auto it : supportedExtensions)
-		{
-			LogInfo("\t{} v{}", it.extensionName, it.specVersion);
-		}
-
-		// Setup layers
-		std::vector<VkLayerProperties> allLayers = GetSupportedLayers();
-		LogInfo("Supported Layers:");
-		for (auto it : allLayers)
-		{
-			LogInfo("\t{} v{} - {}", it.layerName, it.implementationVersion, it.description);
-		}
-		std::vector<const char*> requiredLayers;
-		if constexpr (c_validationLayersEnabled)
-		{
-			LogInfo("Enabling validation layer");
-			requiredLayers.push_back("VK_LAYER_KHRONOS_validation");
-		}
-		if (!AreLayersSupported(allLayers, requiredLayers))
-		{
-			LogError("Some required layers are not supported!");
-			return false;
-		}
-
-		VkInstanceCreateInfo createInfo = {0};
-		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-		createInfo.pApplicationInfo = &appInfo;
-		createInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
-		createInfo.ppEnabledExtensionNames = requiredExtensions.data();
-		createInfo.enabledLayerCount = static_cast<uint32_t>(requiredLayers.size());
-		createInfo.ppEnabledLayerNames = requiredLayers.data();
-		VkResult result = vkCreateInstance(&createInfo, nullptr, &m_vk->m_vkInstance);
-		return CheckResult(result);
 	}
 }

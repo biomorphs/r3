@@ -264,20 +264,6 @@ namespace R3
 		return nullptr;
 	}
 
-	void WorldEditorWindow::OnEntityRestored(const Entities::EntityHandle& oldHandle, const Entities::EntityHandle& newHandle)
-	{
-		// patch the selected entity list
-		for (auto& it : m_selectedEntities)
-		{
-			if (it == oldHandle)
-			{
-				it = newHandle;
-			}
-		}
-
-		// patch handles in the command list
-	}
-
 	void WorldEditorWindow::SelectEntities(const std::vector<Entities::EntityHandle>& h)
 	{
 		R3_PROF_EVENT();

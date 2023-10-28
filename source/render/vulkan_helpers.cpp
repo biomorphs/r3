@@ -1,10 +1,13 @@
 #include "vulkan_helpers.h"
+#include "window.h"
 #include "core/profiler.h"
 #include "core/file_io.h"
 #include "core/log.h"
+#include <SDL_vulkan.h>
 #include <vulkan/vk_enum_string_helper.h>
 #include <string>
 #include <cassert>
+#include <set>
 
 namespace R3
 {
@@ -204,6 +207,292 @@ namespace R3
 			blending.blendConstants[2] = 0.0f; // Optional (b component of blending constant)
 			blending.blendConstants[3] = 0.0f; // Optional (a component of blending constant)
 			return blending;
+		}
+
+		std::vector<const char*> GetSDLRequiredInstanceExtensions(SDL_Window* w)
+		{
+			R3_PROF_EVENT();
+			std::vector<const char*> results;
+			uint32_t extensionCount = 0;
+			if (!SDL_Vulkan_GetInstanceExtensions(w, &extensionCount, nullptr))	// first call gets count
+			{
+				LogError("SDL_Vulkan_GetInstanceExtensions failed");
+				return results;
+			}
+			results.resize(extensionCount);
+			if (!SDL_Vulkan_GetInstanceExtensions(w, &extensionCount, results.data()))	// first call gets count
+			{
+				LogError("SDL_Vulkan_GetInstanceExtensions failed");
+				return results;
+			}
+			return results;
+		}
+
+		std::vector<VkExtensionProperties> GetSupportedInstanceExtensions()
+		{
+			R3_PROF_EVENT();
+			std::vector<VkExtensionProperties> results;
+			uint32_t extCount = 0;
+			if (CheckResult(vkEnumerateInstanceExtensionProperties(nullptr, &extCount, nullptr)))	// get the extension count
+			{
+				results.resize(extCount);
+				CheckResult(vkEnumerateInstanceExtensionProperties(nullptr, &extCount, results.data()));
+			}
+			return results;
+		}
+
+		std::vector<VkLayerProperties> GetSupportedLayers()
+		{
+			R3_PROF_EVENT();
+			std::vector<VkLayerProperties> result;
+			uint32_t count = 0;
+			if (CheckResult(vkEnumerateInstanceLayerProperties(&count, nullptr)))
+			{
+				result.resize(count);
+				CheckResult(vkEnumerateInstanceLayerProperties(&count, result.data()));
+			}
+			return result;
+		}
+
+		bool AreLayersSupported(const std::vector<VkLayerProperties>& allLayers, std::vector<const char*> requestedLayers)
+		{
+			R3_PROF_EVENT();
+			for (const auto& r : requestedLayers)
+			{
+				auto found = std::find_if(allLayers.begin(), allLayers.end(), [&r](const VkLayerProperties& p) {
+					return strcmp(p.layerName, r) == 0;
+				});
+				if (found == allLayers.end())
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+
+		VkInstance CreateVkInstance(Window& w, CreateVkInstanceParams& params)
+		{
+			R3_PROF_EVENT();
+			VkApplicationInfo appInfo = { 0 };
+			appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+			appInfo.pNext = nullptr;
+			appInfo.pApplicationName = params.m_appName.c_str();
+			appInfo.pEngineName = params.m_engineName.c_str();
+			appInfo.applicationVersion = params.m_appVersion;
+			appInfo.engineVersion = params.m_engineVersion;
+			appInfo.apiVersion = params.m_vulkanApiVersion;
+
+			// Setup extensions
+			std::vector<const char*> requiredExtensions = GetSDLRequiredInstanceExtensions(w.GetHandle());
+			std::vector<VkExtensionProperties> supportedExtensions = GetSupportedInstanceExtensions();
+			LogInfo("Supported Vulkan Extensions:");
+			for (auto it : supportedExtensions)
+			{
+				LogInfo("\t{} v{}", it.extensionName, it.specVersion);
+			}
+
+			// Setup layers
+			std::vector<VkLayerProperties> allLayers = GetSupportedLayers();
+			LogInfo("Supported Layers:");
+			for (auto it : allLayers)
+			{
+				LogInfo("\t{} v{} - {}", it.layerName, it.implementationVersion, it.description);
+			}
+			std::vector<const char*> requiredLayers;
+			if (params.m_enableValidationLayers)
+			{
+				LogInfo("Enabling validation layer");
+				requiredLayers.push_back("VK_LAYER_KHRONOS_validation");
+			}
+			if (!AreLayersSupported(allLayers, requiredLayers))
+			{
+				LogError("Some required layers are not supported!");
+				return {};
+			}
+
+			VkInstanceCreateInfo createInfo = { 0 };
+			createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+			createInfo.pApplicationInfo = &appInfo;
+			createInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
+			createInfo.ppEnabledExtensionNames = requiredExtensions.data();
+			createInfo.enabledLayerCount = static_cast<uint32_t>(requiredLayers.size());
+			createInfo.ppEnabledLayerNames = requiredLayers.data();
+			VkInstance newInstance = VK_NULL_HANDLE;
+			VkResult result = vkCreateInstance(&createInfo, nullptr, &newInstance);
+			CheckResult(result);
+			return newInstance;
+		}
+		std::vector<PhysicalDeviceDescriptor> EnumeratePhysicalDevices(VkInstance& instance)
+		{
+			R3_PROF_EVENT();
+			std::vector<PhysicalDeviceDescriptor> results;
+			uint32_t count = 0;
+			std::vector<VkPhysicalDevice> allDevices;
+			if (CheckResult(vkEnumeratePhysicalDevices(instance, &count, nullptr)))
+			{
+				allDevices.resize(count);
+				CheckResult(vkEnumeratePhysicalDevices(instance, &count, allDevices.data()));
+			}
+			for (const auto it : allDevices)
+			{
+				PhysicalDeviceDescriptor newDesc;
+				newDesc.m_device = it;
+				vkGetPhysicalDeviceProperties(it, &newDesc.m_properties);
+				vkGetPhysicalDeviceFeatures(it, &newDesc.m_features);
+
+				uint32_t queueCount = 0;
+				vkGetPhysicalDeviceQueueFamilyProperties(it, &queueCount, nullptr);
+				newDesc.m_queues.resize(queueCount);
+				vkGetPhysicalDeviceQueueFamilyProperties(it, &queueCount, newDesc.m_queues.data());
+
+				uint32_t extensionCount = 0;
+				vkEnumerateDeviceExtensionProperties(it, nullptr, &extensionCount, nullptr);
+				newDesc.m_supportedExtensions.resize(extensionCount);
+				vkEnumerateDeviceExtensionProperties(it, nullptr, &extensionCount, newDesc.m_supportedExtensions.data());
+
+				results.push_back(newDesc);
+			}
+			return results;
+		}
+
+		std::vector<const char*> GetRequiredDeviceExtensions()
+		{
+			return {
+				VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+			};
+		}
+
+		bool AreExtensionsSupported(const std::vector<VkExtensionProperties>& allExtensions, std::vector<const char*> wantedExtensions)
+		{
+			R3_PROF_EVENT();
+			for (const auto& r : wantedExtensions)
+			{
+				auto found = std::find_if(allExtensions.begin(), allExtensions.end(), [&r](const VkExtensionProperties& p) {
+					return strcmp(p.extensionName, r) == 0;
+				});
+				if (found == allExtensions.end())
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+
+		int ChooseGraphicsPhysicalDevice(const std::vector<PhysicalDeviceDescriptor>& devices, VkSurfaceKHR surface)
+		{
+			R3_PROF_EVENT();
+			for (int i = 0; i < devices.size(); ++i)
+			{
+				// is it discrete?
+				if (devices[i].m_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+				{
+					// does it have a graphics queue and a queue that can present to the surface?
+					QueueFamilyIndices qfi = FindQueueFamilyIndices(devices[i], surface);
+					bool hasQueueFamilies = qfi.m_graphicsIndex != -1 && qfi.m_presentIndex != -1;
+					bool extensionsSupported = AreExtensionsSupported(devices[i].m_supportedExtensions, GetRequiredDeviceExtensions());
+					if (hasQueueFamilies && extensionsSupported)
+					{
+						// does it support a valid swap chain for the surface?
+						SwapchainDescriptor swapChainSupport = GetMatchingSwapchains(devices[i].m_device, surface);
+						if (swapChainSupport.m_formats.size() > 0 && swapChainSupport.m_presentModes.size() > 0)
+						{
+							return i;
+						}
+					}
+				}
+			}
+			return -1;
+		}
+
+		QueueFamilyIndices FindQueueFamilyIndices(const PhysicalDeviceDescriptor& pdd, VkSurfaceKHR surface)
+		{
+			R3_PROF_EVENT();
+			QueueFamilyIndices qfi;
+			for (int q = 0; q < pdd.m_queues.size() && (qfi.m_graphicsIndex == -1 && qfi.m_presentIndex == -1); ++q)
+			{
+				if (pdd.m_queues[q].queueFlags & VK_QUEUE_GRAPHICS_BIT)	// graphics queue?
+				{
+					qfi.m_graphicsIndex = q;
+				}
+				if (surface)	// can it present to the surface?
+				{
+					VkBool32 isSupported = false;
+					VkResult r = vkGetPhysicalDeviceSurfaceSupportKHR(pdd.m_device, q, surface, &isSupported);
+					if (CheckResult(r) && isSupported)
+					{
+						qfi.m_presentIndex = q;
+					}
+				}
+			}
+			return qfi;
+		}
+
+		VkDevice CreateLogicalDevice(const PhysicalDeviceDescriptor& pdd, VkSurfaceKHR surface, bool enableValidationLayers)
+		{
+			R3_PROF_EVENT();
+			std::vector<VkDeviceQueueCreateInfo> queues;	// which queues (and how many) do we want?
+			std::vector<float> priorities;
+
+			// create queues (we only need one per unique family index!)
+			QueueFamilyIndices qfi = FindQueueFamilyIndices(pdd, surface);
+			std::set<uint32_t> uniqueFamilies = { qfi.m_graphicsIndex, qfi.m_presentIndex };
+			float queuePriority = 1.0f;
+			for (auto it : uniqueFamilies)
+			{
+				assert(it != -1);
+				VkDeviceQueueCreateInfo queue = { 0 };
+				queue.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+				queue.queueFamilyIndex = it;
+				queue.queueCount = 1;
+				queue.pQueuePriorities = &queuePriority;
+				queues.push_back(queue);
+			}
+
+			// Which device features do we use
+			VkPhysicalDeviceFeatures requiredFeatures{};
+
+			// Create the device
+			VkDeviceCreateInfo deviceCreate = { 0 };
+			deviceCreate.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+			deviceCreate.queueCreateInfoCount = static_cast<uint32_t>(queues.size());
+			deviceCreate.pQueueCreateInfos = queues.data();
+
+			// pass the same validation layers
+			std::vector<const char*> requiredLayers;
+			if(enableValidationLayers)
+			{
+				LogInfo("Enabling validation layer");
+				requiredLayers.push_back("VK_LAYER_KHRONOS_validation");
+			}
+			deviceCreate.enabledLayerCount = static_cast<uint32_t>(requiredLayers.size());
+			deviceCreate.ppEnabledLayerNames = requiredLayers.data();
+			std::vector<const char*> extensions = GetRequiredDeviceExtensions();
+			deviceCreate.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+			deviceCreate.ppEnabledExtensionNames = extensions.data();
+			deviceCreate.pEnabledFeatures = &requiredFeatures;
+			VkDevice newDevice = nullptr;
+			VkResult r = vkCreateDevice(pdd.m_device, &deviceCreate, nullptr, &newDevice);
+			CheckResult(r);
+			return newDevice;
+		}
+
+		SwapchainDescriptor GetMatchingSwapchains(const VkPhysicalDevice& physDevice, VkSurfaceKHR surface)
+		{
+			R3_PROF_EVENT();
+			SwapchainDescriptor desc;
+			CheckResult(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physDevice, surface, &desc.m_caps));
+
+			uint32_t formats = 0;
+			CheckResult(vkGetPhysicalDeviceSurfaceFormatsKHR(physDevice, surface, &formats, nullptr));
+			desc.m_formats.resize(formats);
+			CheckResult(vkGetPhysicalDeviceSurfaceFormatsKHR(physDevice, surface, &formats, desc.m_formats.data()));
+
+			uint32_t presentModes = 0;
+			CheckResult(vkGetPhysicalDeviceSurfacePresentModesKHR(physDevice, surface, &presentModes, nullptr));
+			desc.m_presentModes.resize(presentModes);
+			CheckResult(vkGetPhysicalDeviceSurfacePresentModesKHR(physDevice, surface, &presentModes, desc.m_presentModes.data()));
+
+			return desc;
 		}
 	}
 }

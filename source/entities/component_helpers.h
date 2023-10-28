@@ -1,6 +1,6 @@
 #pragma once
 
-// Pretty much all components will be implementing serialisation and inspection, forward declare it all
+// Pretty much all components will be implementing serialisation and inspection
 #include "entities/world.h"
 #include "engine/serialiser.h"
 #include "engine/value_inspector.h"

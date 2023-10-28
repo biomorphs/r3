@@ -4,6 +4,7 @@
 
 namespace R3
 {
+	class Device;
 	class Window;
 	class RenderSystem : public System
 	{
@@ -24,12 +25,7 @@ namespace R3
 		bool ShowGui();
 		bool CreateMesh();
 		bool DrawFrame();
-		bool InitialiseVMA();
 		bool CreateWindow();
-		bool CreateVkInstance();
-		bool CreatePhysicalDevice();
-		bool CreateLogicalDevice();
-		bool CreateSurface();
 		bool CreateSwapchain();
 		bool CreateDepthBuffer();
 		bool CreateRenderPass();
@@ -42,9 +38,11 @@ namespace R3
 		void DestroySwapchain();
 		bool RecreateSwapchainAndFramebuffers();
 		void OnSystemEvent(void* ev);
+		bool CreateDevice();
 		bool m_isWindowMinimised = false;
 		bool m_recreateSwapchain = false;
 		std::unique_ptr<Window> m_mainWindow;
+		std::unique_ptr<Device> m_device;
 		struct VkStuff;
 		std::unique_ptr<VkStuff> m_vk;
 		glm::vec4 m_mainPassClearColour = { 0,0,0,1 };
