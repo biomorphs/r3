@@ -6,14 +6,6 @@
 
 namespace R3
 {
-	class JsonSerialiser;
-	class ValueInspector;
-	namespace Entities
-	{
-		class EntityHandle;
-		class World;
-	}
-
 	// Contains global environment state
 	class EnvironmentSettingsComponent
 	{

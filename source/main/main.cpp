@@ -24,8 +24,7 @@ int main(int argc, char** args)
 	if (runEditor)
 	{
 		auto registerEditor = []() {
-			auto& s = R3::Systems::GetInstance();
-			s.RegisterSystem<R3::EditorSystem>();
+			R3::Systems::GetInstance().RegisterSystem<R3::EditorSystem>();
 		};
 		auto setupFrameGraph = [](R3::FrameGraph& fg) {
 			auto guiUpdateRoot = fg.m_root.FindFirst("Sequence - ImGuiUpdate");

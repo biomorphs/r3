@@ -15,6 +15,7 @@ namespace Entities
 {
 	World::World()
 	{
+		m_allEntities.reserve(1024 * 1024);
 	}
 
 	World::~World()
