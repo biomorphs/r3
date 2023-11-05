@@ -209,6 +209,27 @@ namespace R3
 			return blending;
 		}
 
+		VkImageMemoryBarrier MakeImageBarrier(VkImage image, VkImageAspectFlags aspectFlags, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageLayout oldLayout, VkImageLayout newLayout)
+		{
+			VkImageMemoryBarrier barrier = { 0 };
+			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			barrier.srcAccessMask = srcAccessMask;
+			barrier.dstAccessMask = dstAccessMask;
+			barrier.oldLayout = oldLayout;
+			barrier.newLayout = newLayout;
+			barrier.image = image;
+
+			VkImageSubresourceRange range = { 0 };
+			range.aspectMask = aspectFlags;
+			range.layerCount = 1;
+			range.baseArrayLayer = 0;
+			range.levelCount = 1;
+			range.baseMipLevel = 0;
+			barrier.subresourceRange = range;
+			
+			return barrier;
+		}
+
 		std::vector<const char*> GetSDLRequiredInstanceExtensions(SDL_Window* w)
 		{
 			R3_PROF_EVENT();
@@ -427,11 +448,10 @@ namespace R3
 			return qfi;
 		}
 
-		VkDevice CreateLogicalDevice(const PhysicalDeviceDescriptor& pdd, VkSurfaceKHR surface, bool enableValidationLayers)
+		VkDevice CreateLogicalDevice(const PhysicalDeviceDescriptor& pdd, VkSurfaceKHR surface, bool enablyDynamicRendering, bool enableValidationLayers)
 		{
 			R3_PROF_EVENT();
 			std::vector<VkDeviceQueueCreateInfo> queues;	// which queues (and how many) do we want?
-			std::vector<float> priorities;
 
 			// create queues (we only need one per unique family index!)
 			QueueFamilyIndices qfi = FindQueueFamilyIndices(pdd, surface);
@@ -470,6 +490,16 @@ namespace R3
 			deviceCreate.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 			deviceCreate.ppEnabledExtensionNames = extensions.data();
 			deviceCreate.pEnabledFeatures = &requiredFeatures;
+
+			// Dynamic rendering is enabled via a feature flag
+			VkPhysicalDeviceDynamicRenderingFeatures pddr = { 0 };
+			if (enablyDynamicRendering)
+			{
+				pddr.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
+				pddr.dynamicRendering = true;
+				deviceCreate.pNext = &pddr;
+			}
+
 			VkDevice newDevice = nullptr;
 			VkResult r = vkCreateDevice(pdd.m_device, &deviceCreate, nullptr, &newDevice);
 			CheckResult(r);

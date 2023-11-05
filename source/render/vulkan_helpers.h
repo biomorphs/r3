@@ -31,14 +31,18 @@ namespace R3
 		VkPipelineColorBlendAttachmentState CreatePipelineColourBlendAttachment_NoBlending();
 		VkPipelineColorBlendStateCreateInfo CreatePipelineColourBlendState(const std::vector<VkPipelineColorBlendAttachmentState>& attachments);
 
+		// Synchronisation helpers
+		VkImageMemoryBarrier MakeImageBarrier(VkImage image, VkImageAspectFlags aspectFlags, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageLayout oldLayout, VkImageLayout newLayout);
+
 		// Initialisation helpers
 		struct CreateVkInstanceParams {
 			std::string m_appName = "R3";
 			std::string m_engineName = "R3";
 			uint32_t m_appVersion = VK_MAKE_VERSION(1, 0, 0);
 			uint32_t m_engineVersion = VK_MAKE_VERSION(1, 0, 0);
-			uint32_t m_vulkanApiVersion = VK_API_VERSION_1_0;
+			uint32_t m_vulkanApiVersion = VK_API_VERSION_1_3;
 			bool m_enableValidationLayers = true;
+			bool m_enableDynamicRendering = true;	// enables VK_dynamic_rendering 
 		};
 		VkInstance CreateVkInstance(Window& w, CreateVkInstanceParams& params);
 
@@ -60,7 +64,7 @@ namespace R3
 		};
 		QueueFamilyIndices FindQueueFamilyIndices(const PhysicalDeviceDescriptor& pdd, VkSurfaceKHR surface);
 
-		VkDevice CreateLogicalDevice(const PhysicalDeviceDescriptor& pdd, VkSurfaceKHR surface, bool enableValidationLayers);
+		VkDevice CreateLogicalDevice(const PhysicalDeviceDescriptor& pdd, VkSurfaceKHR surface, bool enablyDynamicRendering = true, bool enableValidationLayers = true);
 
 		// Swapchain stuff
 		struct SwapchainDescriptor

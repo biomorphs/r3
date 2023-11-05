@@ -26,11 +26,9 @@
 
 namespace R3
 {
-	static constexpr bool c_validationLayersEnabled = true;
 	static constexpr int c_maxFramesInFlight = 2;	// let the cpu get ahead of the gpu by this many frames
 	using VulkanHelpers::CheckResult;				// laziness
 	using VulkanHelpers::FindQueueFamilyIndices;
-	using VulkanHelpers::QueueFamilyIndices;
 
 	struct FrameData
 	{
@@ -73,7 +71,6 @@ namespace R3
 		VkPresentModeKHR m_swapChainPresentMode = {};
 		std::vector<VkImage> m_swapChainImages;
 		std::vector<VkImageView> m_swapChainImageViews;
-		std::vector<VkFramebuffer> m_swapChainFramebuffers; // references the swap chain image views
 		AllocatedImage m_depthBufferImage;	// note the tutorial may be wrong here, we might want one per swap chain image!
 		VkImageView m_depthBufferView;
 		VkFormat m_depthBufferFormat;
@@ -81,7 +78,6 @@ namespace R3
 		int m_currentFrame = 0;
 		VkFence m_immediateSubmitFence = VK_NULL_HANDLE;
 
-		VkRenderPass m_mainRenderPass = VK_NULL_HANDLE;
 		VkPipeline m_simpleTriPipeline = VK_NULL_HANDLE;
 		VkPipeline m_simpleTriFromBuffersPipeline = VK_NULL_HANDLE;
 		VkPipeline m_simpleTriFromBuffersPushConstantPipeline = VK_NULL_HANDLE;
@@ -360,7 +356,7 @@ namespace R3
 	bool RenderSystem::CreateDevice()
 	{
 		m_device = std::make_unique<Device>(m_mainWindow.get());
-		return m_device->Initialise();
+		return m_device->Initialise(true);
 	}
 
 	bool RenderSystem::Init()
@@ -390,21 +386,9 @@ namespace R3
 			return false;
 		}
 
-		if (!CreateRenderPass())
-		{
-			LogError("Failed to create render pass");
-			return false;
-		}
-
 		if (!CreateSimpleTriPipelines())
 		{
 			LogError("Failed to create pipelines");
-			return false;
-		}
-
-		if (!CreateFramebuffers())	// must happen after passes created!
-		{
-			LogError("Failed to create frame buffers");
 			return false;
 		}
 
@@ -482,9 +466,6 @@ namespace R3
 		vkDestroyPipeline(m_device->GetVkDevice(), m_vk->m_simpleTriFromBuffersPushConstantPipeline, nullptr);
 		vkDestroyPipeline(m_device->GetVkDevice(), m_vk->m_simpleTriPipeline, nullptr);
 
-		// render passes
-		vkDestroyRenderPass(m_device->GetVkDevice(), m_vk->m_mainRenderPass, nullptr);
-
 		// swap chain, images, framebuffers
 		DestroySwapchain();
 		
@@ -555,7 +536,9 @@ namespace R3
 		init_info.MinImageCount = static_cast<uint32_t>(m_vk->m_swapChainImages.size());	// ??
 		init_info.ImageCount = static_cast<uint32_t>(m_vk->m_swapChainImages.size());		// ????!
 		init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-		if (!ImGui_ImplVulkan_Init(&init_info, m_vk->m_mainRenderPass))	// note it is tied to a render pass!
+		init_info.UseDynamicRendering = true;
+		init_info.ColorAttachmentFormat = m_vk->m_swapChainFormat.format;
+		if (!ImGui_ImplVulkan_Init(&init_info, nullptr))	
 		{
 			LogError("Failed to init imgui for Vulkan");
 			return false;
@@ -626,10 +609,6 @@ namespace R3
 	void RenderSystem::DestroySwapchain()
 	{
 		R3_PROF_EVENT();
-		for (auto framebuffer : m_vk->m_swapChainFramebuffers) 
-		{
-			vkDestroyFramebuffer(m_device->GetVkDevice(), framebuffer, nullptr);
-		}
 
 		vkDestroyImageView(m_device->GetVkDevice(), m_vk->m_depthBufferView, nullptr);
 		vmaDestroyImage(m_device->GetVMA(), m_vk->m_depthBufferImage.m_image, m_vk->m_depthBufferImage.m_allocation);
@@ -653,12 +632,6 @@ namespace R3
 		if (!CreateSwapchain())
 		{
 			LogError("Failed to create swapchain");
-			return false;
-		}
-
-		if (!CreateFramebuffers())
-		{
-			LogError("Failed to create frame buffers");
 			return false;
 		}
 
@@ -705,6 +678,34 @@ namespace R3
 		return true;
 	}
 
+	void RenderSystem::DrawImgui(int swapImageIndex)
+	{
+		R3_PROF_EVENT();
+
+		auto& cmdBuffer = m_vk->ThisFrameData().m_graphicsCmdBuffer;
+
+		// Dynamic rendering to colour attachment only
+		VkRenderingAttachmentInfo colourAttachment = { 0 };
+		colourAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+		colourAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+		colourAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colourAttachment.imageView = m_vk->m_swapChainImageViews[swapImageIndex];
+		colourAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		VkRenderingInfo ri = { 0 };
+		ri.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+		ri.colorAttachmentCount = 1;
+		ri.pColorAttachments = &colourAttachment;
+		ri.layerCount = 1;
+		ri.renderArea.offset = { 0,0 };
+		ri.renderArea.extent = m_vk->m_swapChainExtents;
+		vkCmdBeginRendering(cmdBuffer, &ri);
+
+		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuffer);
+
+		vkCmdEndRendering(cmdBuffer);
+	}
+
 	bool RenderSystem::RecordCommandBuffer(int swapImageIndex)
 	{
 		R3_PROF_EVENT();
@@ -732,21 +733,54 @@ namespace R3
 			return false;
 		}
 
-		// start the render pass 
-		VkRenderPassBeginInfo renderPassInfo = { 0 };
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = m_vk->m_mainRenderPass;
-		renderPassInfo.framebuffer = m_vk->m_swapChainFramebuffers[swapImageIndex];
-		renderPassInfo.renderArea.offset = { 0, 0 };			// offset/extents to draw to
-		renderPassInfo.renderArea.extent = m_vk->m_swapChainExtents;
-		// attachment clear op values -  clear colour/depth values go here
-		VkClearValue clearColour = { {{m_mainPassClearColour.x, m_mainPassClearColour.y, m_mainPassClearColour.z, m_mainPassClearColour.w }} };
-		VkClearValue depthClearValue = { { 1.0f, 0} };	// clear depth to 1.0 (max depth)
-		VkClearValue clearValues[] = { clearColour, depthClearValue };
-		renderPassInfo.clearValueCount = static_cast<uint32_t>(std::size(clearValues));
-		renderPassInfo.pClearValues = clearValues;
-		// VK_SUBPASS_CONTENTS_INLINE - commands are all stored in primary buffer
-		vkCmdBeginRenderPass(cmdBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+		// Transition swap chain image and depth image to format optimal for drawing 
+		{
+			auto colourBarrier = VulkanHelpers::MakeImageBarrier(m_vk->m_swapChainImages[swapImageIndex],
+				VK_IMAGE_ASPECT_COLOR_BIT,
+				VK_ACCESS_NONE,	
+				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,		// dst mask = colour write
+				VK_IMAGE_LAYOUT_UNDEFINED,					// we dont care what format it starts in
+				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);	// to format optimal for drawing
+			auto depthBarrier = VulkanHelpers::MakeImageBarrier(m_vk->m_depthBufferImage.m_image,
+				VK_IMAGE_ASPECT_DEPTH_BIT,
+				VK_ACCESS_NONE,
+				VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,		// dst mask = depth write
+				VK_IMAGE_LAYOUT_UNDEFINED,							// we dont care what format it starts in
+				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);	// to format optimal for drawing
+			VkImageMemoryBarrier barriers[] = { colourBarrier, depthBarrier };
+
+			// dst stages = before colour write or depth read
+			auto dstStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, dstStages, 0, 0, nullptr, 0, nullptr, 2, barriers);
+		}
+
+		// Dynamic rendering to colour + depth
+		// also clears these buffers!
+		VkRenderingAttachmentInfo colourAttachment = { 0 };
+		colourAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+		colourAttachment.clearValue = { {{m_mainPassClearColour.x, m_mainPassClearColour.y, m_mainPassClearColour.z, m_mainPassClearColour.w }} };
+		colourAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		colourAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colourAttachment.imageView = m_vk->m_swapChainImageViews[swapImageIndex];
+		colourAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;	// this is the layout used during rendering, we need to ensure the transition happens first
+
+		VkRenderingAttachmentInfo depthAttachment = { 0 };
+		depthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+		depthAttachment.clearValue = { { 1.0f, 0} };
+		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		depthAttachment.imageView = m_vk->m_depthBufferView;
+		depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		VkRenderingInfo ri = { 0 };
+		ri.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+		ri.colorAttachmentCount = 1;
+		ri.pColorAttachments = &colourAttachment;
+		ri.pDepthAttachment = &depthAttachment;
+		ri.layerCount = 1;
+		ri.renderArea.offset = { 0,0 };
+		ri.renderArea.extent = m_vk->m_swapChainExtents;
+		vkCmdBeginRendering(cmdBuffer, &ri);
 
 		// bind the pipeline
 		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_vk->m_simpleTriPipeline);
@@ -793,11 +827,19 @@ namespace R3
 		// draw one triangle made of 3 verts
 		vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
 
-		// draw imgui
-		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuffer);
+		vkCmdEndRendering(cmdBuffer);
 
-		// end render pass
-		vkCmdEndRenderPass(cmdBuffer);
+		// ImGui uses separate pass
+		DrawImgui(swapImageIndex);
+
+		// Transition swap chain image to format optimal for present
+		auto colourBarrier = VulkanHelpers::MakeImageBarrier(m_vk->m_swapChainImages[swapImageIndex], 
+			VK_IMAGE_ASPECT_COLOR_BIT, 
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,		// src mask = wait before writing attachment
+			VK_ACCESS_NONE,								// dst mask = we dont care?
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,	// from format optimal for drawing
+			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);			// to format optimal for present
+		vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &colourBarrier);
 
 		if (!CheckResult(vkEndCommandBuffer(cmdBuffer)))
 		{
@@ -835,7 +877,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		// find a graphics queue
-		QueueFamilyIndices queueFamilyIndices = FindQueueFamilyIndices(m_device->GetPhysicalDevice(), m_device->GetMainSurface());
+		auto queueFamilyIndices = FindQueueFamilyIndices(m_device->GetPhysicalDevice(), m_device->GetMainSurface());
 		VkCommandPoolCreateInfo poolInfo = {};
 		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;	// - allow individual buffers to be re-recorded
@@ -849,117 +891,6 @@ namespace R3
 				LogError("failed to create command pool!");
 				return false;
 			}
-		}
-
-		return true;
-	}
-
-	bool RenderSystem::CreateFramebuffers()
-	{
-		R3_PROF_EVENT();
-		// create a frame buffer for each swap chain image
-		m_vk->m_swapChainFramebuffers.resize(m_vk->m_swapChainImageViews.size());
-		for (int i = 0; i < m_vk->m_swapChainImageViews.size(); ++i)
-		{
-			VkImageView attachments[] =
-			{
-				m_vk->m_swapChainImageViews[i], m_vk->m_depthBufferView
-			};
-
-			VkFramebufferCreateInfo framebufferInfo{};
-			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-			framebufferInfo.renderPass = m_vk->m_mainRenderPass;	// frame buffer must be compatible with a pass
-			framebufferInfo.attachmentCount = static_cast<uint32_t>(std::size(attachments));
-			framebufferInfo.pAttachments = attachments;
-			framebufferInfo.width = m_vk->m_swapChainExtents.width;
-			framebufferInfo.height = m_vk->m_swapChainExtents.height;
-			framebufferInfo.layers = 1;	// no arrays pls
-
-			if (!CheckResult(vkCreateFramebuffer(m_device->GetVkDevice(), &framebufferInfo, nullptr, &m_vk->m_swapChainFramebuffers[i])))
-			{
-				LogError("failed to create framebuffer!");
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	bool RenderSystem::CreateRenderPass()
-	{
-		R3_PROF_EVENT();
-
-		// Describe all image attachments for the render pass
-		VkAttachmentDescription colourDesc = {};	// colour attachment from swap chain
-		colourDesc.format = m_vk->m_swapChainFormat.format;
-		colourDesc.samples = VK_SAMPLE_COUNT_1_BIT;			// no msaa
-		colourDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;	// clear the contents of the image before this pass
-		colourDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;	// store the contents after the subpasses coimplete
-		colourDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;		// we dont use stencil
-		colourDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;	// ^^
-		colourDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;			// we dont care about initial layout
-		colourDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;		// layout required for swap chain images
-
-		VkAttachmentDescription depthDesc = {};	// // Depth attachment
-		depthDesc.flags = 0;
-		depthDesc.format = m_vk->m_depthBufferFormat;
-		depthDesc.samples = VK_SAMPLE_COUNT_1_BIT;
-		depthDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;	// clear the contents before this pass
-		depthDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;	// store the contents after the sub-passes complete
-		depthDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;	// clear stencil too
-		depthDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;	// we dont care, we dont write it
-		depthDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;			// dont care about initial layout
-		depthDesc.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;	// final layout optimal for depth/stencil read/write
-
-		// Each sub-pass can reference the attachments above with different layouts
-		VkAttachmentReference colorAttachmentRef = {};
-		colorAttachmentRef.attachment = 0;	// colour attachment
-		colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;	// we want the image to be optimal for rendering
-																				// note vulkan will handle this transition for you between sub-passes
-		VkAttachmentReference depthAttachRef = {};
-		depthAttachRef.attachment = 1;
-		depthAttachRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;	// optimal for depth/stencil read/write
-
-		// Setup our single subpass
-		VkSubpassDescription subpassDesc = {};
-		subpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;	// this is a graphics subpass
-		subpassDesc.colorAttachmentCount = 1;	// note the index of the attachments in this array match the layout(location = x) out vec4 gl_colour in the shader!
-		subpassDesc.pColorAttachments = &colorAttachmentRef;
-		subpassDesc.pDepthStencilAttachment = &depthAttachRef;
-
-		// Subpass dependencies
-		VkSubpassDependency colourDependency = {};
-		colourDependency.srcSubpass = VK_SUBPASS_EXTERNAL;	// moving from VK_SUBPASS_EXTERNAL = implicit subpass before this one
-		colourDependency.dstSubpass = 0;						// ... to our only subpass
-		colourDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;	// wait for the swap chain to finish with the image
-		colourDependency.srcAccessMask = 0;
-		colourDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;	// dont transition until after we write colours
-		colourDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;			// when we finish it will be writable???
-
-		VkSubpassDependency depthDependency = {};
-		depthDependency.srcSubpass = VK_SUBPASS_EXTERNAL;	// from 'external' pass 
-		depthDependency.dstSubpass = 0;						// ... to our only subpass
-		// wait until all depth testing happens
-		depthDependency.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-		depthDependency.srcAccessMask = 0;
-		depthDependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-		depthDependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;	// when we finish depth is writable
-
-		// create the full pass!
-		VkAttachmentDescription attachments[] = { colourDesc,depthDesc };
-		VkSubpassDependency dependencies[] = { colourDependency, depthDependency };
-		VkRenderPassCreateInfo rpci = {};
-		rpci.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		rpci.attachmentCount = static_cast<uint32_t>(std::size(attachments));
-		rpci.pAttachments = attachments;
-		rpci.subpassCount = 1;
-		rpci.pSubpasses = &subpassDesc;
-		rpci.dependencyCount = static_cast<uint32_t>(std::size(dependencies));
-		rpci.pDependencies = dependencies;
-		if (!CheckResult(vkCreateRenderPass(m_device->GetVkDevice(), &rpci, nullptr, &m_vk->m_mainRenderPass)))
-		{
-			LogError("failed to create render pass!");
-			return false;
 		}
 
 		return true;
@@ -1065,7 +996,7 @@ namespace R3
 		pb.m_colourBlendState = VulkanHelpers::CreatePipelineColourBlendState(allAttachments);	// Pipeline also has some global blending state (constants, logical ops enable)
 
 		// build the pipeline
-		m_vk->m_simpleTriPipeline = pb.Build(m_device->GetVkDevice(), m_vk->m_simplePipelineLayout, m_vk->m_mainRenderPass, 0);
+		m_vk->m_simpleTriPipeline = pb.Build(m_device->GetVkDevice(), m_vk->m_simplePipelineLayout, 1, &m_vk->m_swapChainFormat.format, m_vk->m_depthBufferFormat);
 		if (m_vk->m_simpleTriPipeline == VK_NULL_HANDLE)
 		{
 			LogError("Failed to create pipeline!");
@@ -1090,7 +1021,7 @@ namespace R3
 		pb.m_vertexInputState.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
 		pb.m_vertexInputState.pVertexAttributeDescriptions = attributeDescriptions.data();
 
-		m_vk->m_simpleTriFromBuffersPipeline = pb.Build(m_device->GetVkDevice(), m_vk->m_simplePipelineLayout, m_vk->m_mainRenderPass, 0);
+		m_vk->m_simpleTriFromBuffersPipeline = pb.Build(m_device->GetVkDevice(), m_vk->m_simplePipelineLayout, 1, &m_vk->m_swapChainFormat.format, m_vk->m_depthBufferFormat);
 		if (m_vk->m_simpleTriFromBuffersPipeline == VK_NULL_HANDLE)
 		{
 			LogError("Failed to create fancier pipeline!");
@@ -1102,7 +1033,7 @@ namespace R3
 		pb.m_shaderStages.clear();
 		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_VERTEX_BIT, triBufferPushConstantVertShader));
 		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_FRAGMENT_BIT, triBufferFragShader));
-		m_vk->m_simpleTriFromBuffersPushConstantPipeline = pb.Build(m_device->GetVkDevice(), m_vk->m_simpleLayoutWithPushConstant, m_vk->m_mainRenderPass, 0);
+		m_vk->m_simpleTriFromBuffersPushConstantPipeline = pb.Build(m_device->GetVkDevice(), m_vk->m_simpleLayoutWithPushConstant, 1, &m_vk->m_swapChainFormat.format, m_vk->m_depthBufferFormat);
 		if (m_vk->m_simpleTriFromBuffersPushConstantPipeline == VK_NULL_HANDLE)
 		{
 			LogError("Failed to create fancier pipeline!");

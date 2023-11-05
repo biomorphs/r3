@@ -2,7 +2,6 @@
 
 #include "entities/component_helpers.h"
 #include "core/glm_headers.h"
-#include <string_view>
 
 namespace R3
 {

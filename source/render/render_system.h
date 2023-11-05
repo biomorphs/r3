@@ -21,6 +21,7 @@ namespace R3
 		bool InitImGui();
 		void ImGuiNewFrame();
 	private:
+		void DrawImgui(int swapImageIndex);
 		void ProcessEnvironmentSettings();
 		bool ShowGui();
 		bool CreateMesh();
@@ -28,8 +29,6 @@ namespace R3
 		bool CreateWindow();
 		bool CreateSwapchain();
 		bool CreateDepthBuffer();
-		bool CreateRenderPass();
-		bool CreateFramebuffers();
 		bool CreateSimpleTriPipelines();
 		bool CreateCommandPools();
 		bool CreateCommandBuffers();

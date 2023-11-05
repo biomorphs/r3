@@ -20,7 +20,7 @@ namespace R3
 		Device(Device&&) = delete;
 		Device(Window* w);
 		~Device();
-		bool Initialise();
+		bool Initialise(bool enableDynamicRendering = true);
 
 		VkInstance& GetVkInstance() { return m_vkInstance; }
 		VulkanHelpers::PhysicalDeviceDescriptor& GetPhysicalDevice() { return m_physicalDevice; }

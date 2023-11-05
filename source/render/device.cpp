@@ -20,8 +20,9 @@ namespace R3
 		Destroy();
 	}
 
-	bool Device::Initialise()
+	bool Device::Initialise(bool enableDynamicRendering)
 	{
+		m_createInstanceParams.m_enableDynamicRendering = enableDynamicRendering;
 		m_vkInstance = VulkanHelpers::CreateVkInstance(*m_window, m_createInstanceParams);
 		if (m_vkInstance == VK_NULL_HANDLE)
 		{
@@ -78,7 +79,8 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 
-		m_device = VulkanHelpers::CreateLogicalDevice(m_physicalDevice, m_mainSurface, m_createInstanceParams.m_enableValidationLayers);
+		// Create a device that supports dynamic rendering (no render passes!)
+		m_device = VulkanHelpers::CreateLogicalDevice(m_physicalDevice, m_mainSurface, m_createInstanceParams.m_enableDynamicRendering, m_createInstanceParams.m_enableValidationLayers);
 		if (m_device)
 		{
 			// get handles to the queues now

@@ -19,5 +19,6 @@ namespace R3
 		VkPipelineColorBlendStateCreateInfo m_colourBlendState = { 0 };
 		
 		VkPipeline Build(VkDevice device, VkPipelineLayout layout, VkRenderPass pass, int subPass = 0);
+		VkPipeline Build(VkDevice device, VkPipelineLayout layout, int colourAttachCount, VkFormat* colourAttachFormats, VkFormat depthAttachFormat);
 	};
 }
