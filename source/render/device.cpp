@@ -1,5 +1,6 @@
 #include "device.h"
-#include "render/window.h"
+#include "swap_chain.h"
+#include "window.h"
 #include "core/log.h"
 #include "core/profiler.h"
 #include <SDL_vulkan.h>
@@ -54,7 +55,18 @@ namespace R3
 			return false;
 		}
 
+		if (!CreateSwapchain())
+		{
+			LogError("Failed to create swap chain");
+			return false;
+		}
+
 		return true;
+	}
+
+	Swapchain& Device::GetSwapchain()
+	{
+		return *m_swapChain;
 	}
 
 	bool Device::CreatePhysicalDevice()
@@ -100,7 +112,8 @@ namespace R3
 
 	bool Device::CreateSwapchain()
 	{
-		return true;
+		m_swapChain = std::make_unique<Swapchain>();
+		return m_swapChain->Initialise(*this, *m_window);
 	}
 
 	bool Device::InitialiseVMA()
@@ -115,6 +128,9 @@ namespace R3
 
 	void Device::Destroy()
 	{
+		m_swapChain->Destroy(*this);
+		m_swapChain = nullptr;
+
 		vmaDestroyAllocator(m_vma);
 		m_vma = nullptr;
 

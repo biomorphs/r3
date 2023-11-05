@@ -10,6 +10,8 @@ set(RenderLib_SourceFiles
 	pipeline_builder.cpp
 	device.h
 	device.cpp
+	swap_chain.h
+	swap_chain.cpp
 )
 
 add_library(Render ${RenderLib_SourceFiles})

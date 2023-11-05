@@ -1,6 +1,7 @@
 #include "render_system.h"
 #include "window.h"
 #include "device.h"
+#include "swap_chain.h"
 #include "core/file_io.h"
 #include "core/profiler.h"
 #include "core/log.h"
@@ -39,13 +40,6 @@ namespace R3
 		VkFence m_inFlightFence = VK_NULL_HANDLE;				// signalled when previous cmd buffer finished executing (initialised as signalled)
 	};
 
-	struct SwapchainDescriptor
-	{
-		VkSurfaceCapabilitiesKHR m_caps = {};
-		std::vector<VkSurfaceFormatKHR> m_formats;
-		std::vector<VkPresentModeKHR> m_presentModes;
-	};
-
 	struct AllocatedBuffer
 	{
 		VmaAllocation m_allocation = {};
@@ -65,12 +59,6 @@ namespace R3
 
 	struct RenderSystem::VkStuff
 	{
-		VkSwapchainKHR m_swapChain = VK_NULL_HANDLE;
-		VkExtent2D m_swapChainExtents = {};
-		VkSurfaceFormatKHR m_swapChainFormat = {};
-		VkPresentModeKHR m_swapChainPresentMode = {};
-		std::vector<VkImage> m_swapChainImages;
-		std::vector<VkImageView> m_swapChainImageViews;
 		AllocatedImage m_depthBufferImage;	// note the tutorial may be wrong here, we might want one per swap chain image!
 		VkImageView m_depthBufferView;
 		VkFormat m_depthBufferFormat;
@@ -164,7 +152,8 @@ namespace R3
 
 	glm::vec2 RenderSystem::GetWindowExtents()
 	{
-		return { m_vk->m_swapChainExtents.width, m_vk->m_swapChainExtents.height };
+		auto e = m_device->GetSwapchain().GetExtents();
+		return { e.width, e.height };
 	}
 
 	void RenderSystem::RegisterTickFns()
@@ -198,9 +187,9 @@ namespace R3
 		R3_PROF_EVENT();
 		ImGui::Begin("Render System", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
 		{
-			auto str = std::format("Swap chain extents: {}x{}", m_vk->m_swapChainExtents.width, m_vk->m_swapChainExtents.height);
+			auto str = std::format("Swap chain extents: {}x{}", m_device->GetSwapchain().GetExtents().width, m_device->GetSwapchain().GetExtents().height);
 			ImGui::Text(str.c_str());
-			str = std::format("Swap chain images: {}", m_vk->m_swapChainImages.size());
+			str = std::format("Swap chain images: {}", m_device->GetSwapchain().GetImages().size());
 			ImGui::Text(str.c_str());
 			auto timeSys = GetSystem<TimeSystem>();
 			str = std::format("FPS/Frame Time: {:.1f} / {:.4f}ms", 1.0 / timeSys->GetVariableDeltaTime(), timeSys->GetVariableDeltaTime());
@@ -225,7 +214,7 @@ namespace R3
 		}
 		if (m_recreateSwapchain)
 		{
-			if (!RecreateSwapchainAndFramebuffers())
+			if (!RecreateSwapchain())
 			{
 				LogError("Failed to recreate swap chain");
 				return false;
@@ -246,7 +235,7 @@ namespace R3
 			// acquire the next swap chain image (blocks with infinite timeout)
 			// m_imageAvailableSemaphore will be signalled when we are able to draw to the image
 			// note that fences can also be passed here
-			auto r = vkAcquireNextImageKHR(m_device->GetVkDevice(), m_vk->m_swapChain, UINT64_MAX, fd.m_imageAvailableSemaphore, VK_NULL_HANDLE, &swapImageIndex);
+			auto r = vkAcquireNextImageKHR(m_device->GetVkDevice(), m_device->GetSwapchain().GetSwapchain(), UINT64_MAX, fd.m_imageAvailableSemaphore, VK_NULL_HANDLE, &swapImageIndex);
 			if (r == VK_ERROR_OUT_OF_DATE_KHR)
 			{
 				m_recreateSwapchain = true;
@@ -304,7 +293,7 @@ namespace R3
 		VkPresentInfoKHR presentInfo = {};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		presentInfo.pNext = nullptr;
-		presentInfo.pSwapchains = &m_vk->m_swapChain;
+		presentInfo.pSwapchains = &m_device->GetSwapchain().GetSwapchain();
 		presentInfo.swapchainCount = 1;
 		presentInfo.pWaitSemaphores = &fd.m_renderFinishedSemaphore;		// wait on this semaphore before presenting
 		presentInfo.waitSemaphoreCount = 1;
@@ -337,7 +326,7 @@ namespace R3
 			const auto et = theEvent->window.event;
 			if (et == SDL_WINDOWEVENT_SIZE_CHANGED || et == SDL_WINDOWEVENT_RESIZED)
 			{
-				if (m_vk->m_swapChainExtents.width != theEvent->window.data1 || m_vk->m_swapChainExtents.height != theEvent->window.data2)
+				if (m_device->GetSwapchain().GetExtents().width != theEvent->window.data1 || m_device->GetSwapchain().GetExtents().height != theEvent->window.data2)
 				{
 					m_recreateSwapchain = true;
 				}
@@ -380,9 +369,9 @@ namespace R3
 			return false;
 		}
 
-		if (!CreateSwapchain())
+		if (!CreateDepthBuffer())
 		{
-			LogError("Failed to create swapchain");
+			LogError("Failed to create depth buffer");
 			return false;
 		}
 
@@ -465,10 +454,11 @@ namespace R3
 		vkDestroyPipeline(m_device->GetVkDevice(), m_vk->m_simpleTriFromBuffersPipeline, nullptr);
 		vkDestroyPipeline(m_device->GetVkDevice(), m_vk->m_simpleTriFromBuffersPushConstantPipeline, nullptr);
 		vkDestroyPipeline(m_device->GetVkDevice(), m_vk->m_simpleTriPipeline, nullptr);
-
-		// swap chain, images, framebuffers
-		DestroySwapchain();
 		
+		// clean up depth buffer
+		vkDestroyImageView(m_device->GetVkDevice(), m_vk->m_depthBufferView, nullptr);
+		vmaDestroyImage(m_device->GetVMA(), m_vk->m_depthBufferImage.m_image, m_vk->m_depthBufferImage.m_allocation);
+
 		m_device = nullptr;
 		m_mainWindow = nullptr;
 	}
@@ -533,11 +523,11 @@ namespace R3
 		init_info.Device = m_device->GetVkDevice();
 		init_info.Queue = m_device->GetGraphicsQueue();
 		init_info.DescriptorPool = m_vk->m_imgui.m_descriptorPool;
-		init_info.MinImageCount = static_cast<uint32_t>(m_vk->m_swapChainImages.size());	// ??
-		init_info.ImageCount = static_cast<uint32_t>(m_vk->m_swapChainImages.size());		// ????!
+		init_info.MinImageCount = static_cast<uint32_t>(m_device->GetSwapchain().GetImages().size());	// ??
+		init_info.ImageCount = static_cast<uint32_t>(m_device->GetSwapchain().GetImages().size());		// ????!
 		init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 		init_info.UseDynamicRendering = true;
-		init_info.ColorAttachmentFormat = m_vk->m_swapChainFormat.format;
+		init_info.ColorAttachmentFormat = m_device->GetSwapchain().GetFormat().format;
 		if (!ImGui_ImplVulkan_Init(&init_info, nullptr))	
 		{
 			LogError("Failed to init imgui for Vulkan");
@@ -606,36 +596,22 @@ namespace R3
 		return m_vk->m_posColourVertexBuffer.m_buffer != VK_NULL_HANDLE;
 	}
 
-	void RenderSystem::DestroySwapchain()
-	{
-		R3_PROF_EVENT();
-
-		vkDestroyImageView(m_device->GetVkDevice(), m_vk->m_depthBufferView, nullptr);
-		vmaDestroyImage(m_device->GetVMA(), m_vk->m_depthBufferImage.m_image, m_vk->m_depthBufferImage.m_allocation);
-
-		for (auto imageView : m_vk->m_swapChainImageViews) 
-		{
-			vkDestroyImageView(m_device->GetVkDevice(), imageView, nullptr);
-		}
-		m_vk->m_swapChainImageViews.clear();
-		m_vk->m_swapChainImages.clear();	// destroyed as part of swap chain
-		vkDestroySwapchainKHR(m_device->GetVkDevice(), m_vk->m_swapChain, nullptr);
-	}
-
-	bool RenderSystem::RecreateSwapchainAndFramebuffers()
+	bool RenderSystem::RecreateSwapchain()
 	{
 		R3_PROF_EVENT();
 		CheckResult(vkDeviceWaitIdle(m_device->GetVkDevice()));
 
-		DestroySwapchain();
+		vkDestroyImageView(m_device->GetVkDevice(), m_vk->m_depthBufferView, nullptr);
+		vmaDestroyImage(m_device->GetVMA(), m_vk->m_depthBufferImage.m_image, m_vk->m_depthBufferImage.m_allocation);
+		m_device->GetSwapchain().Destroy(*m_device);
 
-		if (!CreateSwapchain())
+		if (!m_device->GetSwapchain().Initialise(*m_device, *m_mainWindow))
 		{
 			LogError("Failed to create swapchain");
 			return false;
 		}
 
-		return true;
+		return CreateDepthBuffer();
 	}
 
 	bool RenderSystem::CreateSyncObjects()
@@ -689,7 +665,7 @@ namespace R3
 		colourAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
 		colourAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 		colourAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		colourAttachment.imageView = m_vk->m_swapChainImageViews[swapImageIndex];
+		colourAttachment.imageView = m_device->GetSwapchain().GetViews()[swapImageIndex];
 		colourAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		VkRenderingInfo ri = { 0 };
@@ -698,7 +674,7 @@ namespace R3
 		ri.pColorAttachments = &colourAttachment;
 		ri.layerCount = 1;
 		ri.renderArea.offset = { 0,0 };
-		ri.renderArea.extent = m_vk->m_swapChainExtents;
+		ri.renderArea.extent = m_device->GetSwapchain().GetExtents();
 		vkCmdBeginRendering(cmdBuffer, &ri);
 
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuffer);
@@ -716,13 +692,13 @@ namespace R3
 		VkViewport viewport = { 0 };
 		viewport.x = 0.0f;
 		viewport.y = 0.0f;
-		viewport.width = (float)m_vk->m_swapChainExtents.width;
-		viewport.height = (float)m_vk->m_swapChainExtents.height;
+		viewport.width = (float)m_device->GetSwapchain().GetExtents().width;
+		viewport.height = (float)m_device->GetSwapchain().GetExtents().height;
 		viewport.minDepth = 0.0f;	// normalised! must be between 0 and 1
 		viewport.maxDepth = 1.0f;	// ^^
 		VkRect2D scissor = { 0 };
 		scissor.offset = { 0, 0 };
-		scissor.extent = m_vk->m_swapChainExtents;	// draw the full image
+		scissor.extent = m_device->GetSwapchain().GetExtents();	// draw the full image
 
 		// start writing
 		VkCommandBufferBeginInfo beginInfo = { 0 };
@@ -735,7 +711,7 @@ namespace R3
 
 		// Transition swap chain image and depth image to format optimal for drawing 
 		{
-			auto colourBarrier = VulkanHelpers::MakeImageBarrier(m_vk->m_swapChainImages[swapImageIndex],
+			auto colourBarrier = VulkanHelpers::MakeImageBarrier(m_device->GetSwapchain().GetImages()[swapImageIndex],
 				VK_IMAGE_ASPECT_COLOR_BIT,
 				VK_ACCESS_NONE,	
 				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,		// dst mask = colour write
@@ -761,7 +737,7 @@ namespace R3
 		colourAttachment.clearValue = { {{m_mainPassClearColour.x, m_mainPassClearColour.y, m_mainPassClearColour.z, m_mainPassClearColour.w }} };
 		colourAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		colourAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		colourAttachment.imageView = m_vk->m_swapChainImageViews[swapImageIndex];
+		colourAttachment.imageView = m_device->GetSwapchain().GetViews()[swapImageIndex];
 		colourAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;	// this is the layout used during rendering, we need to ensure the transition happens first
 
 		VkRenderingAttachmentInfo depthAttachment = { 0 };
@@ -779,7 +755,7 @@ namespace R3
 		ri.pDepthAttachment = &depthAttachment;
 		ri.layerCount = 1;
 		ri.renderArea.offset = { 0,0 };
-		ri.renderArea.extent = m_vk->m_swapChainExtents;
+		ri.renderArea.extent = m_device->GetSwapchain().GetExtents();
 		vkCmdBeginRendering(cmdBuffer, &ri);
 
 		// bind the pipeline
@@ -833,7 +809,7 @@ namespace R3
 		DrawImgui(swapImageIndex);
 
 		// Transition swap chain image to format optimal for present
-		auto colourBarrier = VulkanHelpers::MakeImageBarrier(m_vk->m_swapChainImages[swapImageIndex], 
+		auto colourBarrier = VulkanHelpers::MakeImageBarrier(m_device->GetSwapchain().GetImages()[swapImageIndex],
 			VK_IMAGE_ASPECT_COLOR_BIT, 
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,		// src mask = wait before writing attachment
 			VK_ACCESS_NONE,								// dst mask = we dont care?
@@ -996,7 +972,7 @@ namespace R3
 		pb.m_colourBlendState = VulkanHelpers::CreatePipelineColourBlendState(allAttachments);	// Pipeline also has some global blending state (constants, logical ops enable)
 
 		// build the pipeline
-		m_vk->m_simpleTriPipeline = pb.Build(m_device->GetVkDevice(), m_vk->m_simplePipelineLayout, 1, &m_vk->m_swapChainFormat.format, m_vk->m_depthBufferFormat);
+		m_vk->m_simpleTriPipeline = pb.Build(m_device->GetVkDevice(), m_vk->m_simplePipelineLayout, 1, &m_device->GetSwapchain().GetFormat().format, m_vk->m_depthBufferFormat);
 		if (m_vk->m_simpleTriPipeline == VK_NULL_HANDLE)
 		{
 			LogError("Failed to create pipeline!");
@@ -1021,7 +997,7 @@ namespace R3
 		pb.m_vertexInputState.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
 		pb.m_vertexInputState.pVertexAttributeDescriptions = attributeDescriptions.data();
 
-		m_vk->m_simpleTriFromBuffersPipeline = pb.Build(m_device->GetVkDevice(), m_vk->m_simplePipelineLayout, 1, &m_vk->m_swapChainFormat.format, m_vk->m_depthBufferFormat);
+		m_vk->m_simpleTriFromBuffersPipeline = pb.Build(m_device->GetVkDevice(), m_vk->m_simplePipelineLayout, 1, &m_device->GetSwapchain().GetFormat().format, m_vk->m_depthBufferFormat);
 		if (m_vk->m_simpleTriFromBuffersPipeline == VK_NULL_HANDLE)
 		{
 			LogError("Failed to create fancier pipeline!");
@@ -1033,7 +1009,7 @@ namespace R3
 		pb.m_shaderStages.clear();
 		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_VERTEX_BIT, triBufferPushConstantVertShader));
 		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_FRAGMENT_BIT, triBufferFragShader));
-		m_vk->m_simpleTriFromBuffersPushConstantPipeline = pb.Build(m_device->GetVkDevice(), m_vk->m_simpleLayoutWithPushConstant, 1, &m_vk->m_swapChainFormat.format, m_vk->m_depthBufferFormat);
+		m_vk->m_simpleTriFromBuffersPushConstantPipeline = pb.Build(m_device->GetVkDevice(), m_vk->m_simpleLayoutWithPushConstant, 1, &m_device->GetSwapchain().GetFormat().format, m_vk->m_depthBufferFormat);
 		if (m_vk->m_simpleTriFromBuffersPushConstantPipeline == VK_NULL_HANDLE)
 		{
 			LogError("Failed to create fancier pipeline!");
@@ -1045,73 +1021,6 @@ namespace R3
 		return true;
 	}
 
-	SwapchainDescriptor GetSwapchainInfo(VkPhysicalDevice& physDevice, VkSurfaceKHR surface)
-	{
-		R3_PROF_EVENT();
-		SwapchainDescriptor desc;
-		CheckResult(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physDevice, surface, &desc.m_caps));
-		
-		uint32_t formats = 0;
-		CheckResult(vkGetPhysicalDeviceSurfaceFormatsKHR(physDevice, surface, &formats, nullptr));
-		desc.m_formats.resize(formats);
-		CheckResult(vkGetPhysicalDeviceSurfaceFormatsKHR(physDevice, surface, &formats, desc.m_formats.data()));
-
-		uint32_t presentModes = 0;
-		CheckResult(vkGetPhysicalDeviceSurfacePresentModesKHR(physDevice, surface, &presentModes, nullptr));
-		desc.m_presentModes.resize(presentModes);
-		CheckResult(vkGetPhysicalDeviceSurfacePresentModesKHR(physDevice, surface, &presentModes, desc.m_presentModes.data()));
-
-		return desc;
-	}
-
-	VkSurfaceFormatKHR GetSwapchainSurfaceFormat(const SwapchainDescriptor& sd)
-	{
-		R3_PROF_EVENT();
-		for (const auto& f : sd.m_formats)
-		{
-			// We would prefer bgra8_srg format
-			if (f.format == VK_FORMAT_B8G8R8A8_SRGB && f.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
-			{
-				return f;
-			}
-		}
-		if (sd.m_formats.size() > 0)	// but anything else will do
-		{
-			return sd.m_formats[0];
-		}
-		else
-		{
-			LogError("Failed to find a suitable surface format");
-			return {};
-		}
-	}
-
-	VkPresentModeKHR GetSwapchainSurfacePresentMode(const SwapchainDescriptor& sd)
-	{
-		R3_PROF_EVENT();
-		for (const auto& mode : sd.m_presentModes) 
-		{
-			// preferable, doesn't wait for vsync but avoids tearing by copying previous frame
-			if (mode == VK_PRESENT_MODE_MAILBOX_KHR)	
-			{
-				return mode;
-			}
-		}
-		// regular vsync
-		return VK_PRESENT_MODE_FIFO_KHR;
-	}
-
-	VkExtent2D GetSwapchainSurfaceExtents(Window& window, const SwapchainDescriptor& sd)
-	{
-		R3_PROF_EVENT();
-		VkExtent2D extents;
-		int w = 0, h = 0;
-		SDL_Vulkan_GetDrawableSize(window.GetHandle(), &w, &h);
-		extents.width = glm::clamp((uint32_t)w, sd.m_caps.minImageExtent.width, sd.m_caps.maxImageExtent.width);
-		extents.height = glm::clamp((uint32_t)h, sd.m_caps.minImageExtent.height, sd.m_caps.maxImageExtent.height);
-		return extents;
-	}
-
 	bool RenderSystem::CreateDepthBuffer()
 	{
 		// Create the image first
@@ -1121,7 +1030,7 @@ namespace R3
 		info.imageType = VK_IMAGE_TYPE_2D;
 		info.format = VK_FORMAT_D32_SFLOAT;
 		info.extent = {
-			m_vk->m_swapChainExtents.width, m_vk->m_swapChainExtents.height, 1 
+			m_device->GetSwapchain().GetExtents().width, m_device->GetSwapchain().GetExtents().height, 1
 		};	// same size as swap chain images
 		info.mipLevels = 1;
 		info.arrayLayers = 1;
@@ -1158,98 +1067,6 @@ namespace R3
 		}
 
 		return true;
-	}
-
-	bool RenderSystem::CreateSwapchain()
-	{
-		R3_PROF_EVENT();
-		// find what swap chains are supported
-		SwapchainDescriptor swapChainSupport = GetSwapchainInfo(m_device->GetPhysicalDevice().m_device, m_device->GetMainSurface());
-
-		// find a good combination of format/present mode
-		VkSurfaceFormatKHR bestFormat = GetSwapchainSurfaceFormat(swapChainSupport);
-		VkPresentModeKHR bestPresentMode = GetSwapchainSurfacePresentMode(swapChainSupport);
-		VkExtent2D extents = GetSwapchainSurfaceExtents(*m_mainWindow, swapChainSupport);
-
-		// We generally want min image count + 1 to avoid stalls. Apparently
-		uint32_t imageCount = glm::min(swapChainSupport.m_caps.minImageCount + 1, swapChainSupport.m_caps.maxImageCount);
-		VkSwapchainCreateInfoKHR scInfo = { 0 };
-		scInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-		scInfo.flags = 0;
-		scInfo.surface = m_device->GetMainSurface();
-		scInfo.minImageCount = imageCount;
-		scInfo.imageFormat = bestFormat.format;
-		scInfo.imageColorSpace = bestFormat.colorSpace;
-		scInfo.imageExtent = extents;
-		scInfo.imageArrayLayers = 1;	// 1 unless doing vr
-		scInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;	// image used as colour attachment
-		scInfo.preTransform = swapChainSupport.m_caps.currentTransform;
-		scInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;	// we dont care about alpha from window system
-		scInfo.presentMode = bestPresentMode;
-		scInfo.clipped = VK_TRUE;		// yes we want clipping
-
-		auto qfi = FindQueueFamilyIndices(m_device->GetPhysicalDevice(), m_device->GetMainSurface());
-		if (qfi.m_graphicsIndex == qfi.m_presentIndex)	// do we have more than 1 queue?
-		{
-			// An image is owned by one queue family at a time and ownership must be explicitly transferred before using it in another queue family
-			// Since we only have one queue family it is safe
-			// If we had more, we would need to do queue family transfers... apparently
-			scInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		}
-		else
-		{
-			//  Images can be used across multiple queue families without explicit ownership transfers.
-			//	VK_SHARING_MODE_CONCURRENT specifies that concurrent access to any range or image subresource of the object from multiple queue families is supported.
-			//  (as long as the queue families match these ones)
-			scInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-			scInfo.queueFamilyIndexCount = 2;
-			scInfo.pQueueFamilyIndices = reinterpret_cast<const uint32_t*>(&qfi);	// gross
-		}
-
-		VkResult r = vkCreateSwapchainKHR(m_device->GetVkDevice(), &scInfo, nullptr, &m_vk->m_swapChain);
-		if (!CheckResult(r))
-		{
-			LogError("Failed to create swap chain");
-			return false;
-		}
-
-		// Get all the images created as part of the swapchain
-		uint32_t actualImageCount = 0;
-		CheckResult(vkGetSwapchainImagesKHR(m_device->GetVkDevice(), m_vk->m_swapChain, &actualImageCount, nullptr));
-		m_vk->m_swapChainImages.resize(actualImageCount);
-		CheckResult(vkGetSwapchainImagesKHR(m_device->GetVkDevice(), m_vk->m_swapChain, &actualImageCount, m_vk->m_swapChainImages.data()));
-		m_vk->m_swapChainExtents = extents;
-		m_vk->m_swapChainFormat = bestFormat;
-		m_vk->m_swapChainPresentMode = bestPresentMode;
-
-		// Create image views for every image in the swap chain
-		m_vk->m_swapChainImageViews.resize(actualImageCount);
-		for (uint32_t i = 0; i < actualImageCount; ++i)
-		{
-			VkImageViewCreateInfo createView = { 0 };
-			createView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			createView.image = m_vk->m_swapChainImages[i];
-			createView.flags = 0;
-			createView.viewType = VK_IMAGE_VIEW_TYPE_2D;	// we want a view to a 2d image
-			createView.format = bestFormat.format;			// match the format of the swap chain image
-			createView.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;	// no data swizzling pls
-			createView.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-			createView.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-			createView.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-			createView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;	// which parts of the image do we want to be visible
-			createView.subresourceRange.baseMipLevel = 0;
-			createView.subresourceRange.levelCount = 1;		// mip count (we only have 1 for swap images)
-			createView.subresourceRange.baseArrayLayer = 0;	// no array textures here
-			createView.subresourceRange.layerCount = 1;		// array texture counts
-			VkResult r = vkCreateImageView(m_device->GetVkDevice(), &createView, nullptr, &m_vk->m_swapChainImageViews[i]);
-			if (!CheckResult(r))
-			{
-				LogError("Failed to create image view for swap image {}", i);
-				return false;
-			}
-		}
-
-		return CreateDepthBuffer();	// finally create thr depth buffer(s)
 	}
 	
 	bool RenderSystem::CreateWindow()

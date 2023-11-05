@@ -27,15 +27,13 @@ namespace R3
 		bool CreateMesh();
 		bool DrawFrame();
 		bool CreateWindow();
-		bool CreateSwapchain();
 		bool CreateDepthBuffer();
 		bool CreateSimpleTriPipelines();
 		bool CreateCommandPools();
 		bool CreateCommandBuffers();
 		bool RecordCommandBuffer(int swapImageIndex);
 		bool CreateSyncObjects();
-		void DestroySwapchain();
-		bool RecreateSwapchainAndFramebuffers();
+		bool RecreateSwapchain();
 		void OnSystemEvent(void* ev);
 		bool CreateDevice();
 		bool m_isWindowMinimised = false;
