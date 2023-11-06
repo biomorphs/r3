@@ -24,7 +24,7 @@ namespace R3
 		void Destroy(Device& d);
 		
 		void WriteVertexData(Device& d, VkCommandBuffer& cmdBuffer);	// call this before calling draw! must be called outside of rendering
-		void Draw(Device& d, Swapchain& swapChain, VkCommandBuffer& cmdBuffer);
+		void Draw(glm::mat4 vertexToScreen, Device& d, Swapchain& swapChain, VkCommandBuffer& cmdBuffer);
 		void Flush();	// call at end of frame, clears out previous tri data
 
 		void AddTriangle(const PerVertexData vertices[3]);

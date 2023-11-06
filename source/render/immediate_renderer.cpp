@@ -59,12 +59,11 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		auto& pfd = m_perFrameData[m_currentFrameIndex];
-
-		// host write is coherant, so no flush is required, just memcpy the current frame data
-		// the write is guaranteed to complete when the cmd buffer is submitted to the queue
 		size_t dataToCopy = glm::min(m_maxVertices, m_thisFrameVertices.size()) * sizeof(PerVertexData);
 		if (dataToCopy > 0)
 		{
+			// host write is coherant, so no flush is required, just memcpy the current frame data
+			// the write is guaranteed to complete when the cmd buffer is submitted to the queue
 			memcpy(m_mappedStagingBuffer, m_thisFrameVertices.data(), dataToCopy);
 
 			// now we need to copy the data from staging to the actual buffer using the graphics queue
@@ -74,7 +73,7 @@ namespace R3
 			copyRegion.size = dataToCopy;	// may need to adjust for alignment?
 			vkCmdCopyBuffer(cmdBuffer, m_stagingVertexData.m_buffer, m_allVertexData.m_buffer, 1, &copyRegion);
 
-			// use a memory barrier to ensure the transfer finishes before we can draw
+			// use a memory barrier to ensure the transfer finishes before we draw
 			VkMemoryBarrier writeBarrier = { 0 };
 			writeBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
 			writeBarrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
@@ -90,7 +89,7 @@ namespace R3
 		}
 	}
 
-	void ImmediateRenderer::Draw(Device& d, Swapchain& swapChain, VkCommandBuffer& cmdBuffer)
+	void ImmediateRenderer::Draw(glm::mat4 vertexToScreen, Device& d, Swapchain& swapChain, VkCommandBuffer& cmdBuffer)
 	{
 		R3_PROF_EVENT();
 
@@ -118,8 +117,10 @@ namespace R3
 		vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &m_allVertexData.m_buffer, &offset);
 
 		// draw the triangles, with vertices offset into the current buffer
+		// pass the vertex-screen transform via push constants for now (laziness!)
 		for (auto& tris : m_thisFrameTriangles)
 		{
+			vkCmdPushConstants(cmdBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(vertexToScreen), &vertexToScreen);
 			vkCmdDraw(cmdBuffer, tris.m_vertexCount, 1, tris.m_startVertexOffset + pfd.m_vertexOffset, 0);
 		}
 	}
@@ -241,9 +242,15 @@ namespace R3
 			m_perFrameData[f].m_vertexOffset = f * maxVerticesPerFrame;
 		}
 
-		// shared pipeline layout
+		// shared pipeline layout, transform matrix passed via push constant
+		VkPushConstantRange constantRange;
+		constantRange.offset = 0;	// needs to match in the shader if >0!
+		constantRange.size = sizeof(glm::mat4);
+		constantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo = { 0 };
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		pipelineLayoutInfo.pushConstantRangeCount = 1;
+		pipelineLayoutInfo.pPushConstantRanges = &constantRange;
 		if (!CheckResult(vkCreatePipelineLayout(d.GetVkDevice(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout)))
 		{
 			LogError("Failed to create pipeline layout!");

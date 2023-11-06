@@ -200,7 +200,7 @@ namespace R3
 
 		ProcessEnvironmentSettings();
 
-		float y = sinf(GetSystem<TimeSystem>()->GetElapsedTime());
+		float y = (float)sin(GetSystem<TimeSystem>()->GetElapsedTime());
 		ImmediateRenderer::PerVertexData vertices[3];
 		vertices[0].m_position = { -1, -1 + y, 0, 1 };		vertices[0].m_colour = { 1,0,0,1 };
 		vertices[1].m_position = { 1, -1 + y, 0, 1 };		vertices[1].m_colour = { 0,0,1,1 };
@@ -789,7 +789,8 @@ namespace R3
 		vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
 
 		// IM renderer draw
-		m_imRenderer->Draw(*m_device, *m_swapChain, cmdBuffer);
+		glm::mat4 cameraMatrix = glm::identity<glm::mat4>();
+		m_imRenderer->Draw(cameraMatrix, *m_device, *m_swapChain, cmdBuffer);
 		m_imRenderer->Flush();
 
 		vkCmdEndRendering(cmdBuffer);
