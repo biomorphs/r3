@@ -2,6 +2,8 @@
 #include "engine/systems.h"
 #include "core/glm_headers.h"
 
+struct VkViewport;
+struct VkRect2D;
 namespace R3
 {
 	class Device;
@@ -22,6 +24,7 @@ namespace R3
 		bool InitImGui();
 		void ImGuiNewFrame();
 	private:
+		void RecordMainPass(int swapImageIndex);
 		void DrawImgui(int swapImageIndex);
 		void ProcessEnvironmentSettings();
 		bool ShowGui();

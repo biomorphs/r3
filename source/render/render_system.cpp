@@ -678,10 +678,9 @@ namespace R3
 		vkCmdEndRendering(cmdBuffer);
 	}
 
-	bool RenderSystem::RecordCommandBuffer(int swapImageIndex)
+	void RenderSystem::RecordMainPass(int swapImageIndex)
 	{
 		R3_PROF_EVENT();
-
 		auto& cmdBuffer = m_vk->ThisFrameData().m_graphicsCmdBuffer;
 
 		// pipeline dynamic state
@@ -695,36 +694,6 @@ namespace R3
 		VkRect2D scissor = { 0 };
 		scissor.offset = { 0, 0 };
 		scissor.extent = m_swapChain->GetExtents();	// draw the full image
-
-		// start writing
-		VkCommandBufferBeginInfo beginInfo = { 0 };
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		if (!CheckResult(vkBeginCommandBuffer(cmdBuffer, &beginInfo)))	// resets the cmd buffer
-		{
-			LogError("failed to begin recording command buffer!");
-			return false;
-		}
-
-		// Transition swap chain image and depth image to format optimal for drawing 
-		{
-			auto colourBarrier = VulkanHelpers::MakeImageBarrier(m_swapChain->GetImages()[swapImageIndex],
-				VK_IMAGE_ASPECT_COLOR_BIT,
-				VK_ACCESS_NONE,	
-				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,		// dst mask = colour write
-				VK_IMAGE_LAYOUT_UNDEFINED,					// we dont care what format it starts in
-				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);	// to format optimal for drawing
-			auto depthBarrier = VulkanHelpers::MakeImageBarrier(m_vk->m_depthBufferImage.m_image,
-				VK_IMAGE_ASPECT_DEPTH_BIT,
-				VK_ACCESS_NONE,
-				VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,		// dst mask = depth write
-				VK_IMAGE_LAYOUT_UNDEFINED,							// we dont care what format it starts in
-				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);	// to format optimal for drawing
-			VkImageMemoryBarrier barriers[] = { colourBarrier, depthBarrier };
-
-			// dst stages = before colour write or depth read
-			auto dstStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-			vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, dstStages, 0, 0, nullptr, 0, nullptr, 2, barriers);
-		}
 
 		// Dynamic rendering to colour + depth
 		// also clears these buffers!
@@ -792,7 +761,7 @@ namespace R3
 		PushConstant constants;
 		static double angle = 0.0;
 		angle += GetSystem<TimeSystem>()->GetVariableDeltaTime();
-		constants.m_colour = {sin(angle), cos(angle), 1.0f, 1.0f};
+		constants.m_colour = { sin(angle), cos(angle), 1.0f, 1.0f };
 		constants.m_transform = glm::translate(glm::vec3(sin(angle), sin(angle), sin(angle)));
 		vkCmdPushConstants(cmdBuffer, m_vk->m_simpleLayoutWithPushConstant, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(constants), &constants);
 
@@ -800,8 +769,45 @@ namespace R3
 		vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
 
 		vkCmdEndRendering(cmdBuffer);
+	}
 
-		// ImGui uses separate pass
+	bool RenderSystem::RecordCommandBuffer(int swapImageIndex)
+	{
+		R3_PROF_EVENT();
+
+		auto& cmdBuffer = m_vk->ThisFrameData().m_graphicsCmdBuffer;
+
+		// start writing
+		VkCommandBufferBeginInfo beginInfo = { 0 };
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		if (!CheckResult(vkBeginCommandBuffer(cmdBuffer, &beginInfo)))	// resets the cmd buffer
+		{
+			LogError("failed to begin recording command buffer!");
+			return false;
+		}
+
+		// Transition swap chain image and depth image to format optimal for drawing 
+		{
+			auto colourBarrier = VulkanHelpers::MakeImageBarrier(m_swapChain->GetImages()[swapImageIndex],
+				VK_IMAGE_ASPECT_COLOR_BIT,
+				VK_ACCESS_NONE,	
+				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,		// dst mask = colour write
+				VK_IMAGE_LAYOUT_UNDEFINED,					// we dont care what format it starts in
+				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);	// to format optimal for drawing
+			auto depthBarrier = VulkanHelpers::MakeImageBarrier(m_vk->m_depthBufferImage.m_image,
+				VK_IMAGE_ASPECT_DEPTH_BIT,
+				VK_ACCESS_NONE,
+				VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,		// dst mask = depth write
+				VK_IMAGE_LAYOUT_UNDEFINED,							// we dont care what format it starts in
+				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);	// to format optimal for drawing
+			VkImageMemoryBarrier barriers[] = { colourBarrier, depthBarrier };
+
+			// dst stages = before colour write or depth read
+			auto dstStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, dstStages, 0, 0, nullptr, 0, nullptr, 2, barriers);
+		}
+
+		RecordMainPass(swapImageIndex);
 		DrawImgui(swapImageIndex);
 
 		// Transition swap chain image to format optimal for present
