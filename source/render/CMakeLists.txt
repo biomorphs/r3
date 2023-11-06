@@ -12,6 +12,8 @@ set(RenderLib_SourceFiles
 	device.cpp
 	swap_chain.h
 	swap_chain.cpp
+	immediate_renderer.h
+	immediate_renderer.cpp
 )
 
 add_library(Render ${RenderLib_SourceFiles})

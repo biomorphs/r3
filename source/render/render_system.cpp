@@ -2,6 +2,7 @@
 #include "window.h"
 #include "device.h"
 #include "swap_chain.h"
+#include "immediate_renderer.h"
 #include "core/file_io.h"
 #include "core/profiler.h"
 #include "core/log.h"
@@ -22,7 +23,6 @@
 #include <SDL.h>
 #include <SDL_events.h>
 #include <SDL_vulkan.h>
-#include <set>
 #include <array>
 
 namespace R3
@@ -199,6 +199,13 @@ namespace R3
 		R3_PROF_EVENT();
 
 		ProcessEnvironmentSettings();
+
+		float y = sinf(GetSystem<TimeSystem>()->GetElapsedTime());
+		ImmediateRenderer::PerVertexData vertices[3];
+		vertices[0].m_position = { -1, -1 + y, 0, 1 };		vertices[0].m_colour = { 1,0,0,1 };
+		vertices[1].m_position = { 1, -1 + y, 0, 1 };		vertices[1].m_colour = { 0,0,1,1 };
+		vertices[2].m_position = { 1, 1 + y, 0, 1 };		vertices[2].m_colour = { 0,1,0,1 };
+		m_imRenderer->AddTriangle(vertices);
 
 		// Always 'render' the ImGui frame so we can begin the next one, even if we wont actually draw anything
 		ImGui::Render();	
@@ -392,6 +399,13 @@ namespace R3
 			return false;
 		}
 
+		m_imRenderer = std::make_unique<ImmediateRenderer>();
+		if (!m_imRenderer->Initialise(*m_device, *m_swapChain, m_vk->m_depthBufferFormat))
+		{
+			LogError("Failed to create immediate renderer");
+			return false;
+		}
+
 		if (!CreateMesh())
 		{
 			LogError("Failed to create mesh");
@@ -422,6 +436,9 @@ namespace R3
 		// Clean up ImGui
 		vkDestroyDescriptorPool(m_device->GetVkDevice(), m_vk->m_imgui.m_descriptorPool, nullptr);
 		ImGui_ImplVulkan_Shutdown();
+
+		m_imRenderer->Destroy(*m_device);
+		m_imRenderer = nullptr;
 
 		// Destroy the mesh buffers
 		vmaDestroyBuffer(m_device->GetVMA(), m_vk->m_posColourVertexBuffer.m_buffer, m_vk->m_posColourVertexBuffer.m_allocation);
@@ -683,6 +700,9 @@ namespace R3
 		R3_PROF_EVENT();
 		auto& cmdBuffer = m_vk->ThisFrameData().m_graphicsCmdBuffer;
 
+		// push immediate renderer vertices to gpu outside of render pass 
+		m_imRenderer->WriteVertexData(*m_device, cmdBuffer);
+
 		// pipeline dynamic state
 		VkViewport viewport = { 0 };
 		viewport.x = 0.0f;
@@ -767,6 +787,10 @@ namespace R3
 
 		// draw one triangle made of 3 verts
 		vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
+
+		// IM renderer draw
+		m_imRenderer->Draw(*m_device, *m_swapChain, cmdBuffer);
+		m_imRenderer->Flush();
 
 		vkCmdEndRendering(cmdBuffer);
 	}

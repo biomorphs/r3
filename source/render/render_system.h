@@ -9,6 +9,7 @@ namespace R3
 	class Device;
 	class Window;
 	class Swapchain;
+	class ImmediateRenderer;
 	class RenderSystem : public System
 	{
 	public:
@@ -47,6 +48,7 @@ namespace R3
 		std::unique_ptr<Window> m_mainWindow;
 		std::unique_ptr<Device> m_device;
 		std::unique_ptr<Swapchain> m_swapChain;
+		std::unique_ptr<ImmediateRenderer> m_imRenderer;
 		struct VkStuff;
 		std::unique_ptr<VkStuff> m_vk;
 		glm::vec4 m_mainPassClearColour = { 0,0,0,1 };
