@@ -14,6 +14,8 @@ set(RenderLib_SourceFiles
 	swap_chain.cpp
 	immediate_renderer.h
 	immediate_renderer.cpp
+	camera.h
+	camera.inl
 )
 
 add_library(Render ${RenderLib_SourceFiles})

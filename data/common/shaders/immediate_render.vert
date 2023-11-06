@@ -12,6 +12,6 @@ layout(push_constant) uniform constants
 layout(location = 0) out vec4 fragColor;
 
 void main() {
-    gl_Position = inPosition * PushConstants.m_transform;
+    gl_Position = PushConstants.m_transform * inPosition;
     fragColor = inColour;
 }

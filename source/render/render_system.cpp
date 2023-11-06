@@ -3,6 +3,7 @@
 #include "device.h"
 #include "swap_chain.h"
 #include "immediate_renderer.h"
+#include "camera.h"
 #include "core/file_io.h"
 #include "core/profiler.h"
 #include "core/log.h"
@@ -789,8 +790,12 @@ namespace R3
 		vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
 
 		// IM renderer draw
-		glm::mat4 cameraMatrix = glm::identity<glm::mat4>();
-		m_imRenderer->Draw(cameraMatrix, *m_device, *m_swapChain, cmdBuffer);
+		Camera testCam;
+		float aspect = m_swapChain->GetExtents().width / (float)m_swapChain->GetExtents().height;
+		testCam.SetProjection(70.0f, aspect, 0.1f, 100.0f);
+		testCam.LookAt({ 3,2,-5.0 }, { 0,0,0 }, { 0,1,0 });
+
+		m_imRenderer->Draw(testCam.ProjectionMatrix() * testCam.ViewMatrix(), *m_device, *m_swapChain, cmdBuffer);
 		m_imRenderer->Flush();
 
 		vkCmdEndRendering(cmdBuffer);
