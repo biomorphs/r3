@@ -1,7 +1,15 @@
 {
  "AllEntities": [
   {
-   "ID": 1
+   "EnvironmentSettings": {
+    "Clear Colour": {
+     "W": 0.0,
+     "X": 0.030583389103412628,
+     "Y": 0.21125850081443787,
+     "Z": 0.6895161271095276
+    }
+   },
+   "ID": 0
   }
  ],
  "WorldName": "EditorWorld"

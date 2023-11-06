@@ -40,12 +40,6 @@ namespace R3
 		VkFence m_inFlightFence = VK_NULL_HANDLE;				// signalled when previous cmd buffer finished executing (initialised as signalled)
 	};
 
-	struct AllocatedBuffer
-	{
-		VmaAllocation m_allocation = {};
-		VkBuffer m_buffer = {};
-	};
-
 	struct AllocatedImage
 	{
 		VkImage m_image;
@@ -117,29 +111,6 @@ namespace R3
 		glm::mat4 m_transform;
 	};
 
-	// prefer using this one!
-	AllocatedBuffer CreateBuffer(VmaAllocator allocator, uint64_t sizeBytes, VkBufferUsageFlags bufferUsage,
-		VmaMemoryUsage memUsage = VMA_MEMORY_USAGE_AUTO, uint32_t allocFlags = 0)
-	{
-		R3_PROF_EVENT();
-		AllocatedBuffer newBuffer;
-		VkBufferCreateInfo bci = { 0 };
-		bci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bci.size = sizeBytes;
-		bci.usage = bufferUsage;
-
-		VmaAllocationCreateInfo allocInfo = { 0 };
-		allocInfo.usage = memUsage;
-		allocInfo.flags = allocFlags;
-
-		VkResult r = vmaCreateBuffer(allocator, &bci, &allocInfo, &newBuffer.m_buffer, &newBuffer.m_allocation, nullptr);
-		if (!CheckResult(r))
-		{
-			LogError("Failed to create buffer of size {} bytes", sizeBytes);
-		}
-		return newBuffer;
-	}
-
 	RenderSystem::RenderSystem()
 	{
 		m_vk = std::make_unique<VkStuff>();
@@ -152,7 +123,7 @@ namespace R3
 
 	glm::vec2 RenderSystem::GetWindowExtents()
 	{
-		auto e = m_device->GetSwapchain().GetExtents();
+		auto e = m_swapChain->GetExtents();
 		return { e.width, e.height };
 	}
 
@@ -187,15 +158,39 @@ namespace R3
 		R3_PROF_EVENT();
 		ImGui::Begin("Render System", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
 		{
-			auto str = std::format("Swap chain extents: {}x{}", m_device->GetSwapchain().GetExtents().width, m_device->GetSwapchain().GetExtents().height);
+			auto str = std::format("Swap chain extents: {}x{}", m_swapChain->GetExtents().width, m_swapChain->GetExtents().height);
 			ImGui::Text(str.c_str());
-			str = std::format("Swap chain images: {}", m_device->GetSwapchain().GetImages().size());
+			str = std::format("Swap chain images: {}", m_swapChain->GetImages().size());
 			ImGui::Text(str.c_str());
 			auto timeSys = GetSystem<TimeSystem>();
 			str = std::format("FPS/Frame Time: {:.1f} / {:.4f}ms", 1.0 / timeSys->GetVariableDeltaTime(), timeSys->GetVariableDeltaTime());
 			ImGui::Text(str.c_str());
 		}
 		ImGui::End();
+		return true;
+	}
+
+	bool RenderSystem::CreateSwapchain()
+	{
+		m_swapChain = std::make_unique<Swapchain>();
+		return m_swapChain->Initialise(*m_device, *m_mainWindow);
+	}
+
+	bool RenderSystem::PrepareSwapchain()
+	{
+		if (m_isWindowMinimised)
+		{
+			return false;
+		}
+		if (m_recreateSwapchain)
+		{
+			if (!RecreateSwapchain())
+			{
+				LogError("Failed to recreate swap chain");
+				return false;
+			}
+			m_recreateSwapchain = false;
+		}
 		return true;
 	}
 
@@ -208,23 +203,15 @@ namespace R3
 		// Always 'render' the ImGui frame so we can begin the next one, even if we wont actually draw anything
 		ImGui::Render();	
 
-		if (m_isWindowMinimised)
+		// Nothing to draw this frame if this returns false
+		if (!PrepareSwapchain())
 		{
 			return true;
-		}
-		if (m_recreateSwapchain)
-		{
-			if (!RecreateSwapchain())
-			{
-				LogError("Failed to recreate swap chain");
-				return false;
-			}
-			m_recreateSwapchain = false;
 		}
 
 		auto& fd = m_vk->ThisFrameData();
 		{
-			R3_PROF_STALL("Wait for fence");
+			R3_PROF_STALL("Wait for previous frame fence");
 			// wait for the previous frame to finish with infinite timeout (blocking call)
 			CheckResult(vkWaitForFences(m_device->GetVkDevice(), 1, &fd.m_inFlightFence, VK_TRUE, UINT64_MAX));
 		}
@@ -235,7 +222,7 @@ namespace R3
 			// acquire the next swap chain image (blocks with infinite timeout)
 			// m_imageAvailableSemaphore will be signalled when we are able to draw to the image
 			// note that fences can also be passed here
-			auto r = vkAcquireNextImageKHR(m_device->GetVkDevice(), m_device->GetSwapchain().GetSwapchain(), UINT64_MAX, fd.m_imageAvailableSemaphore, VK_NULL_HANDLE, &swapImageIndex);
+			auto r = vkAcquireNextImageKHR(m_device->GetVkDevice(), m_swapChain->GetSwapchain(), UINT64_MAX, fd.m_imageAvailableSemaphore, VK_NULL_HANDLE, &swapImageIndex);
 			if (r == VK_ERROR_OUT_OF_DATE_KHR)
 			{
 				m_recreateSwapchain = true;
@@ -293,7 +280,7 @@ namespace R3
 		VkPresentInfoKHR presentInfo = {};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		presentInfo.pNext = nullptr;
-		presentInfo.pSwapchains = &m_device->GetSwapchain().GetSwapchain();
+		presentInfo.pSwapchains = &m_swapChain->GetSwapchain();
 		presentInfo.swapchainCount = 1;
 		presentInfo.pWaitSemaphores = &fd.m_renderFinishedSemaphore;		// wait on this semaphore before presenting
 		presentInfo.waitSemaphoreCount = 1;
@@ -326,7 +313,7 @@ namespace R3
 			const auto et = theEvent->window.event;
 			if (et == SDL_WINDOWEVENT_SIZE_CHANGED || et == SDL_WINDOWEVENT_RESIZED)
 			{
-				if (m_device->GetSwapchain().GetExtents().width != theEvent->window.data1 || m_device->GetSwapchain().GetExtents().height != theEvent->window.data2)
+				if (m_swapChain->GetExtents().width != theEvent->window.data1 || m_swapChain->GetExtents().height != theEvent->window.data2)
 				{
 					m_recreateSwapchain = true;
 				}
@@ -366,6 +353,12 @@ namespace R3
 		if (!CreateDevice())
 		{
 			LogError("Failed to create device!");
+			return false;
+		}
+
+		if (!CreateSwapchain())
+		{
+			LogError("Failed to create swap chain");
 			return false;
 		}
 
@@ -459,6 +452,9 @@ namespace R3
 		vkDestroyImageView(m_device->GetVkDevice(), m_vk->m_depthBufferView, nullptr);
 		vmaDestroyImage(m_device->GetVMA(), m_vk->m_depthBufferImage.m_image, m_vk->m_depthBufferImage.m_allocation);
 
+		m_swapChain->Destroy(*m_device);
+		m_swapChain = nullptr;
+
 		m_device = nullptr;
 		m_mainWindow = nullptr;
 	}
@@ -523,11 +519,11 @@ namespace R3
 		init_info.Device = m_device->GetVkDevice();
 		init_info.Queue = m_device->GetGraphicsQueue();
 		init_info.DescriptorPool = m_vk->m_imgui.m_descriptorPool;
-		init_info.MinImageCount = static_cast<uint32_t>(m_device->GetSwapchain().GetImages().size());	// ??
-		init_info.ImageCount = static_cast<uint32_t>(m_device->GetSwapchain().GetImages().size());		// ????!
+		init_info.MinImageCount = static_cast<uint32_t>(m_swapChain->GetImages().size());	// ??
+		init_info.ImageCount = static_cast<uint32_t>(m_swapChain->GetImages().size());		// ????!
 		init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 		init_info.UseDynamicRendering = true;
-		init_info.ColorAttachmentFormat = m_device->GetSwapchain().GetFormat().format;
+		init_info.ColorAttachmentFormat = m_swapChain->GetFormat().format;
 		if (!ImGui_ImplVulkan_Init(&init_info, nullptr))	
 		{
 			LogError("Failed to init imgui for Vulkan");
@@ -556,13 +552,13 @@ namespace R3
 		verts[1].m_colour = { 0.f, 1.f, 0.5f };
 		verts[2].m_colour = { 1.f, 0.f, 0.1f };
 
-		AllocatedBuffer stagingBuffer = CreateBuffer(m_device->GetVMA(),
+		AllocatedBuffer stagingBuffer = VulkanHelpers::CreateBuffer(m_device->GetVMA(),
 			sizeof(PosColourVertex) * 3,
 			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 			VMA_MEMORY_USAGE_AUTO,
 			VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT
 		);
-		m_vk->m_posColourVertexBuffer = CreateBuffer(m_device->GetVMA(),
+		m_vk->m_posColourVertexBuffer = VulkanHelpers::CreateBuffer(m_device->GetVMA(),
 			sizeof(PosColourVertex) * 3,
 			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT
 		);
@@ -603,9 +599,9 @@ namespace R3
 
 		vkDestroyImageView(m_device->GetVkDevice(), m_vk->m_depthBufferView, nullptr);
 		vmaDestroyImage(m_device->GetVMA(), m_vk->m_depthBufferImage.m_image, m_vk->m_depthBufferImage.m_allocation);
-		m_device->GetSwapchain().Destroy(*m_device);
+		m_swapChain->Destroy(*m_device);
 
-		if (!m_device->GetSwapchain().Initialise(*m_device, *m_mainWindow))
+		if (!m_swapChain->Initialise(*m_device, *m_mainWindow))
 		{
 			LogError("Failed to create swapchain");
 			return false;
@@ -665,7 +661,7 @@ namespace R3
 		colourAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
 		colourAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 		colourAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		colourAttachment.imageView = m_device->GetSwapchain().GetViews()[swapImageIndex];
+		colourAttachment.imageView = m_swapChain->GetViews()[swapImageIndex];
 		colourAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		VkRenderingInfo ri = { 0 };
@@ -674,7 +670,7 @@ namespace R3
 		ri.pColorAttachments = &colourAttachment;
 		ri.layerCount = 1;
 		ri.renderArea.offset = { 0,0 };
-		ri.renderArea.extent = m_device->GetSwapchain().GetExtents();
+		ri.renderArea.extent = m_swapChain->GetExtents();
 		vkCmdBeginRendering(cmdBuffer, &ri);
 
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuffer);
@@ -692,13 +688,13 @@ namespace R3
 		VkViewport viewport = { 0 };
 		viewport.x = 0.0f;
 		viewport.y = 0.0f;
-		viewport.width = (float)m_device->GetSwapchain().GetExtents().width;
-		viewport.height = (float)m_device->GetSwapchain().GetExtents().height;
+		viewport.width = (float)m_swapChain->GetExtents().width;
+		viewport.height = (float)m_swapChain->GetExtents().height;
 		viewport.minDepth = 0.0f;	// normalised! must be between 0 and 1
 		viewport.maxDepth = 1.0f;	// ^^
 		VkRect2D scissor = { 0 };
 		scissor.offset = { 0, 0 };
-		scissor.extent = m_device->GetSwapchain().GetExtents();	// draw the full image
+		scissor.extent = m_swapChain->GetExtents();	// draw the full image
 
 		// start writing
 		VkCommandBufferBeginInfo beginInfo = { 0 };
@@ -711,7 +707,7 @@ namespace R3
 
 		// Transition swap chain image and depth image to format optimal for drawing 
 		{
-			auto colourBarrier = VulkanHelpers::MakeImageBarrier(m_device->GetSwapchain().GetImages()[swapImageIndex],
+			auto colourBarrier = VulkanHelpers::MakeImageBarrier(m_swapChain->GetImages()[swapImageIndex],
 				VK_IMAGE_ASPECT_COLOR_BIT,
 				VK_ACCESS_NONE,	
 				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,		// dst mask = colour write
@@ -737,7 +733,7 @@ namespace R3
 		colourAttachment.clearValue = { {{m_mainPassClearColour.x, m_mainPassClearColour.y, m_mainPassClearColour.z, m_mainPassClearColour.w }} };
 		colourAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		colourAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		colourAttachment.imageView = m_device->GetSwapchain().GetViews()[swapImageIndex];
+		colourAttachment.imageView = m_swapChain->GetViews()[swapImageIndex];
 		colourAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;	// this is the layout used during rendering, we need to ensure the transition happens first
 
 		VkRenderingAttachmentInfo depthAttachment = { 0 };
@@ -755,7 +751,7 @@ namespace R3
 		ri.pDepthAttachment = &depthAttachment;
 		ri.layerCount = 1;
 		ri.renderArea.offset = { 0,0 };
-		ri.renderArea.extent = m_device->GetSwapchain().GetExtents();
+		ri.renderArea.extent = m_swapChain->GetExtents();
 		vkCmdBeginRendering(cmdBuffer, &ri);
 
 		// bind the pipeline
@@ -809,7 +805,7 @@ namespace R3
 		DrawImgui(swapImageIndex);
 
 		// Transition swap chain image to format optimal for present
-		auto colourBarrier = VulkanHelpers::MakeImageBarrier(m_device->GetSwapchain().GetImages()[swapImageIndex],
+		auto colourBarrier = VulkanHelpers::MakeImageBarrier(m_swapChain->GetImages()[swapImageIndex],
 			VK_IMAGE_ASPECT_COLOR_BIT, 
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,		// src mask = wait before writing attachment
 			VK_ACCESS_NONE,								// dst mask = we dont care?
@@ -972,7 +968,7 @@ namespace R3
 		pb.m_colourBlendState = VulkanHelpers::CreatePipelineColourBlendState(allAttachments);	// Pipeline also has some global blending state (constants, logical ops enable)
 
 		// build the pipeline
-		m_vk->m_simpleTriPipeline = pb.Build(m_device->GetVkDevice(), m_vk->m_simplePipelineLayout, 1, &m_device->GetSwapchain().GetFormat().format, m_vk->m_depthBufferFormat);
+		m_vk->m_simpleTriPipeline = pb.Build(m_device->GetVkDevice(), m_vk->m_simplePipelineLayout, 1, &m_swapChain->GetFormat().format, m_vk->m_depthBufferFormat);
 		if (m_vk->m_simpleTriPipeline == VK_NULL_HANDLE)
 		{
 			LogError("Failed to create pipeline!");
@@ -997,7 +993,7 @@ namespace R3
 		pb.m_vertexInputState.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
 		pb.m_vertexInputState.pVertexAttributeDescriptions = attributeDescriptions.data();
 
-		m_vk->m_simpleTriFromBuffersPipeline = pb.Build(m_device->GetVkDevice(), m_vk->m_simplePipelineLayout, 1, &m_device->GetSwapchain().GetFormat().format, m_vk->m_depthBufferFormat);
+		m_vk->m_simpleTriFromBuffersPipeline = pb.Build(m_device->GetVkDevice(), m_vk->m_simplePipelineLayout, 1, &m_swapChain->GetFormat().format, m_vk->m_depthBufferFormat);
 		if (m_vk->m_simpleTriFromBuffersPipeline == VK_NULL_HANDLE)
 		{
 			LogError("Failed to create fancier pipeline!");
@@ -1009,7 +1005,7 @@ namespace R3
 		pb.m_shaderStages.clear();
 		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_VERTEX_BIT, triBufferPushConstantVertShader));
 		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_FRAGMENT_BIT, triBufferFragShader));
-		m_vk->m_simpleTriFromBuffersPushConstantPipeline = pb.Build(m_device->GetVkDevice(), m_vk->m_simpleLayoutWithPushConstant, 1, &m_device->GetSwapchain().GetFormat().format, m_vk->m_depthBufferFormat);
+		m_vk->m_simpleTriFromBuffersPushConstantPipeline = pb.Build(m_device->GetVkDevice(), m_vk->m_simpleLayoutWithPushConstant, 1, &m_swapChain->GetFormat().format, m_vk->m_depthBufferFormat);
 		if (m_vk->m_simpleTriFromBuffersPushConstantPipeline == VK_NULL_HANDLE)
 		{
 			LogError("Failed to create fancier pipeline!");
@@ -1030,7 +1026,7 @@ namespace R3
 		info.imageType = VK_IMAGE_TYPE_2D;
 		info.format = VK_FORMAT_D32_SFLOAT;
 		info.extent = {
-			m_device->GetSwapchain().GetExtents().width, m_device->GetSwapchain().GetExtents().height, 1
+			m_swapChain->GetExtents().width, m_swapChain->GetExtents().height, 1
 		};	// same size as swap chain images
 		info.mipLevels = 1;
 		info.arrayLayers = 1;
@@ -1047,7 +1043,7 @@ namespace R3
 		{
 			return false;
 		}
-		m_vk->m_depthBufferFormat = info.format;	// is this actually correc? is the requested format what we actually get?
+		m_vk->m_depthBufferFormat = info.format;	// is this actually correct? is the requested format what we actually get?
 
 		// Create an ImageView for the depth buffer
 		VkImageViewCreateInfo vci = {};

@@ -1,13 +1,22 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
+#include <vk_mem_alloc.h>
 #include <vector>
 #include <string_view>
 #include <functional>
 
+struct VmaAllocator_T;
 namespace R3
 {
 	class Window;
+
+	struct AllocatedBuffer
+	{
+		VmaAllocation m_allocation = {};
+		VkBuffer m_buffer = {};
+	};
+
 	// our aim is NOT to abstract away vulkan, just hide the annoying bits
 	namespace VulkanHelpers
 	{
@@ -17,6 +26,9 @@ namespace R3
 		// Run cmds immediately on a particular queue, wait for the results via fence
 		// Useful for copying data on transfer queues, debugging, etc
 		bool RunCommandsImmediate(VkDevice d, VkQueue cmdQueue, VkCommandPool cmdPool, VkFence waitFence, std::function<void(VkCommandBuffer&)> fn);
+
+		// Buffers
+		AllocatedBuffer CreateBuffer(VmaAllocator vma, uint64_t sizeBytes, VkBufferUsageFlags usage, VmaMemoryUsage memUsage = VMA_MEMORY_USAGE_AUTO, uint32_t allocFlags = 0);
 
 		// ShaderModule wraps the spirv and can be deleted once a pipeline is built with it
 		VkShaderModule CreateShaderModule(VkDevice device, const std::vector<uint8_t>& srcSpirv);

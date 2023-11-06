@@ -77,6 +77,27 @@ namespace R3
 			return true;
 		}
 
+		AllocatedBuffer CreateBuffer(VmaAllocator vma, uint64_t sizeBytes, VkBufferUsageFlags usage, VmaMemoryUsage memUsage, uint32_t allocFlags)
+		{
+			R3_PROF_EVENT();
+			AllocatedBuffer newBuffer;
+			VkBufferCreateInfo bci = { 0 };
+			bci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+			bci.size = sizeBytes;
+			bci.usage = usage;
+
+			VmaAllocationCreateInfo allocInfo = { 0 };
+			allocInfo.usage = memUsage;
+			allocInfo.flags = allocFlags;
+
+			VkResult r = vmaCreateBuffer(vma, &bci, &allocInfo, &newBuffer.m_buffer, &newBuffer.m_allocation, nullptr);
+			if (!CheckResult(r))
+			{
+				LogError("Failed to create buffer of size {} bytes", sizeBytes);
+			}
+			return newBuffer;
+		}
+
 		VkShaderModule CreateShaderModule(VkDevice device, const std::vector<uint8_t>& srcSpirv)
 		{
 			R3_PROF_EVENT();

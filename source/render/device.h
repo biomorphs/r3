@@ -9,10 +9,9 @@ struct VmaAllocator_T;
 namespace R3
 {
 	class Window;
-	class Swapchain;
 
 	// Hooks up a window with vulkan
-	// owns the physical device, logical device, window surface, and swap chain
+	// owns the physical device, logical device, window surface
 	class Device
 	{
 	public:
@@ -30,12 +29,10 @@ namespace R3
 		VkSurfaceKHR& GetMainSurface() { return m_mainSurface; }
 		VkQueue& GetGraphicsQueue() { return m_graphicsQueue; }
 		VkQueue& GetPresentQueue() { return m_presentQueue; }
-		Swapchain& GetSwapchain();
 	private:
 		bool CreatePhysicalDevice();
 		bool CreateLogicalDevice();
 		bool CreateSurface();
-		bool CreateSwapchain();
 		bool InitialiseVMA();
 
 		void Destroy();
@@ -49,6 +46,5 @@ namespace R3
 		VkQueue m_graphicsQueue = VK_NULL_HANDLE;
 		VkQueue m_presentQueue = VK_NULL_HANDLE;
 		VmaAllocator_T* m_vma = nullptr;	// vulkan memory allocator
-		std::unique_ptr<Swapchain> m_swapChain;
 	};
 }

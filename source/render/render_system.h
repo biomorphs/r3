@@ -6,6 +6,7 @@ namespace R3
 {
 	class Device;
 	class Window;
+	class Swapchain;
 	class RenderSystem : public System
 	{
 	public:
@@ -34,12 +35,15 @@ namespace R3
 		bool RecordCommandBuffer(int swapImageIndex);
 		bool CreateSyncObjects();
 		bool RecreateSwapchain();
+		bool PrepareSwapchain();
 		void OnSystemEvent(void* ev);
 		bool CreateDevice();
+		bool CreateSwapchain();
 		bool m_isWindowMinimised = false;
 		bool m_recreateSwapchain = false;
 		std::unique_ptr<Window> m_mainWindow;
 		std::unique_ptr<Device> m_device;
+		std::unique_ptr<Swapchain> m_swapChain;
 		struct VkStuff;
 		std::unique_ptr<VkStuff> m_vk;
 		glm::vec4 m_mainPassClearColour = { 0,0,0,1 };
