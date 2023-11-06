@@ -60,56 +60,14 @@ namespace R3
 		FrameData m_perFrameData[c_maxFramesInFlight];	// contains per frame cmd buffers, sync objects
 		int m_currentFrame = 0;
 		VkFence m_immediateSubmitFence = VK_NULL_HANDLE;
-
-		VkPipeline m_simpleTriPipeline = VK_NULL_HANDLE;
-		VkPipeline m_simpleTriFromBuffersPipeline = VK_NULL_HANDLE;
-		VkPipeline m_simpleTriFromBuffersPushConstantPipeline = VK_NULL_HANDLE;
-		AllocatedBuffer m_posColourVertexBuffer;
-		VkPipelineLayout m_simplePipelineLayout = VK_NULL_HANDLE;	// no descriptors, nada
-		VkPipelineLayout m_simpleLayoutWithPushConstant = VK_NULL_HANDLE;
-
 		ImGuiVkStuff m_imgui;
 
 		// helpers
 		FrameData& ThisFrameData()
 		{
+			assert(m_currentFrame < c_maxFramesInFlight);
 			return m_perFrameData[m_currentFrame];
 		}
-	};
-
-	struct PosColourVertex {
-		glm::vec2 m_position;
-		glm::vec3 m_colour;
-
-		static VkVertexInputBindingDescription GetInputBindingDescription()
-		{
-			// we just want to bind a single buffer
-			VkVertexInputBindingDescription bindingDesc = { 0 };
-			bindingDesc.binding = 0;
-			bindingDesc.stride = sizeof(PosColourVertex);
-			bindingDesc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-			return bindingDesc;
-		}
-
-		static std::array<VkVertexInputAttributeDescription, 2> GetAttributeDescriptions()
-		{
-			// 2 attributes, position and colour stored in buffer 0
-			std::array<VkVertexInputAttributeDescription, 2> attributes{};
-			attributes[0].binding = 0;
-			attributes[0].location = 0;	// location visible from shader
-			attributes[0].format = VK_FORMAT_R32G32_SFLOAT;	// pos = vec2
-			attributes[0].offset = offsetof(PosColourVertex, m_position);
-			attributes[1].binding = 0;
-			attributes[1].location = 1;
-			attributes[1].format = VK_FORMAT_R32G32B32_SFLOAT;	// colour = vec3
-			attributes[1].offset = offsetof(PosColourVertex, m_colour);
-			return attributes;
-		}
-	};
-
-	struct PushConstant {
-		glm::vec4 m_colour;
-		glm::mat4 m_transform;
 	};
 
 	RenderSystem::RenderSystem()
@@ -120,6 +78,151 @@ namespace R3
 	RenderSystem::~RenderSystem()
 	{
 		m_vk = nullptr;
+	}
+
+	void RenderSystem::DrawImgui(int swapImageIndex)
+	{
+		R3_PROF_EVENT();
+
+		auto& cmdBuffer = m_vk->ThisFrameData().m_graphicsCmdBuffer;
+
+		// rendering to colour attachment only
+		VkRenderingAttachmentInfo colourAttachment = { 0 };
+		colourAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+		colourAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+		colourAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colourAttachment.imageView = m_swapChain->GetViews()[swapImageIndex];
+		colourAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		VkRenderingInfo ri = { 0 };
+		ri.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+		ri.colorAttachmentCount = 1;
+		ri.pColorAttachments = &colourAttachment;
+		ri.layerCount = 1;
+		ri.renderArea.offset = { 0,0 };
+		ri.renderArea.extent = m_swapChain->GetExtents();
+		vkCmdBeginRendering(cmdBuffer, &ri);
+
+		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuffer);
+
+		vkCmdEndRendering(cmdBuffer);
+	}
+
+	void RenderSystem::RecordMainPass(int swapImageIndex)
+	{
+		R3_PROF_EVENT();
+		auto& cmdBuffer = m_vk->ThisFrameData().m_graphicsCmdBuffer;
+
+		// push immediate renderer vertices to gpu outside of render pass 
+		m_imRenderer->WriteVertexData(*m_device, cmdBuffer);
+
+		// pipeline dynamic state
+		VkViewport viewport = { 0 };
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = (float)m_swapChain->GetExtents().width;
+		viewport.height = (float)m_swapChain->GetExtents().height;
+		viewport.minDepth = 0.0f;	// normalised! must be between 0 and 1
+		viewport.maxDepth = 1.0f;	// ^^
+		VkRect2D scissor = { 0 };
+		scissor.offset = { 0, 0 };
+		scissor.extent = m_swapChain->GetExtents();	// draw the full image
+
+		// rendering to colour + depth
+		// also clears these buffers!
+		VkRenderingAttachmentInfo colourAttachment = { 0 };
+		colourAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+		colourAttachment.clearValue = { {{m_mainPassClearColour.x, m_mainPassClearColour.y, m_mainPassClearColour.z, m_mainPassClearColour.w }} };
+		colourAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		colourAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colourAttachment.imageView = m_swapChain->GetViews()[swapImageIndex];
+		colourAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;	// this is the layout used during rendering, we need to ensure the transition happens first
+
+		VkRenderingAttachmentInfo depthAttachment = { 0 };
+		depthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+		depthAttachment.clearValue = { { 1.0f, 0} };
+		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		depthAttachment.imageView = m_vk->m_depthBufferView;
+		depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		VkRenderingInfo ri = { 0 };
+		ri.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+		ri.colorAttachmentCount = 1;
+		ri.pColorAttachments = &colourAttachment;
+		ri.pDepthAttachment = &depthAttachment;
+		ri.layerCount = 1;
+		ri.renderArea.offset = { 0,0 };
+		ri.renderArea.extent = m_swapChain->GetExtents();
+		vkCmdBeginRendering(cmdBuffer, &ri);
+
+		// IM renderer draw
+		Camera testCam;
+		float aspect = m_swapChain->GetExtents().width / (float)m_swapChain->GetExtents().height;
+		testCam.SetProjection(70.0f, aspect, 0.1f, 100.0f);
+		testCam.LookAt({ 3,2,-15.0 }, { 0,0,0 }, { 0,1,0 });
+		m_imRenderer->Draw(testCam.ProjectionMatrix() * testCam.ViewMatrix(), *m_device, *m_swapChain, cmdBuffer);
+
+		vkCmdEndRendering(cmdBuffer);
+
+		m_imRenderer->Flush();
+	}
+
+	bool RenderSystem::RecordCommandBuffer(int swapImageIndex)
+	{
+		R3_PROF_EVENT();
+
+		auto& cmdBuffer = m_vk->ThisFrameData().m_graphicsCmdBuffer;
+
+		// start writing
+		VkCommandBufferBeginInfo beginInfo = { 0 };
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		if (!CheckResult(vkBeginCommandBuffer(cmdBuffer, &beginInfo)))	// resets the cmd buffer
+		{
+			LogError("failed to begin recording command buffer!");
+			return false;
+		}
+
+		// Transition swap chain image and depth image to format optimal for drawing 
+		{
+			auto colourBarrier = VulkanHelpers::MakeImageBarrier(m_swapChain->GetImages()[swapImageIndex],
+				VK_IMAGE_ASPECT_COLOR_BIT,
+				VK_ACCESS_NONE,
+				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,		// dst mask = colour write
+				VK_IMAGE_LAYOUT_UNDEFINED,					// we dont care what format it starts in
+				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);	// to format optimal for drawing
+			auto depthBarrier = VulkanHelpers::MakeImageBarrier(m_vk->m_depthBufferImage.m_image,
+				VK_IMAGE_ASPECT_DEPTH_BIT,
+				VK_ACCESS_NONE,
+				VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,		// dst mask = depth write
+				VK_IMAGE_LAYOUT_UNDEFINED,							// we dont care what format it starts in
+				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);	// to format optimal for drawing
+			VkImageMemoryBarrier barriers[] = { colourBarrier, depthBarrier };
+
+			// dst stages = before colour write or depth read
+			auto dstStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, dstStages, 0, 0, nullptr, 0, nullptr, 2, barriers);
+		}
+
+		RecordMainPass(swapImageIndex);
+		DrawImgui(swapImageIndex);
+
+		// Transition swap chain image to format optimal for present
+		auto colourBarrier = VulkanHelpers::MakeImageBarrier(m_swapChain->GetImages()[swapImageIndex],
+			VK_IMAGE_ASPECT_COLOR_BIT,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,		// src mask = wait before writing attachment
+			VK_ACCESS_NONE,								// dst mask = we dont care?
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,	// from format optimal for drawing
+			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);			// to format optimal for present
+		vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &colourBarrier);
+
+		if (!CheckResult(vkEndCommandBuffer(cmdBuffer)))
+		{
+			LogError("failed to end recording command buffer!");
+			return false;
+		}
+
+		return true;
 	}
 
 	glm::vec2 RenderSystem::GetWindowExtents()
@@ -200,6 +303,21 @@ namespace R3
 		R3_PROF_EVENT();
 
 		ProcessEnvironmentSettings();
+
+		glm::vec4 groundColour(0.7, 0.7, 0.7, 1.0);
+		ImmediateRenderer::PerVertexData testScene[] = {
+			{{-10,0,-10,1},groundColour},
+			{{10,0,-10,1},groundColour},
+			{{10,0,10,1},groundColour},
+			{{-10,0,-10,1},groundColour},
+			{{10,0,10,1},groundColour},
+			{{-10,0,10,1},groundColour}
+		};
+		int triCount = (sizeof(testScene) / sizeof(testScene[0])) / 3;
+		for (int t = 0; t < triCount; ++t)
+		{
+			m_imRenderer->AddTriangle(&testScene[t * 3]);
+		}
 
 		float y = (float)sin(GetSystem<TimeSystem>()->GetElapsedTime());
 		ImmediateRenderer::PerVertexData vertices[3];
@@ -376,12 +494,6 @@ namespace R3
 			return false;
 		}
 
-		if (!CreateSimpleTriPipelines())
-		{
-			LogError("Failed to create pipelines");
-			return false;
-		}
-
 		if (!CreateCommandPools())
 		{
 			LogError("Failed to create command pools");
@@ -407,19 +519,6 @@ namespace R3
 			return false;
 		}
 
-		if (!CreateMesh())
-		{
-			LogError("Failed to create mesh");
-			return false;
-		}
-
-		LoadedModel cubeMesh;
-		if (!R3::LoadModel("models/cube.fbx", cubeMesh))
-		{
-			LogError("Failed to load cube mesh");
-			return false;
-		}
-
 		m_mainWindow->Show();
 
 		return true;
@@ -441,9 +540,6 @@ namespace R3
 		m_imRenderer->Destroy(*m_device);
 		m_imRenderer = nullptr;
 
-		// Destroy the mesh buffers
-		vmaDestroyBuffer(m_device->GetVMA(), m_vk->m_posColourVertexBuffer.m_buffer, m_vk->m_posColourVertexBuffer.m_allocation);
-
 		// Destroy the sync objects
 		vkDestroyFence(m_device->GetVkDevice(), m_vk->m_immediateSubmitFence, nullptr);
 		for (int f = c_maxFramesInFlight - 1; f >= 0; --f)	// destroy sync objects in reverse order
@@ -458,13 +554,6 @@ namespace R3
 		{
 			vkDestroyCommandPool(m_device->GetVkDevice(), m_vk->m_perFrameData[f].m_graphicsCommandPool, nullptr);
 		}
-
-		// destroy pipelines + layouts
-		vkDestroyPipelineLayout(m_device->GetVkDevice(), m_vk->m_simpleLayoutWithPushConstant, nullptr);
-		vkDestroyPipelineLayout(m_device->GetVkDevice(), m_vk->m_simplePipelineLayout, nullptr);
-		vkDestroyPipeline(m_device->GetVkDevice(), m_vk->m_simpleTriFromBuffersPipeline, nullptr);
-		vkDestroyPipeline(m_device->GetVkDevice(), m_vk->m_simpleTriFromBuffersPushConstantPipeline, nullptr);
-		vkDestroyPipeline(m_device->GetVkDevice(), m_vk->m_simpleTriPipeline, nullptr);
 		
 		// clean up depth buffer
 		vkDestroyImageView(m_device->GetVkDevice(), m_vk->m_depthBufferView, nullptr);
@@ -558,58 +647,6 @@ namespace R3
 		return true;
 	}
 
-	bool RenderSystem::CreateMesh()
-	{
-		R3_PROF_EVENT();
-
-		PosColourVertex verts[3];
-		verts[0].m_position = { 0.5f, 0.0f };
-		verts[1].m_position = { 0.0f, -1.0f };
-		verts[2].m_position = { 1.0f,  -1.0f };
-		verts[0].m_colour = { 0.f, 0.f, 1.0f };
-		verts[1].m_colour = { 0.f, 1.f, 0.5f };
-		verts[2].m_colour = { 1.f, 0.f, 0.1f };
-
-		AllocatedBuffer stagingBuffer = VulkanHelpers::CreateBuffer(m_device->GetVMA(),
-			sizeof(PosColourVertex) * 3,
-			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			VMA_MEMORY_USAGE_AUTO,
-			VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT
-		);
-		m_vk->m_posColourVertexBuffer = VulkanHelpers::CreateBuffer(m_device->GetVMA(),
-			sizeof(PosColourVertex) * 3,
-			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT
-		);
-		if (m_vk->m_posColourVertexBuffer.m_buffer == VK_NULL_HANDLE || stagingBuffer.m_buffer == VK_NULL_HANDLE)
-		{
-			LogError("Failed to create buffers");
-			return false;
-		}
-
-		// upload the data to the staging buffer
-		void* mappedData = nullptr;
-		if (CheckResult(vmaMapMemory(m_device->GetVMA(), stagingBuffer.m_allocation, &mappedData)))
-		{
-			memcpy(mappedData, verts, 3 * sizeof(PosColourVertex));
-			vmaUnmapMemory(m_device->GetVMA(), stagingBuffer.m_allocation);
-		}
-
-		// copy from staging to vertex buffer using immediate cmd submit
-		VulkanHelpers::RunCommandsImmediate(m_device->GetVkDevice(), m_device->GetGraphicsQueue(), m_vk->ThisFrameData().m_graphicsCommandPool, m_vk->m_immediateSubmitFence,
-			[&](VkCommandBuffer& buf) {
-				VkBufferCopy copyRegion{};
-				copyRegion.srcOffset = 0;
-				copyRegion.dstOffset = 0;
-				copyRegion.size = sizeof(PosColourVertex) * 3;
-				vkCmdCopyBuffer(buf, stagingBuffer.m_buffer, m_vk->m_posColourVertexBuffer.m_buffer, 1, &copyRegion);
-		});
-
-		// done with the staging buffer
-		vmaDestroyBuffer(m_device->GetVMA(), stagingBuffer.m_buffer, stagingBuffer.m_allocation);
-
-		return m_vk->m_posColourVertexBuffer.m_buffer != VK_NULL_HANDLE;
-	}
-
 	bool RenderSystem::RecreateSwapchain()
 	{
 		R3_PROF_EVENT();
@@ -668,196 +705,6 @@ namespace R3
 		return true;
 	}
 
-	void RenderSystem::DrawImgui(int swapImageIndex)
-	{
-		R3_PROF_EVENT();
-
-		auto& cmdBuffer = m_vk->ThisFrameData().m_graphicsCmdBuffer;
-
-		// Dynamic rendering to colour attachment only
-		VkRenderingAttachmentInfo colourAttachment = { 0 };
-		colourAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-		colourAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-		colourAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		colourAttachment.imageView = m_swapChain->GetViews()[swapImageIndex];
-		colourAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-		VkRenderingInfo ri = { 0 };
-		ri.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
-		ri.colorAttachmentCount = 1;
-		ri.pColorAttachments = &colourAttachment;
-		ri.layerCount = 1;
-		ri.renderArea.offset = { 0,0 };
-		ri.renderArea.extent = m_swapChain->GetExtents();
-		vkCmdBeginRendering(cmdBuffer, &ri);
-
-		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuffer);
-
-		vkCmdEndRendering(cmdBuffer);
-	}
-
-	void RenderSystem::RecordMainPass(int swapImageIndex)
-	{
-		R3_PROF_EVENT();
-		auto& cmdBuffer = m_vk->ThisFrameData().m_graphicsCmdBuffer;
-
-		// push immediate renderer vertices to gpu outside of render pass 
-		m_imRenderer->WriteVertexData(*m_device, cmdBuffer);
-
-		// pipeline dynamic state
-		VkViewport viewport = { 0 };
-		viewport.x = 0.0f;
-		viewport.y = 0.0f;
-		viewport.width = (float)m_swapChain->GetExtents().width;
-		viewport.height = (float)m_swapChain->GetExtents().height;
-		viewport.minDepth = 0.0f;	// normalised! must be between 0 and 1
-		viewport.maxDepth = 1.0f;	// ^^
-		VkRect2D scissor = { 0 };
-		scissor.offset = { 0, 0 };
-		scissor.extent = m_swapChain->GetExtents();	// draw the full image
-
-		// Dynamic rendering to colour + depth
-		// also clears these buffers!
-		VkRenderingAttachmentInfo colourAttachment = { 0 };
-		colourAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-		colourAttachment.clearValue = { {{m_mainPassClearColour.x, m_mainPassClearColour.y, m_mainPassClearColour.z, m_mainPassClearColour.w }} };
-		colourAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		colourAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		colourAttachment.imageView = m_swapChain->GetViews()[swapImageIndex];
-		colourAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;	// this is the layout used during rendering, we need to ensure the transition happens first
-
-		VkRenderingAttachmentInfo depthAttachment = { 0 };
-		depthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-		depthAttachment.clearValue = { { 1.0f, 0} };
-		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		depthAttachment.imageView = m_vk->m_depthBufferView;
-		depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-		VkRenderingInfo ri = { 0 };
-		ri.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
-		ri.colorAttachmentCount = 1;
-		ri.pColorAttachments = &colourAttachment;
-		ri.pDepthAttachment = &depthAttachment;
-		ri.layerCount = 1;
-		ri.renderArea.offset = { 0,0 };
-		ri.renderArea.extent = m_swapChain->GetExtents();
-		vkCmdBeginRendering(cmdBuffer, &ri);
-
-		// bind the pipeline
-		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_vk->m_simpleTriPipeline);
-
-		// Set pipeline dynamic state
-		vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
-		vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
-
-		// draw one triangle made of 3 verts
-		vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
-
-		// bind the 2nd pipeline
-		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_vk->m_simpleTriFromBuffersPipeline);
-
-		// Set pipeline dynamic state
-		vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
-		vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
-
-		// bind the vertex buffer with offset 0
-		constexpr VkDeviceSize offset = 0;
-		vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &m_vk->m_posColourVertexBuffer.m_buffer, &offset);
-
-		// draw one triangle made of 3 verts
-		vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
-
-		// bind the pipeline with push constants
-		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_vk->m_simpleTriFromBuffersPushConstantPipeline);
-
-		// Set pipeline dynamic state
-		vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
-		vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
-
-		// bind the vertex buffer with offset 0
-		vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &m_vk->m_posColourVertexBuffer.m_buffer, &offset);
-
-		// push constants
-		PushConstant constants;
-		static double angle = 0.0;
-		angle += GetSystem<TimeSystem>()->GetVariableDeltaTime();
-		constants.m_colour = { sin(angle), cos(angle), 1.0f, 1.0f };
-		constants.m_transform = glm::translate(glm::vec3(sin(angle), sin(angle), sin(angle)));
-		vkCmdPushConstants(cmdBuffer, m_vk->m_simpleLayoutWithPushConstant, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(constants), &constants);
-
-		// draw one triangle made of 3 verts
-		vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
-
-		// IM renderer draw
-		Camera testCam;
-		float aspect = m_swapChain->GetExtents().width / (float)m_swapChain->GetExtents().height;
-		testCam.SetProjection(70.0f, aspect, 0.1f, 100.0f);
-		testCam.LookAt({ 3,2,-5.0 }, { 0,0,0 }, { 0,1,0 });
-
-		m_imRenderer->Draw(testCam.ProjectionMatrix() * testCam.ViewMatrix(), *m_device, *m_swapChain, cmdBuffer);
-		m_imRenderer->Flush();
-
-		vkCmdEndRendering(cmdBuffer);
-	}
-
-	bool RenderSystem::RecordCommandBuffer(int swapImageIndex)
-	{
-		R3_PROF_EVENT();
-
-		auto& cmdBuffer = m_vk->ThisFrameData().m_graphicsCmdBuffer;
-
-		// start writing
-		VkCommandBufferBeginInfo beginInfo = { 0 };
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		if (!CheckResult(vkBeginCommandBuffer(cmdBuffer, &beginInfo)))	// resets the cmd buffer
-		{
-			LogError("failed to begin recording command buffer!");
-			return false;
-		}
-
-		// Transition swap chain image and depth image to format optimal for drawing 
-		{
-			auto colourBarrier = VulkanHelpers::MakeImageBarrier(m_swapChain->GetImages()[swapImageIndex],
-				VK_IMAGE_ASPECT_COLOR_BIT,
-				VK_ACCESS_NONE,	
-				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,		// dst mask = colour write
-				VK_IMAGE_LAYOUT_UNDEFINED,					// we dont care what format it starts in
-				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);	// to format optimal for drawing
-			auto depthBarrier = VulkanHelpers::MakeImageBarrier(m_vk->m_depthBufferImage.m_image,
-				VK_IMAGE_ASPECT_DEPTH_BIT,
-				VK_ACCESS_NONE,
-				VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,		// dst mask = depth write
-				VK_IMAGE_LAYOUT_UNDEFINED,							// we dont care what format it starts in
-				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);	// to format optimal for drawing
-			VkImageMemoryBarrier barriers[] = { colourBarrier, depthBarrier };
-
-			// dst stages = before colour write or depth read
-			auto dstStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-			vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, dstStages, 0, 0, nullptr, 0, nullptr, 2, barriers);
-		}
-
-		RecordMainPass(swapImageIndex);
-		DrawImgui(swapImageIndex);
-
-		// Transition swap chain image to format optimal for present
-		auto colourBarrier = VulkanHelpers::MakeImageBarrier(m_swapChain->GetImages()[swapImageIndex],
-			VK_IMAGE_ASPECT_COLOR_BIT, 
-			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,		// src mask = wait before writing attachment
-			VK_ACCESS_NONE,								// dst mask = we dont care?
-			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,	// from format optimal for drawing
-			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);			// to format optimal for present
-		vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &colourBarrier);
-
-		if (!CheckResult(vkEndCommandBuffer(cmdBuffer)))
-		{
-			LogError("failed to end recording command buffer!");
-			return false;
-		}
-
-		return true;
-	}
-
 	bool RenderSystem::CreateCommandBuffers()
 	{
 		R3_PROF_EVENT();
@@ -900,155 +747,6 @@ namespace R3
 				return false;
 			}
 		}
-
-		return true;
-	}
-
-	bool RenderSystem::CreateSimpleTriPipelines()
-	{
-		R3_PROF_EVENT();
-
-		// Load the shaders
-		// Note the shader modules can be destroyed once the pipeline is created
-		// compiled shader state is associated with the pipeline, not the module!
-		std::string basePath = "shaders_spirv\\vk_tutorials\\";
-		auto singleTriVertexShader = VulkanHelpers::LoadShaderModule(m_device->GetVkDevice(), basePath + "fixed_triangle.vert.spv");
-		auto singleTriFragmentShader = VulkanHelpers::LoadShaderModule(m_device->GetVkDevice(), basePath + "fixed_triangle.frag.spv");
-		auto triBufferVertShader = VulkanHelpers::LoadShaderModule(m_device->GetVkDevice(), basePath + "triangle_from_buffers.vert.spv");
-		auto triBufferFragShader = VulkanHelpers::LoadShaderModule(m_device->GetVkDevice(), basePath + "triangle_from_buffers.frag.spv");
-		auto triBufferPushConstantVertShader = VulkanHelpers::LoadShaderModule(m_device->GetVkDevice(), basePath + "triangle_from_buffers_with_push_constants.vert.spv");
-		if (singleTriVertexShader == VK_NULL_HANDLE || singleTriFragmentShader == VK_NULL_HANDLE
-			|| triBufferVertShader == VK_NULL_HANDLE || triBufferFragShader == VK_NULL_HANDLE
-			|| triBufferPushConstantVertShader == VK_NULL_HANDLE)
-		{
-			LogError("Failed to create shader modules");
-			return false;
-		}
-
-		// Create pipeline layouts
-		VkPipelineLayoutCreateInfo pipelineLayoutInfo = { 0 };
-		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = 0;
-		pipelineLayoutInfo.pushConstantRangeCount = 0;
-		if (!CheckResult(vkCreatePipelineLayout(m_device->GetVkDevice(), &pipelineLayoutInfo, nullptr, &m_vk->m_simplePipelineLayout)))
-		{
-			LogError("Failed to create pipeline layout!");
-			return false;
-		}
-
-		// push constants specified as byte ranges, bound to specific shader stages
-		VkPushConstantRange constantRange;
-		constantRange.offset = 0;	// needs to match in the shader if >0!
-		constantRange.size = sizeof(PushConstant);
-		constantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-		pipelineLayoutInfo.pushConstantRangeCount = 1;
-		pipelineLayoutInfo.pPushConstantRanges = &constantRange;
-		if (!CheckResult(vkCreatePipelineLayout(m_device->GetVkDevice(), &pipelineLayoutInfo, nullptr, &m_vk->m_simpleLayoutWithPushConstant)))
-		{
-			LogError("Failed to create pipeline layout!");
-			return false;
-		}
-
-		PipelineBuilder pb;
-
-		// describe the stages and which shader is used
-		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_VERTEX_BIT, singleTriVertexShader));
-		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_FRAGMENT_BIT, singleTriFragmentShader));
-
-		// dynamic state must be set each time the pipeline is bound!
-		std::vector<VkDynamicState> dynamicStates = {
-			VK_DYNAMIC_STATE_VIEWPORT,		// we will set viewport at draw time (lets us handle window resize without recreating pipelines)
-			VK_DYNAMIC_STATE_SCISSOR		// same for the scissor data
-		};
-		pb.m_dynamicState = VulkanHelpers::CreatePipelineDynamicState(dynamicStates);
-
-		// Set up vertex buffer input state. Since we have no input buffers, just set count to 0
-		VkPipelineVertexInputStateCreateInfo vertexInputInfo = {0};
-		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		vertexInputInfo.vertexBindingDescriptionCount = 0;
-		vertexInputInfo.vertexAttributeDescriptionCount = 0;
-		pb.m_vertexInputState = vertexInputInfo;
-
-		// Input assembly describes type of geometry (lines/tris) and topology(strips,lists,etc) to draw
-		pb.m_inputAssemblyState = VulkanHelpers::CreatePipelineInputAssemblyState(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-
-		// create the viewport state for the pipeline
-		// if using dynamic we only need to set the counts
-		VkPipelineViewportStateCreateInfo viewportState = {0};
-		viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-		viewportState.viewportCount = 1;
-		viewportState.scissorCount = 1;
-		pb.m_viewportState = viewportState;
-
-		// Setup rasteriser state
-		pb.m_rasterState = VulkanHelpers::CreatePipelineRasterState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE);
-
-		// Multisampling state
-		pb.m_multisamplingState = VulkanHelpers::CreatePipelineMultiSampleState_SingleSample();
-
-		// Depth-stencil state (we have no depth/stencil right now, disable it all)
-		VkPipelineDepthStencilStateCreateInfo depthStencilState = { 0 };
-		depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-		depthStencilState.depthTestEnable = VK_FALSE;
-		depthStencilState.depthWriteEnable = VK_FALSE;
-		depthStencilState.depthBoundsTestEnable = VK_FALSE;
-		depthStencilState.stencilTestEnable = VK_FALSE;
-		pb.m_depthStencilState = depthStencilState;
-
-		// Colour blending state
-		// blending state per attachment
-		VkPipelineColorBlendAttachmentState colourBlendAttachment = VulkanHelpers::CreatePipelineColourBlendAttachment_NoBlending();	
-		std::vector<VkPipelineColorBlendAttachmentState> allAttachments = {
-			colourBlendAttachment
-		};
-		pb.m_colourBlendState = VulkanHelpers::CreatePipelineColourBlendState(allAttachments);	// Pipeline also has some global blending state (constants, logical ops enable)
-
-		// build the pipeline
-		m_vk->m_simpleTriPipeline = pb.Build(m_device->GetVkDevice(), m_vk->m_simplePipelineLayout, 1, &m_swapChain->GetFormat().format, m_vk->m_depthBufferFormat);
-		if (m_vk->m_simpleTriPipeline == VK_NULL_HANDLE)
-		{
-			LogError("Failed to create pipeline!");
-			return false;
-		}
-
-		// dont need the shader modules any more!
-		vkDestroyShaderModule(m_device->GetVkDevice(), singleTriFragmentShader, nullptr);
-		vkDestroyShaderModule(m_device->GetVkDevice(), singleTriVertexShader, nullptr);
-
-		// build a similar pipeline but with shaders that take vertex data from buffers
-		// also passes buffer descriptors!
-		pb.m_shaderStages.clear();
-		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_VERTEX_BIT, triBufferVertShader));
-		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_FRAGMENT_BIT, triBufferFragShader));
-
-		// bind the buffers + input attrib descriptors
-		auto bufferBindingDescriptions = PosColourVertex::GetInputBindingDescription();
-		auto attributeDescriptions = PosColourVertex::GetAttributeDescriptions();
-		pb.m_vertexInputState.vertexBindingDescriptionCount = 1;
-		pb.m_vertexInputState.pVertexBindingDescriptions = &bufferBindingDescriptions;
-		pb.m_vertexInputState.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-		pb.m_vertexInputState.pVertexAttributeDescriptions = attributeDescriptions.data();
-
-		m_vk->m_simpleTriFromBuffersPipeline = pb.Build(m_device->GetVkDevice(), m_vk->m_simplePipelineLayout, 1, &m_swapChain->GetFormat().format, m_vk->m_depthBufferFormat);
-		if (m_vk->m_simpleTriFromBuffersPipeline == VK_NULL_HANDLE)
-		{
-			LogError("Failed to create fancier pipeline!");
-			return false;
-		}
-		vkDestroyShaderModule(m_device->GetVkDevice(), triBufferVertShader, nullptr);
-
-		// build pipeline for simple mesh with transform push constant (and push constant layout!!!)
-		pb.m_shaderStages.clear();
-		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_VERTEX_BIT, triBufferPushConstantVertShader));
-		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_FRAGMENT_BIT, triBufferFragShader));
-		m_vk->m_simpleTriFromBuffersPushConstantPipeline = pb.Build(m_device->GetVkDevice(), m_vk->m_simpleLayoutWithPushConstant, 1, &m_swapChain->GetFormat().format, m_vk->m_depthBufferFormat);
-		if (m_vk->m_simpleTriFromBuffersPushConstantPipeline == VK_NULL_HANDLE)
-		{
-			LogError("Failed to create fancier pipeline!");
-			return false;
-		}
-		vkDestroyShaderModule(m_device->GetVkDevice(), triBufferPushConstantVertShader, nullptr);
-		vkDestroyShaderModule(m_device->GetVkDevice(), triBufferFragShader, nullptr);
 
 		return true;
 	}

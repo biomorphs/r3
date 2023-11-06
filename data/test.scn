@@ -10,6 +10,18 @@
     }
    },
    "ID": 0
+  },
+  {
+   "BenchComponent1": {
+    "SomeData": 5
+   },
+   "BenchComponent2": {
+    "SomeData1": 10,
+    "SomeData2": 20,
+    "SomeData3": 30,
+    "SomeData4": 40
+   },
+   "ID": 1
   }
  ],
  "WorldName": "EditorWorld"

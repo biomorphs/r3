@@ -29,11 +29,9 @@ namespace R3
 		void DrawImgui(int swapImageIndex);
 		void ProcessEnvironmentSettings();
 		bool ShowGui();
-		bool CreateMesh();
 		bool DrawFrame();
 		bool CreateWindow();
 		bool CreateDepthBuffer();
-		bool CreateSimpleTriPipelines();
 		bool CreateCommandPools();
 		bool CreateCommandBuffers();
 		bool RecordCommandBuffer(int swapImageIndex);

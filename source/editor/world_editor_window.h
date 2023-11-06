@@ -1,6 +1,6 @@
 #pragma once
 #include "editor_window.h"
-#include "entities/entity_handle.h"	// tempshit
+#include "entities/entity_handle.h"
 #include <string>
 #include <memory>
 
