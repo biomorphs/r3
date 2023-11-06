@@ -2,8 +2,6 @@
 #include "engine/systems.h"
 #include "core/glm_headers.h"
 
-struct VkViewport;
-struct VkRect2D;
 namespace R3
 {
 	class Device;

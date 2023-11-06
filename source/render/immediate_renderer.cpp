@@ -44,9 +44,19 @@ namespace R3
 	{
 	}
 
+	void ImmediateRenderer::AddLine(const PerVertexData vertices[2])
+	{
+		DrawData newLine;
+		newLine.m_startVertexOffset = static_cast<uint32_t>(m_thisFrameVertices.size());
+		newLine.m_vertexCount = 2;
+		m_thisFrameVertices.emplace_back(vertices[0]);
+		m_thisFrameVertices.emplace_back(vertices[1]);
+		m_thisFrameLines.emplace_back(newLine);
+	}
+
 	void ImmediateRenderer::AddTriangle(const PerVertexData vertices[3])
 	{
-		TriangleDrawData newTri;
+		DrawData newTri;
 		newTri.m_startVertexOffset = static_cast<uint32_t>(m_thisFrameVertices.size());
 		newTri.m_vertexCount = 3;
 		m_thisFrameVertices.emplace_back(vertices[0]);
@@ -95,10 +105,7 @@ namespace R3
 
 		auto& pfd = m_perFrameData[m_currentFrameIndex];
 
-		// bind the pipeline
-		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_depthReadDisabledPipeline);
-
-		// Set pipeline dynamic viewport + scissor based on swapchain extents
+		// pipeline dynamic viewport + scissor based on swapchain extents
 		VkViewport viewport = { 0 };
 		viewport.x = 0.0f;
 		viewport.y = 0.0f;
@@ -109,30 +116,43 @@ namespace R3
 		VkRect2D scissor = { 0 };
 		scissor.offset = { 0, 0 };
 		scissor.extent = swapChain.GetExtents();	// draw the full image
+
+		// draw the triangles
+		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_depthReadDisabledTriPipeline);
 		vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
 		vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
-
-		// bind the VB with 0 offset, draw calls will include per-frame offset instead
-		constexpr VkDeviceSize offset = 0;
+		
+		constexpr VkDeviceSize offset = 0;	// bind the VB with 0 offset, draw calls will include per-frame offset instead
 		vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &m_allVertexData.m_buffer, &offset);
 
-		// draw the triangles, with vertices offset into the current buffer
 		// pass the vertex-screen transform via push constants for now (laziness!)
 		for (auto& tris : m_thisFrameTriangles)
 		{
 			vkCmdPushConstants(cmdBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(vertexToScreen), &vertexToScreen);
 			vkCmdDraw(cmdBuffer, tris.m_vertexCount, 1, tris.m_startVertexOffset + pfd.m_vertexOffset, 0);
 		}
+
+		// Draw the lines
+		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_depthReadDisabledLinesPipeline);
+		vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
+		vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
+		vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &m_allVertexData.m_buffer, &offset);
+		for (auto& lines : m_thisFrameLines)
+		{
+			vkCmdPushConstants(cmdBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(vertexToScreen), &vertexToScreen);
+			vkCmdDraw(cmdBuffer, lines.m_vertexCount, 1, lines.m_startVertexOffset + pfd.m_vertexOffset, 0);
+		}
 	}
 
 	void ImmediateRenderer::Flush()
 	{
 		m_thisFrameTriangles.clear();
+		m_thisFrameLines.clear();
 		m_thisFrameVertices.clear();
 		m_currentFrameIndex = (m_currentFrameIndex + 1) % c_framesInFlight;
 	}
 
-	bool ImmediateRenderer::CreateNoDepthReadPipeline(Device& d, Swapchain& swapChain, VkFormat depthBufferFormat)
+	bool ImmediateRenderer::CreateNoDepthReadPipelines(Device& d, Swapchain& swapChain, VkFormat depthBufferFormat)
 	{
 		// Load the shaders
 		std::string basePath = "shaders_spirv\\common\\";
@@ -197,11 +217,21 @@ namespace R3
 		};
 		pb.m_colourBlendState = VulkanHelpers::CreatePipelineColourBlendState(allAttachments);	// Pipeline also has some global blending state (constants, logical ops enable)
 
-		// build the pipeline
-		m_depthReadDisabledPipeline = pb.Build(d.GetVkDevice(), m_pipelineLayout, 1, &swapChain.GetFormat().format, depthBufferFormat);
-		if (m_depthReadDisabledPipeline == VK_NULL_HANDLE)
+		// build the pipelines
+		m_depthReadDisabledTriPipeline = pb.Build(d.GetVkDevice(), m_pipelineLayout, 1, &swapChain.GetFormat().format, depthBufferFormat);
+		if (m_depthReadDisabledTriPipeline == VK_NULL_HANDLE)
 		{
-			LogError("Failed to create depth-read-disabled pipeline!");
+			LogError("Failed to create depth-read-disabled triangle pipeline!");
+			return false;
+		}
+
+		// build another similar pipeline but with line primitives + no backface culling
+		pb.m_inputAssemblyState = VulkanHelpers::CreatePipelineInputAssemblyState(VK_PRIMITIVE_TOPOLOGY_LINE_LIST);
+		pb.m_rasterState = VulkanHelpers::CreatePipelineRasterState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE);
+		m_depthReadDisabledLinesPipeline = pb.Build(d.GetVkDevice(), m_pipelineLayout, 1, &swapChain.GetFormat().format, depthBufferFormat);
+		if (m_depthReadDisabledLinesPipeline == VK_NULL_HANDLE)
+		{
+			LogError("Failed to create depth-read-disabled lines pipeline!");
 			return false;
 		}
 
@@ -258,7 +288,7 @@ namespace R3
 		}
 
 		// create pipeline compatible with swap chain + depth buffer
-		if (!CreateNoDepthReadPipeline(d, swapChain, depthBufferFormat))
+		if (!CreateNoDepthReadPipelines(d, swapChain, depthBufferFormat))
 		{
 			LogError("Failed to create pipeline");
 			return false;
@@ -272,7 +302,8 @@ namespace R3
 		R3_PROF_EVENT();
 
 		// destroy the pipeline objects
-		vkDestroyPipeline(d.GetVkDevice(), m_depthReadDisabledPipeline, nullptr);
+		vkDestroyPipeline(d.GetVkDevice(), m_depthReadDisabledTriPipeline, nullptr);
+		vkDestroyPipeline(d.GetVkDevice(), m_depthReadDisabledLinesPipeline, nullptr);
 		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayout, nullptr);
 
 		vmaUnmapMemory(d.GetVMA(), m_stagingVertexData.m_allocation);

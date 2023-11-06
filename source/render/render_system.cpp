@@ -160,7 +160,7 @@ namespace R3
 		Camera testCam;
 		float aspect = m_swapChain->GetExtents().width / (float)m_swapChain->GetExtents().height;
 		testCam.SetProjection(70.0f, aspect, 0.1f, 100.0f);
-		testCam.LookAt({ 3,2,-15.0 }, { 0,0,0 }, { 0,1,0 });
+		testCam.LookAt({ 3,3,-15.0 }, { 0,0,0 }, { 0,1,0 });
 		m_imRenderer->Draw(testCam.ProjectionMatrix() * testCam.ViewMatrix(), *m_device, *m_swapChain, cmdBuffer);
 
 		vkCmdEndRendering(cmdBuffer);
@@ -317,6 +317,53 @@ namespace R3
 		for (int t = 0; t < triCount; ++t)
 		{
 			m_imRenderer->AddTriangle(&testScene[t * 3]);
+		}
+
+		glm::vec4 lineColour(1.0, 0.0, 0.0, 1.0);
+		ImmediateRenderer::PerVertexData testLines[] = {
+			{ {-1,-1,-1,1}, lineColour},
+			{ {1,-1,-1,1}, lineColour},
+		
+			{ {1,-1,-1,1}, lineColour},
+			{ {1,1,-1,1}, lineColour},
+		
+			{ {1,1,-1,1}, lineColour},
+			{ {-1,1,-1,1}, lineColour},
+		
+			{ {-1,1,-1,1}, lineColour},
+			{ {-1,-1,-1,1}, lineColour},
+
+			{ {-1,-1,1,1}, lineColour},
+			{ {1,-1,1,1}, lineColour},
+
+			{ {1,-1,1,1}, lineColour},
+			{ {1,1,1,1}, lineColour},
+
+			{ {1,1,1,1}, lineColour},
+			{ {-1,1,1,1}, lineColour},
+
+			{ {-1,1,1,1}, lineColour},
+			{ {-1,-1,1,1}, lineColour},
+
+			{ {-1,-1,-1,1}, lineColour},
+			{ {-1,-1,1,1}, lineColour},
+
+			{ {1,-1,-1,1}, lineColour},
+			{ {1,-1,1,1}, lineColour},
+
+			{ {1,1,-1,1}, lineColour},
+			{ {1,1,1,1}, lineColour},
+
+			{ {-1,1,-1,1}, lineColour},
+			{ {-1,1,1,1}, lineColour},
+		};
+		int lineCount = (sizeof(testLines) / sizeof(testLines[0])) / 2;
+		glm::vec4 offset(4.0f, 1.0f, -2.0f, 0.0f);
+		for (int t = 0; t < lineCount; ++t)
+		{
+			testLines[t * 2].m_position += offset;
+			testLines[(t * 2) + 1].m_position += offset;
+			m_imRenderer->AddLine(&testLines[t * 2]);
 		}
 
 		float y = (float)sin(GetSystem<TimeSystem>()->GetElapsedTime());

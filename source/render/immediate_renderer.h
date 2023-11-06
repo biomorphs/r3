@@ -28,15 +28,16 @@ namespace R3
 		void Flush();	// call at end of frame, clears out previous tri data
 
 		void AddTriangle(const PerVertexData vertices[3]);
+		void AddLine(const PerVertexData vertices[2]);
 
 	private:
-		bool CreateNoDepthReadPipeline(Device& d, Swapchain& swapChain, VkFormat depthBufferFormat);
+		bool CreateNoDepthReadPipelines(Device& d, Swapchain& swapChain, VkFormat depthBufferFormat);
 
 		static constexpr int c_framesInFlight = 2;
 		struct PerFrameData {
 			uint32_t m_vertexOffset = 0;			// offset into m_allVertexData
 		};
-		struct TriangleDrawData {
+		struct DrawData {
 			uint32_t m_startVertexOffset = 0;		// relative to m_thisFrameVertices
 			uint32_t m_vertexCount = 0;
 		};
@@ -45,11 +46,13 @@ namespace R3
 		AllocatedBuffer m_stagingVertexData;	// contains max vertices for 1 frame, host visible, coherant
 		void* m_mappedStagingBuffer = nullptr;
 		std::vector<PerVertexData> m_thisFrameVertices;
-		std::vector<TriangleDrawData> m_thisFrameTriangles;
+		std::vector<DrawData> m_thisFrameTriangles;
+		std::vector<DrawData> m_thisFrameLines;
 		PerFrameData m_perFrameData[c_framesInFlight];
 		int m_currentFrameIndex = 0;
 
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
-		VkPipeline m_depthReadDisabledPipeline = VK_NULL_HANDLE;
+		VkPipeline m_depthReadDisabledTriPipeline = VK_NULL_HANDLE;
+		VkPipeline m_depthReadDisabledLinesPipeline = VK_NULL_HANDLE;
 	};
 }
