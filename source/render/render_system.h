@@ -18,6 +18,7 @@ namespace R3
 		virtual bool Init();
 		virtual void Shutdown();
 		glm::vec2 GetWindowExtents();
+		ImmediateRenderer& GetImRenderer() { return *m_imRenderer; }
 
 		// Called from imgui system
 		bool InitImGui();

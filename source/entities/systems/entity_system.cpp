@@ -183,7 +183,6 @@ namespace Entities
 		RegisterComponentType<BenchComponent2>();
 		RegisterComponentType<TestComponent1>();
 		RegisterComponentType<TestComponent2>();
-		RegisterComponentType<EnvironmentSettingsComponent>();
 		EntityBenchmarks(CreateWorld("Benchmarks", "Benchmarks"));
 	}
 

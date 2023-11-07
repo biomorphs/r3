@@ -1,6 +1,7 @@
 #include "engine_startup.h"
 #include "frame_graph.h"
 #include "systems.h"
+#include "register_engine_components.h"
 #include "systems/time_system.h"
 #include "systems/event_system.h"
 #include "systems/input_system.h"
@@ -87,6 +88,9 @@ namespace R3
 			LogError("Failed to initialise systems");
 			return false;
 		}
+
+		// Register engine component types after systems init
+		RegisterEngineComponents();
 
 		// Build the frame graph
 		FrameGraph runFrame;

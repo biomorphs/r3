@@ -1,7 +1,6 @@
 set(EngineLib_SourceFiles
 	loaded_model.h
 	loaded_model.cpp
-	thread_masks.h
 	engine_startup.h
 	engine_startup.cpp
 	systems.h
@@ -21,6 +20,8 @@ set(EngineLib_SourceFiles
 	basic_value_inspector.cpp
 	file_dialogs.h
 	file_dialogs.cpp
+	register_engine_components.h
+	register_engine_components.cpp
 	systems/time_system.h
 	systems/time_system.cpp
 	systems/event_system.h
@@ -31,6 +32,10 @@ set(EngineLib_SourceFiles
 	systems/imgui_system.cpp
 	components/environment_settings.h
 	components/environment_settings.cpp
+	components/transform.h
+	components/transform.cpp
+	components/camera.h
+	components/camera.cpp
 )
 
 add_library(Engine ${EngineLib_SourceFiles})

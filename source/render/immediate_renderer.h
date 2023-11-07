@@ -29,6 +29,8 @@ namespace R3
 
 		void AddTriangle(const PerVertexData vertices[3]);
 		void AddLine(const PerVertexData vertices[2]);
+		void AddLines(const PerVertexData* vertices, int linecount);
+		void AddAxisAtPoint(glm::vec3 position, glm::mat4 transform = glm::identity<glm::mat4>());
 
 	private:
 		bool CreateNoDepthReadPipelines(Device& d, Swapchain& swapChain, VkFormat depthBufferFormat);

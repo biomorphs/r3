@@ -12,8 +12,10 @@
 #include "engine/entity_list_widget.h"
 #include "engine/entity_inspector_widget.h"
 #include "engine/imgui_menubar_helper.h"
+#include "engine/components/transform.h"
 #include "entities/systems/entity_system.h"
 #include "render/render_system.h"
+#include "render/immediate_renderer.h"
 #include "imgui.h"
 #include <format>
 
@@ -187,6 +189,20 @@ namespace R3
 		return m_titleString;
 	}
 
+	void WorldEditorWindow::DrawSelected()
+	{
+		auto theWorld = GetWorld();
+		auto& imRender = Systems::GetSystem<RenderSystem>()->GetImRenderer();
+		for (auto& theEntity : m_selectedEntities)
+		{
+			auto transformCmp = theWorld->GetComponent<TransformComponent>(theEntity);
+			if (transformCmp)
+			{
+				imRender.AddAxisAtPoint(transformCmp->GetPosition(), transformCmp->GetWorldspaceMatrix());
+			}
+		}
+	}
+
 	void WorldEditorWindow::Update()
 	{
 		R3_PROF_EVENT();
@@ -200,6 +216,7 @@ namespace R3
 			m_showCommandsWindow = m_cmds->ShowWidget();
 		}
 		m_cmds->RunNext();
+		DrawSelected();
 	}
 
 	EditorWindow::CloseStatus WorldEditorWindow::PrepareToClose()

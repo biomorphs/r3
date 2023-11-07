@@ -54,6 +54,29 @@ namespace R3
 		m_thisFrameLines.emplace_back(newLine);
 	}
 
+	void ImmediateRenderer::AddLines(const PerVertexData* vertices, int linecount)
+	{
+		DrawData newLines;
+		newLines.m_startVertexOffset = static_cast<uint32_t>(m_thisFrameVertices.size());
+		newLines.m_vertexCount = linecount * 2;
+		m_thisFrameVertices.insert(m_thisFrameVertices.end(), vertices, vertices + (linecount * 2));
+		m_thisFrameLines.emplace_back(newLines);
+	}
+
+	void ImmediateRenderer::AddAxisAtPoint(glm::vec3 position, glm::mat4 transform)
+	{
+		glm::vec4 p0 = glm::vec4(position, 1.0f);
+		PerVertexData vertices[6] = {
+			{ p0, {1.0f,0.0f,0.0f,1.0f} },
+			{ transform * glm::vec4(1.0f,0.0f,0.0f,1.0f), {1.0f,0.0f,0.0f,1.0f} },
+			{ p0, {0.0f,1.0f,0.0f,1.0f} },
+			{ transform * glm::vec4(0.0f,1.0f,0.0f,1.0f), {0.0f,1.0f,0.0f,1.0f} },
+			{ p0, {0.0f,0.0f,1.0f,1.0f} },
+			{ transform * glm::vec4(0.0f,0.0f,1.0f,1.0f), {0.0f,0.0f,1.0f,1.0f} },
+		};
+		AddLines(vertices, 3);
+	}
+
 	void ImmediateRenderer::AddTriangle(const PerVertexData vertices[3])
 	{
 		DrawData newTri;

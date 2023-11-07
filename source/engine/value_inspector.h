@@ -14,7 +14,9 @@ namespace R3
 	{
 	public:
 		virtual ~ValueInspector() {}
-		virtual bool Inspect(std::string_view label, int currentValue, std::function<void(int)> setFn, int step = 1, int minv = INT_MIN, int maxv = INT_MAX) = 0;
+		virtual bool Inspect(std::string_view label, int currentValue, std::function<void(int)> setFn, int step, int minv, int maxv) = 0;
+		virtual bool Inspect(std::string_view label, float currentValue, std::function<void(float)> setFn, float step, float minv, float maxv) = 0;
+		virtual bool Inspect(std::string_view label, glm::vec3 currentValue, std::function<void(glm::vec3)> setFn, glm::vec3 minv, glm::vec3 maxv) = 0;
 		virtual bool InspectColour(std::string_view label, glm::vec4 currentValue, std::function<void(glm::vec4)> setFn) = 0;
 	};
 }

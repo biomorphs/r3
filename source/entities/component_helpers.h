@@ -2,6 +2,7 @@
 
 // Pretty much all components will be implementing serialisation and inspection
 #include "entities/world.h"
+#include "entities/component_storage.h"
 #include "engine/serialiser.h"
 #include "engine/value_inspector.h"
 
@@ -24,6 +25,20 @@ namespace R3
 			if (foundCmp)
 			{
 				foundCmp->*valuePtr = newValue;
+			}
+		};
+	}
+
+	// takes a pointer to member *function* as a parameter, this will be called when the value is set
+	template<class ComponentType, class PropertyType>
+	auto InspectProperty(void(ComponentType::* fn)(PropertyType), const Entities::EntityHandle& e, Entities::World* w)
+	{
+		return [e, w, fn](PropertyType newValue)
+		{
+			auto foundCmp = w->GetComponent<ComponentType>(e);
+			if (foundCmp)
+			{
+				(foundCmp->*fn)(newValue);
 			}
 		};
 	}

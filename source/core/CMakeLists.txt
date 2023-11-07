@@ -2,8 +2,6 @@ set(CoreLib_SourceFiles
 	file_io.h
 	file_io.cpp
 	glm_headers.h
-	thread_pool.h
-	thread_pool.cpp
 	mutex.h
 	mutex.cpp
     platform.h
