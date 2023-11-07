@@ -27,6 +27,7 @@ namespace Entities
 		void DestroyWorld(const std::string& id);
 
 		void SetActiveWorld(const std::string& id) { m_activeWorldId = id; }
+		const std::string& GetActiveWorldID() { return m_activeWorldId; }
 		World* GetActiveWorld();
 
 	private:

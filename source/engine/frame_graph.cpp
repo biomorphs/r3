@@ -115,9 +115,9 @@ namespace R3
 		return *AddAsyncInternal(name);
 	}
 	
-	FrameGraph::Node& FrameGraph::Node::AddFn(std::string name)
+	FrameGraph::Node& FrameGraph::Node::AddFn(std::string name, bool addToFront)
 	{
-		AddFnInternal(name);
+		AddFnInternal(name, addToFront);
 		return *this;
 	}
 
@@ -173,14 +173,21 @@ namespace R3
 		return returnPtr;
 	}
 
-	FrameGraph::FnNode* FrameGraph::Node::AddFnInternal(std::string name)
+	FrameGraph::FnNode* FrameGraph::Node::AddFnInternal(std::string name, bool addToFront)
 	{
 		R3_PROF_EVENT();
 		auto newFn = std::make_unique<FnNode>();
 		auto returnPtr = newFn.get();
 		newFn->m_displayName = "Fn - " + name;
 		newFn->m_fn = Systems::GetInstance().GetTick(name);
-		m_children.push_back(std::move(newFn));
+		if (addToFront)
+		{
+			m_children.insert(m_children.begin(), std::move(newFn));
+		}
+		else
+		{
+			m_children.push_back(std::move(newFn));
+		}
 		return returnPtr;
 	}
 }

@@ -24,7 +24,7 @@ namespace R3
 			FixedUpdateSequenceNode& AddFixedUpdateSequence(std::string name);
 			SequenceNode& AddSequence(std::string name);
 			AsyncNode& AddAsync(std::string name);
-			Node& AddFn(std::string name);
+			Node& AddFn(std::string name, bool addToFront = false);
 		protected:
 			Node* FindInternal(Node* parent, std::string_view name);
 			std::string m_displayName = "";
@@ -32,7 +32,7 @@ namespace R3
 			FixedUpdateSequenceNode* AddFixedUpdateInternal(std::string name);
 			SequenceNode* AddSequenceInternal(std::string name);
 			AsyncNode* AddAsyncInternal(std::string name);
-			FnNode* AddFnInternal(std::string name);
+			FnNode* AddFnInternal(std::string name, bool addToFront);
 		};
 		struct FixedUpdateSequenceNode : public Node {
 			virtual bool Run();

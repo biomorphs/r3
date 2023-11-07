@@ -10,6 +10,7 @@
 #include "engine/systems/event_system.h"
 #include "engine/systems/time_system.h"
 #include "engine/systems/imgui_system.h"
+#include "engine/systems/camera_system.h"
 #include "entities/systems/entity_system.h"
 #include "entities/queries.h"
 #include "engine/components/environment_settings.h"
@@ -157,11 +158,8 @@ namespace R3
 		vkCmdBeginRendering(cmdBuffer, &ri);
 
 		// IM renderer draw
-		Camera testCam;
-		float aspect = m_swapChain->GetExtents().width / (float)m_swapChain->GetExtents().height;
-		testCam.SetProjection(70.0f, aspect, 0.1f, 100.0f);
-		testCam.LookAt({ 3,3,-15.0 }, { 0,0,0 }, { 0,1,0 });
-		m_imRenderer->Draw(testCam.ProjectionMatrix() * testCam.ViewMatrix(), *m_device, *m_swapChain, cmdBuffer);
+		auto cameras = GetSystem<CameraSystem>();
+		m_imRenderer->Draw(cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix(), *m_device, *m_swapChain, cmdBuffer);
 
 		vkCmdEndRendering(cmdBuffer);
 

@@ -30,7 +30,7 @@ int main(int argc, char** args)
 			auto guiUpdateRoot = fg.m_root.FindFirst("Sequence - ImGuiUpdate");
 			if (guiUpdateRoot)
 			{
-				guiUpdateRoot->AddFn("EditorSystem::ShowGui");
+				guiUpdateRoot->AddFn("EditorSystem::ShowGui", true);	// push to front of sequence
 			}
 		};
 		return R3::Run(fullCmdLine, registerEditor, setupFrameGraph);

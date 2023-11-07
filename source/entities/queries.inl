@@ -27,7 +27,14 @@ namespace Queries
 	{
 		R3_PROF_EVENT();
 		// choose which component type to iterate on based on smallest total count
-		if (w->GetStorage<ComponentType1>()->GetTotalCount() < w->GetStorage<ComponentType2>()->GetTotalCount())
+		auto storage1 = w->GetStorage<ComponentType1>();
+		auto storage2 = w->GetStorage<ComponentType2>();
+		if (storage1 == nullptr || storage2 == nullptr) 
+		{
+			return;
+		}
+
+		if (storage1->GetTotalCount() < storage2->GetTotalCount())
 		{
 			const uint32_t type2Index = ComponentTypeRegistry::GetTypeIndex<ComponentType2>();
 			auto forEachCmp1 = [w, fn, type2Index](const EntityHandle& e, ComponentType1& cmp1)

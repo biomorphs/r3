@@ -6,6 +6,7 @@
 #include "systems/event_system.h"
 #include "systems/input_system.h"
 #include "systems/imgui_system.h"
+#include "systems/camera_system.h"
 #include "render/render_system.h"
 #include "entities/systems/entity_system.h"
 #include "core/platform.h"
@@ -26,6 +27,7 @@ namespace R3
 		s.RegisterSystem<InputSystem>();
 		s.RegisterSystem<RenderSystem>();
 		s.RegisterSystem<ImGuiSystem>();
+		s.RegisterSystem<CameraSystem>();
 		s.RegisterSystem<Entities::EntitySystem>();
 	}
 
@@ -52,9 +54,11 @@ namespace R3
 			auto& guiUpdate = fg.m_root.AddSequence("ImGuiUpdate");
 			guiUpdate.AddFn("Render::ShowGui");
 			guiUpdate.AddFn("Entities::ShowGui");
+			guiUpdate.AddFn("Cameras::ShowGui");
 		}
 		{
 			auto& render = fg.m_root.AddSequence("Render");
+			render.AddFn("Cameras::PreRenderUpdate");
 			render.AddFn("Render::DrawFrame");
 		}
 	}

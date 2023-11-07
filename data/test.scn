@@ -12,16 +12,33 @@
    "ID": 0
   },
   {
-   "BenchComponent1": {
-    "SomeData": 5
-   },
-   "BenchComponent2": {
-    "SomeData1": 10,
-    "SomeData2": 20,
-    "SomeData3": 30,
-    "SomeData4": 40
-   },
    "ID": 1
+  },
+  {
+   "Camera": {
+    "FOV": 70.0,
+    "Far Plane": 1000.0,
+    "Near Plane": 0.10000000149011612
+   },
+   "ID": 2,
+   "Transform": {
+    "Orientation": {
+     "W": 0.981060266494751,
+     "X": 0.0858316421508789,
+     "Y": -0.1729874610900879,
+     "Z": 0.015134439803659916
+    },
+    "Position": {
+     "X": 4.0,
+     "Y": 2.0,
+     "Z": -10.0
+    },
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
   }
  ],
  "WorldName": "EditorWorld"

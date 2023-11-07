@@ -10,7 +10,7 @@
 namespace R3
 {
 	// serialiser knows about 
-	// ints, floats, bools, strings, vec2, vec3, vec4
+	// ints, floats, bools, strings, vec2, vec3, vec4, quat
 	// objects (that have a Serialise function)
 	// vectors of the above
 
@@ -212,6 +212,14 @@ namespace R3
 	}
 
 	template<> inline void SerialiseJson(glm::vec4& t, JsonSerialiser& s)
+	{
+		s("X", t.x);
+		s("Y", t.y);
+		s("Z", t.z);
+		s("W", t.w);
+	}
+
+	template<> inline void SerialiseJson(glm::quat& t, JsonSerialiser& s)
 	{
 		s("X", t.x);
 		s("Y", t.y);
