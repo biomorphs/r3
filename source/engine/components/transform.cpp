@@ -22,7 +22,7 @@ namespace R3
 		modified |= i.Inspect("Scale", m_scale, InspectProperty(&TransformComponent::SetScale, e, w), { 0,0,0 }, maxBounds);
 	}
 
-	glm::mat4 TransformComponent::GetWorldspaceMatrix()
+	glm::mat4 TransformComponent::GetWorldspaceMatrix() const
 	{
 		return m_matrix;	// later on we will want some kind of heirarchy
 	}

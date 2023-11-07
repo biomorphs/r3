@@ -20,6 +20,8 @@ set(EngineLib_SourceFiles
 	basic_value_inspector.cpp
 	file_dialogs.h
 	file_dialogs.cpp
+	frustum.h
+	frustum.cpp
 	register_engine_components.h
 	register_engine_components.cpp
 	systems/time_system.h

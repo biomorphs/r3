@@ -22,7 +22,7 @@ namespace R3
 		glm::vec3 GetOrientationDegrees() const { return glm::degrees(GetOrientationRadians()); }
 		glm::vec3 GetScale() const { return m_scale; }
 
-		glm::mat4 GetWorldspaceMatrix();
+		glm::mat4 GetWorldspaceMatrix() const;
 
 	private:
 		void RebuildMatrix();

@@ -3,6 +3,7 @@
 #include "device.h"
 #include "swap_chain.h"
 #include "pipeline_builder.h"
+#include "engine/frustum.h"
 #include "core/log.h"
 #include "core/profiler.h"
 #include <array>
@@ -75,6 +76,32 @@ namespace R3
 			{ transform * glm::vec4(0.0f,0.0f,1.0f,1.0f), {0.0f,0.0f,1.0f,1.0f} },
 		};
 		AddLines(vertices, 3);
+	}
+
+	void ImmediateRenderer::AddFrustum(const Frustum& f, glm::vec4 colour)
+	{
+		const auto& p = f.GetPoints();
+		glm::vec4 v[] = {
+			{p[0],1.0f},	{p[1],1.0f},	// lbn,	ltn
+			{p[1],1.0f},	{p[3],1.0f},	// ltn, rtn
+			{p[3],1.0f},	{p[2],1.0f},	// rtn, rbn
+			{p[2],1.0f},	{p[0],1.0f},	// rbn, lbn
+			{p[0],1.0f},	{p[4],1.0f},	// lbn, lbf
+			{p[1],1.0f},	{p[5],1.0f},	// ltn, ltf
+			{p[2],1.0f},	{p[6],1.0f},	// rbn, rbf
+			{p[3],1.0f},	{p[7],1.0f},	// rtn, rtf
+			{p[4],1.0f},	{p[5],1.0f},	// lbf,	ltf
+			{p[5],1.0f},	{p[7],1.0f},	// ltf, rtf
+			{p[7],1.0f},	{p[6],1.0f},	// rtf, rbf
+			{p[6],1.0f},	{p[4],1.0f},	// rbf, lbf
+		};
+		constexpr int c_vertexCount = sizeof(v) / sizeof(v[0]);
+		PerVertexData vertices[c_vertexCount];
+		for (int i = 0; i < c_vertexCount; ++i)
+		{
+			vertices[i] = { v[i], colour };
+		}
+		AddLines(vertices, c_vertexCount / 2);
 	}
 
 	void ImmediateRenderer::AddTriangle(const PerVertexData vertices[3])

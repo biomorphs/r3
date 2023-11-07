@@ -7,6 +7,7 @@ namespace R3
 {
 	class Device;
 	class Swapchain;
+	class Frustum;
 
 	// handles a dynamic vertex buffer of triangles + draw calls
 	class ImmediateRenderer
@@ -31,6 +32,7 @@ namespace R3
 		void AddLine(const PerVertexData vertices[2]);
 		void AddLines(const PerVertexData* vertices, int linecount);
 		void AddAxisAtPoint(glm::vec3 position, glm::mat4 transform = glm::identity<glm::mat4>());
+		void AddFrustum(const Frustum& f, glm::vec4 colour);
 
 	private:
 		bool CreateNoDepthReadPipelines(Device& d, Swapchain& swapChain, VkFormat depthBufferFormat);
