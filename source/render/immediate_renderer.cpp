@@ -62,7 +62,7 @@ namespace R3
 	{
 		DrawData newLines;
 		newLines.m_startVertexOffset = static_cast<uint32_t>(m_thisFrameVertices.size());
-		if (newLines.m_startVertexOffset + 2 <= m_maxVertices)
+		if (newLines.m_startVertexOffset + (linecount * 2) <= m_maxVertices)
 		{
 			newLines.m_vertexCount = linecount * 2;
 			m_thisFrameVertices.insert(m_thisFrameVertices.end(), vertices, vertices + (linecount * 2));
