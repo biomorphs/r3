@@ -7,6 +7,7 @@
 
 namespace R3
 {
+	class Flycam;
 	class CameraSystem : public System
 	{
 	public:
@@ -17,11 +18,15 @@ namespace R3
 
 		const Camera& GetMainCamera() { return m_mainCamera; }
 	private:
+		void ApplyFlycamToCamera();
+		bool IsFlycamActive();
+		bool FixedUpdate();
 		void ApplyEntityToCamera(const class CameraComponent& camCmp, const class TransformComponent& transCmp, Camera& target);
 		void DrawCameraFrustums();
 		bool ShowGui();
 		bool Update();
 		bool m_drawFrustums = false;
+		std::unique_ptr<Flycam> m_flyCam;
 		std::unordered_map<std::string, Entities::EntityHandle> m_activeCameras;	// per-world active camera entity, key = world ID
 		Camera m_mainCamera;	// updated each frame from active world/entity
 	};

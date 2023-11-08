@@ -44,6 +44,7 @@ namespace R3
 		}
 		{
 			auto& fixedUpdate = fg.m_root.AddFixedUpdateSequence("FixedUpdate");
+			fixedUpdate.AddFn("Cameras::FixedUpdate");
 			fixedUpdate.AddFn("Time::FixedUpdateEnd");
 		}
 		{

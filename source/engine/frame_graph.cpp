@@ -7,16 +7,15 @@
 namespace R3
 {
 	bool FrameGraph::FixedUpdateSequenceNode::Run() {
-		char debugName[1024] = { '\0' };
-		sprintf_s(debugName, "%s", m_displayName.c_str());
-		R3_PROF_EVENT_DYN(debugName);
 		auto timeSys = Systems::GetSystem<TimeSystem>();
 		double startTime = timeSys->GetElapsedTimeReal();
 		const double c_maxUpdateTime = timeSys->GetFixedUpdateDelta() / 2.0f;
 		while (timeSys->GetFixedUpdateCatchupTime() >= timeSys->GetFixedUpdateDelta() &&
 			(timeSys->GetElapsedTimeReal() - startTime) < c_maxUpdateTime)
 		{
-			R3_PROF_EVENT("FixedUpdate");
+			char debugName[1024] = { '\0' };
+			sprintf_s(debugName, "%s", m_displayName.c_str());
+			R3_PROF_EVENT_DYN(debugName);
 			bool result = true;
 			for (auto& it : m_children)
 			{

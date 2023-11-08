@@ -63,6 +63,7 @@ namespace R3
 
 	void EditorSystem::OnNewWorld()
 	{
+		R3_PROF_EVENT();
 		auto entities = GetSystem<Entities::EntitySystem>();
 		int newWorldNameId = m_worldInternalNameCounter++;
 		std::string worldInternalName = std::format("EditorWorld_{}", newWorldNameId);
@@ -76,6 +77,7 @@ namespace R3
 
 	void EditorSystem::OnOpenWorld()
 	{
+		R3_PROF_EVENT();
 		std::string fileToOpen = FileLoadDialog("", "scn");
 		if (!fileToOpen.empty())
 		{
@@ -97,6 +99,7 @@ namespace R3
 
 	void EditorSystem::ShowMainMenu()
 	{
+		R3_PROF_EVENT();
 		auto& fileMenu = MenuBar::MainMenu().GetSubmenu("File");
 		fileMenu.AddItem("New World", [this]() {
 			OnNewWorld();
@@ -112,6 +115,7 @@ namespace R3
 
 	void EditorSystem::CloseAllWindows()
 	{
+		R3_PROF_EVENT();
 		for (int i = 0; i < m_allWindows.size(); ++i)
 		{
 			CloseWindow(m_allWindows[i].get());
@@ -120,6 +124,7 @@ namespace R3
 
 	void EditorSystem::ShowWindowTabs()
 	{
+		R3_PROF_EVENT();
 		uint32_t windowFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;
 		auto windowFullExtents = GetSystem<RenderSystem>()->GetWindowExtents();
 		ImGui::SetNextWindowPos({ 0,ImGui::GetTextLineHeightWithSpacing() + 1 });
@@ -150,6 +155,7 @@ namespace R3
 
 	void EditorSystem::ProcessClosingWindows()
 	{
+		R3_PROF_EVENT();
 		std::vector<EditorWindow*> destroyedWindows;
 		std::vector<EditorWindow*> cancelledWindows;
 		for (auto& toClose : m_windowsToClose)
@@ -233,6 +239,7 @@ namespace R3
 
 	void EditorSystem::ApplyStyle()
 	{
+		R3_PROF_EVENT();
 		// generated via imgui demo style editor
 		// its a bit gray
 		ImVec4* colors = ImGui::GetStyle().Colors;

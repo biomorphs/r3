@@ -1,6 +1,7 @@
 #include "world_editor_add_component_cmd.h"
 #include "editor/world_editor_window.h"
 #include "entities/world.h"
+#include "core/profiler.h"
 #include <format>
 
 namespace R3
@@ -15,6 +16,7 @@ namespace R3
 
 	EditorCommand::Result WorldEditorAddComponentCommand::Execute()
 	{
+		R3_PROF_EVENT();
 		auto world = m_window->GetWorld();
 		m_addedToEntities.clear();
 		for (int i = 0; i < m_targetEntities.size(); ++i)
@@ -32,6 +34,7 @@ namespace R3
 
 	EditorCommand::Result WorldEditorAddComponentCommand::Undo()
 	{
+		R3_PROF_EVENT();
 		auto world = m_window->GetWorld();
 		for (int i = 0; i < m_addedToEntities.size(); ++i)
 		{

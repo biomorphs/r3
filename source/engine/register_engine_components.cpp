@@ -9,6 +9,7 @@ namespace R3
 {
 	void RegisterEngineComponents()
 	{
+		R3_PROF_EVENT();
 		auto entities = Systems::GetSystem<Entities::EntitySystem>();
 		entities->RegisterComponentType<EnvironmentSettingsComponent>();
 		entities->RegisterComponentType<TransformComponent>();

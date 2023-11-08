@@ -10,6 +10,7 @@ namespace R3
 {
 	void EntityListWidget::DisplayEntityExtended(Entities::World& w, const Entities::EntityHandle& h, bool isSelected)
 	{
+		R3_PROF_EVENT();
 		const auto& allCmpTypes = Entities::ComponentTypeRegistry::GetInstance().AllTypes();
 		for (int i = 0; i < allCmpTypes.size(); ++i)
 		{
@@ -22,6 +23,7 @@ namespace R3
 
 	bool EntityListWidget::DisplaySingleEntity(Entities::World& w, const Entities::EntityHandle& h, bool isSelected)
 	{
+		R3_PROF_EVENT();
 		char entityName[256] = "";
 		char displayName[512] = "";
 		bool selectionChanged = false;
@@ -142,6 +144,7 @@ namespace R3
 
 	void EntityListWidget::DisplayFilter()
 	{
+		R3_PROF_EVENT();
 		if (m_options.m_filter == FilterType::ByName && m_filterText.size() < 256)
 		{
 			char filterBuffer[256] = { '\0' };

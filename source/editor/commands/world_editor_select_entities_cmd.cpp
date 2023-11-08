@@ -15,6 +15,7 @@ namespace R3
 
 	EditorCommand::Result WorldEditorSelectEntitiesCommand::Execute()
 	{
+		R3_PROF_EVENT();
 		m_oldSelection = m_window->GetSelectedEntities();
 		if (m_selectAll)
 		{

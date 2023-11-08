@@ -71,6 +71,7 @@ namespace R3
 
 	void WorldEditorWindow::DeleteSelected()
 	{
+		R3_PROF_EVENT();
 		auto world = GetWorld();
 		for (int s = 0; s < m_selectedEntities.size(); ++s)
 		{
@@ -81,6 +82,7 @@ namespace R3
 
 	void WorldEditorWindow::UpdateMainContextMenu()
 	{
+		R3_PROF_EVENT();
 		auto world = GetWorld();
 
 		MenuBar contextMenu;
@@ -111,6 +113,7 @@ namespace R3
 
 	void WorldEditorWindow::DrawSideBarRight(Entities::World* w)
 	{
+		R3_PROF_EVENT();
 		uint32_t sidebarFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove;
 		auto windowFullExtents = Systems::GetSystem<RenderSystem>()->GetWindowExtents();
 		ImGui::SetNextWindowPos({ windowFullExtents.x - m_sidebarRightWidth,ImGui::GetTextLineHeightWithSpacing() * 3 });
@@ -134,6 +137,7 @@ namespace R3
 
 	void WorldEditorWindow::UpdateMainMenu()
 	{
+		R3_PROF_EVENT();
 		auto& fileMenu = MenuBar::MainMenu().GetSubmenu("File");
 		fileMenu.AddItemAfter("Open World", "Save World", [this]() {
 			m_cmds->Push(std::make_unique<WorldEditorSaveCmd>(this, m_filePath));
@@ -156,6 +160,7 @@ namespace R3
 
 	void WorldEditorWindow::DrawSideBarLeft(Entities::World* w)
 	{
+		R3_PROF_EVENT();
 		uint32_t sidebarFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove;
 		auto windowFullExtents = Systems::GetSystem<RenderSystem>()->GetWindowExtents();
 		ImGui::SetNextWindowPos({ 0,ImGui::GetTextLineHeightWithSpacing() * 3 });
@@ -191,6 +196,7 @@ namespace R3
 
 	void WorldEditorWindow::DrawSelected()
 	{
+		R3_PROF_EVENT();
 		auto theWorld = GetWorld();
 		auto& imRender = Systems::GetSystem<RenderSystem>()->GetImRenderer();
 		for (auto& theEntity : m_selectedEntities)
@@ -221,6 +227,7 @@ namespace R3
 
 	EditorWindow::CloseStatus WorldEditorWindow::PrepareToClose()
 	{
+		R3_PROF_EVENT();
 		bool shouldCloseWindow = false;
 		bool shouldCancelRequest = false;
 		ImGui::OpenPopup("Close window?");
@@ -262,6 +269,7 @@ namespace R3
 
 	bool WorldEditorWindow::SaveWorld(std::string_view path)
 	{
+		R3_PROF_EVENT();
 		Entities::World* thisWorld = GetWorld();
 		if (thisWorld && thisWorld->Save(path))
 		{

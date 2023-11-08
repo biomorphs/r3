@@ -22,6 +22,8 @@ set(EngineLib_SourceFiles
 	file_dialogs.cpp
 	frustum.h
 	frustum.cpp
+	flycam.h
+	flycam.cpp
 	register_engine_components.h
 	register_engine_components.cpp
 	systems/time_system.h

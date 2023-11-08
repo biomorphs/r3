@@ -2,6 +2,7 @@
 #include "editor/world_editor_window.h"
 #include "entities/world.h"
 #include "engine/serialiser.h"
+#include "core/profiler.h"
 #include <format>
 
 namespace R3
@@ -16,6 +17,7 @@ namespace R3
 
 	EditorCommand::Result WorldEditorDeleteComponentCommand::Execute()
 	{
+		R3_PROF_EVENT();
 		auto world = m_window->GetWorld();
 		m_deletedFromEntities.clear();
 		m_serialisedComponents.clear();
@@ -36,6 +38,7 @@ namespace R3
 
 	EditorCommand::Result WorldEditorDeleteComponentCommand::Undo()
 	{
+		R3_PROF_EVENT();
 		auto world = m_window->GetWorld();
 		JsonSerialiser cmpReadData(JsonSerialiser::Read);
 		for (int d = 0; d < m_deletedFromEntities.size(); ++d)

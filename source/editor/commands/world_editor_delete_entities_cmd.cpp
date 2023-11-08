@@ -1,5 +1,6 @@
 #include "world_editor_delete_entities_cmd.h"
 #include "editor/world_editor_window.h"
+#include "core/profiler.h"
 #include "entities/world.h"
 
 namespace R3
@@ -11,6 +12,7 @@ namespace R3
 
 	EditorCommand::Result WorldEditorDeleteEntitiesCmd::Execute()
 	{
+		R3_PROF_EVENT();
 		auto world = m_window->GetWorld();
 		m_deletedEntities = m_window->GetSelectedEntities();
 		m_window->DeselectAll();
@@ -25,6 +27,7 @@ namespace R3
 
 	EditorCommand::Result WorldEditorDeleteEntitiesCmd::Undo()
 	{
+		R3_PROF_EVENT();
 		auto world = m_window->GetWorld();
 		JsonSerialiser json(JsonSerialiser::Read);
 		json.LoadFromString(m_serialisedEntities);
