@@ -93,7 +93,7 @@ namespace R3
 			auto input = GetSystem<InputSystem>();
 			double delta = GetSystem<TimeSystem>()->GetFixedUpdateDelta();
 			m_flyCam->Update(input->ControllerState(0), delta);
-			//if (!m_debugGui->IsCapturingMouse() && !m_debugGui->IsCapturingKeyboard())
+			if (!input->IsGuiCapturingInput())
 			{
 				m_flyCam->Update(input->GetMouseState(), delta);
 				m_flyCam->Update(input->GetKeyboardState(), delta);

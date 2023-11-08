@@ -66,6 +66,7 @@ namespace R3
 		bool IsKeyDown(Key key);
 		bool IsKeyDown(const char* keyStr);
 		void SetKeyboardEnabled(bool enabled) { m_keysEnabled = enabled; }
+		bool IsGuiCapturingInput();	// returns true if mouse or keyboard interacting with imgui
 
 	private:
 		bool OnFrameStart();

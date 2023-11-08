@@ -1,6 +1,7 @@
 #include "input_system.h"
 #include "core/profiler.h"
 #include "event_system.h"
+#include <imgui.h>
 #include <SDL_joystick.h>
 #include <SDL_gamecontroller.h>
 #include <SDL_mouse.h>
@@ -267,6 +268,11 @@ namespace R3
 		{
 			return false;
 		}
+	}
+
+	bool InputSystem::IsGuiCapturingInput()
+	{
+		return ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard;
 	}
 
 	void InputSystem::EnumerateControllers()
