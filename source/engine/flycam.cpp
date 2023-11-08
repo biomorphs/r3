@@ -5,6 +5,8 @@
 
 namespace R3
 {
+	const float c_maxPitchValue = (glm::pi<float>() * 0.5f) - 0.01f;	// just < 90 degrees to avoid flippage
+
 	Flycam::Flycam()
 		: m_position(0.0f, 0.0f, 0.0f)
 		, m_pitch(0.0f)
@@ -52,6 +54,7 @@ namespace R3
 
 					const float pitchRotation = -movementAtSpeed.y * timeDeltaF + m_pitchRotSpeed * timeDeltaF;
 					m_pitch += m_mouseSensitivity * pitchRotation;
+					m_pitch = glm::clamp(m_pitch, -c_maxPitchValue, c_maxPitchValue);
 				}
 			}
 		}
@@ -116,6 +119,7 @@ namespace R3
 
 		const float pitchRotation = yAxisRight * m_pitchRotSpeed * timeDeltaF;
 		m_pitch += pitchRotation * m_controllerSensitivity;
+		m_pitch = glm::clamp(m_pitch, -c_maxPitchValue, c_maxPitchValue);
 
 		// build direction from pitch, yaw
 		glm::vec3 downZ(0.0f, 0.0f, -1.0f);

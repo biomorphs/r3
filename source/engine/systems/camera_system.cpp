@@ -18,6 +18,7 @@ namespace R3
 	{
 		m_flyCam = std::make_unique<Flycam>();
 		m_flyCam->SetPosition({ 0,2,-5 });
+		m_flyCam->SetYaw(glm::radians(180.0f));
 	}
 
 	CameraSystem::~CameraSystem()
