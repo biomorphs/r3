@@ -21,7 +21,7 @@ namespace R3
 			glm::vec4 m_position;
 			glm::vec4 m_colour;
 		};
-		bool Initialise(Device& d, Swapchain& swapChain, VkFormat depthBufferFormat, uint32_t maxVerticesPerFrame = 1024 * 8);
+		bool Initialise(Device& d, Swapchain& swapChain, VkFormat depthBufferFormat, uint32_t maxVerticesPerFrame = 1024 * 20);
 		void Destroy(Device& d);
 		
 		void WriteVertexData(Device& d, VkCommandBuffer& cmdBuffer);	// call this before calling draw! must be called outside of rendering

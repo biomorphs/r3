@@ -356,14 +356,26 @@ namespace R3
 			{ {-1,1,1,1}, lineColour},
 		};
 		int lineCount = (sizeof(testLines) / sizeof(testLines[0])) / 2;
-		glm::vec4 offset(4.0f, 1.0f, -2.0f, 0.0f);
-		for (int t = 0; t < lineCount; ++t)
+		glm::vec4 offset(-32.0f, 1.0f, -2.0f, 0.0f);
+		for (int y = 0; y < 64; ++y)
 		{
-			testLines[t * 2].m_position += offset;
-			testLines[(t * 2) + 1].m_position += offset;
-			m_imRenderer->AddLine(&testLines[t * 2]);
+			for (int x = 0; x < 16; ++x)
+			{
+				glm::vec4 realOffset = offset + (glm::vec4(4, 0, 0, 0) * (float)x) + (glm::vec4(0, 4, 0, 0) * (float)y);
+				for (int t = 0; t < lineCount; ++t)
+				{
+					testLines[t * 2].m_position += realOffset;
+					testLines[(t * 2) + 1].m_position += realOffset;
+				}
+				m_imRenderer->AddLines(testLines, lineCount);
+				for (int t = 0; t < lineCount; ++t)
+				{
+					testLines[t * 2].m_position -= realOffset;
+					testLines[(t * 2) + 1].m_position -= realOffset;
+				}
+			}
 		}
-
+		
 		float y = (float)sin(GetSystem<TimeSystem>()->GetElapsedTime());
 		ImmediateRenderer::PerVertexData vertices[3];
 		vertices[0].m_position = { -1, -1 + y, 0, 1 };		vertices[0].m_colour = { 1,0,0,1 };

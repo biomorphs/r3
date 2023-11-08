@@ -49,19 +49,25 @@ namespace R3
 	{
 		DrawData newLine;
 		newLine.m_startVertexOffset = static_cast<uint32_t>(m_thisFrameVertices.size());
-		newLine.m_vertexCount = 2;
-		m_thisFrameVertices.emplace_back(vertices[0]);
-		m_thisFrameVertices.emplace_back(vertices[1]);
-		m_thisFrameLines.emplace_back(newLine);
+		if (newLine.m_startVertexOffset + 2 <= m_maxVertices)
+		{
+			newLine.m_vertexCount = 2;
+			m_thisFrameVertices.emplace_back(vertices[0]);
+			m_thisFrameVertices.emplace_back(vertices[1]);
+			m_thisFrameLines.emplace_back(newLine);
+		}
 	}
 
 	void ImmediateRenderer::AddLines(const PerVertexData* vertices, int linecount)
 	{
 		DrawData newLines;
 		newLines.m_startVertexOffset = static_cast<uint32_t>(m_thisFrameVertices.size());
-		newLines.m_vertexCount = linecount * 2;
-		m_thisFrameVertices.insert(m_thisFrameVertices.end(), vertices, vertices + (linecount * 2));
-		m_thisFrameLines.emplace_back(newLines);
+		if (newLines.m_startVertexOffset + 2 <= m_maxVertices)
+		{
+			newLines.m_vertexCount = linecount * 2;
+			m_thisFrameVertices.insert(m_thisFrameVertices.end(), vertices, vertices + (linecount * 2));
+			m_thisFrameLines.emplace_back(newLines);
+		}
 	}
 
 	void ImmediateRenderer::AddAxisAtPoint(glm::vec3 position, glm::mat4 transform)
@@ -108,11 +114,14 @@ namespace R3
 	{
 		DrawData newTri;
 		newTri.m_startVertexOffset = static_cast<uint32_t>(m_thisFrameVertices.size());
-		newTri.m_vertexCount = 3;
-		m_thisFrameVertices.emplace_back(vertices[0]);
-		m_thisFrameVertices.emplace_back(vertices[1]);
-		m_thisFrameVertices.emplace_back(vertices[2]);
-		m_thisFrameTriangles.emplace_back(newTri);
+		if (newTri.m_startVertexOffset + 3 <= m_maxVertices)
+		{
+			newTri.m_vertexCount = 3;
+			m_thisFrameVertices.emplace_back(vertices[0]);
+			m_thisFrameVertices.emplace_back(vertices[1]);
+			m_thisFrameVertices.emplace_back(vertices[2]);
+			m_thisFrameTriangles.emplace_back(newTri);
+		}
 	}
 
 	void ImmediateRenderer::WriteVertexData(Device& d, VkCommandBuffer& cmdBuffer)
