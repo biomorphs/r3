@@ -357,21 +357,26 @@ namespace R3
 		};
 		int lineCount = (sizeof(testLines) / sizeof(testLines[0])) / 2;
 		glm::vec4 offset(-32.0f, 1.0f, -2.0f, 0.0f);
-		for (int y = 0; y < 64; ++y)
+		for (int y = 0; y < 32; ++y)
 		{
 			for (int x = 0; x < 16; ++x)
 			{
 				glm::vec4 realOffset = offset + (glm::vec4(4, 0, 0, 0) * (float)x) + (glm::vec4(0, 4, 0, 0) * (float)y);
+				glm::vec4 colourOffset = (glm::vec4(0, 0, 1, 0) * (x / 16.0f)) + (glm::vec4(0, 1, 0, 0) * (y / 32.0f)) + (glm::vec4(-1, 0, 0, 0) * (x / 16.0f));
 				for (int t = 0; t < lineCount; ++t)
 				{
 					testLines[t * 2].m_position += realOffset;
+					testLines[t * 2].m_colour += colourOffset;
 					testLines[(t * 2) + 1].m_position += realOffset;
+					testLines[(t * 2) + 1].m_colour += colourOffset;
 				}
 				m_imRenderer->AddLines(testLines, lineCount);
 				for (int t = 0; t < lineCount; ++t)
 				{
 					testLines[t * 2].m_position -= realOffset;
+					testLines[t * 2].m_colour -= colourOffset;
 					testLines[(t * 2) + 1].m_position -= realOffset;
+					testLines[(t * 2) + 1].m_colour -= colourOffset;
 				}
 			}
 		}

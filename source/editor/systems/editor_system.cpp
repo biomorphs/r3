@@ -39,8 +39,6 @@ namespace R3
 			});
 		}
 
-		OnNewWorld();
-
 		return true;
 	}
 

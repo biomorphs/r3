@@ -23,6 +23,8 @@ namespace R3
 	void Flycam::ApplyToCamera(Camera& target)
 	{
 		glm::vec3 up(0.0f, 1.0f, 0.0f);
+
+		// we should interpolate out based on difference between current tick + last fixed update
 		target.LookAt(m_position, m_position + m_lookDirection, up);
 	}
 
