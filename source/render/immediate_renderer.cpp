@@ -110,6 +110,53 @@ namespace R3
 		AddLines(vertices, c_vertexCount / 2);
 	}
 
+	void ImmediateRenderer::AddCubeWireframe(glm::mat4 transform, glm::vec4 colour)
+	{
+		ImmediateRenderer::PerVertexData testLines[] = {
+			{ {-1,-1,-1,1}, colour},
+			{ {1,-1,-1,1}, colour},
+
+			{ {1,-1,-1,1}, colour},
+			{ {1,1,-1,1}, colour},
+
+			{ {1,1,-1,1}, colour},
+			{ {-1,1,-1,1}, colour},
+
+			{ {-1,1,-1,1}, colour},
+			{ {-1,-1,-1,1}, colour},
+
+			{ {-1,-1,1,1}, colour},
+			{ {1,-1,1,1}, colour},
+
+			{ {1,-1,1,1}, colour},
+			{ {1,1,1,1}, colour},
+
+			{ {1,1,1,1}, colour},
+			{ {-1,1,1,1}, colour},
+
+			{ {-1,1,1,1}, colour},
+			{ {-1,-1,1,1}, colour},
+
+			{ {-1,-1,-1,1}, colour},
+			{ {-1,-1,1,1}, colour},
+
+			{ {1,-1,-1,1}, colour},
+			{ {1,-1,1,1}, colour},
+
+			{ {1,1,-1,1}, colour},
+			{ {1,1,1,1}, colour},
+
+			{ {-1,1,-1,1}, colour},
+			{ {-1,1,1,1}, colour},
+		};
+		int vertexCount = (sizeof(testLines) / sizeof(testLines[0]));
+		for (int v = 0; v < vertexCount; ++v)
+		{
+			testLines[v].m_position = transform * testLines[v].m_position;
+		}
+		AddLines(testLines, vertexCount / 2);
+	}
+
 	void ImmediateRenderer::AddTriangle(const PerVertexData vertices[3])
 	{
 		DrawData newTri;
