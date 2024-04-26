@@ -5,7 +5,7 @@
 
 namespace R3
 {
-	constexpr std::string c_jobPoolNames[] = {
+	constexpr const char* c_jobPoolNames[] = {
 		"Fast Jobs",
 		"Slow Jobs"
 	};
@@ -20,8 +20,8 @@ namespace R3
 	JobSystem::JobSystem()
 	{
 		R3_PROF_EVENT();
-		m_jobPools.emplace_back(std::make_unique<JobPool>(4));	// Fast jobs
-		m_jobPools.emplace_back(std::make_unique<JobPool>(4));	// Slow jobs
+		m_jobPools.emplace_back(std::make_unique<JobPool>(4, "Fast Jobs"));	// Fast jobs
+		m_jobPools.emplace_back(std::make_unique<JobPool>(4, "Slow Jobs"));	// Slow jobs
 	}
 
 	JobSystem::~JobSystem()
@@ -33,7 +33,7 @@ namespace R3
 		R3_PROF_EVENT();
 		for (int i = 0; i < m_jobPools.size(); ++i)
 		{
-			m_jobPools[i]->WaitUntilComplete();
+			m_jobPools[i]->StopAndWait();
 		}
 		m_jobPools.clear();
 	}

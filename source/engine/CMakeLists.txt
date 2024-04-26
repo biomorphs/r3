@@ -1,6 +1,8 @@
 set(EngineLib_SourceFiles
-	loaded_model.h
-	loaded_model.cpp
+	async.h
+	async.cpp
+	model_data.h
+	model_data.cpp
 	engine_startup.h
 	engine_startup.cpp
 	systems.h
@@ -44,6 +46,8 @@ set(EngineLib_SourceFiles
 	components/transform.cpp
 	components/camera.h
 	components/camera.cpp
+	components/static_mesh.h
+	components/static_mesh.cpp
 )
 
 add_library(Engine ${EngineLib_SourceFiles})

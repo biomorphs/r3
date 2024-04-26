@@ -1,4 +1,4 @@
-#include "loaded_model.h"
+#include "model_data.h"
 #include "core/profiler.h"
 #include "core/file_io.h"
 #include "core/log.h"
