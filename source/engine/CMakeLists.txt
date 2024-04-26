@@ -36,6 +36,8 @@ set(EngineLib_SourceFiles
 	systems/imgui_system.cpp
 	systems/camera_system.h
 	systems/camera_system.cpp
+	systems/job_system.h
+	systems/job_system.cpp
 	components/environment_settings.h
 	components/environment_settings.cpp
 	components/transform.h

@@ -16,6 +16,7 @@
 	"assimp",
 	"vulkan-memory-allocator",
 	"nlohmann-json",
-	"nativefiledialog"
+	"nativefiledialog",
+	"concurrentqueue"
   ]
 }

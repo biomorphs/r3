@@ -4,6 +4,8 @@ set(CoreLib_SourceFiles
 	glm_headers.h
 	mutex.h
 	mutex.cpp
+	job_pool.h
+	job_pool.cpp
     platform.h
 	platform.cpp
 	profiler.h
@@ -19,4 +21,4 @@ set(CoreLib_SourceFiles
 add_library(Core ${CoreLib_SourceFiles})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/../ FILES ${CoreLib_SourceFiles})	# adds directory structure filters in VS
 target_include_directories(Core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../)
-target_link_libraries(Core PRIVATE Optick::OptickCore SDL2::SDL2 glm::glm) 
+target_link_libraries(Core PRIVATE Optick::OptickCore SDL2::SDL2 glm::glm unofficial::concurrentqueue::concurrentqueue) 

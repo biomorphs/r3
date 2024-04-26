@@ -21,6 +21,7 @@ find_package(assimp REQUIRED)
 find_package(imgui REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(unofficial-nativefiledialog REQUIRED)
+find_package(unofficial-concurrentqueue REQUIRED)
 
 # external libs not from vcpkg
 find_package(Optick REQUIRED)
