@@ -14,7 +14,7 @@
 #include "entities/systems/entity_system.h"
 #include "entities/queries.h"
 #include "engine/components/environment_settings.h"
-#include "engine/loaded_model.h"
+#include "engine/model_data.h"
 #include "vulkan_helpers.h"
 #include "pipeline_builder.h"
 #include <vulkan/vulkan.h>

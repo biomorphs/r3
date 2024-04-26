@@ -1,10 +1,13 @@
 #include "model_data.h"
 #include "core/profiler.h"
+#include "core/mutex.h"
 #include "core/file_io.h"
 #include "core/log.h"
+#include <assimp/IOSystem.hpp>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <filesystem>
 
 namespace R3
 {
@@ -19,7 +22,7 @@ namespace R3
 		};
 	}
 
-	void CalculateAABB(const LoadedModel& m, glm::vec3& minb, glm::vec3& maxb)
+	void CalculateAABB(const ModelData& m, glm::vec3& minb, glm::vec3& maxb)
 	{
 		R3_PROF_EVENT();
 		glm::vec3 boundsMin(FLT_MAX), boundsMax(-FLT_MAX);
@@ -45,7 +48,7 @@ namespace R3
 		maxb = boundsMax;
 	}
 
-	void ProcessMesh(const aiScene* scene, const struct aiMesh* mesh, LoadedModel& model, glm::mat4 transform)
+	void ProcessMesh(const aiScene* scene, const struct aiMesh* mesh, ModelData& model, glm::mat4 transform)
 	{
 		R3_PROF_EVENT();
 
@@ -60,10 +63,10 @@ namespace R3
 		glm::vec3 boundsMin(FLT_MAX);
 		glm::vec3 boundsMax(FLT_MIN);
 
-		LoadedMesh newMesh;
+		Mesh newMesh;
 		newMesh.m_transform = transform;
 		newMesh.m_vertices.reserve(mesh->mNumVertices);
-		LoadedMeshVertex newVertex;
+		MeshVertex newVertex;
 		for (uint32_t v = 0; v < mesh->mNumVertices; ++v)
 		{
 			auto pos = glm::vec3(mesh->mVertices[v].x, mesh->mVertices[v].y, mesh->mVertices[v].z);
@@ -110,7 +113,7 @@ namespace R3
 		model.m_meshes.push_back(std::move(newMesh));
 	}
 
-	void ParseSceneNode(const aiScene* scene, const aiNode* node, LoadedModel& model, glm::mat4 parentTransform)
+	void ParseSceneNode(const aiScene* scene, const aiNode* node, ModelData& model, glm::mat4 parentTransform)
 	{
 		R3_PROF_EVENT();
 		glm::mat4 nodeTransform = ToGlmMatrix(node->mTransformation) * parentTransform;
@@ -127,7 +130,7 @@ namespace R3
 		}
 	}
 
-	bool ParseMaterials(const aiScene* scene, LoadedModel& result)
+	bool ParseMaterials(const aiScene* scene, ModelData& result)
 	{
 		R3_PROF_EVENT();
 		if (scene->HasMaterials())
@@ -135,7 +138,7 @@ namespace R3
 			result.m_materials.reserve(scene->mNumMaterials);
 			for (unsigned int i = 0; i < scene->mNumMaterials; ++i)
 			{
-				LoadedMeshMaterial newMaterial;
+				MeshMaterial newMaterial;
 				const aiMaterial* sceneMat = scene->mMaterials[i];
 				uint32_t diffuseTextureCount = sceneMat->GetTextureCount(aiTextureType_DIFFUSE);	// diffuse
 				for (uint32_t t = 0; t < diffuseTextureCount; ++t)
@@ -165,7 +168,7 @@ namespace R3
 		return true;
 	}
 
-	bool LoadModel(std::string_view filePath, LoadedModel& result, bool flattenMeshes)
+	bool LoadModelData(std::string_view filePath, ModelData& result, bool flattenMeshes)
 	{
 		R3_PROF_EVENT();
 
@@ -175,29 +178,52 @@ namespace R3
 			LogWarn("Failed to load model file {}", filePath);
 			return false;
 		}
+		return LoadModelData(filePath, rawData, result, flattenMeshes);
+	}
 
-		Assimp::Importer importer;
-		const aiScene* scene = importer.ReadFileFromMemory(rawData.data(), rawData.size(),
-			aiProcess_CalcTangentSpace |
-			aiProcess_GenNormals |	// only if no normals in data
-			aiProcess_Triangulate |
-			aiProcess_JoinIdenticalVertices |
-			aiProcess_SortByPType |
-			aiProcess_ValidateDataStructure |
-			aiProcess_OptimizeMeshes |
-			aiProcess_RemoveRedundantMaterials |
-			(flattenMeshes ? aiProcess_PreTransformVertices : 0)
-		);
-		if (!scene)
+	bool LoadModelData(std::string_view filePath, const std::vector<uint8_t>& rawData, ModelData& result, bool flattenMeshes)
+	{
+		R3_PROF_EVENT();
+		const aiScene* scene = nullptr;
+
+		// We push the root directory of the file path to assimp IO so any child files are loaded relative to the root
+		auto absolutePath = std::filesystem::absolute(filePath);
+		if (!absolutePath.has_filename())
 		{
-			return false;
+			LogError("Invalid path {}", absolutePath.string());
 		}
-
-		glm::mat4 nodeTransform = ToGlmMatrix(scene->mRootNode->mTransformation);
-		ParseMaterials(scene, result);
-		ParseSceneNode(scene, scene->mRootNode, result, nodeTransform);
-		CalculateAABB(result, result.m_boundsMin, result.m_boundsMax);
-
+		auto fileName = absolutePath.filename();
+		Assimp::Importer importer;
+		importer.GetIOHandler()->ChangeDirectory(absolutePath.remove_filename().string());	// note this changes working directory
+		{
+			R3_PROF_EVENT("AssimpReadFile");
+			static Mutex assimpMutex;	// assimp is not really thread-safe, so we slap a mutex around it
+			ScopedLock lockAssimp(assimpMutex);
+			scene = importer.ReadFileFromMemory(rawData.data(), rawData.size(),
+				aiProcess_CalcTangentSpace |
+				aiProcess_GenNormals |	// only if no normals in data
+				aiProcess_Triangulate |
+				aiProcess_JoinIdenticalVertices |
+				aiProcess_SortByPType |
+				aiProcess_ValidateDataStructure |
+				aiProcess_OptimizeMeshes |
+				aiProcess_RemoveRedundantMaterials |
+				(flattenMeshes ? aiProcess_PreTransformVertices : 0)
+			);
+			if (!scene)
+			{
+				LogError("Failed to load model - {}", importer.GetErrorString());
+				return false;
+			}
+		}
+		{
+			R3_PROF_EVENT("Parse");
+			glm::mat4 nodeTransform = ToGlmMatrix(scene->mRootNode->mTransformation);
+			ParseMaterials(scene, result);
+			ParseSceneNode(scene, scene->mRootNode, result, nodeTransform);
+			CalculateAABB(result, result.m_boundsMin, result.m_boundsMax);
+		}
+		
 		return true;
 	}
 }

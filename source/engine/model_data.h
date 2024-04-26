@@ -20,7 +20,7 @@ struct aiMesh;
 
 namespace R3
 {
-	struct LoadedMeshVertex
+	struct MeshVertex
 	{
 		float m_position[3];
 		float m_normal[3];
@@ -28,7 +28,7 @@ namespace R3
 		float m_texCoord0[2];
 	};
 
-	struct LoadedMeshMaterial
+	struct MeshMaterial
 	{
 		std::vector<std::string> m_diffuseMaps;
 		std::vector<std::string> m_normalMaps;
@@ -36,9 +36,9 @@ namespace R3
 		float m_opacity;
 	};
 
-	struct LoadedMesh
+	struct Mesh
 	{
-		std::vector<LoadedMeshVertex> m_vertices;	// verts are in mesh space
+		std::vector<MeshVertex> m_vertices;	// verts are in mesh space
 		std::vector<uint32_t> m_indices;
 		int m_materialIndex;		// -1 = no material
 		glm::mat4 m_transform;		// relative to the model
@@ -46,14 +46,15 @@ namespace R3
 		glm::vec3 m_boundsMax;
 	};
 
-	struct LoadedModel
+	struct ModelData
 	{
-		std::vector<LoadedMeshMaterial> m_materials;
-		std::vector<LoadedMesh> m_meshes;
+		std::vector<MeshMaterial> m_materials;
+		std::vector<Mesh> m_meshes;
 		glm::vec3 m_boundsMin = glm::vec3{ -1.0f };
 		glm::vec3 m_boundsMax = glm::vec3{ 1.0f };
 	};
 
 	// flattenMeshes - flattens mesh heirarchy into an array of meshes
-	bool LoadModel(std::string_view filePath, LoadedModel& result, bool flattenMeshes = true);
+	bool LoadModelData(std::string_view filePath, ModelData& result, bool flattenMeshes = true);
+	bool LoadModelData(std::string_view filePath, const std::vector<uint8_t>& rawData, ModelData& result, bool flattenMeshes = true);
 }

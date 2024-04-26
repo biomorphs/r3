@@ -7,6 +7,8 @@
 #include "systems/input_system.h"
 #include "systems/imgui_system.h"
 #include "systems/camera_system.h"
+#include "systems/model_data_system.h"
+#include "systems/static_mesh_system.h"
 #include "systems/job_system.h"
 #include "render/render_system.h"
 #include "entities/systems/entity_system.h"
@@ -31,6 +33,8 @@ namespace R3
 		s.RegisterSystem<CameraSystem>();
 		s.RegisterSystem<JobSystem>();
 		s.RegisterSystem<Entities::EntitySystem>();
+		s.RegisterSystem<ModelDataSystem>();
+		s.RegisterSystem<StaticMeshSystem>();
 	}
 
 	// the default frame graph
@@ -59,6 +63,8 @@ namespace R3
 			guiUpdate.AddFn("Entities::ShowGui");
 			guiUpdate.AddFn("Cameras::ShowGui");
 			guiUpdate.AddFn("Jobs::ShowGui");
+			guiUpdate.AddFn("StaticMeshes::ShowGui");
+			guiUpdate.AddFn("ModelData::ShowGui");
 		}
 		{
 			auto& render = fg.m_root.AddSequence("Render");
@@ -71,6 +77,7 @@ namespace R3
 	int Run(std::string_view fullCmdLine, RegisterSystemsFn systemCreation, BuildFrameGraphFn frameGraphBuildCb)
 	{
 		R3_PROF_EVENT();
+		R3_PROF_THREAD("Main");
 
 		auto result = R3::Platform::Initialise(fullCmdLine);
 		assert(result == R3::Platform::InitOK);

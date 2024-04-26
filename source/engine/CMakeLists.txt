@@ -40,6 +40,10 @@ set(EngineLib_SourceFiles
 	systems/camera_system.cpp
 	systems/job_system.h
 	systems/job_system.cpp
+	systems/model_data_system.h
+	systems/model_data_system.cpp
+	systems/static_mesh_system.h
+	systems/static_mesh_system.cpp
 	components/environment_settings.h
 	components/environment_settings.cpp
 	components/transform.h
