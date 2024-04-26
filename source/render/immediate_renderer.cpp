@@ -17,31 +17,6 @@ namespace R3
 		VkDeviceAddress m_vertexBufferAddress;
 	};
 
-	static VkVertexInputBindingDescription CreateVertexInputBindingDescription()
-	{
-		// we just want to bind a single buffer of vertices
-		VkVertexInputBindingDescription bindingDesc = { 0 };
-		bindingDesc.binding = 0;
-		bindingDesc.stride = sizeof(ImmediateRenderer::PerVertexData);
-		bindingDesc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-		return bindingDesc;
-	}
-
-	static std::array<VkVertexInputAttributeDescription, 2> CreateVertexAttributeDescriptions()
-	{
-		// 2 attributes, position and colour stored in buffer 0
-		std::array<VkVertexInputAttributeDescription, 2> attributes{};
-		attributes[0].binding = 0;
-		attributes[0].location = 0;	// location visible from shader
-		attributes[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;	// pos = vec4
-		attributes[0].offset = offsetof(ImmediateRenderer::PerVertexData, m_position);
-		attributes[1].binding = 0;
-		attributes[1].location = 1;
-		attributes[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;	// colour = vec4
-		attributes[1].offset = offsetof(ImmediateRenderer::PerVertexData, m_colour);
-		return attributes;
-	}
-
 	ImmediateRenderer::ImmediateRenderer()
 	{
 	}
@@ -233,7 +208,7 @@ namespace R3
 		vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
 		vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
 
-		// pass the vertex to screen transform via push constants for now along with the buffer address
+		// pass the vertex to screen transform via push constants along with the buffer address
 		PushConstants pc;
 		pc.m_vertexToScreen = vertexToScreen;
 		pc.m_vertexBufferAddress = m_allvertsBufferAddress;
