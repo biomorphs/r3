@@ -1,6 +1,7 @@
 #pragma once
 #include "engine/systems.h"
 #include "core/glm_headers.h"
+#include "deletion_queue.h"
 
 namespace R3
 {
@@ -49,5 +50,6 @@ namespace R3
 		struct VkStuff;
 		std::unique_ptr<VkStuff> m_vk;
 		glm::vec4 m_mainPassClearColour = { 0,0,0,1 };
+		DeletionQueue m_mainDeleters;	// only ran when the render system shuts down
 	};
 }

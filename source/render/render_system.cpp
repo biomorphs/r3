@@ -40,6 +40,7 @@ namespace R3
 		VkSemaphore m_imageAvailableSemaphore = VK_NULL_HANDLE;	// signalled when new swap chain image available
 		VkSemaphore m_renderFinishedSemaphore = VK_NULL_HANDLE;	// signalled when m_graphicsCmdBuffer has been fully submitted to a queue
 		VkFence m_inFlightFence = VK_NULL_HANDLE;				// signalled when previous cmd buffer finished executing (initialised as signalled)
+		DeletionQueue m_deleters;								// queue of objects to be deleted this frame
 	};
 
 	struct AllocatedImage
@@ -388,6 +389,9 @@ namespace R3
 			R3_PROF_STALL("Wait for previous frame fence");
 			// wait for the previous frame to finish with infinite timeout (blocking call)
 			CheckResult(vkWaitForFences(m_device->GetVkDevice(), 1, &fd.m_inFlightFence, VK_TRUE, UINT64_MAX));
+			
+			// run any deleters that need to happen this frame
+			fd.m_deleters.DeleteAll();
 		}
 
 		uint32_t swapImageIndex = 0;
@@ -566,6 +570,10 @@ namespace R3
 			LogError("Failed to create immediate renderer");
 			return false;
 		}
+		m_mainDeleters.PushDeleter([&]() {
+			m_imRenderer->Destroy(*m_device);
+			m_imRenderer = nullptr;
+		});
 
 		m_mainWindow->Show();
 
@@ -581,35 +589,17 @@ namespace R3
 		// Wait for rendering to finish before shutting down
 		CheckResult(vkDeviceWaitIdle(m_device->GetVkDevice()));
 
-		// Clean up ImGui
-		vkDestroyDescriptorPool(m_device->GetVkDevice(), m_vk->m_imgui.m_descriptorPool, nullptr);
-		ImGui_ImplVulkan_Shutdown();
-
-		m_imRenderer->Destroy(*m_device);
-		m_imRenderer = nullptr;
-
-		// Destroy the sync objects
-		vkDestroyFence(m_device->GetVkDevice(), m_vk->m_immediateSubmitFence, nullptr);
-		for (int f = c_maxFramesInFlight - 1; f >= 0; --f)	// destroy sync objects in reverse order
+		// run all per-frame deleters
+		for (int f = c_maxFramesInFlight - 1; f >= 0; --f)	// run in reverse order
 		{
-			vkDestroyFence(m_device->GetVkDevice(), m_vk->m_perFrameData[f].m_inFlightFence, nullptr);
-			vkDestroySemaphore(m_device->GetVkDevice(), m_vk->m_perFrameData[f].m_renderFinishedSemaphore, nullptr);
-			vkDestroySemaphore(m_device->GetVkDevice(), m_vk->m_perFrameData[f].m_imageAvailableSemaphore, nullptr);
+			m_vk->m_perFrameData[f].m_deleters.DeleteAll();
 		}
 
-		//cmd buffers do not need to be destroyed, removing the pool is enough
-		for (int f = c_maxFramesInFlight - 1; f >= 0; --f)	// destroy sync objects in reverse order
-		{
-			vkDestroyCommandPool(m_device->GetVkDevice(), m_vk->m_perFrameData[f].m_graphicsCommandPool, nullptr);
-		}
-		
-		// clean up depth buffer
-		vkDestroyImageView(m_device->GetVkDevice(), m_vk->m_depthBufferView, nullptr);
-		vmaDestroyImage(m_device->GetVMA(), m_vk->m_depthBufferImage.m_image, m_vk->m_depthBufferImage.m_allocation);
+		// Run all global deleters
+		m_mainDeleters.DeleteAll();
 
 		m_swapChain->Destroy(*m_device);
 		m_swapChain = nullptr;
-
 		m_device = nullptr;
 		m_mainWindow = nullptr;
 	}
@@ -692,6 +682,12 @@ namespace R3
 		});
 		ImGui_ImplVulkan_DestroyFontUploadObjects();	// destroy the font data once it is uploaded
 
+		m_mainDeleters.PushDeleter([&]() {
+			// Shut downn imgui
+			vkDestroyDescriptorPool(m_device->GetVkDevice(), m_vk->m_imgui.m_descriptorPool, nullptr);
+			ImGui_ImplVulkan_Shutdown();
+		});
+
 		return true;
 	}
 
@@ -730,16 +726,25 @@ namespace R3
 				LogError("Failed to create semaphore");
 				return false;
 			}
+			m_mainDeleters.PushDeleter([&, f]() {
+				vkDestroySemaphore(m_device->GetVkDevice(), m_vk->m_perFrameData[f].m_imageAvailableSemaphore, nullptr);
+			});
 			if (!CheckResult(vkCreateSemaphore(m_device->GetVkDevice(), &semaphoreInfo, nullptr, &fd.m_renderFinishedSemaphore)))
 			{
 				LogError("Failed to create semaphore");
 				return false;
 			}
+			m_mainDeleters.PushDeleter([&, f]() {
+				vkDestroySemaphore(m_device->GetVkDevice(), m_vk->m_perFrameData[f].m_renderFinishedSemaphore, nullptr);
+			});
 			if (!CheckResult(vkCreateFence(m_device->GetVkDevice(), &fenceInfo, nullptr, &fd.m_inFlightFence)))
 			{
 				LogError("Failed to create fence");
 				return false;
 			}
+			m_mainDeleters.PushDeleter([&, f]() {
+				vkDestroyFence(m_device->GetVkDevice(), m_vk->m_perFrameData[f].m_inFlightFence, nullptr);
+			});
 		}
 
 		VkFenceCreateInfo fenceInfoNotSignalled = fenceInfo;
@@ -749,7 +754,10 @@ namespace R3
 			LogError("Failed to create immediate submit fence");
 			return false;
 		}
-
+		m_mainDeleters.PushDeleter([&]() {
+			vkDestroyFence(m_device->GetVkDevice(), m_vk->m_immediateSubmitFence, nullptr);
+		});
+		
 		return true;
 	}
 
@@ -794,6 +802,10 @@ namespace R3
 				LogError("failed to create command pool!");
 				return false;
 			}
+			m_mainDeleters.PushDeleter([&, frame]() {
+				// cmd buffers do not need to be destroyed, removing the pool is enough
+				vkDestroyCommandPool(m_device->GetVkDevice(), m_vk->m_perFrameData[frame].m_graphicsCommandPool, nullptr);
+			});
 		}
 
 		return true;
@@ -826,6 +838,9 @@ namespace R3
 			return false;
 		}
 		m_vk->m_depthBufferFormat = info.format;	// is this actually correct? is the requested format what we actually get?
+		m_mainDeleters.PushDeleter([&]() {
+			vmaDestroyImage(m_device->GetVMA(), m_vk->m_depthBufferImage.m_image, m_vk->m_depthBufferImage.m_allocation);
+		});
 
 		// Create an ImageView for the depth buffer
 		VkImageViewCreateInfo vci = {};
@@ -843,6 +858,9 @@ namespace R3
 		{
 			return false;
 		}
+		m_mainDeleters.PushDeleter([&]() {
+			vkDestroyImageView(m_device->GetVkDevice(), m_vk->m_depthBufferView, nullptr);
+		});
 
 		return true;
 	}

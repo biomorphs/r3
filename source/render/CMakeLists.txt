@@ -16,6 +16,8 @@ set(RenderLib_SourceFiles
 	immediate_renderer.cpp
 	camera.h
 	camera.inl
+	deletion_queue.h
+	deletion_queue.cpp
 )
 
 add_library(Render ${RenderLib_SourceFiles})

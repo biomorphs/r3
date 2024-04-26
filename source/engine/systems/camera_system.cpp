@@ -129,7 +129,7 @@ namespace R3
 			{
 				auto camCmp = activeWorld->GetComponent<CameraComponent>(foundActiveCam->second);
 				auto transCmp = activeWorld->GetComponent<TransformComponent>(foundActiveCam->second);
-				return false;
+				return !(camCmp && transCmp);
 			}
 		}
 		return true;

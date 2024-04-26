@@ -14,13 +14,12 @@ namespace R3
 			: m_currentValue(currentValue)
 			, m_newValue(newValue)
 			, m_setFn(setFn)
-			, m_name(name)
+			, m_name(std::format("Set Value '{}'", name))
 		{
 		}
 		virtual std::string_view GetName() 
 		{ 
-			static std::string name = std::format("Set Value '{}'", m_name);
-			return name.c_str(); 
+			return m_name;
 		}
 		virtual Result Execute()
 		{
