@@ -32,6 +32,7 @@ namespace R3
 		bool DrawFrame();
 		bool CreateWindow();
 		bool CreateDepthBuffer();
+		bool CreateBackBuffer();
 		bool CreateCommandPools();
 		bool CreateCommandBuffers();
 		bool RecordCommandBuffer(int swapImageIndex);

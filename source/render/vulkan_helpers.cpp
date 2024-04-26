@@ -104,7 +104,7 @@ namespace R3
 			vci.subresourceRange.levelCount = 1;
 			vci.subresourceRange.baseArrayLayer = 0;
 			vci.subresourceRange.layerCount = 1;
-			vci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;	// we want to access the depth data
+			vci.subresourceRange.aspectMask = aspectFlags;
 			return vci;
 		}
 

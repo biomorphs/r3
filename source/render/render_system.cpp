@@ -56,6 +56,9 @@ namespace R3
 
 	struct RenderSystem::VkStuff
 	{
+		AllocatedImage m_backBufferImage;
+		VkImageView m_backBufferView;
+		VkFormat m_backBufferFormat;
 		AllocatedImage m_depthBufferImage;	// note the tutorial may be wrong here, we might want one per swap chain image!
 		VkImageView m_depthBufferView;
 		VkFormat m_depthBufferFormat;
@@ -539,10 +542,14 @@ namespace R3
 			LogError("Failed to create swap chain");
 			return false;
 		}
-
 		if (!CreateDepthBuffer())
 		{
 			LogError("Failed to create depth buffer");
+			return false;
+		}
+		if (!CreateBackBuffer())
+		{
+			LogError("Failed to create back buffer");
 			return false;
 		}
 
@@ -696,8 +703,11 @@ namespace R3
 		R3_PROF_EVENT();
 		CheckResult(vkDeviceWaitIdle(m_device->GetVkDevice()));
 
+		// Destroy old depth/backbuffer/swapchain images
 		vkDestroyImageView(m_device->GetVkDevice(), m_vk->m_depthBufferView, nullptr);
 		vmaDestroyImage(m_device->GetVMA(), m_vk->m_depthBufferImage.m_image, m_vk->m_depthBufferImage.m_allocation);
+		vkDestroyImageView(m_device->GetVkDevice(), m_vk->m_backBufferView, nullptr);
+		vmaDestroyImage(m_device->GetVMA(), m_vk->m_backBufferImage.m_image, m_vk->m_backBufferImage.m_allocation);
 		m_swapChain->Destroy(*m_device);
 
 		if (!m_swapChain->Initialise(*m_device, *m_mainWindow))
@@ -706,7 +716,9 @@ namespace R3
 			return false;
 		}
 
-		return CreateDepthBuffer();
+		bool created = CreateDepthBuffer();
+		created &= CreateBackBuffer();
+		return created;
 	}
 
 	bool RenderSystem::CreateSyncObjects()
@@ -813,7 +825,6 @@ namespace R3
 
 	bool RenderSystem::CreateDepthBuffer()
 	{
-		// Create the image first
 		VkExtent3D extents = {
 			m_swapChain->GetExtents().width, m_swapChain->GetExtents().height, 1
 		};
@@ -836,7 +847,7 @@ namespace R3
 				m_vk->m_depthBufferImage.m_allocation = nullptr;
 			}
 		});
-		m_vk->m_depthBufferFormat = info.format;	// is this actually correct? is the requested format what we actually get?
+		m_vk->m_depthBufferFormat = info.format;
 
 		// Create an ImageView for the depth buffer
 		VkImageViewCreateInfo vci = VulkanHelpers::CreateImageView2DNoMSAANoMips(m_vk->m_depthBufferFormat, m_vk->m_depthBufferImage.m_image, VK_IMAGE_ASPECT_DEPTH_BIT);
@@ -846,7 +857,65 @@ namespace R3
 			return false;
 		}
 		m_mainDeleters.PushDeleter([&]() {
-			vkDestroyImageView(m_device->GetVkDevice(), m_vk->m_depthBufferView, nullptr);
+			if (m_vk->m_depthBufferView)
+			{
+				vkDestroyImageView(m_device->GetVkDevice(), m_vk->m_depthBufferView, nullptr);
+				m_vk->m_depthBufferView = nullptr;
+			}
+		});
+
+		return true;
+	}
+
+	bool RenderSystem::CreateBackBuffer()
+	{
+		VkExtent3D extents = {
+			m_swapChain->GetExtents().width, m_swapChain->GetExtents().height, 1
+		};
+
+		// back buffer is a src + dest for writes/reads, used as colour attachment
+		VkImageUsageFlags drawImageUsages{};
+		drawImageUsages |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+		drawImageUsages |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+		drawImageUsages |= VK_IMAGE_USAGE_STORAGE_BIT;
+		drawImageUsages |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+		// Create the image first
+		VkImageCreateInfo info = VulkanHelpers::CreateImage2DNoMSAANoMips(VK_FORMAT_R16G16B16A16_SFLOAT, drawImageUsages, extents);
+
+		// We want the allocation to be in fast gpu memory!
+		VmaAllocationCreateInfo allocInfo = { };
+		allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+		allocInfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		auto r = vmaCreateImage(m_device->GetVMA(), &info, &allocInfo, &m_vk->m_backBufferImage.m_image, &m_vk->m_backBufferImage.m_allocation, nullptr);
+		if (!CheckResult(r))
+		{
+			return false;
+		}
+		m_mainDeleters.PushDeleter([&]() {
+			if (m_vk->m_backBufferImage.m_image && m_vk->m_backBufferImage.m_allocation)	// gets queued multiple times due to resize logic
+			{
+				vmaDestroyImage(m_device->GetVMA(), m_vk->m_backBufferImage.m_image, m_vk->m_backBufferImage.m_allocation);
+				m_vk->m_backBufferImage.m_image = nullptr;
+				m_vk->m_backBufferImage.m_allocation = nullptr;
+			}
+		});
+		m_vk->m_backBufferFormat = info.format;
+
+		// Create an ImageView for the back buffer
+		VkImageViewCreateInfo vci = VulkanHelpers::CreateImageView2DNoMSAANoMips(m_vk->m_backBufferFormat, m_vk->m_backBufferImage.m_image, VK_IMAGE_ASPECT_COLOR_BIT);
+		r = vkCreateImageView(m_device->GetVkDevice(), &vci, nullptr, &m_vk->m_backBufferView);
+		if (!CheckResult(r))
+		{
+			return false;
+		}
+		m_mainDeleters.PushDeleter([&]() {
+			if (m_vk->m_backBufferView)
+			{
+				vkDestroyImageView(m_device->GetVkDevice(), m_vk->m_backBufferView, nullptr);
+				m_vk->m_backBufferView = nullptr;
+			}
+			
 		});
 
 		return true;
