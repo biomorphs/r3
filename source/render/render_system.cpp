@@ -814,19 +814,10 @@ namespace R3
 	bool RenderSystem::CreateDepthBuffer()
 	{
 		// Create the image first
-		VkImageCreateInfo info = { };
-		info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		info.pNext = nullptr;
-		info.imageType = VK_IMAGE_TYPE_2D;
-		info.format = VK_FORMAT_D32_SFLOAT;
-		info.extent = {
+		VkExtent3D extents = {
 			m_swapChain->GetExtents().width, m_swapChain->GetExtents().height, 1
-		};	// same size as swap chain images
-		info.mipLevels = 1;
-		info.arrayLayers = 1;
-		info.samples = VK_SAMPLE_COUNT_1_BIT;
-		info.tiling = VK_IMAGE_TILING_OPTIMAL;
-		info.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;	// depth-stencil attachment
+		};
+		VkImageCreateInfo info = VulkanHelpers::CreateImage2DNoMSAANoMips(VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, extents);
 
 		// We want the allocation to be in fast gpu memory!
 		VmaAllocationCreateInfo allocInfo = { };
@@ -837,22 +828,18 @@ namespace R3
 		{
 			return false;
 		}
-		m_vk->m_depthBufferFormat = info.format;	// is this actually correct? is the requested format what we actually get?
 		m_mainDeleters.PushDeleter([&]() {
-			vmaDestroyImage(m_device->GetVMA(), m_vk->m_depthBufferImage.m_image, m_vk->m_depthBufferImage.m_allocation);
+			if (m_vk->m_depthBufferImage.m_image && m_vk->m_depthBufferImage.m_allocation)	// gets queued multiple times due to resize logic
+			{
+				vmaDestroyImage(m_device->GetVMA(), m_vk->m_depthBufferImage.m_image, m_vk->m_depthBufferImage.m_allocation);
+				m_vk->m_depthBufferImage.m_image = nullptr;
+				m_vk->m_depthBufferImage.m_allocation = nullptr;
+			}
 		});
+		m_vk->m_depthBufferFormat = info.format;	// is this actually correct? is the requested format what we actually get?
 
 		// Create an ImageView for the depth buffer
-		VkImageViewCreateInfo vci = {};
-		vci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		vci.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		vci.image = m_vk->m_depthBufferImage.m_image;
-		vci.format = m_vk->m_depthBufferFormat;
-		vci.subresourceRange.baseMipLevel = 0;
-		vci.subresourceRange.levelCount = 1;
-		vci.subresourceRange.baseArrayLayer = 0;
-		vci.subresourceRange.layerCount = 1;
-		vci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;	// we want to access the depth data
+		VkImageViewCreateInfo vci = VulkanHelpers::CreateImageView2DNoMSAANoMips(m_vk->m_depthBufferFormat, m_vk->m_depthBufferImage.m_image, VK_IMAGE_ASPECT_DEPTH_BIT);
 		r = vkCreateImageView(m_device->GetVkDevice(), &vci, nullptr, &m_vk->m_depthBufferView);
 		if (!CheckResult(r))
 		{

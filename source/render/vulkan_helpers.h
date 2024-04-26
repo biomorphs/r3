@@ -27,6 +27,10 @@ namespace R3
 		// Useful for copying data on transfer queues, debugging, etc
 		bool RunCommandsImmediate(VkDevice d, VkQueue cmdQueue, VkCommandPool cmdPool, VkFence waitFence, std::function<void(VkCommandBuffer&)> fn);
 
+		// Images
+		VkImageCreateInfo CreateImage2DNoMSAANoMips(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extents);
+		VkImageViewCreateInfo CreateImageView2DNoMSAANoMips(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags);
+
 		// Buffers
 		AllocatedBuffer CreateBuffer(VmaAllocator vma, uint64_t sizeBytes, VkBufferUsageFlags usage, VmaMemoryUsage memUsage = VMA_MEMORY_USAGE_AUTO, uint32_t allocFlags = 0);
 

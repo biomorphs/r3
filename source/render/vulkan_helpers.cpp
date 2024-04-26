@@ -77,6 +77,37 @@ namespace R3
 			return true;
 		}
 
+		VkImageCreateInfo CreateImage2DNoMSAANoMips(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extents)
+		{
+			VkImageCreateInfo info = {};
+			info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+			info.pNext = nullptr;
+			info.imageType = VK_IMAGE_TYPE_2D;
+			info.format = format;
+			info.extent = extents;
+			info.mipLevels = 1;
+			info.arrayLayers = 1;
+			info.samples = VK_SAMPLE_COUNT_1_BIT;
+			info.tiling = VK_IMAGE_TILING_OPTIMAL;	// optimal for gpu
+			info.usage = usageFlags;	// depth-stencil attachment
+			return info;
+		}
+
+		VkImageViewCreateInfo CreateImageView2DNoMSAANoMips(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags)
+		{
+			VkImageViewCreateInfo vci = {};
+			vci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			vci.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			vci.image = image;
+			vci.format = format;
+			vci.subresourceRange.baseMipLevel = 0;
+			vci.subresourceRange.levelCount = 1;
+			vci.subresourceRange.baseArrayLayer = 0;
+			vci.subresourceRange.layerCount = 1;
+			vci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;	// we want to access the depth data
+			return vci;
+		}
+
 		AllocatedBuffer CreateBuffer(VmaAllocator vma, uint64_t sizeBytes, VkBufferUsageFlags usage, VmaMemoryUsage memUsage, uint32_t allocFlags)
 		{
 			R3_PROF_EVENT();
