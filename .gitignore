@@ -52,6 +52,9 @@ data/*.stl
 data/*.gltf
 data/*.exp
 
+# big source assets
+data/sponza/*
+
 # Compiled assets
 data/shaders_spirv/*
 
