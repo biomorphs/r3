@@ -25,7 +25,7 @@ namespace R3
 			bool taskDequeud = false;
 			{
 				R3_PROF_STALL("WaitForJobs");
-				taskDequeud = m_jobs.wait_dequeue_timed(task, 100);	// this will return false if timeout hits
+				taskDequeud = m_jobs.wait_dequeue_timed(task, 1000);	// this will return false if timeout hits
 			}
 			if (taskDequeud)
 			{

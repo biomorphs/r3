@@ -46,26 +46,10 @@ namespace R3
 	bool JobSystem::ShowGui()
 	{
 		R3_PROF_EVENT();
-
-		// test
-		for (int i = 0; i < 10; ++i)
-		{
-			PushJob(SlowJobs, []() {
-				R3_PROF_EVENT("Test slow job");
-				_sleep(1);
-			});
-		}
-		for (int i = 0; i < 100; ++i)
-		{
-			PushJob(FastJobs, []() {
-				R3_PROF_EVENT("Test fast job");
-			});
-		}
-
 		ImGui::Begin("Jobs");
 		for (int i = 0; i < m_jobPools.size(); ++i)
 		{
-			std::string txt = std::format("Pending {}: {}", c_jobPoolNames[i], m_jobPools[0]->JobsPending());
+			std::string txt = std::format("Pending {}: {}", c_jobPoolNames[i], m_jobPools[i]->JobsPending());
 			ImGui::Text(txt.c_str());
 		}
 		ImGui::End();
