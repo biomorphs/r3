@@ -12,6 +12,11 @@ namespace R3
 {
 	using VulkanHelpers::CheckResult;
 
+	struct PushConstants {
+		glm::mat4 m_vertexToScreen;
+		VkDeviceAddress m_vertexBufferAddress;
+	};
+
 	static VkVertexInputBindingDescription CreateVertexInputBindingDescription()
 	{
 		// we just want to bind a single buffer of vertices
@@ -227,14 +232,14 @@ namespace R3
 		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_depthReadDisabledTriPipeline);
 		vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
 		vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
-		
-		constexpr VkDeviceSize offset = 0;	// bind the VB with 0 offset, draw calls will include per-frame offset instead
-		vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &m_allVertexData.m_buffer, &offset);
 
-		// pass the vertex-screen transform via push constants for now (laziness!)
+		// pass the vertex to screen transform via push constants for now along with the buffer address
+		PushConstants pc;
+		pc.m_vertexToScreen = vertexToScreen;
+		pc.m_vertexBufferAddress = m_allvertsBufferAddress;
+		vkCmdPushConstants(cmdBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(pc), &pc);
 		for (auto& tris : m_thisFrameTriangles)
 		{
-			vkCmdPushConstants(cmdBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(vertexToScreen), &vertexToScreen);
 			vkCmdDraw(cmdBuffer, tris.m_vertexCount, 1, tris.m_startVertexOffset + pfd.m_vertexOffset, 0);
 		}
 
@@ -242,10 +247,9 @@ namespace R3
 		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_depthReadDisabledLinesPipeline);
 		vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
 		vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
-		vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &m_allVertexData.m_buffer, &offset);
+		vkCmdPushConstants(cmdBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(pc), &pc);
 		for (auto& lines : m_thisFrameLines)
 		{
-			vkCmdPushConstants(cmdBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(vertexToScreen), &vertexToScreen);
 			vkCmdDraw(cmdBuffer, lines.m_vertexCount, 1, lines.m_startVertexOffset + pfd.m_vertexOffset, 0);
 		}
 	}
@@ -281,15 +285,11 @@ namespace R3
 		};
 		pb.m_dynamicState = VulkanHelpers::CreatePipelineDynamicState(dynamicStates);
 
-		// Set up vertex data input state
-		auto attribDescriptions = CreateVertexAttributeDescriptions();
-		auto inputBindingDescriptor = CreateVertexInputBindingDescription();
+		// Set up empty vertex data input state
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo = { 0 };
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		vertexInputInfo.vertexBindingDescriptionCount = 1;
-		vertexInputInfo.vertexAttributeDescriptionCount = 2;
-		vertexInputInfo.pVertexAttributeDescriptions = attribDescriptions.data();
-		vertexInputInfo.pVertexBindingDescriptions = &inputBindingDescriptor;
+		vertexInputInfo.vertexBindingDescriptionCount = 0;
+		vertexInputInfo.vertexAttributeDescriptionCount = 0;
 		pb.m_vertexInputState = vertexInputInfo;
 
 		// Input assembly describes type of geometry (lines/tris) and topology(strips,lists,etc) to draw
@@ -351,7 +351,12 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		size_t bufferSize = maxVerticesPerFrame * c_framesInFlight * sizeof(PerVertexData);
-		m_allVertexData = VulkanHelpers::CreateBuffer(d.GetVMA(), bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+		m_allVertexData = VulkanHelpers::CreateBuffer(d.GetVMA(), bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
+		//find the adress of the vertex buffer
+		VkBufferDeviceAddressInfo deviceAdressInfo = {};
+		deviceAdressInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+		deviceAdressInfo.buffer = m_allVertexData.m_buffer;
+		m_allvertsBufferAddress = vkGetBufferDeviceAddress(d.GetVkDevice(), &deviceAdressInfo);
 		if (m_allVertexData.m_allocation == VK_NULL_HANDLE)
 		{
 			LogError("Failed to create vertex buffer of size {} bytes", bufferSize);
@@ -381,7 +386,7 @@ namespace R3
 		// shared pipeline layout, transform matrix passed via push constant
 		VkPushConstantRange constantRange;
 		constantRange.offset = 0;	// needs to match in the shader if >0!
-		constantRange.size = sizeof(glm::mat4);
+		constantRange.size = sizeof(PushConstants);
 		constantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo = { 0 };
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;

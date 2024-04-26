@@ -1,17 +1,25 @@
 #version 450
+#extension GL_EXT_buffer_reference : require
 
-layout(location = 0) in vec4 inPosition;
-layout(location = 1) in vec4 inColour;
+struct Vertex {
+	vec4 position;
+	vec4 colour;
+}; 
+layout(buffer_reference, std430) readonly buffer VertexBuffer { 
+	Vertex vertices[];
+};
 
-// transform set in push constants for now (laziness)
+// transform and vertex buffer set in push constants
 layout(push_constant) uniform constants
 {
 	mat4 m_transform;
+	VertexBuffer vertexBuffer;
 } PushConstants;
 
 layout(location = 0) out vec4 fragColor;
 
 void main() {
-    gl_Position = PushConstants.m_transform * inPosition;
-    fragColor = inColour;
+	Vertex v = PushConstants.vertexBuffer.vertices[gl_VertexIndex];
+    gl_Position = PushConstants.m_transform * v.position;
+    fragColor = v.colour;
 }

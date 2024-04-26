@@ -580,13 +580,18 @@ namespace R3
 			deviceCreate.pEnabledFeatures = &requiredFeatures;
 
 			// Dynamic rendering is enabled via a feature flag
-			VkPhysicalDeviceDynamicRenderingFeatures pddr = { 0 };
+			VkPhysicalDeviceDynamicRenderingFeatures pddr = { };
 			if (enablyDynamicRendering)
 			{
 				pddr.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
 				pddr.dynamicRendering = true;
 				deviceCreate.pNext = &pddr;
 			}
+			// Enable buffer addresses
+			VkPhysicalDeviceBufferDeviceAddressFeatures bAddr = { };
+			bAddr.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
+			bAddr.bufferDeviceAddress = true;
+			pddr.pNext = &bAddr;
 
 			VkDevice newDevice = nullptr;
 			VkResult r = vkCreateDevice(pdd.m_device, &deviceCreate, nullptr, &newDevice);

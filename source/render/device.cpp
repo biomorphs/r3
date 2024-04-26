@@ -105,6 +105,7 @@ namespace R3
 		allocatorInfo.physicalDevice = m_physicalDevice.m_device;
 		allocatorInfo.device = m_device;
 		allocatorInfo.instance = m_vkInstance;
+		allocatorInfo.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;	// enable buffer device addresses
 		return CheckResult(vmaCreateAllocator(&allocatorInfo, &m_vma));
 	}
 

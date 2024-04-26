@@ -48,6 +48,7 @@ namespace R3
 		};
 		size_t m_maxVertices = 0;
 		AllocatedBuffer m_allVertexData;		// contains c_framesInFlight x max vertices
+		VkDeviceAddress m_allvertsBufferAddress;
 		AllocatedBuffer m_stagingVertexData;	// contains max vertices for 1 frame, host visible, coherant
 		void* m_mappedStagingBuffer = nullptr;
 		std::vector<PerVertexData> m_thisFrameVertices;
