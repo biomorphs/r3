@@ -6,6 +6,8 @@ namespace R3
 {
 	class Device;
 	class Window;
+
+	// Represents the actual swap chain images + views
 	class Swapchain
 	{
 	public:

@@ -116,7 +116,7 @@ namespace R3
 		scInfo.imageColorSpace = bestFormat.colorSpace;
 		scInfo.imageExtent = extents;
 		scInfo.imageArrayLayers = 1;	// 1 unless doing vr
-		scInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;	// image used as colour attachment
+		scInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;	// image used as colour attachment and transfer dest
 		scInfo.preTransform = swapChainSupport.m_caps.currentTransform;
 		scInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;	// we dont care about alpha from window system
 		scInfo.presentMode = bestPresentMode;

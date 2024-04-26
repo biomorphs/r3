@@ -77,6 +77,42 @@ namespace R3
 			return true;
 		}
 
+		bool BlitColourImageToImage(VkCommandBuffer cmds, VkImage srcImage, VkExtent2D srcSize, VkImage destImage, VkExtent2D destSize)
+		{
+			VkImageBlit2 blitRegion = {};
+			blitRegion.sType = VK_STRUCTURE_TYPE_IMAGE_BLIT_2;
+			blitRegion.srcOffsets[1].x = srcSize.width;
+			blitRegion.srcOffsets[1].y = srcSize.height;
+			blitRegion.srcOffsets[1].z = 1;
+			blitRegion.dstOffsets[1].x = destSize.width;
+			blitRegion.dstOffsets[1].y = destSize.height;
+			blitRegion.dstOffsets[1].z = 1;
+
+			blitRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			blitRegion.srcSubresource.baseArrayLayer = 0;
+			blitRegion.srcSubresource.layerCount = 1;
+			blitRegion.srcSubresource.mipLevel = 0;
+
+			blitRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			blitRegion.dstSubresource.baseArrayLayer = 0;
+			blitRegion.dstSubresource.layerCount = 1;
+			blitRegion.dstSubresource.mipLevel = 0;
+
+			VkBlitImageInfo2 blitInfo = {};
+			blitInfo.sType = VK_STRUCTURE_TYPE_BLIT_IMAGE_INFO_2;
+			blitInfo.dstImage = destImage;
+			blitInfo.dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+			blitInfo.srcImage = srcImage;
+			blitInfo.srcImageLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+			blitInfo.filter = VK_FILTER_LINEAR;
+			blitInfo.regionCount = 1;
+			blitInfo.pRegions = &blitRegion;
+
+			vkCmdBlitImage2(cmds, &blitInfo);
+
+			return true;
+		}
+
 		VkImageCreateInfo CreateImage2DNoMSAANoMips(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extents)
 		{
 			VkImageCreateInfo info = {};

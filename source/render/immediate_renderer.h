@@ -21,11 +21,11 @@ namespace R3
 			glm::vec4 m_position;
 			glm::vec4 m_colour;
 		};
-		bool Initialise(Device& d, Swapchain& swapChain, VkFormat depthBufferFormat, uint32_t maxVerticesPerFrame = 1024 * 20);
+		bool Initialise(Device& d, VkFormat colourBufferFormat, VkFormat depthBufferFormat, uint32_t maxVerticesPerFrame = 1024 * 20);
 		void Destroy(Device& d);
 		
 		void WriteVertexData(Device& d, VkCommandBuffer& cmdBuffer);	// call this before calling draw! must be called outside of rendering
-		void Draw(glm::mat4 vertexToScreen, Device& d, Swapchain& swapChain, VkCommandBuffer& cmdBuffer);
+		void Draw(glm::mat4 vertexToScreen, Device& d, VkExtent2D viewportSize, VkCommandBuffer& cmdBuffer);
 		void Flush();	// call at end of frame, clears out previous tri data
 
 		void AddTriangle(const PerVertexData vertices[3]);
@@ -36,7 +36,7 @@ namespace R3
 		void AddCubeWireframe(glm::mat4 transform, glm::vec4 colour);
 
 	private:
-		bool CreateNoDepthReadPipelines(Device& d, Swapchain& swapChain, VkFormat depthBufferFormat);
+		bool CreateNoDepthReadPipelines(Device& d, VkFormat colourBufferFormat, VkFormat depthBufferFormat);
 
 		static constexpr int c_framesInFlight = 2;
 		struct PerFrameData {

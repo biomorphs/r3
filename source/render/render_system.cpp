@@ -91,7 +91,7 @@ namespace R3
 
 		auto& cmdBuffer = m_vk->ThisFrameData().m_graphicsCmdBuffer;
 
-		// rendering to colour attachment only
+		// rendering to swap chain directly
 		VkRenderingAttachmentInfo colourAttachment = { 0 };
 		colourAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
 		colourAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
@@ -133,14 +133,14 @@ namespace R3
 		scissor.offset = { 0, 0 };
 		scissor.extent = m_swapChain->GetExtents();	// draw the full image
 
-		// rendering to colour + depth
+		// rendering to backbuffer + depth
 		// also clears these buffers!
 		VkRenderingAttachmentInfo colourAttachment = { 0 };
 		colourAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
 		colourAttachment.clearValue = { {{m_mainPassClearColour.x, m_mainPassClearColour.y, m_mainPassClearColour.z, m_mainPassClearColour.w }} };
 		colourAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		colourAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		colourAttachment.imageView = m_swapChain->GetViews()[swapImageIndex];
+		colourAttachment.imageView = m_vk->m_backBufferView;
 		colourAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;	// this is the layout used during rendering, we need to ensure the transition happens first
 
 		VkRenderingAttachmentInfo depthAttachment = { 0 };
@@ -161,9 +161,9 @@ namespace R3
 		ri.renderArea.extent = m_swapChain->GetExtents();
 		vkCmdBeginRendering(cmdBuffer, &ri);
 
-		// IM renderer draw
+		// IM renderer draws to back buffer
 		auto cameras = GetSystem<CameraSystem>();
-		m_imRenderer->Draw(cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix(), *m_device, *m_swapChain, cmdBuffer);
+		m_imRenderer->Draw(cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix(), *m_device, m_swapChain->GetExtents(), cmdBuffer);
 
 		vkCmdEndRendering(cmdBuffer);
 
@@ -185,28 +185,60 @@ namespace R3
 			return false;
 		}
 
-		// Transition swap chain image and depth image to format optimal for drawing 
+		auto& swapImage = m_swapChain->GetImages()[swapImageIndex];
+
+		// Transition swap chain image, backbuffer and depth image to format optimal for drawing 
 		{
-			auto colourBarrier = VulkanHelpers::MakeImageBarrier(m_swapChain->GetImages()[swapImageIndex],
+			auto backBufBarrier = VulkanHelpers::MakeImageBarrier(m_vk->m_backBufferImage.m_image,
+				VK_IMAGE_ASPECT_COLOR_BIT,
+				VK_ACCESS_NONE,
+				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+				VK_IMAGE_LAYOUT_UNDEFINED,
+				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL	// optimal for rendering
+			);
+			auto colourBarrier = VulkanHelpers::MakeImageBarrier(swapImage,
 				VK_IMAGE_ASPECT_COLOR_BIT,
 				VK_ACCESS_NONE,
 				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,		// dst mask = colour write
 				VK_IMAGE_LAYOUT_UNDEFINED,					// we dont care what format it starts in
-				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);	// to format optimal for drawing
+				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);		// to format optimal for copy from back buffer
 			auto depthBarrier = VulkanHelpers::MakeImageBarrier(m_vk->m_depthBufferImage.m_image,
 				VK_IMAGE_ASPECT_DEPTH_BIT,
 				VK_ACCESS_NONE,
 				VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,		// dst mask = depth write
 				VK_IMAGE_LAYOUT_UNDEFINED,							// we dont care what format it starts in
-				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);	// to format optimal for drawing
-			VkImageMemoryBarrier barriers[] = { colourBarrier, depthBarrier };
+				VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);	// to format optimal for rendering
+			VkImageMemoryBarrier barriers[] = { backBufBarrier, colourBarrier, depthBarrier };
 
 			// dst stages = before colour write or depth read
 			auto dstStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-			vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, dstStages, 0, 0, nullptr, 0, nullptr, 2, barriers);
+			vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, dstStages, 0, 0, nullptr, 0, nullptr, 3, barriers);
 		}
 
 		RecordMainPass(swapImageIndex);
+		
+		// Need to transfer backbuffer to VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+		// Swap chain is already VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+		{
+			auto backBufBarrier = VulkanHelpers::MakeImageBarrier(m_vk->m_backBufferImage.m_image,
+				VK_IMAGE_ASPECT_COLOR_BIT,
+				VK_ACCESS_NONE,
+				VK_ACCESS_TRANSFER_READ_BIT,
+				VK_IMAGE_LAYOUT_UNDEFINED,
+				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+			);
+			VkImageMemoryBarrier barriers[] = { backBufBarrier };
+
+			// dst stages = before transfer
+			auto dstStages = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, dstStages, 0, 0, nullptr, 0, nullptr, 1, barriers);
+		}
+		// Copy back buffer contents to swap chain image
+		VulkanHelpers::BlitColourImageToImage(cmdBuffer,
+			m_vk->m_backBufferImage.m_image, m_swapChain->GetExtents(),
+			m_swapChain->GetImages()[swapImageIndex], m_swapChain->GetExtents());
+
+		// Draw imgui directly to swap chain
 		DrawImgui(swapImageIndex);
 
 		// Transition swap chain image to format optimal for present
@@ -214,7 +246,7 @@ namespace R3
 			VK_IMAGE_ASPECT_COLOR_BIT,
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,		// src mask = wait before writing attachment
 			VK_ACCESS_NONE,								// dst mask = we dont care?
-			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,	// from format optimal for drawing
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,	// from format optimal for drawing
 			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);			// to format optimal for present
 		vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &colourBarrier);
 
@@ -572,7 +604,7 @@ namespace R3
 		}
 
 		m_imRenderer = std::make_unique<ImmediateRenderer>();
-		if (!m_imRenderer->Initialise(*m_device, *m_swapChain, m_vk->m_depthBufferFormat))
+		if (!m_imRenderer->Initialise(*m_device, m_vk->m_backBufferFormat, m_vk->m_depthBufferFormat))
 		{
 			LogError("Failed to create immediate renderer");
 			return false;
@@ -671,8 +703,8 @@ namespace R3
 		init_info.Device = m_device->GetVkDevice();
 		init_info.Queue = m_device->GetGraphicsQueue();
 		init_info.DescriptorPool = m_vk->m_imgui.m_descriptorPool;
-		init_info.MinImageCount = static_cast<uint32_t>(m_swapChain->GetImages().size());	// ??
-		init_info.ImageCount = static_cast<uint32_t>(m_swapChain->GetImages().size());		// ????!
+		init_info.MinImageCount = static_cast<uint32_t>(m_swapChain->GetImages().size());
+		init_info.ImageCount = static_cast<uint32_t>(m_swapChain->GetImages().size());
 		init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 		init_info.UseDynamicRendering = true;
 		init_info.ColorAttachmentFormat = m_swapChain->GetFormat().format;

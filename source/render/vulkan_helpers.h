@@ -28,6 +28,7 @@ namespace R3
 		bool RunCommandsImmediate(VkDevice d, VkQueue cmdQueue, VkCommandPool cmdPool, VkFence waitFence, std::function<void(VkCommandBuffer&)> fn);
 
 		// Images
+		bool BlitColourImageToImage(VkCommandBuffer cmds, VkImage srcImage, VkExtent2D srcSize, VkImage destImage, VkExtent2D destSize);
 		VkImageCreateInfo CreateImage2DNoMSAANoMips(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extents);
 		VkImageViewCreateInfo CreateImageView2DNoMSAANoMips(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags);
 
