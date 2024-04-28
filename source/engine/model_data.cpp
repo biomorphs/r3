@@ -207,7 +207,9 @@ namespace R3
 
 	bool LoadModelData(std::string_view filePath, ModelData& result, bool flattenMeshes)
 	{
-		R3_PROF_EVENT();
+		char debugName[1024] = { '\0' };
+		sprintf_s(debugName, "LoadModelData %s", filePath.data());
+		R3_PROF_EVENT_DYN(debugName);
 		return LoadModelDataAssimp(filePath, result, flattenMeshes);
 	}
 }

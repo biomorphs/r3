@@ -109,12 +109,13 @@ namespace R3
 			return modelHandle;		// a handle alredy exists, it might not be loaded yet but we dont care
 		}
 
-		auto loadModelJob = [this, modelHandle, path]()
+		std::string pathCopy(path);
+		auto loadModelJob = [this, modelHandle, pathCopy]()
 		{
 			assert(m_allModels[modelHandle.m_index].m_loadState == StoredModel::LoadedState::Loading);
 			assert(m_allModels[modelHandle.m_index].m_modelData == nullptr);
 			auto newData = std::make_unique<ModelData>();
-			bool modelLoaded = LoadModelData(path, *newData);
+			bool modelLoaded = LoadModelData(pathCopy, *newData);
 			{
 				ScopedLock lock(m_allModelsMutex);
 				if (modelLoaded)

@@ -26,7 +26,7 @@ namespace R3
         std::string pathStr(filePath);
         auto loadFileThen = [pathStr, onCompletion]() {
             char debugName[1024] = { '\0' };
-            sprintf_s(debugName, "LB %s", pathStr.c_str());
+            sprintf_s(debugName, "LoadBinary %s", pathStr.c_str());
             R3_PROF_EVENT_DYN(debugName);
             std::vector<uint8_t> rawData;
             if (!FileIO::LoadBinaryFile(pathStr, rawData))
