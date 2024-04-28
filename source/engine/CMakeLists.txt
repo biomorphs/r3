@@ -5,6 +5,7 @@ set(EngineLib_SourceFiles
 	model_data.h
 	model_data.cpp
 	model_data_handle.h
+	model_data_handle.cpp
 	engine_startup.h
 	engine_startup.cpp
 	systems.h
@@ -28,7 +29,6 @@ set(EngineLib_SourceFiles
 	frustum.cpp
 	flycam.h
 	flycam.cpp
-
 	register_engine_components.h
 	register_engine_components.cpp
 	systems/time_system.h

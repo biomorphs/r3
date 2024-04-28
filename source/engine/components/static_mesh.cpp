@@ -1,16 +1,18 @@
 #include "static_mesh.h"
-#include "engine/systems/static_mesh_system.h"
+#include "engine/systems/model_data_system.h"
 
 namespace R3
 {
 	void StaticMeshComponent::SerialiseJson(JsonSerialiser& s)
 	{
-
+		s("Model", m_modelHandle);
 	}
 
 	void StaticMeshComponent::Inspect(const Entities::EntityHandle& e, Entities::World* w, ValueInspector& i)
 	{
-
+		auto modelSys = Systems::GetSystem<ModelDataSystem>();
+		std::string currentPath = modelSys->GetModelName(m_modelHandle);
+		i.InspectFile("Model Path", currentPath, "", InspectProperty(&StaticMeshComponent::SetModelFromPath, e, w));
 	}
 
 	void StaticMeshComponent::SetModel(ModelDataHandle s)
@@ -21,5 +23,11 @@ namespace R3
 	ModelDataHandle StaticMeshComponent::GetModel() const
 	{
 		return m_modelHandle;
+	}
+
+	void StaticMeshComponent::SetModelFromPath(const std::string& path)
+	{
+		auto modelSys = Systems::GetSystem<ModelDataSystem>();
+		m_modelHandle = modelSys->LoadModel(path.c_str());
 	}
 }

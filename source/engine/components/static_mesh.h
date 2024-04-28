@@ -16,6 +16,7 @@ namespace R3
 		ModelDataHandle GetModel() const;
 
 	private:
+		void SetModelFromPath(const std::string& path);
 		ModelDataHandle m_modelHandle;
 	};
 }

@@ -6,8 +6,6 @@
 
 namespace R3
 {
-	ModelDataHandle sponzaModel, cubeModel;
-
 	void StaticMeshSystem::RegisterTickFns()
 	{
 		RegisterTick("StaticMeshes::ShowGui", [this]() {
@@ -23,15 +21,6 @@ namespace R3
 	bool StaticMeshSystem::ShowGui()
 	{
 		ImGui::Begin("Static Meshes");
-		auto values = Systems::GetSystem<ModelDataSystem>()->GetModelData(sponzaModel);
-		if (values.m_data)
-		{
-			ImGui::Text("Loaded!");
-		}
-		else
-		{
-			ImGui::Text("Not Loaded!");
-		}
 		ImGui::End();
 		return true;
 	}
@@ -42,7 +31,6 @@ namespace R3
 		auto loadedModelName = models->GetModelName(handle);
 		if (loaded)
 		{
-			LogInfo("Model Data '{}' loaded", loadedModelName);
 			m_loadedModels.enqueue(handle);
 		}
 		else
@@ -58,9 +46,6 @@ namespace R3
 		m_onModelDataLoadedCbToken = models->RegisterLoadedCallback([this](const ModelDataHandle& handle, bool loaded) {
 			OnModelDataLoaded(handle, loaded);
 		});
-
-		sponzaModel = Systems::GetSystem<ModelDataSystem>()->LoadModel("sponza\\NewSponza_Main_glTF_002.gltf");
-		cubeModel = Systems::GetSystem<ModelDataSystem>()->LoadModel("common\\models\\cube.fbx");
 		return true;
 	}
 }

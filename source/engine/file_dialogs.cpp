@@ -2,13 +2,13 @@
 #include "core/file_io.h"
 #include "core/log.h"
 #include <nfd.h>
+#include <filesystem>
 
 namespace R3
 {
     std::string FileLoadDialog(std::string_view initialPath, std::string_view filter)
     {
         std::string realInitialPath = initialPath.empty() ? std::string(FileIO::GetBasePath()) : FileIO::FindAbsolutePath(initialPath);
-
         nfdchar_t* newPath = NULL;
         nfdresult_t result = NFD_OpenDialog(filter.data(), realInitialPath.data(), &newPath);
         if (result == NFD_OKAY)

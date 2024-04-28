@@ -1,7 +1,10 @@
 #include "undo_redo_value_inspector.h"
 #include "commands/set_value_cmd.h"
 #include "editor/editor_command_list.h"
+#include "engine/file_dialogs.h"
+#include "core/log.h"
 #include "imgui.h"
+#include <filesystem>
 
 namespace R3
 {
@@ -68,4 +71,23 @@ namespace R3
 		}
 		return false;
 	}
+
+	bool UndoRedoInspector::InspectFile(std::string_view label, std::string_view path, std::string_view filter, std::function<void(const std::string&)> setFn)
+	{
+		std::string txt = std::format("{} - {}", label, path);
+		if (ImGui::Button(txt.c_str()))
+		{
+			std::string newPath = FileLoadDialog(path, filter);
+			if (newPath.length() > 0)
+			{
+				// sanitise path, only files relative to data root are allowed
+				auto currentPath = std::filesystem::current_path();
+				auto relativePath = std::filesystem::relative(newPath, currentPath);
+				m_cmds.Push(std::make_unique<SetValueCommand<std::string>>(label, std::string(path), relativePath.string(), setFn));
+				return true;
+			}
+		}
+		return false;
+	}
+
 }

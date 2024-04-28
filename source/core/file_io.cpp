@@ -21,7 +21,7 @@ namespace R3
 			{
 				if (std::filesystem::exists(p))
 				{
-					return p.generic_string();
+					return p.string();
 				}
 			}
 			else
@@ -32,12 +32,12 @@ namespace R3
 					std::filesystem::path pp(fullPath + std::string(filePath));
 					if (std::filesystem::exists(pp))
 					{
-						return std::filesystem::absolute(pp).generic_string();
+						return std::filesystem::absolute(pp).string();
 					}
 				}
 				if (std::filesystem::exists(c_baseDirectory + std::string(filePath)))
 				{
-					return std::filesystem::absolute(c_baseDirectory + std::string(filePath)).generic_string();
+					return std::filesystem::absolute(c_baseDirectory + std::string(filePath)).string();
 				}
 			}
 			return "";
