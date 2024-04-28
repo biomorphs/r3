@@ -1,8 +1,10 @@
 #pragma once
 #include "entities/component_helpers.h"
+#include "engine/model_data_handle.h"
 
 namespace R3
 {
+	struct ModelDataHandle;
 	class StaticMeshComponent
 	{
 	public:
@@ -10,6 +12,10 @@ namespace R3
 		void SerialiseJson(JsonSerialiser& s);
 		void Inspect(const Entities::EntityHandle& e, Entities::World* w, ValueInspector& i);
 
+		void SetModel(ModelDataHandle s);
+		ModelDataHandle GetModel() const;
+
 	private:
+		ModelDataHandle m_modelHandle;
 	};
 }

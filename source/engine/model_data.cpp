@@ -168,53 +168,32 @@ namespace R3
 		return true;
 	}
 
-	bool LoadModelData(std::string_view filePath, ModelData& result, bool flattenMeshes)
+	bool LoadModelDataAssimp(std::string_view filePath, ModelData& result, bool flattenMeshes)
 	{
 		R3_PROF_EVENT();
-
-		std::vector<uint8_t> rawData;
-		if (!FileIO::LoadBinaryFile(filePath, rawData))
-		{
-			LogWarn("Failed to load model file {}", filePath);
-			return false;
-		}
-		return LoadModelData(filePath, rawData, result, flattenMeshes);
-	}
-
-	bool LoadModelData(std::string_view filePath, const std::vector<uint8_t>& rawData, ModelData& result, bool flattenMeshes)
-	{
-		R3_PROF_EVENT();
-		const aiScene* scene = nullptr;
-
 		// We push the root directory of the file path to assimp IO so any child files are loaded relative to the root
 		auto absolutePath = std::filesystem::absolute(filePath);
 		if (!absolutePath.has_filename())
 		{
 			LogError("Invalid path {}", absolutePath.string());
+			return false;
 		}
-		auto fileName = absolutePath.filename();
 		Assimp::Importer importer;
-		importer.GetIOHandler()->ChangeDirectory(absolutePath.remove_filename().string());	// note this changes working directory
+		const aiScene* scene = importer.ReadFile(absolutePath.string(),
+			aiProcess_CalcTangentSpace |
+			aiProcess_GenNormals |	// only if no normals in data
+			aiProcess_Triangulate |
+			aiProcess_JoinIdenticalVertices |
+			aiProcess_SortByPType |
+			aiProcess_ValidateDataStructure |
+			aiProcess_OptimizeMeshes |
+			aiProcess_RemoveRedundantMaterials |
+			(flattenMeshes ? aiProcess_PreTransformVertices : 0)
+		);
+		if (!scene)
 		{
-			R3_PROF_EVENT("AssimpReadFile");
-			static Mutex assimpMutex;	// assimp is not really thread-safe, so we slap a mutex around it
-			ScopedLock lockAssimp(assimpMutex);
-			scene = importer.ReadFileFromMemory(rawData.data(), rawData.size(),
-				aiProcess_CalcTangentSpace |
-				aiProcess_GenNormals |	// only if no normals in data
-				aiProcess_Triangulate |
-				aiProcess_JoinIdenticalVertices |
-				aiProcess_SortByPType |
-				aiProcess_ValidateDataStructure |
-				aiProcess_OptimizeMeshes |
-				aiProcess_RemoveRedundantMaterials |
-				(flattenMeshes ? aiProcess_PreTransformVertices : 0)
-			);
-			if (!scene)
-			{
-				LogError("Failed to load model - {}", importer.GetErrorString());
-				return false;
-			}
+			LogError("Failed to load model - {}", importer.GetErrorString());
+			return false;
 		}
 		{
 			R3_PROF_EVENT("Parse");
@@ -223,7 +202,12 @@ namespace R3
 			ParseSceneNode(scene, scene->mRootNode, result, nodeTransform);
 			CalculateAABB(result, result.m_boundsMin, result.m_boundsMax);
 		}
-		
 		return true;
+	}
+
+	bool LoadModelData(std::string_view filePath, ModelData& result, bool flattenMeshes)
+	{
+		R3_PROF_EVENT();
+		return LoadModelDataAssimp(filePath, result, flattenMeshes);
 	}
 }

@@ -56,5 +56,4 @@ namespace R3
 
 	// flattenMeshes - flattens mesh heirarchy into an array of meshes
 	bool LoadModelData(std::string_view filePath, ModelData& result, bool flattenMeshes = true);
-	bool LoadModelData(std::string_view filePath, const std::vector<uint8_t>& rawData, ModelData& result, bool flattenMeshes = true);
 }

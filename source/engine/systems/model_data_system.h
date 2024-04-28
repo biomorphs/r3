@@ -2,17 +2,12 @@
 
 #include "engine/systems.h"
 #include "engine/model_data.h"
+#include "engine/model_data_handle.h"
+#include "engine/callback_array.h"
 #include "core/mutex.h"
 
 namespace R3
 {
-	// Handle to model data
-	struct ModelDataHandle
-	{
-		uint32_t m_index = -1;
-		static ModelDataHandle Invalid() { return { (uint32_t)-1 }; };
-	};
-
 	// Use this to access the actual model data
 	class ModelDataValues
 	{
@@ -34,21 +29,36 @@ namespace R3
 		virtual void RegisterTickFns();
 		virtual bool Init();
 
-		ModelDataHandle LoadModel(const char* path, std::function<void(bool, ModelDataHandle)> onFinish = nullptr);
+		using ModelLoadedCallback = std::function<void(const ModelDataHandle&, bool)>;
+		using ModelLoadedCallbacks = CallbackArray<ModelLoadedCallback>;
+		ModelLoadedCallbacks::Token RegisterLoadedCallback(const ModelLoadedCallback& fn);
+		bool UnregisterLoadedCallback(ModelLoadedCallbacks::Token token);
+
+		ModelDataHandle LoadModel(const char* path);
 		ModelDataValues GetModelData(const ModelDataHandle& h);
+		std::string GetModelName(const ModelDataHandle& h);
 
 	private:
+		bool RunModelLoadedCallbacks();
 		bool ShowGui();
 		ModelDataHandle FindModel(std::string_view name);	// does not load any new ones
 		bool FindOrCreate(std::string_view name, ModelDataHandle& h);	// returns true if an existing handle was found
 		struct StoredModel
 		{
+			enum class LoadedState
+			{
+				Loading,
+				LoadFailed,
+				LoadOk
+			};
 			std::string m_name;
 			std::unique_ptr<ModelData> m_modelData;
-			bool m_loadError = false;
+			LoadedState m_loadState = LoadedState::Loading;
 		};
 		Mutex m_allModelsMutex;
 		std::vector<StoredModel> m_allModels;
 		std::atomic<int> m_pendingModels = 0;
+		Mutex m_loadedCallbacksMutex;
+		ModelLoadedCallbacks m_modelLoadedCbs;
 	};
 }

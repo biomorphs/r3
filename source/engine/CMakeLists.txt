@@ -1,8 +1,10 @@
 set(EngineLib_SourceFiles
 	async.h
 	async.cpp
+	callback_array.h
 	model_data.h
 	model_data.cpp
+	model_data_handle.h
 	engine_startup.h
 	engine_startup.cpp
 	systems.h
@@ -26,6 +28,7 @@ set(EngineLib_SourceFiles
 	frustum.cpp
 	flycam.h
 	flycam.cpp
+
 	register_engine_components.h
 	register_engine_components.cpp
 	systems/time_system.h

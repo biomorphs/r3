@@ -31,15 +31,15 @@ namespace R3
 			for (const auto& m : m_allModels)
 			{
 				std::string statusText = "";
-				if (m.m_modelData == nullptr && m.m_loadError == false)
+				if (m.m_loadState == StoredModel::LoadedState::Loading)
 				{
 					statusText = "Loading";
 				}
-				else if (m.m_loadError)
+				else if (m.m_loadState == StoredModel::LoadedState::LoadFailed)
 				{
-					statusText = "Error";
+					statusText = "Failed";
 				}
-				else if (m.m_modelData != nullptr)
+				else if (m.m_loadState == StoredModel::LoadedState::LoadOk)
 				{
 					statusText = "Loaded";
 				}
@@ -59,8 +59,6 @@ namespace R3
 		{
 			return {};
 		}
-
-		ModelData* data = nullptr;
 		{
 			m_allModelsMutex.Lock();	// the ModelDataValues may be responsible for unlocking
 			if (h.m_index != -1 && h.m_index < m_allModels.size() && m_allModels[h.m_index].m_modelData != nullptr)
@@ -75,21 +73,46 @@ namespace R3
 		}
 	}
 
-	ModelDataHandle ModelDataSystem::LoadModel(const char* path, std::function<void(bool, ModelDataHandle)> onFinish)
+	std::string ModelDataSystem::GetModelName(const ModelDataHandle& h)
+	{
+		R3_PROF_EVENT();
+		std::string modelName = "";
+		if (h.m_index != -1)
+		{
+			ScopedLock lock(m_allModelsMutex);
+			if (h.m_index != -1 && h.m_index < m_allModels.size())
+			{
+				modelName = m_allModels[h.m_index].m_name;
+			}
+		}
+		return modelName;
+	}
+
+	ModelDataSystem::ModelLoadedCallbacks::Token ModelDataSystem::RegisterLoadedCallback(const ModelLoadedCallback& fn)
+	{
+		ScopedLock l(m_loadedCallbacksMutex);
+		return m_modelLoadedCbs.AddCallback(fn);
+	}
+
+	bool ModelDataSystem::UnregisterLoadedCallback(ModelLoadedCallbacks::Token token)
+	{
+		ScopedLock l(m_loadedCallbacksMutex);
+		return m_modelLoadedCbs.RemoveCallback(token);
+	}
+
+	ModelDataHandle ModelDataSystem::LoadModel(const char* path)
 	{
 		R3_PROF_EVENT();
 		ModelDataHandle modelHandle;
 		if (FindOrCreate(path, modelHandle))
 		{
-			if (onFinish)
-			{
-				onFinish(true, modelHandle);
-			}
-			return modelHandle;
+			return modelHandle;		// a handle alredy exists, it might not be loaded yet but we dont care
 		}
 
-		auto loadModelJob = [this, modelHandle, path, onFinish]()
+		auto loadModelJob = [this, modelHandle, path]()
 		{
+			assert(m_allModels[modelHandle.m_index].m_loadState == StoredModel::LoadedState::Loading);
+			assert(m_allModels[modelHandle.m_index].m_modelData == nullptr);
 			auto newData = std::make_unique<ModelData>();
 			bool modelLoaded = LoadModelData(path, *newData);
 			{
@@ -97,15 +120,16 @@ namespace R3
 				if (modelLoaded)
 				{
 					m_allModels[modelHandle.m_index].m_modelData = std::move(newData);
+					m_allModels[modelHandle.m_index].m_loadState = StoredModel::LoadedState::LoadOk;
 				}
 				else
 				{
-					m_allModels[modelHandle.m_index].m_loadError = true;
+					m_allModels[modelHandle.m_index].m_loadState = StoredModel::LoadedState::LoadFailed;
 				}
 			}
-			if (onFinish)
 			{
-				onFinish(modelLoaded, modelHandle);
+				ScopedLock cbLock(m_loadedCallbacksMutex);
+				m_modelLoadedCbs.Run(modelHandle, modelLoaded);
 			}
 			m_pendingModels.fetch_add(-1);
 		};
