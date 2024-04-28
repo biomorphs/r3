@@ -144,6 +144,14 @@ namespace R3
 			return vci;
 		}
 
+		VkDeviceAddress GetBufferDeviceAddress(VkDevice device, const AllocatedBuffer& b)
+		{
+			VkBufferDeviceAddressInfo deviceAdressInfo = {};
+			deviceAdressInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+			deviceAdressInfo.buffer = b.m_buffer;
+			return vkGetBufferDeviceAddress(device, &deviceAdressInfo);
+		}
+
 		AllocatedBuffer CreateBuffer(VmaAllocator vma, uint64_t sizeBytes, VkBufferUsageFlags usage, VmaMemoryUsage memUsage, uint32_t allocFlags)
 		{
 			R3_PROF_EVENT();

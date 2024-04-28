@@ -69,22 +69,16 @@ namespace R3
 		MeshVertex newVertex;
 		for (uint32_t v = 0; v < mesh->mNumVertices; ++v)
 		{
-			auto pos = glm::vec3(mesh->mVertices[v].x, mesh->mVertices[v].y, mesh->mVertices[v].z);
-			memcpy(newVertex.m_position, glm::value_ptr(pos), sizeof(float) * 3);
-			if (mesh->mNormals != nullptr)
-			{
-				memcpy(newVertex.m_normal, &mesh->mNormals[v].x, sizeof(float) * 3);
-			}
-			if (mesh->mTangents != nullptr)
-			{
-				memcpy(newVertex.m_tangent, &mesh->mBitangents[v].x, sizeof(float) * 3);
-			}
-			if (mesh->mTextureCoords[0] != nullptr)
-			{
-				memcpy(newVertex.m_texCoord0, &mesh->mTextureCoords[0][v].x, sizeof(float) * 2);
-			}
-			boundsMin = glm::min(boundsMin, pos);
-			boundsMax = glm::max(boundsMax, pos);
+			auto uv0 = (mesh->mTextureCoords[0] != nullptr) ? glm::vec2(mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y) : glm::vec2(0, 0);
+			auto normalv0 = (mesh->mNormals != nullptr) ? glm::vec4(mesh->mNormals[v].x, mesh->mNormals[v].y, mesh->mNormals[v].z, uv0.y) 
+				: glm::vec4(0, 0, 0, uv0.y);
+			auto posu0 = glm::vec4(mesh->mVertices[v].x, mesh->mVertices[v].y, mesh->mVertices[v].z, uv0.x);
+			auto tangentPadding = (mesh->mTangents != nullptr) ? glm::vec4(mesh->mTangents[v].x, mesh->mTangents[v].y, mesh->mTangents[v].z, 0) : glm::vec4(0);
+			memcpy(newVertex.m_positionU0, glm::value_ptr(posu0), sizeof(float) * 4);
+			memcpy(newVertex.m_normalV0, glm::value_ptr(normalv0), sizeof(float) * 4);
+			memcpy(newVertex.m_tangentPad, glm::value_ptr(tangentPadding), sizeof(float) * 3);
+			boundsMin = glm::min(boundsMin, glm::vec3(posu0));
+			boundsMax = glm::max(boundsMax, glm::vec3(posu0));
 			newMesh.m_vertices.push_back(newVertex);
 		}
 		newMesh.m_boundsMin = boundsMin;
@@ -211,5 +205,17 @@ namespace R3
 		sprintf_s(debugName, "LoadModelData %s", filePath.data());
 		R3_PROF_EVENT_DYN(debugName);
 		return LoadModelDataAssimp(filePath, result, flattenMeshes);
+	}
+
+	void ModelData::GetGeometryMetrics(uint32_t& totalVerts, uint32_t& totalIndices) const
+	{
+		uint32_t tv = 0, ti = 0;
+		for (const auto& p : m_meshes)
+		{
+			tv += static_cast<uint32_t>(p.m_vertices.size());
+			ti += static_cast<uint32_t>(p.m_indices.size());
+		}
+		totalVerts = tv;
+		totalIndices = ti;
 	}
 }

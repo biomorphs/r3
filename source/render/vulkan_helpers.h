@@ -33,6 +33,7 @@ namespace R3
 		VkImageViewCreateInfo CreateImageView2DNoMSAANoMips(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags);
 
 		// Buffers
+		VkDeviceAddress GetBufferDeviceAddress(VkDevice device, const AllocatedBuffer& b);
 		AllocatedBuffer CreateBuffer(VmaAllocator vma, uint64_t sizeBytes, VkBufferUsageFlags usage, VmaMemoryUsage memUsage = VMA_MEMORY_USAGE_AUTO, uint32_t allocFlags = 0);
 
 		// ShaderModule wraps the spirv and can be deleted once a pipeline is built with it

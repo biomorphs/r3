@@ -118,6 +118,8 @@ namespace R3
 		R3_PROF_EVENT();
 		auto& cmdBuffer = m_vk->ThisFrameData().m_graphicsCmdBuffer;
 
+		m_onMainPassBegin.Run(*m_device, cmdBuffer);
+
 		// push immediate renderer vertices to gpu outside of render pass 
 		m_imRenderer->WriteVertexData(*m_device, cmdBuffer);
 
@@ -650,6 +652,16 @@ namespace R3
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplSDL2_NewFrame(m_mainWindow->GetHandle());
 		ImGui::NewFrame();
+	}
+
+	uint64_t RenderSystem::RegisterMainPassBeginCb(MainPassBeginCallback fn)
+	{
+		return m_onMainPassBegin.AddCallback(fn);
+	}
+
+	void RenderSystem::UnregisterMainPassBeginCb(uint64_t token)
+	{
+		m_onMainPassBegin.RemoveCallback(token);
 	}
 
 	bool RenderSystem::InitImGui()

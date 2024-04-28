@@ -1,8 +1,10 @@
 #pragma once
 #include "engine/systems.h"
+#include "engine/callback_array.h"
 #include "core/glm_headers.h"
 #include "deletion_queue.h"
 
+struct VkCommandBuffer_T;
 namespace R3
 {
 	class Device;
@@ -24,6 +26,11 @@ namespace R3
 		// Called from imgui system
 		bool InitImGui();
 		void ImGuiNewFrame();
+
+		using MainPassBeginCallback = std::function<void(Device&,VkCommandBuffer_T*)>;
+		uint64_t RegisterMainPassBeginCb(MainPassBeginCallback fn);
+		void UnregisterMainPassBeginCb(uint64_t token);
+
 	private:
 		void RecordMainPass(int swapImageIndex);
 		void DrawImgui(int swapImageIndex);
@@ -48,6 +55,7 @@ namespace R3
 		std::unique_ptr<Device> m_device;
 		std::unique_ptr<Swapchain> m_swapChain;
 		std::unique_ptr<ImmediateRenderer> m_imRenderer;
+		CallbackArray<MainPassBeginCallback> m_onMainPassBegin;
 		struct VkStuff;
 		std::unique_ptr<VkStuff> m_vk;
 		glm::vec4 m_mainPassClearColour = { 0,0,0,1 };

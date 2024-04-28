@@ -22,10 +22,9 @@ namespace R3
 {
 	struct MeshVertex
 	{
-		float m_position[3];
-		float m_normal[3];
-		float m_tangent[3];
-		float m_texCoord0[2];
+		float m_positionU0[4];
+		float m_normalV0[4];
+		float m_tangentPad[4];
 	};
 
 	struct MeshMaterial
@@ -48,6 +47,7 @@ namespace R3
 
 	struct ModelData
 	{
+		void GetGeometryMetrics(uint32_t& totalVerts, uint32_t& totalIndices) const;	// total verts/indices in all lods/parts
 		std::vector<MeshMaterial> m_materials;
 		std::vector<Mesh> m_meshes;
 		glm::vec3 m_boundsMin = glm::vec3{ -1.0f };

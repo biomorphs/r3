@@ -327,11 +327,7 @@ namespace R3
 		R3_PROF_EVENT();
 		size_t bufferSize = maxVerticesPerFrame * c_framesInFlight * sizeof(PerVertexData);
 		m_allVertexData = VulkanHelpers::CreateBuffer(d.GetVMA(), bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
-		//find the adress of the vertex buffer
-		VkBufferDeviceAddressInfo deviceAdressInfo = {};
-		deviceAdressInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
-		deviceAdressInfo.buffer = m_allVertexData.m_buffer;
-		m_allvertsBufferAddress = vkGetBufferDeviceAddress(d.GetVkDevice(), &deviceAdressInfo);
+		m_allvertsBufferAddress = VulkanHelpers::GetBufferDeviceAddress(d.GetVkDevice(), m_allVertexData);
 		if (m_allVertexData.m_allocation == VK_NULL_HANDLE)
 		{
 			LogError("Failed to create vertex buffer of size {} bytes", bufferSize);
