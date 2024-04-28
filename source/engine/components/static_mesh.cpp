@@ -12,7 +12,7 @@ namespace R3
 	{
 		auto modelSys = Systems::GetSystem<ModelDataSystem>();
 		std::string currentPath = modelSys->GetModelName(m_modelHandle);
-		i.InspectFile("Model Path", currentPath, "gltf, fbx, obj, usda", InspectProperty(&StaticMeshComponent::SetModelFromPath, e, w));
+		i.InspectFile("Model Path", currentPath, "gltf,fbx,obj,usda", InspectProperty(&StaticMeshComponent::SetModelFromPath, e, w));
 	}
 
 	void StaticMeshComponent::SetModel(ModelDataHandle s)

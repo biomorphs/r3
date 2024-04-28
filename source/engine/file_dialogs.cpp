@@ -1,6 +1,7 @@
 #include "file_dialogs.h"
 #include "core/file_io.h"
 #include "core/log.h"
+#include "core/profiler.h"
 #include <nfd.h>
 #include <filesystem>
 
@@ -8,6 +9,7 @@ namespace R3
 {
     std::string FileLoadDialog(std::string_view initialPath, std::string_view filter)
     {
+        R3_PROF_EVENT();
         std::string realInitialPath = initialPath.empty() ? std::string(FileIO::GetBasePath()) : FileIO::FindAbsolutePath(initialPath);
         nfdchar_t* newPath = NULL;
         nfdresult_t result = NFD_OpenDialog(filter.data(), realInitialPath.data(), &newPath);
@@ -24,8 +26,8 @@ namespace R3
 
 	std::string FileSaveDialog(std::string_view initialPath, std::string_view filter)
 	{
+        R3_PROF_EVENT();
         std::string realInitialPath = initialPath.empty() ? std::string(FileIO::GetBasePath()) : FileIO::FindAbsolutePath(initialPath);
-
         nfdchar_t* savePath = NULL;
         nfdresult_t result = NFD_SaveDialog(filter.data(), realInitialPath.data(), &savePath);
         if (result == NFD_OKAY)
