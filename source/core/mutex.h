@@ -10,6 +10,7 @@ namespace R3
 		Mutex(Mutex&& other) noexcept;
 		~Mutex();
 
+		bool TryLock();
 		void Lock();
 		void Unlock();
 
@@ -25,5 +26,17 @@ namespace R3
 		~ScopedLock() { m_mutex.Unlock(); }
 	private:
 		Mutex& m_mutex;
+	};
+
+	class ScopedTryLock
+	{
+	public:
+		explicit ScopedTryLock(Mutex& target) : m_mutex(target) { m_locked = m_mutex.TryLock(); }
+		ScopedTryLock(const ScopedTryLock& other) = delete;
+		~ScopedTryLock() { if (m_locked) { m_mutex.Unlock(); } }
+		bool IsLocked() { return m_locked; }
+	private:
+		Mutex& m_mutex;
+		bool m_locked = false;
 	};
 }

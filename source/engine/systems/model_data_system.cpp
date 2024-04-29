@@ -25,29 +25,30 @@ namespace R3
 		ImGui::Begin("ModelData");
 		std::string str = std::format("{} models pending", m_pendingModels.load());
 		ImGui::Text(str.c_str());
-
 		{
-			ScopedLock lockModels(m_allModelsMutex);
-			for (const auto& m : m_allModels)
+			ScopedTryLock trylock(m_allModelsMutex);
+			if (trylock.IsLocked())
 			{
-				std::string statusText = "";
-				if (m.m_loadState == StoredModel::LoadedState::Loading)
+				for (const auto& m : m_allModels)
 				{
-					statusText = "Loading";
+					std::string statusText = "";
+					if (m.m_loadState == StoredModel::LoadedState::Loading)
+					{
+						statusText = "Loading";
+					}
+					else if (m.m_loadState == StoredModel::LoadedState::LoadFailed)
+					{
+						statusText = "Failed";
+					}
+					else if (m.m_loadState == StoredModel::LoadedState::LoadOk)
+					{
+						statusText = "Loaded";
+					}
+					std::string txt = std::format("{} - {}", m.m_name, statusText);
+					ImGui::Text(txt.c_str());
 				}
-				else if (m.m_loadState == StoredModel::LoadedState::LoadFailed)
-				{
-					statusText = "Failed";
-				}
-				else if (m.m_loadState == StoredModel::LoadedState::LoadOk)
-				{
-					statusText = "Loaded";
-				}
-				std::string txt = std::format("{} - {}", m.m_name, statusText);
-				ImGui::Text(txt.c_str());
 			}
 		}
-
 		ImGui::End();
 		return true;
 	}

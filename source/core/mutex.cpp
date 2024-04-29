@@ -22,6 +22,11 @@ namespace R3
 		}
 	}
 
+	bool Mutex::TryLock()
+	{
+		return SDL_TryLockMutex(static_cast<SDL_mutex*>(m_mutex)) != SDL_MUTEX_TIMEDOUT;
+	}
+
 	void Mutex::Lock()
 	{
 		SDL_LockMutex(static_cast<SDL_mutex*>(m_mutex));
