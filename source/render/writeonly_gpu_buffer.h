@@ -24,6 +24,8 @@ namespace R3
 		void Flush(Device& d, VkCommandBuffer cmds);							// schedules all copies from staging->alldata, issues pipeline barrier
 		bool IsCreated();
 		void Destroy(Device& d);
+		uint64_t GetSize();
+		uint64_t GetMaxSize();
 	private:
 		AllocatedBuffer m_allData;
 		VkDeviceAddress m_allDataAddress;
@@ -73,6 +75,14 @@ namespace R3
 		void Destroy(Device& d)
 		{
 			m_buffer.Destroy(d);
+		}
+		uint64_t GetAllocated()
+		{
+			return m_buffer.GetSize() / sizeof(Type);
+		}
+		uint64_t GetMaxAllocated()
+		{
+			return m_buffer.GetMaxSize() / sizeof(Type);
 		}
 	private:
 		WriteOnlyGpuBuffer m_buffer;

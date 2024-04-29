@@ -65,6 +65,6 @@ namespace R3
 		WriteOnlyGpuArray<MeshVertex> m_allVertices;
 		WriteOnlyGpuArray<uint32_t> m_allIndices;
 		const uint32_t c_maxVerticesToStore = 1024 * 1024 * 16;		// ~800mb
-		const uint32_t c_maxIndicesToStore = 1024 * 1024 * 32;		// ~128mb
+		const uint32_t c_maxIndicesToStore = 1024 * 1024 * 64;		// ~256mb
 	};
 }

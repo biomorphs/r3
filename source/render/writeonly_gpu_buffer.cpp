@@ -99,7 +99,7 @@ namespace R3
 			// we need multiple staging buffers to be safe, or a fence before writing (which would be crap)
 			// lets see how long it takes to explode
 			// todo double/triple buffer
-			m_allDataCurrentSizeBytes.store(0);
+			m_stagingEndOffset.store(0);
 		}
 	}
 
@@ -114,5 +114,15 @@ namespace R3
 		vmaUnmapMemory(d.GetVMA(), m_stagingBuffer.m_allocation);
 		vmaDestroyBuffer(d.GetVMA(), m_allData.m_buffer, m_allData.m_allocation);
 		vmaDestroyBuffer(d.GetVMA(), m_stagingBuffer.m_buffer, m_stagingBuffer.m_allocation);
+	}
+
+	uint64_t WriteOnlyGpuBuffer::GetSize()
+	{
+		return m_allDataCurrentSizeBytes.load();
+	}
+
+	uint64_t WriteOnlyGpuBuffer::GetMaxSize()
+	{
+		return m_allDataMaxSize;
 	}
 }

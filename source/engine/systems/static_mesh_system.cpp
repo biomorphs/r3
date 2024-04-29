@@ -129,7 +129,29 @@ namespace R3
 	bool StaticMeshSystem::ShowGui()
 	{
 		R3_PROF_EVENT();
+		std::string txt;
 		ImGui::Begin("Static Meshes");
+		{
+			ScopedTryLock lock(m_allDataMutex);
+			if (lock.IsLocked())
+			{
+				txt = std::format("{} static models uploaded", m_allData.size());
+				ImGui::Text(txt.c_str());
+				txt = std::format("{} materials", m_allMaterials.size());
+				ImGui::Text(txt.c_str());
+				txt = std::format("{} parts", m_allParts.size());
+				ImGui::Text(txt.c_str());
+				txt = std::format("{} / {} vertices", m_allVertices.GetAllocated(), m_allVertices.GetMaxAllocated());
+				ImGui::Text(txt.c_str());
+				ImGui::SameLine();
+				ImGui::ProgressBar((float)m_allVertices.GetAllocated() / (float)m_allVertices.GetMaxAllocated());
+				txt = std::format("{} / {} indices", m_allIndices.GetAllocated(), m_allIndices.GetMaxAllocated());
+				ImGui::Text(txt.c_str());
+				ImGui::SameLine();
+				ImGui::ProgressBar((float)m_allIndices.GetAllocated() / (float)m_allIndices.GetMaxAllocated());
+			}
+		}
+
 		ImGui::End();
 		return true;
 	}
