@@ -18,6 +18,8 @@ set(RenderLib_SourceFiles
 	camera.inl
 	deletion_queue.h
 	deletion_queue.cpp
+	writeonly_gpu_buffer.h
+	writeonly_gpu_buffer.cpp
 )
 
 add_library(Render ${RenderLib_SourceFiles})

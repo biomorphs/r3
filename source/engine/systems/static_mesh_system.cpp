@@ -1,25 +1,134 @@
 #include "static_mesh_system.h"
+#include "render/render_system.h"
+#include "render/device.h"
 #include "model_data_system.h"
-#include "entities/systems/entity_system.h"
+#include "engine/async.h"
 #include "core/log.h"
+#include "core/profiler.h"
 #include <imgui.h>
 
 namespace R3
 {
+	StaticMeshSystem::StaticMeshSystem()
+	{
+		m_allData.reserve(1024 * 4);
+		m_allMaterials.reserve(1024 * 32);
+		m_allParts.reserve(1024 * 32);
+	}
+
+	StaticMeshSystem::~StaticMeshSystem()
+	{
+	}
+
 	void StaticMeshSystem::RegisterTickFns()
 	{
+		R3_PROF_EVENT();
 		RegisterTick("StaticMeshes::ShowGui", [this]() {
 			return ShowGui();
 		});
 	}
+
 	void StaticMeshSystem::Shutdown()
 	{
+		R3_PROF_EVENT();
 		Systems::GetSystem<ModelDataSystem>()->UnregisterLoadedCallback(m_onModelDataLoadedCbToken);
-		m_onModelDataLoadedCbToken = -1;
+		Systems::GetSystem<RenderSystem>()->UnregisterMainPassBeginCb(m_onMainPassBeginToken);
+	}
+
+	bool StaticMeshSystem::PrepareForUpload(const ModelDataHandle& handle)
+	{
+		R3_PROF_EVENT();
+		auto prepMeshData = [this, handle]() {
+			R3_PROF_EVENT("PrepareStaticMeshForUpload");
+			auto mdata = Systems::GetSystem<ModelDataSystem>()->GetModelData(handle);
+			auto& m = mdata.m_data;
+
+			LogInfo("Model {} contains {} verts, {} indices",
+				Systems::GetSystem<ModelDataSystem>()->GetModelName(handle),
+				m->m_vertices.size(), m->m_indices.size());
+
+			// allocate the mesh data + fill in what we can while we have the lock
+			StaticMeshGpuData newMesh;
+			newMesh.m_vertexDataOffset = m_allVertices.Allocate(m->m_vertices.size());
+			newMesh.m_indexDataOffset = m_allIndices.Allocate(m->m_indices.size());
+			if (newMesh.m_vertexDataOffset == -1 || newMesh.m_indexDataOffset == -1)
+			{
+				LogError("Failed to create vertex or index buffer for mesh {}", Systems::GetSystem<ModelDataSystem>()->GetModelName(handle));
+				return;
+			}
+
+			newMesh.m_materialCount = static_cast<uint32_t>(m->m_materials.size());
+			newMesh.m_meshPartCount = static_cast<uint32_t>(m->m_meshes.size());
+			newMesh.m_totalIndices = static_cast<uint32_t>(m->m_indices.size());
+			newMesh.m_totalVertices = static_cast<uint32_t>(m->m_vertices.size());
+			newMesh.m_boundsMax = m->m_boundsMax;
+			newMesh.m_boundsMin = m->m_boundsMin;
+			newMesh.m_modelHandleIndex = handle.m_index;
+			{
+				ScopedLock lock(m_allDataMutex);
+				newMesh.m_firstMaterialOffset = static_cast<uint32_t>(m_allMaterials.size());
+				m_allMaterials.resize(m_allMaterials.size() + m->m_materials.size());
+				for (uint32_t mat = 0; mat < newMesh.m_materialCount; ++mat)
+				{
+					auto& md = m_allMaterials[mat + newMesh.m_firstMaterialOffset];
+					md.m_diffuseOpacity = { m->m_materials[mat].m_diffuseColour, m->m_materials[mat].m_opacity };
+				}
+				newMesh.m_firstMeshPartOffset = static_cast<uint32_t>(m_allParts.size());
+				m_allParts.resize(m_allParts.size() + m->m_meshes.size());
+				for (uint32_t part = 0; part < newMesh.m_meshPartCount; ++part)
+				{
+					auto& pt = m_allParts[part + newMesh.m_firstMeshPartOffset];
+					pt.m_boundsMax = m->m_meshes[part].m_boundsMax;
+					pt.m_boundsMin = m->m_meshes[part].m_boundsMin;
+					pt.m_indexCount = m->m_meshes[part].m_indexCount;
+					pt.m_indexStartOffset = newMesh.m_indexDataOffset + m->m_meshes[part].m_indexDataOffset;
+					pt.m_materialIndex = newMesh.m_firstMaterialOffset + m->m_meshes[part].m_materialIndex;
+					pt.m_vertexCount = m->m_meshes[part].m_vertexCount;
+					pt.m_vertexStartOffset = newMesh.m_vertexDataOffset + m->m_meshes[part].m_vertexDataOffset;
+				}
+			}
+
+			// now copy the vertex + index data to staging
+			m_allVertices.Write(newMesh.m_vertexDataOffset, m->m_vertices.size(), m->m_vertices.data());
+			m_allIndices.Write(newMesh.m_indexDataOffset, m->m_indices.size(), m->m_indices.data());
+
+			{
+				ScopedLock lock(m_allDataMutex);
+				m_allData.push_back(std::move(newMesh));	// push the new mesh to our array, it is ready to go!
+			}
+		};
+		RunAsync(std::move(prepMeshData));
+		return true;
+	}
+
+	void StaticMeshSystem::OnMainPassBegin(Device& d, VkCommandBuffer cmds)
+	{
+		R3_PROF_EVENT();
+		auto models = Systems::GetSystem<ModelDataSystem>();
+		if (!m_allVertices.IsCreated())
+		{
+			if (!m_allVertices.Create(d, c_maxVerticesToStore, c_maxVerticesToStore / 2, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT))
+			{
+				LogError("Failed to create vertex buffer");
+			}
+		}
+		if (!m_allIndices.IsCreated())
+		{
+			if (!m_allIndices.Create(d, c_maxIndicesToStore, c_maxIndicesToStore / 2, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT))
+			{
+				LogError("Failed to create index buffer");
+			}
+		}
+		m_allVertices.Flush(d, cmds);
+		m_allIndices.Flush(d, cmds);
+
+		// now we are safe to issue draws
+		// ... draw stuff
 	}
 
 	bool StaticMeshSystem::ShowGui()
 	{
+		R3_PROF_EVENT();
 		ImGui::Begin("Static Meshes");
 		ImGui::End();
 		return true;
@@ -27,24 +136,37 @@ namespace R3
 
 	void StaticMeshSystem::OnModelDataLoaded(const ModelDataHandle& handle, bool loaded)
 	{
+		R3_PROF_EVENT();
 		auto models = Systems::GetSystem<ModelDataSystem>();
-		auto loadedModelName = models->GetModelName(handle);
-		if (loaded)
+		if (!loaded)
 		{
-			m_loadedModels.enqueue(handle);
+			LogError("Failed to load model data '{}'", models->GetModelName(handle));
 		}
 		else
 		{
-			LogError("Failed to load model data '{}'", loadedModelName);
+			if (!PrepareForUpload(handle))
+			{
+				LogWarn("Failed to prepare model {} for upload", models->GetModelName(handle));
+			}
 		}
 	}
 
 	bool StaticMeshSystem::Init()
 	{
+		R3_PROF_EVENT();
 		// Register as a listener for any new loaded models
 		auto models = Systems::GetSystem<ModelDataSystem>();
 		m_onModelDataLoadedCbToken = models->RegisterLoadedCallback([this](const ModelDataHandle& handle, bool loaded) {
 			OnModelDataLoaded(handle, loaded);
+		});
+		// Register render functions
+		auto render = Systems::GetSystem<RenderSystem>();
+		m_onMainPassBeginToken = render->RegisterMainPassBeginCb([this](Device& d, VkCommandBuffer cmds) {
+			OnMainPassBegin(d, cmds);
+		});
+		render->RegisterShutdownCallback([this](Device& d) {
+			m_allVertices.Destroy(d);
+			m_allIndices.Destroy(d);
 		});
 		return true;
 	}

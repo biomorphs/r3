@@ -630,6 +630,9 @@ namespace R3
 		// Wait for rendering to finish before shutting down
 		CheckResult(vkDeviceWaitIdle(m_device->GetVkDevice()));
 
+		// Run all registered shutdown callbacks
+		m_onShutdownCbs.Run(*m_device);
+
 		// run all per-frame deleters
 		for (int f = c_maxFramesInFlight - 1; f >= 0; --f)	// run in reverse order
 		{
@@ -652,6 +655,16 @@ namespace R3
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplSDL2_NewFrame(m_mainWindow->GetHandle());
 		ImGui::NewFrame();
+	}
+
+	uint64_t RenderSystem::RegisterShutdownCallback(ShutdownCallback fn)
+	{
+		return m_onShutdownCbs.AddCallback(fn);
+	}
+
+	void RenderSystem::UnregisterShutdownCallback(uint64_t token)
+	{
+		m_onShutdownCbs.RemoveCallback(token);
 	}
 
 	uint64_t RenderSystem::RegisterMainPassBeginCb(MainPassBeginCallback fn)

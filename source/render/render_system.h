@@ -27,6 +27,9 @@ namespace R3
 		bool InitImGui();
 		void ImGuiNewFrame();
 
+		using ShutdownCallback = std::function<void(Device&)>;
+		uint64_t RegisterShutdownCallback(ShutdownCallback fn);
+		void UnregisterShutdownCallback(uint64_t token);
 		using MainPassBeginCallback = std::function<void(Device&,VkCommandBuffer_T*)>;
 		uint64_t RegisterMainPassBeginCb(MainPassBeginCallback fn);
 		void UnregisterMainPassBeginCb(uint64_t token);
@@ -56,6 +59,7 @@ namespace R3
 		std::unique_ptr<Swapchain> m_swapChain;
 		std::unique_ptr<ImmediateRenderer> m_imRenderer;
 		CallbackArray<MainPassBeginCallback> m_onMainPassBegin;
+		CallbackArray<ShutdownCallback> m_onShutdownCbs;
 		struct VkStuff;
 		std::unique_ptr<VkStuff> m_vk;
 		glm::vec4 m_mainPassClearColour = { 0,0,0,1 };
