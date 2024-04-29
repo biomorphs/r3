@@ -37,17 +37,20 @@ namespace R3
 
 	struct Mesh
 	{
-		std::vector<MeshVertex> m_vertices;	// verts are in mesh space
-		std::vector<uint32_t> m_indices;
-		int m_materialIndex;		// -1 = no material
 		glm::mat4 m_transform;		// relative to the model
 		glm::vec3 m_boundsMin;		// bounds are in mesh space
 		glm::vec3 m_boundsMax;
+		uint32_t m_vertexDataOffset;
+		uint32_t m_vertexCount;
+		uint32_t m_indexDataOffset;
+		uint32_t m_indexCount;
+		int m_materialIndex;		// -1 = no material
 	};
 
 	struct ModelData
 	{
-		void GetGeometryMetrics(uint32_t& totalVerts, uint32_t& totalIndices) const;	// total verts/indices in all lods/parts
+		std::vector<MeshVertex> m_vertices;	// verts are in mesh space
+		std::vector<uint32_t> m_indices;
 		std::vector<MeshMaterial> m_materials;
 		std::vector<Mesh> m_meshes;
 		glm::vec3 m_boundsMin = glm::vec3{ -1.0f };

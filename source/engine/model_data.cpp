@@ -65,7 +65,8 @@ namespace R3
 
 		Mesh newMesh;
 		newMesh.m_transform = transform;
-		newMesh.m_vertices.reserve(mesh->mNumVertices);
+		newMesh.m_vertexDataOffset = static_cast<uint32_t>(model.m_vertices.size());
+		newMesh.m_vertexCount = mesh->mNumVertices;
 		MeshVertex newVertex;
 		for (uint32_t v = 0; v < mesh->mNumVertices; ++v)
 		{
@@ -79,20 +80,23 @@ namespace R3
 			memcpy(newVertex.m_tangentPad, glm::value_ptr(tangentPadding), sizeof(float) * 3);
 			boundsMin = glm::min(boundsMin, glm::vec3(posu0));
 			boundsMax = glm::max(boundsMax, glm::vec3(posu0));
-			newMesh.m_vertices.push_back(newVertex);
+			model.m_vertices.push_back(newVertex);
 		}
 		newMesh.m_boundsMin = boundsMin;
 		newMesh.m_boundsMax = boundsMax;
-
-		// Process indices
-		newMesh.m_indices.reserve(mesh->mNumFaces * 3);	// assuming triangles
+		
+		int indexCount = 0;
+		newMesh.m_indexDataOffset = static_cast<uint32_t>(model.m_indices.size());
+		model.m_indices.reserve(model.m_indices.size() + mesh->mNumFaces * 3);
 		for (uint32_t face = 0; face < mesh->mNumFaces; ++face)
 		{
 			for (uint32_t faceIndex = 0; faceIndex < mesh->mFaces[face].mNumIndices; ++faceIndex)
 			{
-				newMesh.m_indices.push_back(mesh->mFaces[face].mIndices[faceIndex]);
+				++indexCount;
+				model.m_indices.push_back(mesh->mFaces[face].mIndices[faceIndex]);
 			}
 		}
+		newMesh.m_indexCount = indexCount;
 
 		// Process materials
 		if (mesh->mMaterialIndex >= 0)
@@ -205,17 +209,5 @@ namespace R3
 		sprintf_s(debugName, "LoadModelData %s", filePath.data());
 		R3_PROF_EVENT_DYN(debugName);
 		return LoadModelDataAssimp(filePath, result, flattenMeshes);
-	}
-
-	void ModelData::GetGeometryMetrics(uint32_t& totalVerts, uint32_t& totalIndices) const
-	{
-		uint32_t tv = 0, ti = 0;
-		for (const auto& p : m_meshes)
-		{
-			tv += static_cast<uint32_t>(p.m_vertices.size());
-			ti += static_cast<uint32_t>(p.m_indices.size());
-		}
-		totalVerts = tv;
-		totalIndices = ti;
 	}
 }
