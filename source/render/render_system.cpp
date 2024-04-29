@@ -972,7 +972,6 @@ namespace R3
 				vkDestroyImageView(m_device->GetVkDevice(), m_vk->m_backBufferView, nullptr);
 				m_vk->m_backBufferView = nullptr;
 			}
-			
 		});
 
 		return true;

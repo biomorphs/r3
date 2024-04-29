@@ -58,7 +58,7 @@ namespace R3
 		}
 		uint64_t Allocate(uint64_t count)
 		{
-			return m_buffer.Allocate(count * sizeof(Type));
+			return m_buffer.Allocate(count * sizeof(Type)) / sizeof(Type);
 		}
 		bool Write(uint64_t startIndex, uint64_t count, const Type* data)
 		{

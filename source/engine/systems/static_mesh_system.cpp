@@ -89,9 +89,11 @@ namespace R3
 			}
 
 			// now copy the vertex + index data to staging
-			m_allVertices.Write(newMesh.m_vertexDataOffset, m->m_vertices.size(), m->m_vertices.data());
-			m_allIndices.Write(newMesh.m_indexDataOffset, m->m_indices.size(), m->m_indices.data());
-
+			{
+				R3_PROF_EVENT("WriteGpuDataToStaging");
+				m_allVertices.Write(newMesh.m_vertexDataOffset, m->m_vertices.size(), m->m_vertices.data());
+				m_allIndices.Write(newMesh.m_indexDataOffset, m->m_indices.size(), m->m_indices.data());
+			}
 			{
 				ScopedLock lock(m_allDataMutex);
 				m_allData.push_back(std::move(newMesh));	// push the new mesh to our array, it is ready to go!
@@ -119,8 +121,12 @@ namespace R3
 				LogError("Failed to create index buffer");
 			}
 		}
-		m_allVertices.Flush(d, cmds);
-		m_allIndices.Flush(d, cmds);
+
+		{
+			R3_PROF_EVENT("FlushStagingWrites");
+			m_allVertices.Flush(d, cmds);
+			m_allIndices.Flush(d, cmds);
+		}
 
 		// now we are safe to issue draws
 		// ... draw stuff

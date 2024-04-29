@@ -48,6 +48,14 @@ namespace R3
 		}
 
 		uint64_t stagingOffset = m_stagingEndOffset.fetch_add(sizeBytes);
+		// if staging buffer is full, reset it
+		// this is NOT safe, we need multiple staging buffers to do it properly
+		if (stagingOffset + sizeBytes >= m_stagingMaxSize)
+		{
+			LogInfo("Staging buffer full, resetting");
+			m_stagingEndOffset.store(0);
+			stagingOffset = 0;
+		}
 		if (stagingOffset + sizeBytes < m_stagingMaxSize)
 		{
 			uint8_t* stagingPtr = static_cast<uint8_t*>(m_stagingMappedPtr) + stagingOffset;
@@ -94,12 +102,6 @@ namespace R3
 				&writeBarrier,
 				0, nullptr, 0, nullptr
 			);
-
-			// This is not safe, its possible to write new stuff to the staging buffer while these copies are still pending
-			// we need multiple staging buffers to be safe, or a fence before writing (which would be crap)
-			// lets see how long it takes to explode
-			// todo double/triple buffer
-			m_stagingEndOffset.store(0);
 		}
 	}
 

@@ -6,12 +6,9 @@
 std::string FullCmdLine(int argc, char** args)
 {
 	std::string fullCmdLine = "";
-	if (argc > 1)
+	for (int i = 1; i < argc; ++i)
 	{
-		for (int i = 1; i < argc; ++i)
-		{
-			fullCmdLine += args[i];
-		}
+		fullCmdLine += args[i];
 	}
 	return fullCmdLine;
 }

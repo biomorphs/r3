@@ -22,6 +22,7 @@ namespace R3
 		Mutex* m_valuesMutex = nullptr;	// ensure the model data is locked while we try to access it
 	};
 
+	// Loads model data async, fires callbacks to listeners when they are ready to use
 	class ModelDataSystem : public System
 	{
 	public:
@@ -60,6 +61,8 @@ namespace R3
 		std::vector<StoredModel> m_allModels;
 		std::atomic<int> m_pendingModels = 0;
 		Mutex m_loadedCallbacksMutex;
+
+
 		ModelLoadedCallbacks m_modelLoadedCbs;
 	};
 }
