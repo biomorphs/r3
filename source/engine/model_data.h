@@ -13,6 +13,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <functional>
 
 struct aiNode;
 struct aiScene;
@@ -58,5 +59,6 @@ namespace R3
 	};
 
 	// flattenMeshes - flattens mesh heirarchy into an array of meshes
-	bool LoadModelData(std::string_view filePath, ModelData& result, bool flattenMeshes = true);
+	using ProgressCb = std::function<void(int)>;
+	bool LoadModelData(std::string_view filePath, ModelData& result, bool flattenMeshes = true, ProgressCb progCb = {});
 }

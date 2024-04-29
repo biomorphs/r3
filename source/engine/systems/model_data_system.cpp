@@ -34,7 +34,7 @@ namespace R3
 					std::string statusText = "";
 					if (m.m_loadState == StoredModel::LoadedState::Loading)
 					{
-						statusText = "Loading";
+						statusText = std::format("Loading ({}%% complete)", m.m_loadProgress);
 					}
 					else if (m.m_loadState == StoredModel::LoadedState::LoadFailed)
 					{
@@ -110,13 +110,18 @@ namespace R3
 			return modelHandle;		// a handle alredy exists, it might not be loaded yet but we dont care
 		}
 
+		auto updateProgress = [this, modelHandle](int p) {
+			ScopedLock lock(m_allModelsMutex);
+			m_allModels[modelHandle.m_index].m_loadProgress = p;
+		};
+
 		std::string pathCopy(path);
-		auto loadModelJob = [this, modelHandle, pathCopy]()
+		auto loadModelJob = [this, modelHandle, pathCopy, updateProgress]()
 		{
 			assert(m_allModels[modelHandle.m_index].m_loadState == StoredModel::LoadedState::Loading);
 			assert(m_allModels[modelHandle.m_index].m_modelData == nullptr);
 			auto newData = std::make_unique<ModelData>();
-			bool modelLoaded = LoadModelData(pathCopy, *newData);
+			bool modelLoaded = LoadModelData(pathCopy, *newData, true, updateProgress);
 			{
 				ScopedLock lock(m_allModelsMutex);
 				if (modelLoaded)

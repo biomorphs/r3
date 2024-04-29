@@ -7,6 +7,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <assimp/ProgressHandler.hpp>
 #include <filesystem>
 
 namespace R3
@@ -166,7 +167,22 @@ namespace R3
 		return true;
 	}
 
-	bool LoadModelDataAssimp(std::string_view filePath, ModelData& result, bool flattenMeshes)
+	class ModelDataAssimpProgressHandler : public Assimp::ProgressHandler
+	{
+	public:
+		ModelDataAssimpProgressHandler(ProgressCb cb) : m_cb(cb) {}
+		virtual bool Update(float progress)
+		{
+			if (m_cb)
+			{
+				m_cb(static_cast<int>(progress * 100.0f));
+			}
+			return true;
+		}
+		ProgressCb m_cb;
+	};
+
+	bool LoadModelDataAssimp(std::string_view filePath, ModelData& result, bool flattenMeshes, ProgressCb progCb)
 	{
 		R3_PROF_EVENT();
 		// We push the root directory of the file path to assimp IO so any child files are loaded relative to the root
@@ -177,6 +193,7 @@ namespace R3
 			return false;
 		}
 		Assimp::Importer importer;
+		importer.SetProgressHandler(new ModelDataAssimpProgressHandler(progCb));	// will be deleted by assimp
 		const aiScene* scene = importer.ReadFile(absolutePath.string(),
 			aiProcess_CalcTangentSpace |
 			aiProcess_GenNormals |	// only if no normals in data
@@ -203,11 +220,11 @@ namespace R3
 		return true;
 	}
 
-	bool LoadModelData(std::string_view filePath, ModelData& result, bool flattenMeshes)
+	bool LoadModelData(std::string_view filePath, ModelData& result, bool flattenMeshes, ProgressCb progCb)
 	{
 		char debugName[1024] = { '\0' };
 		sprintf_s(debugName, "LoadModelData %s", filePath.data());
 		R3_PROF_EVENT_DYN(debugName);
-		return LoadModelDataAssimp(filePath, result, flattenMeshes);
+		return LoadModelDataAssimp(filePath, result, flattenMeshes, progCb);
 	}
 }

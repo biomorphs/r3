@@ -54,6 +54,7 @@ namespace R3
 			std::string m_name;
 			std::unique_ptr<ModelData> m_modelData;
 			LoadedState m_loadState = LoadedState::Loading;
+			uint8_t m_loadProgress = 0;
 		};
 		Mutex m_allModelsMutex;
 		std::vector<StoredModel> m_allModels;
