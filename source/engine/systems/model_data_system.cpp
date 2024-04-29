@@ -46,6 +46,11 @@ namespace R3
 					}
 					std::string txt = std::format("{} - {}", m.m_name, statusText);
 					ImGui::Text(txt.c_str());
+					if (m.m_loadState == StoredModel::LoadedState::Loading)
+					{
+						ImGui::SameLine();
+						ImGui::ProgressBar((float)m.m_loadProgress / 100.0f);
+					}
 				}
 			}
 		}
