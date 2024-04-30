@@ -24,7 +24,7 @@ namespace R3
 		R3_PROF_EVENT();
 		if (m_showGui)
 		{
-			ImGui::Begin("ModelData");
+			ImGui::Begin("ModelData", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar);
 			std::string str = std::format("{} models pending", m_pendingModels.load());
 			ImGui::Text(str.c_str());
 			{

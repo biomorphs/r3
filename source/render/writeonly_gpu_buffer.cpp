@@ -28,10 +28,10 @@ namespace R3
 	uint64_t WriteOnlyGpuBuffer::Allocate(uint64_t sizeBytes)
 	{
 		R3_PROF_EVENT();
-		if (sizeBytes < m_allDataMaxSize)
+		if (sizeBytes <= m_allDataMaxSize)
 		{
 			uint64_t newDataOffset = m_allDataCurrentSizeBytes.fetch_add(sizeBytes);
-			if ((newDataOffset + sizeBytes) < m_allDataMaxSize)
+			if ((newDataOffset + sizeBytes) <= m_allDataMaxSize)
 			{
 				return newDataOffset;
 			}
@@ -52,7 +52,7 @@ namespace R3
 		// this is NOT safe, we need multiple staging buffers to do it properly
 		if (stagingOffset + sizeBytes >= m_stagingMaxSize)
 		{
-			LogInfo("Staging buffer full, resetting");
+			// LogInfo("Staging buffer full, resetting");
 			m_stagingEndOffset.store(0);
 			stagingOffset = 0;
 		}

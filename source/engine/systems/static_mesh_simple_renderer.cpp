@@ -15,12 +15,20 @@
 
 namespace R3
 {
-	struct PushConstants 
+	// stored in a buffer
+	struct StaticMeshSimpleRenderer::GlobalConstants
 	{
-		glm::mat4 m_instanceTransform;
 		glm::mat4 m_projViewTransform;
 		glm::vec4 m_cameraWorldSpacePos;
 		VkDeviceAddress m_vertexBufferAddress;
+	};
+
+	// one per draw call
+	struct PushConstants 
+	{
+		glm::mat4 m_instanceTransform;
+		VkDeviceAddress m_globalConstantsAddress;
+		int m_globalIndex;
 	};
 
 	StaticMeshSimpleRenderer::StaticMeshSimpleRenderer()
@@ -61,6 +69,7 @@ namespace R3
 		R3_PROF_EVENT();
 		vkDestroyPipeline(d.GetVkDevice(), m_simpleTriPipeline, nullptr);
 		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayout, nullptr);
+		m_globalConstantsBuffer.Destroy(d);
 	}
 
 	bool StaticMeshSimpleRenderer::ShowGui()
@@ -151,11 +160,34 @@ namespace R3
 		return true;
 	}
 
-	void StaticMeshSimpleRenderer::MainPassBegin(Device& d, VkCommandBuffer)
+	void StaticMeshSimpleRenderer::MainPassBegin(Device& d, VkCommandBuffer cmds)
 	{
 		if (m_pipelineLayout == VK_NULL_HANDLE || m_simpleTriPipeline == VK_NULL_HANDLE)
 		{
 			CreatePipelineData(d);
+		}
+		if (!m_globalConstantsBuffer.IsCreated())
+		{
+			if (!m_globalConstantsBuffer.Create(d, c_maxGlobalConstantBuffers, c_maxGlobalConstantBuffers * 2, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+			{
+				LogError("Failed to create constant buffer");
+			}
+			else
+			{
+				m_globalConstantsBuffer.Allocate(c_maxGlobalConstantBuffers);	// reserve the memory now, allows writes to any entry
+			}
+		}
+		else
+		{
+			// write + flush the global constants each frame
+			auto cameras = GetSystem<CameraSystem>();
+			auto staticMeshes = GetSystem<StaticMeshSystem>();
+			GlobalConstants globals;
+			globals.m_cameraWorldSpacePos = glm::vec4(cameras->GetMainCamera().Position(), 1);
+			globals.m_projViewTransform = cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix();
+			globals.m_vertexBufferAddress = staticMeshes->GetVertexDataDeviceAddress();
+			m_globalConstantsBuffer.Write(m_currentGlobalConstantsBuffer, 1, &globals);
+			m_globalConstantsBuffer.Flush(d, cmds);
 		}
 	}
 
@@ -189,9 +221,12 @@ namespace R3
 		
 		// pass the vertex buffer and model-view-proj matrix via push constants for each instance
 		PushConstants pc;
-		pc.m_projViewTransform = viewProjMat;
-		pc.m_vertexBufferAddress = staticMeshes->GetVertexDataDeviceAddress();
-		pc.m_cameraWorldSpacePos = glm::vec4(cameras->GetMainCamera().Position(),1);
+		pc.m_globalConstantsAddress = m_globalConstantsBuffer.GetDataDeviceAddress();
+		pc.m_globalIndex = m_currentGlobalConstantsBuffer++;
+		if (m_currentGlobalConstantsBuffer >= c_maxGlobalConstantBuffers)
+		{
+			m_currentGlobalConstantsBuffer = 0;
+		}
 		if (activeWorld)
 		{
 			auto forEach = [&](const Entities::EntityHandle& e, StaticMeshComponent& s, TransformComponent& t) 

@@ -1,6 +1,7 @@
 #pragma once
 #include "engine/systems.h"
 #include "render/vulkan_helpers.h"
+#include "render/writeonly_gpu_buffer.h"
 
 namespace R3
 {
@@ -20,6 +21,10 @@ namespace R3
 		void MainPassDraw(Device&, VkCommandBuffer, const VkExtent2D&);
 		bool CreatePipelineData(Device&);
 
+		struct GlobalConstants;
+		WriteOnlyGpuArray<GlobalConstants> m_globalConstantsBuffer;
+		const int c_maxGlobalConstantBuffers = 3;	// ring buffer writes to avoid synchronisation
+		int m_currentGlobalConstantsBuffer = 0;
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_simpleTriPipeline = VK_NULL_HANDLE;
 		bool m_showGui = false;
