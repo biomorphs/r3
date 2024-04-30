@@ -125,6 +125,7 @@ namespace R3
 				for (uint32_t part = 0; part < newMesh.m_meshPartCount; ++part)
 				{
 					auto& pt = m_allParts[part + newMesh.m_firstMeshPartOffset];
+					pt.m_transform = m->m_meshes[part].m_transform;
 					pt.m_boundsMax = m->m_meshes[part].m_boundsMax;
 					pt.m_boundsMin = m->m_meshes[part].m_boundsMin;
 					pt.m_indexCount = m->m_meshes[part].m_indexCount;
@@ -134,7 +135,6 @@ namespace R3
 					pt.m_vertexStartOffset = newMesh.m_vertexDataOffset + m->m_meshes[part].m_vertexDataOffset;
 				}
 			}
-
 			// now copy the vertex + index data to staging
 			{
 				R3_PROF_EVENT("WriteGpuDataToStaging");

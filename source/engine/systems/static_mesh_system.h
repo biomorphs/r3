@@ -11,6 +11,7 @@ namespace R3
 {
 	struct StaticMeshPart
 	{
+		glm::mat4 m_transform;					// relative to the model
 		glm::vec3 m_boundsMin;					// mesh space bounds
 		glm::vec3 m_boundsMax;
 		uint64_t m_vertexStartOffset;			// offset into verts

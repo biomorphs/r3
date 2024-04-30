@@ -17,7 +17,9 @@ namespace R3
 {
 	struct PushConstants 
 	{
-		glm::mat4 m_transform;
+		glm::mat4 m_instanceTransform;
+		glm::mat4 m_projViewTransform;
+		glm::vec4 m_cameraWorldSpacePos;
 		VkDeviceAddress m_vertexBufferAddress;
 	};
 
@@ -79,7 +81,7 @@ namespace R3
 		VkPushConstantRange constantRange;
 		constantRange.offset = 0;	// needs to match in the shader if >0!
 		constantRange.size = sizeof(PushConstants);
-		constantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		constantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo = { 0 };
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipelineLayoutInfo.pushConstantRangeCount = 1;
@@ -187,7 +189,9 @@ namespace R3
 		
 		// pass the vertex buffer and model-view-proj matrix via push constants for each instance
 		PushConstants pc;
+		pc.m_projViewTransform = viewProjMat;
 		pc.m_vertexBufferAddress = staticMeshes->GetVertexDataDeviceAddress();
+		pc.m_cameraWorldSpacePos = glm::vec4(cameras->GetMainCamera().Position(),1);
 		if (activeWorld)
 		{
 			auto forEach = [&](const Entities::EntityHandle& e, StaticMeshComponent& s, TransformComponent& t) 
@@ -195,13 +199,13 @@ namespace R3
 				StaticMeshGpuData meshData;
 				if (staticMeshes->GetMeshDataForModel(s.GetModel(), meshData))
 				{
-					pc.m_transform = viewProjMat * t.GetWorldspaceMatrix();
-					vkCmdPushConstants(cmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(pc), &pc);
 					for (uint32_t part = 0; part < meshData.m_meshPartCount; ++part)
 					{
 						StaticMeshPart partData;
 						if (staticMeshes->GetMeshPart(meshData.m_firstMeshPartOffset + part, partData))
 						{
+							pc.m_instanceTransform = partData.m_transform * t.GetWorldspaceMatrix();
+							vkCmdPushConstants(cmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 							vkCmdDrawIndexed(cmds, partData.m_indexCount, 1, (uint32_t)partData.m_indexStartOffset, (uint32_t)meshData.m_vertexDataOffset, 0);
 						}
 					}
