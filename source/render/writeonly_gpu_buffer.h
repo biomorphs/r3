@@ -26,6 +26,8 @@ namespace R3
 		void Destroy(Device& d);
 		uint64_t GetSize();
 		uint64_t GetMaxSize();
+		VkDeviceAddress GetDataDeviceAddress();
+		VkBuffer GetBuffer();
 	private:
 		AllocatedBuffer m_allData;
 		VkDeviceAddress m_allDataAddress;
@@ -83,6 +85,14 @@ namespace R3
 		uint64_t GetMaxAllocated()
 		{
 			return m_buffer.GetMaxSize() / sizeof(Type);
+		}
+		VkDeviceAddress GetDataDeviceAddress()
+		{
+			return m_buffer.GetDataDeviceAddress();
+		}
+		VkBuffer GetBuffer()
+		{
+			return m_buffer.GetBuffer();
 		}
 	private:
 		WriteOnlyGpuBuffer m_buffer;

@@ -22,39 +22,40 @@ namespace R3
 	bool ModelDataSystem::ShowGui()
 	{
 		R3_PROF_EVENT();
-		ImGui::Begin("ModelData");
-		std::string str = std::format("{} models pending", m_pendingModels.load());
-		ImGui::Text(str.c_str());
+		if (m_showGui)
 		{
-			ScopedTryLock trylock(m_allModelsMutex);
-			if (trylock.IsLocked())
+			ImGui::Begin("ModelData");
+			std::string str = std::format("{} models pending", m_pendingModels.load());
+			ImGui::Text(str.c_str());
 			{
-				for (const auto& m : m_allModels)
+				ScopedTryLock trylock(m_allModelsMutex);
+				if (trylock.IsLocked())
 				{
-					std::string statusText = "";
-					if (m.m_loadState == StoredModel::LoadedState::Loading)
+					for (const auto& m : m_allModels)
 					{
-						statusText = std::format("Loading ({}%% complete)", m.m_loadProgress);
-					}
-					else if (m.m_loadState == StoredModel::LoadedState::LoadFailed)
-					{
-						statusText = "Failed";
-					}
-					else if (m.m_loadState == StoredModel::LoadedState::LoadOk)
-					{
-						statusText = "Loaded";
-					}
-					std::string txt = std::format("{} - {}", m.m_name, statusText);
-					ImGui::Text(txt.c_str());
-					if (m.m_loadState == StoredModel::LoadedState::Loading)
-					{
+						str = std::format("{} - ", m.m_name);
+						ImGui::Text(str.c_str());
 						ImGui::SameLine();
-						ImGui::ProgressBar((float)m.m_loadProgress / 100.0f);
+						if (m.m_loadState == StoredModel::LoadedState::Loading)
+						{
+							if (m.m_loadState == StoredModel::LoadedState::Loading)
+							{	
+								ImGui::ProgressBar((float)m.m_loadProgress / 100.0f, ImVec2(-FLT_MIN, 0), "Loading");
+							}
+						}
+						else if (m.m_loadState == StoredModel::LoadedState::LoadFailed)
+						{
+							ImGui::Text("Failed");
+						}
+						else if (m.m_loadState == StoredModel::LoadedState::LoadOk)
+						{
+							ImGui::Text("Loaded");
+						}
 					}
 				}
 			}
+			ImGui::End();
 		}
-		ImGui::End();
 		return true;
 	}
 

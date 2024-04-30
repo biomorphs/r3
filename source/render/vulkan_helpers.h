@@ -41,6 +41,8 @@ namespace R3
 		VkShaderModule LoadShaderModule(VkDevice device, std::string_view filePath);
 		
 		// Pipeline stuff
+		VkPipelineViewportStateCreateInfo CreatePipelineDynamicViewportState(int viewportCount = 1, int scissorCount = 1);
+		VkPipelineVertexInputStateCreateInfo CreatePipelineEmptyVertexInputState();
 		VkPipelineShaderStageCreateInfo CreatePipelineShaderState(VkShaderStageFlagBits stage, VkShaderModule shader, const char* entryPoint = "main");
 		VkPipelineDynamicStateCreateInfo CreatePipelineDynamicState(const std::vector<VkDynamicState>& statesToEnable);
 		VkPipelineInputAssemblyStateCreateInfo CreatePipelineInputAssemblyState(VkPrimitiveTopology topology, bool enablePrimitiveRestart=false);

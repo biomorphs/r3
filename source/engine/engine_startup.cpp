@@ -9,6 +9,7 @@
 #include "systems/camera_system.h"
 #include "systems/model_data_system.h"
 #include "systems/static_mesh_system.h"
+#include "systems/static_mesh_simple_renderer.h"
 #include "systems/job_system.h"
 #include "render/render_system.h"
 #include "entities/systems/entity_system.h"
@@ -35,6 +36,7 @@ namespace R3
 		s.RegisterSystem<Entities::EntitySystem>();
 		s.RegisterSystem<ModelDataSystem>();
 		s.RegisterSystem<StaticMeshSystem>();
+		s.RegisterSystem<StaticMeshSimpleRenderer>();
 	}
 
 	// the default frame graph
@@ -65,6 +67,7 @@ namespace R3
 			guiUpdate.AddFn("Jobs::ShowGui");
 			guiUpdate.AddFn("StaticMeshes::ShowGui");
 			guiUpdate.AddFn("ModelData::ShowGui");
+			guiUpdate.AddFn("StaticMeshSimpleRenderer::ShowGui");
 		}
 		{
 			auto& render = fg.m_root.AddSequence("Render");

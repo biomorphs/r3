@@ -47,6 +47,8 @@ set(EngineLib_SourceFiles
 	systems/model_data_system.cpp
 	systems/static_mesh_system.h
 	systems/static_mesh_system.cpp
+	systems/static_mesh_simple_renderer.h
+	systems/static_mesh_simple_renderer.cpp
 	components/environment_settings.h
 	components/environment_settings.cpp
 	components/transform.h

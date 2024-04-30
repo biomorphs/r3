@@ -46,13 +46,16 @@ namespace R3
 	bool JobSystem::ShowGui()
 	{
 		R3_PROF_EVENT();
-		ImGui::Begin("Jobs");
-		for (int i = 0; i < m_jobPools.size(); ++i)
+		if (m_showGui)
 		{
-			std::string txt = std::format("Pending {}: {}", c_jobPoolNames[i], m_jobPools[i]->JobsPending());
-			ImGui::Text(txt.c_str());
+			ImGui::Begin("Jobs");
+			for (int i = 0; i < m_jobPools.size(); ++i)
+			{
+				std::string txt = std::format("Pending {}: {}", c_jobPoolNames[i], m_jobPools[i]->JobsPending());
+				ImGui::Text(txt.c_str());
+			}
+			ImGui::End();
 		}
-		ImGui::End();
 		return true;
 	}
 }

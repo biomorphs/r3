@@ -94,7 +94,10 @@ namespace R3
 			for (uint32_t faceIndex = 0; faceIndex < mesh->mFaces[face].mNumIndices; ++faceIndex)
 			{
 				++indexCount;
-				model.m_indices.push_back(mesh->mFaces[face].mIndices[faceIndex]);
+				// vert index is relative to the mesh part! make it relative to the entire model
+				uint32_t meshVertexIndex = mesh->mFaces[face].mIndices[faceIndex];
+				meshVertexIndex += newMesh.m_vertexDataOffset;
+				model.m_indices.push_back(meshVertexIndex);
 			}
 		}
 		newMesh.m_indexCount = indexCount;

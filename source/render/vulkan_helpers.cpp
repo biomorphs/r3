@@ -210,6 +210,25 @@ namespace R3
 			return result;
 		}
 
+		VkPipelineViewportStateCreateInfo CreatePipelineDynamicViewportState(int viewportCount, int scissorCount)
+		{
+			VkPipelineViewportStateCreateInfo viewportState = { 0 };
+			viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+			viewportState.viewportCount = viewportCount;
+			viewportState.scissorCount = scissorCount;
+			return viewportState;
+		}
+
+		VkPipelineVertexInputStateCreateInfo CreatePipelineEmptyVertexInputState()
+		{
+			// Set up empty vertex data input state
+			VkPipelineVertexInputStateCreateInfo vertexInputInfo = { 0 };
+			vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+			vertexInputInfo.vertexBindingDescriptionCount = 0;
+			vertexInputInfo.vertexAttributeDescriptionCount = 0;
+			return vertexInputInfo;
+		}
+
 		VkPipelineShaderStageCreateInfo CreatePipelineShaderState(VkShaderStageFlagBits stage, VkShaderModule shader, const char* entryPoint)
 		{
 			R3_PROF_EVENT();

@@ -261,21 +261,13 @@ namespace R3
 		pb.m_dynamicState = VulkanHelpers::CreatePipelineDynamicState(dynamicStates);
 
 		// Set up empty vertex data input state
-		VkPipelineVertexInputStateCreateInfo vertexInputInfo = { 0 };
-		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		vertexInputInfo.vertexBindingDescriptionCount = 0;
-		vertexInputInfo.vertexAttributeDescriptionCount = 0;
-		pb.m_vertexInputState = vertexInputInfo;
+		pb.m_vertexInputState = VulkanHelpers::CreatePipelineEmptyVertexInputState();
 
 		// Input assembly describes type of geometry (lines/tris) and topology(strips,lists,etc) to draw
 		pb.m_inputAssemblyState = VulkanHelpers::CreatePipelineInputAssemblyState(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 
 		// create the viewport state for the pipeline, we only need to set the counts when using dynamic state
-		VkPipelineViewportStateCreateInfo viewportState = { 0 };
-		viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-		viewportState.viewportCount = 1;
-		viewportState.scissorCount = 1;
-		pb.m_viewportState = viewportState;
+		pb.m_viewportState = VulkanHelpers::CreatePipelineDynamicViewportState();
 
 		// Setup rasteriser state
 		pb.m_rasterState = VulkanHelpers::CreatePipelineRasterState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE);

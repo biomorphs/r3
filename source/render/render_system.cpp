@@ -163,11 +163,16 @@ namespace R3
 		ri.renderArea.extent = m_swapChain->GetExtents();
 		vkCmdBeginRendering(cmdBuffer, &ri);
 
+		VkExtent2D swapExtents = m_swapChain->GetExtents();
+		m_onMainPassDraw.Run(*m_device, cmdBuffer, swapExtents);
+
 		// IM renderer draws to back buffer
 		auto cameras = GetSystem<CameraSystem>();
 		m_imRenderer->Draw(cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix(), *m_device, m_swapChain->GetExtents(), cmdBuffer);
 
 		vkCmdEndRendering(cmdBuffer);
+
+		m_onMainPassEnd.Run(*m_device);
 
 		m_imRenderer->Flush();
 	}
@@ -267,6 +272,16 @@ namespace R3
 		return { e.width, e.height };
 	}
 
+	VkFormat RenderSystem::GetMainColourTargetFormat()
+	{
+		return m_vk->m_backBufferFormat;
+	}
+
+	VkFormat RenderSystem::GetMainDepthStencilFormat()
+	{
+		return m_vk->m_depthBufferFormat;
+	}
+
 	void RenderSystem::RegisterTickFns()
 	{
 		R3_PROF_EVENT();
@@ -339,78 +354,6 @@ namespace R3
 		R3_PROF_EVENT();
 
 		ProcessEnvironmentSettings();
-
-		glm::vec4 groundColour(0.7, 0.7, 0.7, 1.0);
-		ImmediateRenderer::PerVertexData testScene[] = {
-			{{-10,0,-10,1},groundColour},
-			{{10,0,-10,1},groundColour},
-			{{10,0,10,1},groundColour},
-			{{-10,0,-10,1},groundColour},
-			{{10,0,10,1},groundColour},
-			{{-10,0,10,1},groundColour}
-		};
-		int triCount = (sizeof(testScene) / sizeof(testScene[0])) / 3;
-		for (int t = 0; t < triCount; ++t)
-		{
-			m_imRenderer->AddTriangle(&testScene[t * 3]);
-		}
-
-		glm::vec4 lineColour(1.0, 0.0, 0.0, 1.0);
-		ImmediateRenderer::PerVertexData testLines[] = {
-			{ {-1,-1,-1,1}, lineColour},
-			{ {1,-1,-1,1}, lineColour},
-		
-			{ {1,-1,-1,1}, lineColour},
-			{ {1,1,-1,1}, lineColour},
-		
-			{ {1,1,-1,1}, lineColour},
-			{ {-1,1,-1,1}, lineColour},
-		
-			{ {-1,1,-1,1}, lineColour},
-			{ {-1,-1,-1,1}, lineColour},
-
-			{ {-1,-1,1,1}, lineColour},
-			{ {1,-1,1,1}, lineColour},
-
-			{ {1,-1,1,1}, lineColour},
-			{ {1,1,1,1}, lineColour},
-
-			{ {1,1,1,1}, lineColour},
-			{ {-1,1,1,1}, lineColour},
-
-			{ {-1,1,1,1}, lineColour},
-			{ {-1,-1,1,1}, lineColour},
-
-			{ {-1,-1,-1,1}, lineColour},
-			{ {-1,-1,1,1}, lineColour},
-
-			{ {1,-1,-1,1}, lineColour},
-			{ {1,-1,1,1}, lineColour},
-
-			{ {1,1,-1,1}, lineColour},
-			{ {1,1,1,1}, lineColour},
-
-			{ {-1,1,-1,1}, lineColour},
-			{ {-1,1,1,1}, lineColour},
-		};
-		int lineCount = (sizeof(testLines) / sizeof(testLines[0])) / 2;
-		glm::vec3 offset(-32.0f, 1.0f, -2.0f);
-		for (int y = 0; y < 32; ++y)
-		{
-			for (int x = 0; x < 16; ++x)
-			{
-				glm::mat4 cubeTransform = glm::translate(glm::identity<glm::mat4>(), offset + (glm::vec3(4, 0, 0) * (float)x) + (glm::vec3(0, 4, 0) * (float)y));
-				glm::vec4 colourOffset = (glm::vec4(0, 0, 1, 0) * (x / 16.0f)) + (glm::vec4(0, 1, 0, 0) * (y / 32.0f)) + (glm::vec4(-1, 0, 0, 0) * (x / 16.0f));
-				m_imRenderer->AddCubeWireframe(cubeTransform, lineColour + colourOffset);
-			}
-		}
-		
-		float y = (float)sin(GetSystem<TimeSystem>()->GetElapsedTime());
-		ImmediateRenderer::PerVertexData vertices[3];
-		vertices[0].m_position = { -1, -1 + y, 0, 1 };		vertices[0].m_colour = { 1,0,0,1 };
-		vertices[1].m_position = { 1, -1 + y, 0, 1 };		vertices[1].m_colour = { 0,0,1,1 };
-		vertices[2].m_position = { 1, 1 + y, 0, 1 };		vertices[2].m_colour = { 0,1,0,1 };
-		m_imRenderer->AddTriangle(vertices);
 
 		// Always 'render' the ImGui frame so we can begin the next one, even if we wont actually draw anything
 		ImGui::Render();	
@@ -655,26 +598,6 @@ namespace R3
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplSDL2_NewFrame(m_mainWindow->GetHandle());
 		ImGui::NewFrame();
-	}
-
-	uint64_t RenderSystem::RegisterShutdownCallback(ShutdownCallback fn)
-	{
-		return m_onShutdownCbs.AddCallback(fn);
-	}
-
-	void RenderSystem::UnregisterShutdownCallback(uint64_t token)
-	{
-		m_onShutdownCbs.RemoveCallback(token);
-	}
-
-	uint64_t RenderSystem::RegisterMainPassBeginCb(MainPassBeginCallback fn)
-	{
-		return m_onMainPassBegin.AddCallback(fn);
-	}
-
-	void RenderSystem::UnregisterMainPassBeginCb(uint64_t token)
-	{
-		m_onMainPassBegin.RemoveCallback(token);
 	}
 
 	bool RenderSystem::InitImGui()

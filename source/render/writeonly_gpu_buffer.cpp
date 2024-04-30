@@ -127,4 +127,14 @@ namespace R3
 	{
 		return m_allDataMaxSize;
 	}
+
+	VkDeviceAddress WriteOnlyGpuBuffer::GetDataDeviceAddress()
+	{
+		return m_allDataAddress;
+	}
+
+	VkBuffer WriteOnlyGpuBuffer::GetBuffer()
+	{
+		return m_allData.m_buffer;
+	}
 }

@@ -23,6 +23,7 @@ namespace R3
 
 	private:
 		bool ShowGui();
+		bool m_showGui = false;
 		std::vector<std::unique_ptr<JobPool>> m_jobPools;
 	};
 }

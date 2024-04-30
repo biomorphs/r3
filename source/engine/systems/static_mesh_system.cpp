@@ -32,7 +32,54 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		Systems::GetSystem<ModelDataSystem>()->UnregisterLoadedCallback(m_onModelDataLoadedCbToken);
-		Systems::GetSystem<RenderSystem>()->UnregisterMainPassBeginCb(m_onMainPassBeginToken);
+		Systems::GetSystem<RenderSystem>()->m_onMainPassBegin.RemoveCallback(m_onMainPassBeginToken);
+	}
+
+	VkDeviceAddress StaticMeshSystem::GetVertexDataDeviceAddress()
+	{
+		return m_allVertices.GetDataDeviceAddress();
+	}
+
+	VkBuffer StaticMeshSystem::GetIndexBuffer()
+	{
+		return m_allIndices.GetBuffer();
+	}
+
+	bool StaticMeshSystem::GetMeshDataForModel(const ModelDataHandle& handle, StaticMeshGpuData& result)
+	{
+		if (handle.m_index != -1)
+		{
+			ScopedLock lock(m_allDataMutex);
+			auto foundIt = std::find_if(m_allData.begin(), m_allData.end(), [&](const StaticMeshGpuData& d) {
+				return d.m_modelHandleIndex == handle.m_index;
+			});
+			if (foundIt != m_allData.end())
+			{
+				result = *foundIt;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool StaticMeshSystem::GetMeshPart(uint32_t partIndex, StaticMeshPart& result)
+	{
+		if (partIndex < m_allParts.size())
+		{
+			result = m_allParts[partIndex];
+			return true;
+		}
+		return false;
+	}
+
+	bool StaticMeshSystem::GetMeshMaterial(uint32_t materialIndex, StaticMeshMaterial& result)
+	{
+		if (materialIndex < m_allMaterials.size())
+		{
+			result = m_allMaterials[materialIndex];
+			return true;
+		}
+		return false;
 	}
 
 	bool StaticMeshSystem::PrepareForUpload(const ModelDataHandle& handle)
@@ -116,49 +163,48 @@ namespace R3
 		}
 		if (!m_allIndices.IsCreated())
 		{
-			if (!m_allIndices.Create(d, c_maxIndicesToStore, c_maxIndicesToStore / 2, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT))
+			if (!m_allIndices.Create(d, c_maxIndicesToStore, c_maxIndicesToStore / 2, VK_BUFFER_USAGE_INDEX_BUFFER_BIT))
 			{
 				LogError("Failed to create index buffer");
 			}
 		}
-
 		{
 			R3_PROF_EVENT("FlushStagingWrites");
 			m_allVertices.Flush(d, cmds);
 			m_allIndices.Flush(d, cmds);
 		}
-
 		// now we are safe to issue draws
-		// ... draw stuff
 	}
 
 	bool StaticMeshSystem::ShowGui()
 	{
 		R3_PROF_EVENT();
-		std::string txt;
-		ImGui::Begin("Static Meshes");
+		if (m_showGui)
 		{
-			ScopedTryLock lock(m_allDataMutex);
-			if (lock.IsLocked())
+			std::string txt;
+			ImGui::Begin("Static Meshes");
 			{
-				txt = std::format("{} static models uploaded", m_allData.size());
-				ImGui::Text(txt.c_str());
-				txt = std::format("{} materials", m_allMaterials.size());
-				ImGui::Text(txt.c_str());
-				txt = std::format("{} parts", m_allParts.size());
-				ImGui::Text(txt.c_str());
-				txt = std::format("{} / {} vertices", m_allVertices.GetAllocated(), m_allVertices.GetMaxAllocated());
-				ImGui::Text(txt.c_str());
-				ImGui::SameLine();
-				ImGui::ProgressBar((float)m_allVertices.GetAllocated() / (float)m_allVertices.GetMaxAllocated());
-				txt = std::format("{} / {} indices", m_allIndices.GetAllocated(), m_allIndices.GetMaxAllocated());
-				ImGui::Text(txt.c_str());
-				ImGui::SameLine();
-				ImGui::ProgressBar((float)m_allIndices.GetAllocated() / (float)m_allIndices.GetMaxAllocated());
+				ScopedTryLock lock(m_allDataMutex);
+				if (lock.IsLocked())
+				{
+					txt = std::format("{} static models uploaded", m_allData.size());
+					ImGui::Text(txt.c_str());
+					txt = std::format("{} materials", m_allMaterials.size());
+					ImGui::Text(txt.c_str());
+					txt = std::format("{} parts", m_allParts.size());
+					ImGui::Text(txt.c_str());
+					txt = std::format("{} / {} vertices", m_allVertices.GetAllocated(), m_allVertices.GetMaxAllocated());
+					ImGui::Text(txt.c_str());
+					ImGui::SameLine();
+					ImGui::ProgressBar((float)m_allVertices.GetAllocated() / (float)m_allVertices.GetMaxAllocated());
+					txt = std::format("{} / {} indices", m_allIndices.GetAllocated(), m_allIndices.GetMaxAllocated());
+					ImGui::Text(txt.c_str());
+					ImGui::SameLine();
+					ImGui::ProgressBar((float)m_allIndices.GetAllocated() / (float)m_allIndices.GetMaxAllocated());
+				}
 			}
+			ImGui::End();
 		}
-
-		ImGui::End();
 		return true;
 	}
 
@@ -189,10 +235,10 @@ namespace R3
 		});
 		// Register render functions
 		auto render = Systems::GetSystem<RenderSystem>();
-		m_onMainPassBeginToken = render->RegisterMainPassBeginCb([this](Device& d, VkCommandBuffer cmds) {
+		m_onMainPassBeginToken = render->m_onMainPassBegin.AddCallback([this](Device& d, VkCommandBuffer cmds) {
 			OnMainPassBegin(d, cmds);
 		});
-		render->RegisterShutdownCallback([this](Device& d) {
+		render->m_onShutdownCbs.AddCallback([this](Device& d) {
 			m_allVertices.Destroy(d);
 			m_allIndices.Destroy(d);
 		});
