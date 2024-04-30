@@ -28,7 +28,6 @@ namespace R3
 	public:
 		static std::string_view GetName() { return "ModelData"; }
 		virtual void RegisterTickFns();
-		virtual bool Init();
 
 		using ModelLoadedCallback = std::function<void(const ModelDataHandle&, bool)>;
 		using ModelLoadedCallbacks = CallbackArray<ModelLoadedCallback>;
@@ -40,7 +39,6 @@ namespace R3
 		std::string GetModelName(const ModelDataHandle& h);
 
 	private:
-		bool RunModelLoadedCallbacks();
 		bool ShowGui();
 		ModelDataHandle FindModel(std::string_view name);	// does not load any new ones
 		bool FindOrCreate(std::string_view name, ModelDataHandle& h);	// returns true if an existing handle was found

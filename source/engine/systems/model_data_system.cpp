@@ -14,11 +14,6 @@ namespace R3
 		});
 	}
 
-	bool ModelDataSystem::Init()
-	{
-		return true;
-	}
-
 	bool ModelDataSystem::ShowGui()
 	{
 		R3_PROF_EVENT();

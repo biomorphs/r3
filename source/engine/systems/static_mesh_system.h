@@ -22,7 +22,9 @@ namespace R3
 	};
 	struct StaticMeshMaterial
 	{
-		glm::vec4 m_diffuseOpacity;
+		glm::vec4 m_albedoOpacity;
+		float m_metallic;						// 0.0 = dielectric, 1 = metallic
+		float m_roughness;						// 0 = perfectly smooth, 1 = max roughness
 	};
 	struct StaticMeshGpuData
 	{
@@ -50,6 +52,7 @@ namespace R3
 		virtual bool Init();
 		virtual void Shutdown();
 		VkDeviceAddress GetVertexDataDeviceAddress();
+		VkDeviceAddress GetMaterialsDeviceAddress();
 		VkBuffer GetIndexBuffer();
 		bool GetMeshDataForModel(const ModelDataHandle& handle, StaticMeshGpuData& result);
 		bool GetMeshPart(uint32_t partIndex, StaticMeshPart& result);
@@ -70,9 +73,11 @@ namespace R3
 		std::vector<StaticMeshMaterial> m_allMaterials;
 		std::vector<StaticMeshPart> m_allParts;
 
+		WriteOnlyGpuArray<StaticMeshMaterial> m_allMaterialsGpu;	// gpu buffer of materials
 		WriteOnlyGpuArray<MeshVertex> m_allVertices;
 		WriteOnlyGpuArray<uint32_t> m_allIndices;
 		const uint32_t c_maxVerticesToStore = 1024 * 1024 * 16;		// ~800mb
 		const uint32_t c_maxIndicesToStore = 1024 * 1024 * 64;		// ~256mb
+		const uint32_t c_maxMaterialsToStore = 1024 * 128;
 	};
 }

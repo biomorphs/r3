@@ -8,3 +8,14 @@ struct MeshVertex
 layout(buffer_reference, std430) readonly buffer VertexBuffer { 
 	MeshVertex vertices[];
 };
+
+struct StaticMeshMaterial
+{
+	vec4 m_albedoOpacity;
+	float m_metallic;						// 0.0 = dielectric, 1 = metallic
+	float m_roughness;						// 0 = perfectly smooth, 1 = max roughness
+};
+
+layout(buffer_reference, std430) readonly buffer MaterialBuffer { 
+	StaticMeshMaterial materials[];
+};

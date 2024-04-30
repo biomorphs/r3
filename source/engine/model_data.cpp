@@ -158,12 +158,16 @@ namespace R3
 					newMaterial.m_normalMaps.push_back(texturePath.C_Str());
 				}
 
-				aiColor3D diffuseColour(0.f, 0.f, 0.f);
-				float opacity = 1.0f;
-				sceneMat->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColour);
+				aiColor3D albedo(0.f, 0.f, 0.f);
+				float opacity = 1.0f, metallic = 0.0f, roughness = 0.0f;
+				sceneMat->Get(AI_MATKEY_COLOR_DIFFUSE, albedo);			// maybe use AI_MATKEY_BASE_COLOR
 				sceneMat->Get(AI_MATKEY_OPACITY, opacity);
-				newMaterial.m_diffuseColour = { diffuseColour.r,diffuseColour.g,diffuseColour.b };
+				sceneMat->Get(AI_MATKEY_METALLIC_FACTOR, metallic);		
+				sceneMat->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness);
+				newMaterial.m_albedo = { albedo.r,albedo.g,albedo.b };
 				newMaterial.m_opacity = opacity;
+				newMaterial.m_metallic = metallic;
+				newMaterial.m_roughness = roughness;
 				result.m_materials.push_back(std::move(newMaterial));
 			}
 		}

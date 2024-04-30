@@ -11,6 +11,7 @@ namespace R3
 {
 	StaticMeshSystem::StaticMeshSystem()
 	{
+		R3_PROF_EVENT();
 		m_allData.reserve(1024 * 4);
 		m_allMaterials.reserve(1024 * 32);
 		m_allParts.reserve(1024 * 32);
@@ -40,6 +41,11 @@ namespace R3
 		return m_allVertices.GetDataDeviceAddress();
 	}
 
+	VkDeviceAddress StaticMeshSystem::GetMaterialsDeviceAddress()
+	{
+		return m_allMaterialsGpu.GetDataDeviceAddress();
+	}
+
 	VkBuffer StaticMeshSystem::GetIndexBuffer()
 	{
 		return m_allIndices.GetBuffer();
@@ -47,6 +53,7 @@ namespace R3
 
 	bool StaticMeshSystem::GetMeshDataForModel(const ModelDataHandle& handle, StaticMeshGpuData& result)
 	{
+		R3_PROF_EVENT();
 		if (handle.m_index != -1)
 		{
 			ScopedLock lock(m_allDataMutex);
@@ -114,12 +121,21 @@ namespace R3
 			{
 				ScopedLock lock(m_allDataMutex);
 				newMesh.m_firstMaterialOffset = static_cast<uint32_t>(m_allMaterials.size());
-				m_allMaterials.resize(m_allMaterials.size() + m->m_materials.size());
+				m_allMaterials.resize(m_allMaterials.size() + newMesh.m_materialCount);
+				uint64_t gpuIndex = m_allMaterialsGpu.Allocate(newMesh.m_materialCount);
+				assert(gpuIndex == newMesh.m_firstMaterialOffset);
 				for (uint32_t mat = 0; mat < newMesh.m_materialCount; ++mat)
 				{
 					auto& md = m_allMaterials[mat + newMesh.m_firstMaterialOffset];
-					md.m_diffuseOpacity = { m->m_materials[mat].m_diffuseColour, m->m_materials[mat].m_opacity };
+					md.m_albedoOpacity = { m->m_materials[mat].m_albedo, m->m_materials[mat].m_opacity };
+					md.m_metallic = m->m_materials[mat].m_metallic;
+					md.m_roughness = m->m_materials[mat].m_roughness;
 				}
+				if (gpuIndex != -1 && gpuIndex == newMesh.m_firstMaterialOffset)
+				{
+					m_allMaterialsGpu.Write(gpuIndex, newMesh.m_materialCount, &m_allMaterials[newMesh.m_firstMaterialOffset]);
+				}
+				
 				newMesh.m_firstMeshPartOffset = static_cast<uint32_t>(m_allParts.size());
 				m_allParts.resize(m_allParts.size() + m->m_meshes.size());
 				for (uint32_t part = 0; part < newMesh.m_meshPartCount; ++part)
@@ -168,10 +184,18 @@ namespace R3
 				LogError("Failed to create index buffer");
 			}
 		}
+		if (!m_allMaterialsGpu.IsCreated())
+		{
+			if (!m_allMaterialsGpu.Create(d, c_maxMaterialsToStore, c_maxMaterialsToStore, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+			{
+				LogError("Failed to create material buffer");
+			}
+		}
 		{
 			R3_PROF_EVENT("FlushStagingWrites");
 			m_allVertices.Flush(d, cmds);
 			m_allIndices.Flush(d, cmds);
+			m_allMaterialsGpu.Flush(d, cmds);
 		}
 		// now we are safe to issue draws
 	}
@@ -239,6 +263,7 @@ namespace R3
 			OnMainPassBegin(d, cmds);
 		});
 		render->m_onShutdownCbs.AddCallback([this](Device& d) {
+			m_allMaterialsGpu.Destroy(d);
 			m_allVertices.Destroy(d);
 			m_allIndices.Destroy(d);
 		});

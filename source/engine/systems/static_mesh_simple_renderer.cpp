@@ -15,12 +15,20 @@
 
 namespace R3
 {
+	// todo 
+	// add materials data WriteOnlyGpuArray
+	//	make sure per-instance material-override is possible
+	//	 allocate material entry per-instance?
+	// add lights data WriteOnlyGpuArray
+	//	or most likely, a lights system
+
 	// stored in a buffer
 	struct StaticMeshSimpleRenderer::GlobalConstants
 	{
 		glm::mat4 m_projViewTransform;
 		glm::vec4 m_cameraWorldSpacePos;
 		VkDeviceAddress m_vertexBufferAddress;
+		VkDeviceAddress m_materialBufferAddress;
 	};
 
 	// one per draw call
@@ -29,6 +37,7 @@ namespace R3
 		glm::mat4 m_instanceTransform;
 		VkDeviceAddress m_globalConstantsAddress;
 		int m_globalIndex;
+		int m_materialIndex;
 	};
 
 	StaticMeshSimpleRenderer::StaticMeshSimpleRenderer()
@@ -162,6 +171,7 @@ namespace R3
 
 	void StaticMeshSimpleRenderer::MainPassBegin(Device& d, VkCommandBuffer cmds)
 	{
+		R3_PROF_EVENT();
 		if (m_pipelineLayout == VK_NULL_HANDLE || m_simpleTriPipeline == VK_NULL_HANDLE)
 		{
 			CreatePipelineData(d);
@@ -186,6 +196,7 @@ namespace R3
 			globals.m_cameraWorldSpacePos = glm::vec4(cameras->GetMainCamera().Position(), 1);
 			globals.m_projViewTransform = cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix();
 			globals.m_vertexBufferAddress = staticMeshes->GetVertexDataDeviceAddress();
+			globals.m_materialBufferAddress = staticMeshes->GetMaterialsDeviceAddress();
 			m_globalConstantsBuffer.Write(m_currentGlobalConstantsBuffer, 1, &globals);
 			m_globalConstantsBuffer.Flush(d, cmds);
 		}
@@ -193,6 +204,7 @@ namespace R3
 
 	void StaticMeshSimpleRenderer::MainPassDraw(Device& d, VkCommandBuffer cmds, const VkExtent2D& e)
 	{
+		R3_PROF_EVENT();
 		if (m_simpleTriPipeline == VK_NULL_HANDLE)
 		{
 			return;
@@ -239,7 +251,8 @@ namespace R3
 						StaticMeshPart partData;
 						if (staticMeshes->GetMeshPart(meshData.m_firstMeshPartOffset + part, partData))
 						{
-							pc.m_instanceTransform = partData.m_transform * t.GetWorldspaceMatrix();
+							pc.m_materialIndex = partData.m_materialIndex;
+							pc.m_instanceTransform = t.GetWorldspaceMatrix() * partData.m_transform;
 							vkCmdPushConstants(cmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 							vkCmdDrawIndexed(cmds, partData.m_indexCount, 1, (uint32_t)partData.m_indexStartOffset, (uint32_t)meshData.m_vertexDataOffset, 0);
 						}

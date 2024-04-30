@@ -32,8 +32,10 @@ namespace R3
 	{
 		std::vector<std::string> m_diffuseMaps;
 		std::vector<std::string> m_normalMaps;
-		glm::vec3 m_diffuseColour;
+		glm::vec3 m_albedo;
 		float m_opacity;
+		float m_metallic;
+		float m_roughness;
 	};
 
 	struct Mesh
