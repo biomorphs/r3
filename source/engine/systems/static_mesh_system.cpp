@@ -2,6 +2,12 @@
 #include "render/render_system.h"
 #include "render/device.h"
 #include "model_data_system.h"
+#include "engine/intersection_tests.h"
+#include "engine/components/static_mesh.h"
+#include "engine/components/transform.h"
+#include "entities/systems/entity_system.h"
+#include "entities/world.h"
+#include "entities/queries.h"
 #include "engine/async.h"
 #include "core/log.h"
 #include "core/profiler.h"
@@ -19,6 +25,55 @@ namespace R3
 
 	StaticMeshSystem::~StaticMeshSystem()
 	{
+	}
+
+	// Searches the active world for any entities with static mesh components that intersect the ray
+	// returns the closest hit entity (nearest to rayStart)
+	Entities::EntityHandle StaticMeshSystem::FindClosestActiveEntityIntersectingRay(glm::vec3 rayStart, glm::vec3 rayEnd)
+	{
+		R3_PROF_EVENT();
+		auto entities = Systems::GetSystem<Entities::EntitySystem>();
+		if (entities->GetActiveWorld() == nullptr)
+		{
+			return {};
+		}
+
+		struct HitEntityRecord {
+			Entities::EntityHandle m_entity;
+			float m_hitDistance;
+		};
+		std::vector<HitEntityRecord> hitEntities;
+		auto forEachEntity = [&](const Entities::EntityHandle& e, StaticMeshComponent& smc, TransformComponent& t)
+		{
+			const auto modelData = GetSystem<ModelDataSystem>()->GetModelData(smc.GetModel());
+			if (modelData.m_data)
+			{
+				// transform the ray into model space so we can do a simple AABB test
+				const glm::mat4 inverseTransform = glm::inverse(t.GetWorldspaceMatrix());
+				const auto rs = glm::vec3(inverseTransform * glm::vec4(rayStart, 1));
+				const auto re = glm::vec3(inverseTransform * glm::vec4(rayEnd, 1));
+				float hitT = 0.0f;
+				if (RayIntersectsAABB(rs, re, modelData.m_data->m_boundsMin, modelData.m_data->m_boundsMax, hitT))
+				{
+					hitEntities.push_back({ e, hitT });
+				}
+			}
+			return true;
+		};
+		Entities::Queries::ForEach<StaticMeshComponent, TransformComponent>(entities->GetActiveWorld(), forEachEntity);
+
+		// now find the closest hit entity
+		Entities::EntityHandle closestHit = {};
+		float closestHitDistance = FLT_MAX;
+		for (int i = 0; i < hitEntities.size(); ++i)
+		{
+			if (hitEntities[i].m_hitDistance < closestHitDistance)
+			{
+				closestHit = hitEntities[i].m_entity;
+				closestHitDistance = hitEntities[i].m_hitDistance;
+			}
+		}
+		return closestHit;
 	}
 
 	void StaticMeshSystem::RegisterTickFns()

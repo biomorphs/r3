@@ -1,4 +1,5 @@
 #include "world_editor_window.h"
+#include "editor_utils.h"
 #include "world_info_widget.h"
 #include "editor_command_list.h"
 #include "undo_redo_value_inspector.h"
@@ -13,6 +14,8 @@
 #include "engine/entity_inspector_widget.h"
 #include "engine/imgui_menubar_helper.h"
 #include "engine/systems/model_data_system.h"
+#include "engine/systems/static_mesh_system.h"
+#include "engine/systems/input_system.h"
 #include "engine/components/transform.h"
 #include "engine/components/static_mesh.h"
 #include "entities/systems/entity_system.h"
@@ -143,21 +146,21 @@ namespace R3
 		auto& fileMenu = MenuBar::MainMenu().GetSubmenu("File");
 		fileMenu.AddItemAfter("Open World", "Save World", [this]() {
 			m_cmds->Push(std::make_unique<WorldEditorSaveCmd>(this, m_filePath));
-		});
+			});
 		fileMenu.AddItemAfter("Save World", "Save World As", [this]() {
 			m_cmds->Push(std::make_unique<WorldEditorSaveCmd>(this, ""));
-		});
+			});
 		auto& editMenu = MenuBar::MainMenu().GetSubmenu("Edit");
 		editMenu.AddItem("Undo", [this]() {
 			m_cmds->Undo();
-		}, "", m_cmds->CanUndo());
+			}, "", m_cmds->CanUndo());
 		editMenu.AddItem("Redo", [this]() {
 			m_cmds->Redo();
-		}, "", m_cmds->CanRedo());
+			}, "", m_cmds->CanRedo());
 		auto& settingsMenu = MenuBar::MainMenu().GetSubmenu("Settings");
 		settingsMenu.AddItem("Show Command List", [this]() {
 			m_showCommandsWindow = true;
-		});
+			});
 	}
 
 	void WorldEditorWindow::DrawSideBarLeft(Entities::World* w)
@@ -196,6 +199,43 @@ namespace R3
 		return m_titleString;
 	}
 
+	void WorldEditorWindow::UpdateSelected()
+	{
+		R3_PROF_EVENT();
+		auto theWorld = GetWorld();
+		auto staticMeshes = Systems::GetSystem<StaticMeshSystem>();
+		auto inputSystem = Systems::GetSystem<InputSystem>();
+		static bool middleButtonWasDown = false;
+		bool isMiddleButtonDown = inputSystem->GetMouseState().m_buttonState & MiddleButton;
+		Entities::EntityHandle hitEntity;
+		if (isMiddleButtonDown || middleButtonWasDown)
+		{
+			glm::vec3 selectionRayStart, selectionRayEnd;
+			MouseCursorToWorldspaceRay(100000.0f, selectionRayStart, selectionRayEnd);		// fire a ray out into the world
+			hitEntity = staticMeshes->FindClosestActiveEntityIntersectingRay(selectionRayStart, selectionRayEnd);
+		}
+		if (hitEntity.GetID() != -1)
+		{
+			DrawEntityBounds(*theWorld, hitEntity, { 0,1,1,1 });
+		}
+		if (isMiddleButtonDown)
+		{
+			middleButtonWasDown = true;
+		}
+		else if (middleButtonWasDown)	// just released
+		{
+			middleButtonWasDown = false;
+			if (hitEntity.GetID() != -1)
+			{
+				bool append = inputSystem->GetKeyboardState().m_keyPressed[KEY_LCTRL];
+				auto selectCmd = std::make_unique<WorldEditorSelectEntitiesCommand>(this);
+				selectCmd->m_appendToSelection = append;
+				selectCmd->m_toSelect.push_back(hitEntity);
+				m_cmds->Push(std::move(selectCmd));
+			}
+		}
+	}
+
 	void WorldEditorWindow::DrawSelected()
 	{
 		R3_PROF_EVENT();
@@ -204,23 +244,7 @@ namespace R3
 		auto modelDataSys = Systems::GetSystem<ModelDataSystem>();
 		for (auto& theEntity : m_selectedEntities)
 		{
-			auto transformCmp = theWorld->GetComponent<TransformComponent>(theEntity);
-			if (transformCmp)
-			{
-				imRender.AddAxisAtPoint(transformCmp->GetPosition(), transformCmp->GetWorldspaceMatrix());
-				auto staticMeshCmp = theWorld->GetComponent<StaticMeshComponent>(theEntity);
-				if (staticMeshCmp)
-				{
-					auto modelHandle = staticMeshCmp->GetModel();
-					auto modelData = modelDataSys->GetModelData(modelHandle);
-					if (modelData.m_data)
-					{
-						glm::vec3 bounds[2] = { modelData.m_data->m_boundsMin, modelData.m_data->m_boundsMax };
-						glm::mat4 transform = transformCmp->GetWorldspaceMatrix();
-						imRender.DrawAABB(bounds[0], bounds[1], transform, { 1,1,0,1 });
-					}
-				}
-			}
+			DrawEntityBounds(*theWorld, theEntity, { 1,1,0,1 });
 		}
 	}
 
@@ -238,6 +262,7 @@ namespace R3
 		}
 		m_cmds->RunNext();
 		DrawSelected();
+		UpdateSelected();
 	}
 
 	EditorWindow::CloseStatus WorldEditorWindow::PrepareToClose()

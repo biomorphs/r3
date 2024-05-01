@@ -9,6 +9,8 @@ set(EditorLib_SourceFiles
 	editor_command_list.cpp
 	undo_redo_value_inspector.h
 	undo_redo_value_inspector.cpp
+	editor_utils.h
+	editor_utils.cpp
 	systems/editor_system.h
 	systems/editor_system.cpp
 	commands/world_editor_save_cmd.h
