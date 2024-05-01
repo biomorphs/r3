@@ -9,6 +9,11 @@
 
 namespace R3
 {
+	namespace Entities
+	{
+		class EntityHandle;
+	}
+
 	struct StaticMeshPart
 	{
 		glm::mat4 m_transform;					// relative to the model
@@ -57,6 +62,10 @@ namespace R3
 		bool GetMeshDataForModel(const ModelDataHandle& handle, StaticMeshGpuData& result);
 		bool GetMeshPart(uint32_t partIndex, StaticMeshPart& result);
 		bool GetMeshMaterial(uint32_t materialIndex, StaticMeshMaterial& result);
+
+		// Searches the active world entities for any entities with static mesh components that intersect the ray
+		// returns the closest hit entity (nearest to rayStart)
+		Entities::EntityHandle FindClosestActiveEntityIntersectingRay(glm::vec3 rayStart, glm::vec3 rayEnd);
 
 	private:
 		void OnModelDataLoaded(const ModelDataHandle& handle, bool loaded);

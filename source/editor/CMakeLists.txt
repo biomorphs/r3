@@ -9,6 +9,8 @@ set(EditorLib_SourceFiles
 	editor_command_list.cpp
 	undo_redo_value_inspector.h
 	undo_redo_value_inspector.cpp
+	editor_utils.h
+	editor_utils.cpp
 	systems/editor_system.h
 	systems/editor_system.cpp
 	commands/world_editor_save_cmd.h
@@ -23,6 +25,8 @@ set(EditorLib_SourceFiles
 	commands/world_editor_add_component_cmd.cpp
 	commands/world_editor_delete_component_cmd.h
 	commands/world_editor_delete_component_cmd.cpp
+	commands/world_editor_clone_entities_cmd.h
+	commands/world_editor_clone_entities_cmd.cpp
 	commands/set_value_cmd.h
 )
 

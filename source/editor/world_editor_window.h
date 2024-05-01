@@ -35,6 +35,7 @@ namespace R3
 		void SelectAll();
 		void DeleteSelected();
 	private:
+		void UpdateSelected();
 		void DrawSelected();
 		void UpdateMainContextMenu();
 		void UpdateMainMenu();

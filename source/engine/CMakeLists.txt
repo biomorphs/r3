@@ -1,4 +1,6 @@
 set(EngineLib_SourceFiles
+	intersection_tests.h
+	intersection_tests.cpp
 	async.h
 	async.cpp
 	callback_array.h
