@@ -59,13 +59,18 @@ namespace R3
 		}
 	}
 
-	VkPresentModeKHR GetSwapchainSurfacePresentMode(const SwapchainDescriptor& sd)
+	VkPresentModeKHR GetSwapchainSurfacePresentMode(const SwapchainDescriptor& sd, bool enableVsync)
 	{
 		R3_PROF_EVENT();
 		for (const auto& mode : sd.m_presentModes)
 		{
+			// vsync if available + asked for
+			if (enableVsync && mode == VK_PRESENT_MODE_FIFO_KHR)
+			{
+				return mode;
+			}
 			// preferable, doesn't wait for vsync but avoids tearing by copying previous frame
-			if (mode == VK_PRESENT_MODE_MAILBOX_KHR)
+			if (!enableVsync && mode == VK_PRESENT_MODE_MAILBOX_KHR)
 			{
 				return mode;
 			}
@@ -93,7 +98,7 @@ namespace R3
 	{
 	}
 
-	bool Swapchain::Initialise(Device& d, Window& w)
+	bool Swapchain::Initialise(Device& d, Window& w, bool enableVsync)
 	{
 		R3_PROF_EVENT();
 
@@ -102,7 +107,7 @@ namespace R3
 
 		// find a good combination of format/present mode
 		VkSurfaceFormatKHR bestFormat = GetSwapchainSurfaceFormat(swapChainSupport);
-		VkPresentModeKHR bestPresentMode = GetSwapchainSurfacePresentMode(swapChainSupport);
+		VkPresentModeKHR bestPresentMode = GetSwapchainSurfacePresentMode(swapChainSupport, enableVsync);
 		VkExtent2D extents = GetSwapchainSurfaceExtents(w, swapChainSupport);
 
 		// We generally want min image count + 1 to avoid stalls. Apparently

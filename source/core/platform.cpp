@@ -14,6 +14,14 @@ namespace R3
 			std::string g_fullCmdLine;
 		}
 
+		SystemPowerState GetSystemPowerState()
+		{
+			SystemPowerState sps;
+			SDL_PowerState sdlPs = SDL_GetPowerInfo(&sps.m_batterySecondsLeft, &sps.m_batteryPercentageRemaining);
+			sps.m_isRunningOnBattery = (sdlPs == SDL_POWERSTATE_ON_BATTERY);
+			return sps;
+		}
+
 		std::string_view GetCmdLine()
 		{
 			return Internal::g_fullCmdLine;

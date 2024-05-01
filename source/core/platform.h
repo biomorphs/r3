@@ -17,6 +17,13 @@ namespace R3
 			ShutdownOK
 		};
 
+		struct SystemPowerState
+		{
+			int m_batterySecondsLeft = 0;	// approx how many seconds of battery life remain
+			int m_batteryPercentageRemaining = 0;
+			bool m_isRunningOnBattery = false;
+		};
+		SystemPowerState GetSystemPowerState();
 		std::string_view GetCmdLine();
 		InitResult Initialise(std::string_view fullCmdLine);
 		ShutdownResult Shutdown();

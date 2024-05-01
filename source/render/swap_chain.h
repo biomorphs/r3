@@ -13,7 +13,7 @@ namespace R3
 	public:
 		Swapchain();
 		~Swapchain();
-		bool Initialise(Device& d, Window& w);
+		bool Initialise(Device& d, Window& w, bool enableVsync = false);
 		void Destroy(Device& d);
 
 		VkExtent2D GetExtents() { return m_swapChainExtents; }

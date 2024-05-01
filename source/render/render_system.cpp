@@ -7,6 +7,7 @@
 #include "core/file_io.h"
 #include "core/profiler.h"
 #include "core/log.h"
+#include "core/platform.h"
 #include "engine/systems/event_system.h"
 #include "engine/systems/time_system.h"
 #include "engine/systems/imgui_system.h"
@@ -328,7 +329,9 @@ namespace R3
 	bool RenderSystem::CreateSwapchain()
 	{
 		m_swapChain = std::make_unique<Swapchain>();
-		return m_swapChain->Initialise(*m_device, *m_mainWindow);
+		bool useVsync = Platform::GetCmdLine().find("-vsync") != std::string::npos;
+		useVsync |= Platform::GetSystemPowerState().m_isRunningOnBattery;	// enable vsync if running on battery
+		return m_swapChain->Initialise(*m_device, *m_mainWindow, useVsync);
 	}
 
 	bool RenderSystem::PrepareSwapchain()
@@ -356,12 +359,19 @@ namespace R3
 		ProcessEnvironmentSettings();
 
 		// Always 'render' the ImGui frame so we can begin the next one, even if we wont actually draw anything
-		ImGui::Render();	
+		ImGui::Render();
 
 		// Nothing to draw this frame if this returns false
 		if (!PrepareSwapchain())
 		{
 			return true;
+		}
+
+		// If running with low battery, wait a bit!
+		if (Platform::GetSystemPowerState().m_batteryPercentageRemaining < 80)
+		{
+			R3_PROF_EVENT("StopKillingBattery");
+			SDL_Delay(10);
 		}
 
 		auto& fd = m_vk->ThisFrameData();
