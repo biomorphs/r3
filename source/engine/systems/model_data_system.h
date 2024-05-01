@@ -55,7 +55,7 @@ namespace R3
 			LoadedState m_loadState = LoadedState::Loading;
 			uint8_t m_loadProgress = 0;
 		};
-		bool m_showGui = true;
+		bool m_showGui = false;
 		Mutex m_allModelsMutex;
 		std::vector<StoredModel> m_allModels;
 		std::atomic<int> m_pendingModels = 0;

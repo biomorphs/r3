@@ -62,12 +62,12 @@ namespace R3
 		};
 		Entities::Queries::ForEach<StaticMeshComponent, TransformComponent>(entities->GetActiveWorld(), forEachEntity);
 
-		// now find the closest hit entity
+		// now find the closest hit entity that is in front of the ray
 		Entities::EntityHandle closestHit = {};
 		float closestHitDistance = FLT_MAX;
 		for (int i = 0; i < hitEntities.size(); ++i)
 		{
-			if (hitEntities[i].m_hitDistance < closestHitDistance)
+			if (hitEntities[i].m_hitDistance >= 0.0f && hitEntities[i].m_hitDistance < closestHitDistance)
 			{
 				closestHit = hitEntities[i].m_entity;
 				closestHitDistance = hitEntities[i].m_hitDistance;

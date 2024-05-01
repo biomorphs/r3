@@ -9,6 +9,7 @@
 #include "commands/world_editor_delete_entities_cmd.h"
 #include "commands/world_editor_add_component_cmd.h"
 #include "commands/world_editor_delete_component_cmd.h"
+#include "commands/world_editor_clone_entities_cmd.h"
 #include "engine/systems.h"
 #include "engine/entity_list_widget.h"
 #include "engine/entity_inspector_widget.h"
@@ -102,6 +103,9 @@ namespace R3
 		});
 		if (m_selectedEntities.size() > 0)
 		{
+			contextMenu.AddItem("Clone selection", [this]() {
+				m_cmds->Push(std::make_unique<WorldEditorCloneEntitiesCmd>(this));
+			});
 			contextMenu.AddItem("Deselect all", [this]() {
 				auto selectCmd = std::make_unique<WorldEditorSelectEntitiesCommand>(this);
 				selectCmd->m_deselectAll = true;
