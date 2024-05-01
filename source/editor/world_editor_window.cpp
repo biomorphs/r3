@@ -12,7 +12,9 @@
 #include "engine/entity_list_widget.h"
 #include "engine/entity_inspector_widget.h"
 #include "engine/imgui_menubar_helper.h"
+#include "engine/systems/model_data_system.h"
 #include "engine/components/transform.h"
+#include "engine/components/static_mesh.h"
 #include "entities/systems/entity_system.h"
 #include "render/render_system.h"
 #include "render/immediate_renderer.h"
@@ -199,12 +201,25 @@ namespace R3
 		R3_PROF_EVENT();
 		auto theWorld = GetWorld();
 		auto& imRender = Systems::GetSystem<RenderSystem>()->GetImRenderer();
+		auto modelDataSys = Systems::GetSystem<ModelDataSystem>();
 		for (auto& theEntity : m_selectedEntities)
 		{
 			auto transformCmp = theWorld->GetComponent<TransformComponent>(theEntity);
 			if (transformCmp)
 			{
 				imRender.AddAxisAtPoint(transformCmp->GetPosition(), transformCmp->GetWorldspaceMatrix());
+				auto staticMeshCmp = theWorld->GetComponent<StaticMeshComponent>(theEntity);
+				if (staticMeshCmp)
+				{
+					auto modelHandle = staticMeshCmp->GetModel();
+					auto modelData = modelDataSys->GetModelData(modelHandle);
+					if (modelData.m_data)
+					{
+						glm::vec3 bounds[2] = { modelData.m_data->m_boundsMin, modelData.m_data->m_boundsMax };
+						glm::mat4 transform = transformCmp->GetWorldspaceMatrix();
+						imRender.DrawAABB(bounds[0], bounds[1], transform, { 1,1,0,1 });
+					}
+				}
 			}
 		}
 	}

@@ -90,6 +90,44 @@ namespace R3
 		AddLines(vertices, c_vertexCount / 2);
 	}
 
+	void ImmediateRenderer::DrawAABB(glm::vec3 minbound, glm::vec3 maxbound, glm::mat4 transform, glm::vec4 colour)
+	{
+		ImmediateRenderer::PerVertexData lines[] = {
+			{ {minbound.x,minbound.y,minbound.z,1}, colour},
+			{ {maxbound.x,minbound.y,minbound.z,1}, colour},
+			{ {minbound.x,minbound.y,maxbound.z,1}, colour},
+			{ {maxbound.x,minbound.y,maxbound.z,1}, colour},
+			{ {minbound.x,maxbound.y,minbound.z,1}, colour},
+			{ {maxbound.x,maxbound.y,minbound.z,1}, colour},
+			{ {minbound.x,maxbound.y,maxbound.z,1}, colour},
+			{ {maxbound.x,maxbound.y,maxbound.z,1}, colour},
+
+			{ {minbound.x,minbound.y,minbound.z,1}, colour},
+			{ {minbound.x,minbound.y,maxbound.z,1}, colour},
+			{ {maxbound.x,minbound.y,minbound.z,1}, colour},
+			{ {maxbound.x,minbound.y,maxbound.z,1}, colour},
+			{ {minbound.x,maxbound.y,minbound.z,1}, colour},
+			{ {minbound.x,maxbound.y,maxbound.z,1}, colour},
+			{ {maxbound.x,maxbound.y,minbound.z,1}, colour},
+			{ {maxbound.x,maxbound.y,maxbound.z,1}, colour},
+
+			{ {minbound.x,minbound.y,minbound.z,1}, colour},
+			{ {minbound.x,maxbound.y,minbound.z,1}, colour},
+			{ {minbound.x,minbound.y,maxbound.z,1}, colour},
+			{ {minbound.x,maxbound.y,maxbound.z,1}, colour},
+			{ {maxbound.x,minbound.y,minbound.z,1}, colour},
+			{ {maxbound.x,maxbound.y,minbound.z,1}, colour},
+			{ {maxbound.x,minbound.y,maxbound.z,1}, colour},
+			{ {maxbound.x,maxbound.y,maxbound.z,1}, colour},
+		};
+		int vertexCount = (sizeof(lines) / sizeof(lines[0]));
+		for (int v = 0; v < vertexCount; ++v)
+		{
+			lines[v].m_position = transform * lines[v].m_position;
+		}
+		AddLines(lines, vertexCount / 2);
+	}
+
 	void ImmediateRenderer::AddCubeWireframe(glm::mat4 transform, glm::vec4 colour)
 	{
 		ImmediateRenderer::PerVertexData testLines[] = {

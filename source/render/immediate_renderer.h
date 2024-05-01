@@ -34,6 +34,7 @@ namespace R3
 		void AddAxisAtPoint(glm::vec3 position, glm::mat4 transform = glm::identity<glm::mat4>());
 		void AddFrustum(const Frustum& f, glm::vec4 colour);
 		void AddCubeWireframe(glm::mat4 transform, glm::vec4 colour);
+		void DrawAABB(glm::vec3 minbound, glm::vec3 maxbound, glm::mat4 transform, glm::vec4 colour);
 
 	private:
 		bool CreateNoDepthReadPipelines(Device& d, VkFormat colourBufferFormat, VkFormat depthBufferFormat);
