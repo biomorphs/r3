@@ -31,7 +31,8 @@ namespace R3
 		};
 		std::vector<Entities::EntityHandle> m_currentEntities;
 		std::vector<TrackedEntity> m_trackedEntities;
-		glm::mat4 m_widgetTransform;	// current transform
+		glm::mat4 m_currentCenterTransform;		// updated each frame
+		glm::mat4 m_widgetTransform;			// original transform since dragging started, only updated on reset
 		glm::mat4 m_mouseDragStartTransform;	// transform when mouse started being dragged
 		glm::vec3 m_mouseClickPosOnAxis;		// position on the original axis where drag started
 		bool m_mouseBtnDownLastFrame = false;

@@ -243,6 +243,7 @@ namespace R3
 		{
 			StaticMeshGpuData currentMeshData;
 			ModelDataHandle currentMeshDataHandle;
+			StaticMeshPart partData;
 			auto forEach = [&](const Entities::EntityHandle& e, StaticMeshComponent& s, TransformComponent& t) 
 			{
 				if (s.GetModel().m_index != currentMeshDataHandle.m_index)
@@ -259,7 +260,6 @@ namespace R3
 				const uint32_t partCount = currentMeshData.m_meshPartCount;
 				for (uint32_t part = 0; part < partCount; ++part)
 				{
-					StaticMeshPart partData;
 					if (staticMeshes->GetMeshPart(currentMeshData.m_firstMeshPartOffset + part, partData))
 					{
 						pc.m_materialIndex = partData.m_materialIndex;
