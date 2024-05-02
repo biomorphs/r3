@@ -14,8 +14,14 @@ set(EditorLib_SourceFiles
 	world_editor_tool.h
 	world_editor_select_entity_tool.h
 	world_editor_select_entity_tool.cpp
+	world_editor_move_entities_tool.h
+	world_editor_move_entities_tool.cpp
+	world_editor_transform_widget.h
+	world_editor_transform_widget.cpp
 	systems/editor_system.h
 	systems/editor_system.cpp
+	commands/world_editor_set_entity_positions_cmd.h
+	commands/world_editor_set_entity_positions_cmd.cpp
 	commands/world_editor_save_cmd.h
 	commands/world_editor_save_cmd.cpp
 	commands/world_editor_select_entities_cmd.h

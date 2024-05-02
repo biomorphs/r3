@@ -29,9 +29,10 @@ namespace R3
 		void Flush();	// call at end of frame, clears out previous tri data
 
 		void AddTriangle(const PerVertexData vertices[3]);
+		void AddLine(glm::vec3 p0, glm::vec3 p1, glm::vec4 colour);
 		void AddLine(const PerVertexData vertices[2]);
 		void AddLines(const PerVertexData* vertices, int linecount);
-		void AddAxisAtPoint(glm::vec3 position, glm::mat4 transform = glm::identity<glm::mat4>());
+		void AddAxisAtPoint(glm::vec3 position, float scale = 1.0f, glm::mat4 transform = glm::identity<glm::mat4>());
 		void AddFrustum(const Frustum& f, glm::vec4 colour);
 		void AddCubeWireframe(glm::mat4 transform, glm::vec4 colour);
 		void DrawAABB(glm::vec3 minbound, glm::vec3 maxbound, glm::mat4 transform, glm::vec4 colour);

@@ -50,16 +50,16 @@ namespace R3
 		}
 	}
 
-	void ImmediateRenderer::AddAxisAtPoint(glm::vec3 position, glm::mat4 transform)
+	void ImmediateRenderer::AddAxisAtPoint(glm::vec3 position, float scale, glm::mat4 transform)
 	{
 		glm::vec4 p0 = glm::vec4(position, 1.0f);
 		PerVertexData vertices[6] = {
 			{ p0, {1.0f,0.0f,0.0f,1.0f} },
-			{ transform * glm::vec4(1.0f,0.0f,0.0f,1.0f), {1.0f,0.0f,0.0f,1.0f} },
+			{ transform * glm::vec4(scale,0.0f,0.0f,1.0f), {1.0f,0.0f,0.0f,1.0f} },
 			{ p0, {0.0f,1.0f,0.0f,1.0f} },
-			{ transform * glm::vec4(0.0f,1.0f,0.0f,1.0f), {0.0f,1.0f,0.0f,1.0f} },
+			{ transform * glm::vec4(0.0f,scale,0.0f,1.0f), {0.0f,1.0f,0.0f,1.0f} },
 			{ p0, {0.0f,0.0f,1.0f,1.0f} },
-			{ transform * glm::vec4(0.0f,0.0f,1.0f,1.0f), {0.0f,0.0f,1.0f,1.0f} },
+			{ transform * glm::vec4(0.0f,0.0f,scale,1.0f), {0.0f,0.0f,1.0f,1.0f} },
 		};
 		AddLines(vertices, 3);
 	}
@@ -187,6 +187,16 @@ namespace R3
 			m_thisFrameVertices.emplace_back(vertices[2]);
 			m_thisFrameTriangles.emplace_back(newTri);
 		}
+	}
+
+	void ImmediateRenderer::AddLine(glm::vec3 p0, glm::vec3 p1, glm::vec4 colour)
+	{
+		PerVertexData verts[2];
+		verts[0].m_colour = colour;
+		verts[0].m_position = glm::vec4(p0,1);
+		verts[1].m_colour = colour;
+		verts[1].m_position = glm::vec4(p1,1);
+		AddLine(verts);
 	}
 
 	void ImmediateRenderer::WriteVertexData(Device& d, VkCommandBuffer& cmdBuffer)

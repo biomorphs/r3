@@ -5,6 +5,7 @@
 #include "undo_redo_value_inspector.h"
 #include "world_editor_tool.h"
 #include "world_editor_select_entity_tool.h"
+#include "world_editor_move_entities_tool.h"
 #include "commands/world_editor_save_cmd.h"
 #include "commands/world_editor_select_entities_cmd.h"
 #include "commands/world_editor_add_empty_entity_cmd.h"
@@ -193,6 +194,7 @@ namespace R3
 	void WorldEditorWindow::CreateTools()
 	{
 		m_tools.push_back(std::make_unique<WorldEditorSelectEntityTool>(this));
+		m_tools.push_back(std::make_unique<WorldEditorMoveEntitiesTool>(this));
 	}
 
 	void WorldEditorWindow::ActivateTool(int toolIndex)
@@ -360,6 +362,11 @@ namespace R3
 	{
 		auto* entities = Systems::GetSystem<Entities::EntitySystem>();
 		entities->SetActiveWorld(m_worldIdentifier);
+	}
+
+	void WorldEditorWindow::PushCommand(std::unique_ptr<EditorCommand>&& cmd)
+	{
+		m_cmds->Push(std::move(cmd));
 	}
 
 	bool WorldEditorWindow::SaveWorld(std::string_view path)

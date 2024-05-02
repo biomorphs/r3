@@ -36,6 +36,7 @@ namespace R3
 		float m_highSpeedMultiplier = 50.0f;
 
 	private:
+		bool m_mouseLookActive = false;
 		glm::vec3 m_position;
 		glm::vec3 m_lookDirection;
 		glm::vec3 m_right;

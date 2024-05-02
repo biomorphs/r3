@@ -14,6 +14,7 @@ namespace R3
 	class EntityListWidget;
 	class EntityInspectorWidget;
 	class EditorCommandList;
+	class EditorCommand;
 	class WorldEditorTool;
 	class WorldEditorWindow : public EditorWindow
 	{
@@ -24,6 +25,8 @@ namespace R3
 		virtual void Update();
 		virtual CloseStatus PrepareToClose();
 		virtual void OnFocusGained();
+
+		void PushCommand(std::unique_ptr<EditorCommand>&&);
 
 		bool SaveWorld(std::string_view path);
 		Entities::World* GetWorld() const;

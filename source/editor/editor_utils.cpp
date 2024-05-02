@@ -45,7 +45,7 @@ namespace R3
 		}
 		if(transformCmp)
 		{
-			imRender.AddAxisAtPoint(transformCmp->GetPosition(), transformCmp->GetWorldspaceMatrix());
+			imRender.AddAxisAtPoint(transformCmp->GetPosition(), 1.0f, transformCmp->GetWorldspaceMatrix());
 		}
 	}
 }

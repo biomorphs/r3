@@ -37,7 +37,7 @@ namespace R3
 		static bool enabled = false;
 		static glm::ivec2 lastClickPos = { 0,0 };
 		
-		if (mouse.m_buttonState & MouseButtons::LeftButton)
+		if (m_mouseLookActive && mouse.m_buttonState & MouseButtons::LeftButton)
 		{
 			if (!enabled)
 			{
@@ -74,6 +74,7 @@ namespace R3
 		float forwardAmount = 0.0f;
 		float strafeAmount = 0.0f;
 		float speedMul = 1.0f;
+		m_mouseLookActive = kbState.m_keyPressed[KEY_LSHIFT];
 		if (kbState.m_keyPressed[KEY_LSHIFT] || kbState.m_keyPressed[KEY_RSHIFT])
 		{ 
 			speedMul = 10.0f;
