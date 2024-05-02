@@ -1,8 +1,14 @@
+#include "mesh_data.h"
+#include "lights.h"
+
 struct GlobalConstants { 
 	mat4 m_projViewTransform;
 	vec4 m_cameraWorldSpacePos;
 	VertexBuffer m_vertexBuffer;
 	MaterialBuffer m_materialBuffer;
+	PointlightBuffer m_pointlightBuffer;
+	uint m_firstPointLightOffset;
+	uint m_pointLightCount;
 };
 
 // global constants stored in an array to allow overlapping frames

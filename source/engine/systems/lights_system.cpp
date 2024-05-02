@@ -34,17 +34,35 @@ namespace R3
 		Systems::GetSystem<RenderSystem>()->m_onMainPassBegin.RemoveCallback(m_onMainPassBeginToken);
 	}
 
+	VkDeviceAddress LightsSystem::GetPointlightsDeviceAddress()
+	{
+		return m_allPointlights.GetDataDeviceAddress();
+	}
+
+	uint32_t LightsSystem::GetFirstPointlightOffset()
+	{
+		return m_currentInFrameOffset;
+	}
+
+	uint32_t LightsSystem::GetTotalPointlightsThisFrame()
+	{
+		return m_totalPointlightsThisFrame;
+	}
+
 	bool LightsSystem::DrawLightBounds()
 	{
-		auto entities = Systems::GetSystem<Entities::EntitySystem>();
-		auto& imRender = Systems::GetSystem<RenderSystem>()->GetImRenderer();
-		auto drawLights = [&](const Entities::EntityHandle& e, PointLightComponent& pl, TransformComponent& t) {
-			imRender.AddSphere(t.GetPosition(), pl.m_distance, { pl.m_colour, 1 });
-			return true;
-		};
-		if (entities->GetActiveWorld())
+		if (m_drawBounds)
 		{
-			Entities::Queries::ForEach<PointLightComponent, TransformComponent>(entities->GetActiveWorld(), drawLights);
+			auto entities = Systems::GetSystem<Entities::EntitySystem>();
+			auto& imRender = Systems::GetSystem<RenderSystem>()->GetImRenderer();
+			auto drawLights = [&](const Entities::EntityHandle& e, PointLightComponent& pl, TransformComponent& t) {
+				imRender.AddSphere(t.GetPosition(), pl.m_distance, { pl.m_colour, 1 });
+				return true;
+				};
+			if (entities->GetActiveWorld())
+			{
+				Entities::Queries::ForEach<PointLightComponent, TransformComponent>(entities->GetActiveWorld(), drawLights);
+			}
 		}
 		return true;
 	}
@@ -82,6 +100,7 @@ namespace R3
 		}
 		m_allPointlights.Write(m_currentInFrameOffset, allPointlights.size(), allPointlights.data());
 		m_allPointlights.Flush(d, cmds);
+		m_totalPointlightsThisFrame = static_cast<uint32_t>(allPointlights.size());
 		allPointlights.clear();
 	}
 }

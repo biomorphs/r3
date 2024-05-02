@@ -18,13 +18,19 @@ vec3 FresnelSchlick(float nDotL, vec3 F0);
 
 const float PI = 3.14159265359;
 
+vec3 PBRGetAmbientLighting(PBRMaterial material)
+{
+	return material.m_ambientMulti * material.m_albedo * material.m_ao;
+}
+
 vec3 PBRDirectLighting(
+	PBRMaterial material,
 	vec3 worldToCamera, 
 	vec3 worldPos, 
 	vec3 worldNormal, 
 	vec3 lightPosWorldSpace,
 	vec3 lightColour,
-	PBRMaterial material)
+	float lightAttenuation)
 {
 	vec3 lightToPixel = normalize(lightPosWorldSpace - worldPos);
     vec3 halfVec = normalize(worldToCamera + lightToPixel);
@@ -35,9 +41,7 @@ vec3 PBRDirectLighting(
     F0 = mix(F0, material.m_albedo, material.m_metallic);	// should not be calculated per light!
 	
 	// per light from here
-	float distance = length(lightPosWorldSpace - worldPos);
-	float attenuation = 1.0 / (distance * distance);
-	vec3 lightRadiance = lightColour * attenuation;
+	vec3 lightRadiance = lightColour * lightAttenuation;
 	
 	// cook-torrence BRDF
 	float ndf = NormalDistributionGGX(worldNormal, worldToCamera, material.m_roughness);
@@ -55,10 +59,8 @@ vec3 PBRDirectLighting(
 	vec3 specular     = numerator / denominator;  
 	
 	vec3 radianceOut = (refractedAmount * material.m_albedo / PI + specular) * lightRadiance * nDotL;
-	
-	vec3 ambient = material.m_ambientMulti * material.m_albedo * material.m_ao;
-	
-	return radianceOut + ambient;
+
+	return radianceOut;
 }
 
 // https://learnopengl.com/PBR/Theory
