@@ -9,6 +9,8 @@ namespace R3
 	{
 	public:
 		WorldEditorSelectEntityTool(WorldEditorWindow* w);
+		virtual std::string_view GetToolbarButtonText() { return "S"; };
+		virtual std::string_view GetTooltipText() { return "Select Entities"; }
 	private:
 		WorldEditorWindow* m_window = nullptr;
 	};

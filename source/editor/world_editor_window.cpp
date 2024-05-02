@@ -19,6 +19,7 @@
 #include "engine/systems/model_data_system.h"
 #include "engine/systems/static_mesh_system.h"
 #include "engine/systems/input_system.h"
+#include "engine/systems/imgui_system.h"
 #include "engine/components/transform.h"
 #include "engine/components/static_mesh.h"
 #include "entities/systems/entity_system.h"
@@ -66,6 +67,8 @@ namespace R3
 
 		m_cmds = std::make_unique<EditorCommandList>();
 		m_valueInspector = std::make_unique<UndoRedoInspector>(*m_cmds);
+
+		CreateTools();
 	}
 
 	WorldEditorWindow::~WorldEditorWindow()
@@ -146,10 +149,54 @@ namespace R3
 		m_sidebarRightWidth = glm::min(m_sidebarRightWidth, windowFullExtents.x * 0.45f);
 	}
 
+	void WorldEditorWindow::DrawToolbar()
+	{
+		R3_PROF_EVENT();
+		const float c_toolbarButtonSize = 24.0f;
+		const auto buttonExtents = ImVec2(c_toolbarButtonSize, c_toolbarButtonSize);
+		uint32_t flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground;
+		auto windowFullExtents = Systems::GetSystem<RenderSystem>()->GetWindowExtents();
+		ImGui::SetNextWindowPos({ 2 + m_sidebarLeftWidth,ImGui::GetTextLineHeightWithSpacing() * 3 });
+		ImGui::SetNextWindowSize(ImVec2(c_toolbarButtonSize, m_tools.size() * c_toolbarButtonSize));
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+		ImGui::Begin("WorldEditToolbar", nullptr, flags);
+		ImGui::PopStyleVar();
+		{
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+			ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.5, 0.5));
+			for(int t=0;t<m_tools.size();++t)
+			{
+				ImGuiSelectableFlags selectFlags = 0;
+				std::string btnText = std::format("{}##{}", m_tools[t]->GetToolbarButtonText().data(), t);
+				bool isCurrentlyActive = m_activeTool == t;
+				if (isCurrentlyActive)
+				{
+					Systems::GetSystem<ImGuiSystem>()->PushBoldFont();
+				}
+				if (ImGui::Selectable(btnText.c_str(), isCurrentlyActive, selectFlags, buttonExtents))
+				{
+					ActivateTool(t);
+				}
+				if (isCurrentlyActive)
+				{
+					ImGui::PopFont();
+				}
+				if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+				{
+					ImGui::SetTooltip(m_tools[t]->GetTooltipText().data());
+				}
+			}
+			ImGui::PopStyleVar();
+			ImGui::PopStyleVar();
+		}
+		ImGui::End();
+	}
+
 	void WorldEditorWindow::CreateTools()
 	{
-		auto selectEntityTool = std::make_unique<WorldEditorSelectEntityTool>(this);
-		m_tools.push_back(std::move(selectEntityTool));
+		m_tools.push_back(std::make_unique<WorldEditorSelectEntityTool>(this));
+		m_tools.push_back(std::make_unique<WorldEditorSelectEntityTool>(this));
+		m_tools.push_back(std::make_unique<WorldEditorSelectEntityTool>(this));
 	}
 
 	void WorldEditorWindow::ActivateTool(int toolIndex)
@@ -160,22 +207,28 @@ namespace R3
 			return;
 		}
 
-		// should the existing active tool be deactivated?
-		if ((m_activeTool != -1) && (toolIndex != m_activeTool))
+		if (m_activeTool != -1)
 		{
 			if (!m_tools[m_activeTool]->OnDeactivated())	// can't deactivate yet
 			{
 				return;
 			}
 		}
-		if (toolIndex != -1)
+		if (toolIndex != -1 && toolIndex != m_activeTool)
 		{
 			if (!m_tools[toolIndex]->OnActivated())
 			{
 				return;
 			}
 		}
-		m_activeTool = toolIndex;
+		if (toolIndex == m_activeTool)
+		{
+			m_activeTool = -1;
+		}
+		else
+		{
+			m_activeTool = toolIndex;
+		}
 	}
 
 	void WorldEditorWindow::UpdateMainMenu()
@@ -293,6 +346,7 @@ namespace R3
 		UpdateMainMenu();
 		DrawSideBarLeft(theWorld);
 		DrawSideBarRight(theWorld);
+		DrawToolbar();
 		UpdateMainContextMenu();
 		if (m_showCommandsWindow)
 		{

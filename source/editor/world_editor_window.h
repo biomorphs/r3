@@ -42,6 +42,7 @@ namespace R3
 		void UpdateMainMenu();
 		void DrawSideBarLeft(Entities::World* w);
 		void DrawSideBarRight(Entities::World* w);
+		void DrawToolbar();
 		void CreateTools();
 		void ActivateTool(int toolIndex);
 		float m_sidebarLeftWidth = 200.0f;
