@@ -51,6 +51,10 @@ set(EngineLib_SourceFiles
 	systems/static_mesh_system.cpp
 	systems/static_mesh_simple_renderer.h
 	systems/static_mesh_simple_renderer.cpp
+	systems/lights_system.h
+	systems/lights_system.cpp
+	components/point_light.h
+	components/point_light.cpp
 	components/environment_settings.h
 	components/environment_settings.cpp
 	components/transform.h

@@ -4,8 +4,8 @@
 #include "components/camera.h"
 #include "components/static_mesh.h"
 #include "components/static_mesh_materials.h"
+#include "components/point_light.h"
 #include "entities/systems/entity_system.h"
-
 
 namespace R3
 {
@@ -18,5 +18,6 @@ namespace R3
 		entities->RegisterComponentType<CameraComponent>();
 		entities->RegisterComponentType<StaticMeshComponent>();
 		entities->RegisterComponentType<StaticMeshMaterialsComponent>();
+		entities->RegisterComponentType<PointLightComponent>();
 	}
 }

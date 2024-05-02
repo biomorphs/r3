@@ -19,6 +19,7 @@
 #include "engine/imgui_menubar_helper.h"
 #include "engine/systems/model_data_system.h"
 #include "engine/systems/imgui_system.h"
+#include "engine/systems/input_system.h"
 #include "engine/components/transform.h"
 #include "engine/components/static_mesh.h"
 #include "entities/systems/entity_system.h"
@@ -189,6 +190,16 @@ namespace R3
 			ImGui::PopStyleVar();
 		}
 		ImGui::End();
+
+		auto input = Systems::GetSystem<InputSystem>();
+		for (int t = 0; t < m_tools.size() && t < 9; ++t)
+		{
+			Key testKey = static_cast<Key>(t + static_cast<int>(KEY_1));
+			if (t != m_activeTool && input->IsKeyDown(testKey))
+			{
+				ActivateTool(t);
+			}
+		}
 	}
 
 	void WorldEditorWindow::CreateTools()

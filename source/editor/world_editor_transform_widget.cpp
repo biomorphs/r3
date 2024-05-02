@@ -52,18 +52,6 @@ namespace R3
 			}
 		}
 		m_currentEntities = entities;
-
-		// rescale the widget based on current distance to camera
-		const float scaleMin = 0.1f;
-		const float scaleMax = 256.0f;
-		const float scaleMaxDist = 1000.0f;
-		auto camPos = Systems::GetSystem<CameraSystem>()->GetMainCamera().Position();
-		float distanceToCam = glm::length(glm::vec3(m_widgetTransform[3]) - camPos);
-		if (distanceToCam > 0.001f)
-		{
-			float mixT = glm::min(distanceToCam / scaleMaxDist, 1.0f);
-			m_widgetScale = glm::mix(scaleMin, scaleMax, mixT);
-		}
 	}
 
 	void WorldEditorTransformWidget::RestoreEntityTransforms()
@@ -131,7 +119,7 @@ namespace R3
 				}
 			}
 		}
-		imRender.DrawAABB(boxMin, boxMax, m_widgetTransform, colour);
+		imRender.DrawAABB(boxMin, boxMax, m_currentCenterTransform, colour);
 
 		return false;
 	}
@@ -166,6 +154,20 @@ namespace R3
 		if (entities != m_currentEntities)
 		{
 			Reset(entities);
+		}
+
+		// rescale the widget based on current distance to camera
+		glm::vec3 newPosition = FindCenterPosition(entities);
+		m_currentCenterTransform = glm::translate(newPosition);	// also used for drawing the widget
+		const float scaleMin = 0.1f;
+		const float scaleMax = 256.0f;
+		const float scaleMaxDist = 1000.0f;
+		auto camPos = Systems::GetSystem<CameraSystem>()->GetMainCamera().Position();
+		float distanceToCam = glm::length(newPosition - camPos);
+		if (distanceToCam > 0.001f)
+		{
+			float mixT = glm::min(distanceToCam / scaleMaxDist, 1.0f);
+			m_widgetScale = glm::mix(scaleMin, scaleMax, mixT);
 		}
 
 		if (m_trackedEntities.size() > 0)

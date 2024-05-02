@@ -1,6 +1,7 @@
 #include "static_mesh_simple_renderer.h"
 #include "static_mesh_system.h"
 #include "camera_system.h"
+#include "lights_system.h"
 #include "engine/components/transform.h"
 #include "engine/components/static_mesh.h"
 #include "entities/systems/entity_system.h"
@@ -29,6 +30,9 @@ namespace R3
 		glm::vec4 m_cameraWorldSpacePos;
 		VkDeviceAddress m_vertexBufferAddress;
 		VkDeviceAddress m_materialBufferAddress;
+		VkDeviceAddress m_pointLightsBufferAddress;
+		uint32_t m_firstPointLightOffset;
+		uint32_t m_pointlightCount;
 	};
 
 	// one per draw call
@@ -192,11 +196,15 @@ namespace R3
 			// write + flush the global constants each frame
 			auto cameras = GetSystem<CameraSystem>();
 			auto staticMeshes = GetSystem<StaticMeshSystem>();
+			auto lights = GetSystem<LightsSystem>();
 			GlobalConstants globals;
 			globals.m_cameraWorldSpacePos = glm::vec4(cameras->GetMainCamera().Position(), 1);
 			globals.m_projViewTransform = cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix();
 			globals.m_vertexBufferAddress = staticMeshes->GetVertexDataDeviceAddress();
 			globals.m_materialBufferAddress = staticMeshes->GetMaterialsDeviceAddress();
+			globals.m_pointLightsBufferAddress = lights->GetPointlightsDeviceAddress();
+			globals.m_firstPointLightOffset = lights->GetFirstPointlightOffset();
+			globals.m_pointlightCount = lights->GetTotalPointlightsThisFrame();
 			m_globalConstantsBuffer.Write(m_currentGlobalConstantsBuffer, 1, &globals);
 			m_globalConstantsBuffer.Flush(d, cmds);
 		}
@@ -243,6 +251,7 @@ namespace R3
 		{
 			StaticMeshGpuData currentMeshData;
 			ModelDataHandle currentMeshDataHandle;
+			StaticMeshPart partData;
 			auto forEach = [&](const Entities::EntityHandle& e, StaticMeshComponent& s, TransformComponent& t) 
 			{
 				if (s.GetModel().m_index != currentMeshDataHandle.m_index)
@@ -259,7 +268,6 @@ namespace R3
 				const uint32_t partCount = currentMeshData.m_meshPartCount;
 				for (uint32_t part = 0; part < partCount; ++part)
 				{
-					StaticMeshPart partData;
 					if (staticMeshes->GetMeshPart(currentMeshData.m_firstMeshPartOffset + part, partData))
 					{
 						pc.m_materialIndex = partData.m_materialIndex;

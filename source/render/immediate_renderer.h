@@ -21,7 +21,7 @@ namespace R3
 			glm::vec4 m_position;
 			glm::vec4 m_colour;
 		};
-		bool Initialise(Device& d, VkFormat colourBufferFormat, VkFormat depthBufferFormat, uint32_t maxVerticesPerFrame = 1024 * 20);
+		bool Initialise(Device& d, VkFormat colourBufferFormat, VkFormat depthBufferFormat, uint32_t maxVerticesPerFrame = 1024 * 256);
 		void Destroy(Device& d);
 		
 		void WriteVertexData(Device& d, VkCommandBuffer& cmdBuffer);	// call this before calling draw! must be called outside of rendering
@@ -35,6 +35,7 @@ namespace R3
 		void AddAxisAtPoint(glm::vec3 position, float scale = 1.0f, glm::mat4 transform = glm::identity<glm::mat4>());
 		void AddFrustum(const Frustum& f, glm::vec4 colour);
 		void AddCubeWireframe(glm::mat4 transform, glm::vec4 colour);
+		void AddSphere(glm::vec3 center, float radius, glm::vec4 colour, glm::mat4 transform = glm::identity<glm::mat4>());
 		void DrawAABB(glm::vec3 minbound, glm::vec3 maxbound, glm::mat4 transform, glm::vec4 colour);
 
 	private:
