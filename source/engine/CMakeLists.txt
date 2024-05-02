@@ -59,6 +59,8 @@ set(EngineLib_SourceFiles
 	components/camera.cpp
 	components/static_mesh.h
 	components/static_mesh.cpp
+	components/static_mesh_materials.h
+	components/static_mesh_materials.cpp
 )
 
 add_library(Engine ${EngineLib_SourceFiles})

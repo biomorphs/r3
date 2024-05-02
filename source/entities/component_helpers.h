@@ -40,6 +40,24 @@ namespace R3
 			{
 				(foundCmp->*fn)(newValue);
 			}
+			};
+	}
+
+	// wraps a lambda fn that is called with signature void(const PropertyType&, EntityHandle, World)
+	// useful as a 'passthrough' for complex components (i.e. lists of stuff need custom inspector, see StaticMeshMaterialsComponent)
+	template<class ComponentType, class PropertyType>
+	using CustomComponentInspector = std::function<void(const Entities::EntityHandle&, ComponentType&, Entities::World*, PropertyType)>;
+
+	template<class ComponentType, class PropertyType>
+	auto InspectComponentCustom(const Entities::EntityHandle& e, Entities::World* w, CustomComponentInspector<ComponentType, PropertyType> callFn)
+	{
+		return[e, w, callFn](PropertyType newValue)
+		{
+			auto foundCmp = w->GetComponent<ComponentType>(e);
+			if (foundCmp)
+			{
+				callFn(e, *foundCmp, w, newValue);
+			}
 		};
 	}
 }

@@ -3,6 +3,7 @@
 #include "components/transform.h"
 #include "components/camera.h"
 #include "components/static_mesh.h"
+#include "components/static_mesh_materials.h"
 #include "entities/systems/entity_system.h"
 
 
@@ -16,5 +17,6 @@ namespace R3
 		entities->RegisterComponentType<TransformComponent>();
 		entities->RegisterComponentType<CameraComponent>();
 		entities->RegisterComponentType<StaticMeshComponent>();
+		entities->RegisterComponentType<StaticMeshMaterialsComponent>();
 	}
 }
