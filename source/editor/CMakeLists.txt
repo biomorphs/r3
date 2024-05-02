@@ -11,6 +11,9 @@ set(EditorLib_SourceFiles
 	undo_redo_value_inspector.cpp
 	editor_utils.h
 	editor_utils.cpp
+	world_editor_tool.h
+	world_editor_select_entity_tool.h
+	world_editor_select_entity_tool.cpp
 	systems/editor_system.h
 	systems/editor_system.cpp
 	commands/world_editor_save_cmd.h

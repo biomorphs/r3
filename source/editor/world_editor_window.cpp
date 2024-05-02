@@ -3,6 +3,8 @@
 #include "world_info_widget.h"
 #include "editor_command_list.h"
 #include "undo_redo_value_inspector.h"
+#include "world_editor_tool.h"
+#include "world_editor_select_entity_tool.h"
 #include "commands/world_editor_save_cmd.h"
 #include "commands/world_editor_select_entities_cmd.h"
 #include "commands/world_editor_add_empty_entity_cmd.h"
@@ -142,6 +144,38 @@ namespace R3
 		ImGui::End();
 		m_sidebarRightWidth = glm::max(newWidth, windowFullExtents.x * 0.05f);
 		m_sidebarRightWidth = glm::min(m_sidebarRightWidth, windowFullExtents.x * 0.45f);
+	}
+
+	void WorldEditorWindow::CreateTools()
+	{
+		auto selectEntityTool = std::make_unique<WorldEditorSelectEntityTool>(this);
+		m_tools.push_back(std::move(selectEntityTool));
+	}
+
+	void WorldEditorWindow::ActivateTool(int toolIndex)
+	{
+		assert(toolIndex < m_tools.size());
+		if (toolIndex >= m_tools.size())
+		{
+			return;
+		}
+
+		// should the existing active tool be deactivated?
+		if ((m_activeTool != -1) && (toolIndex != m_activeTool))
+		{
+			if (!m_tools[m_activeTool]->OnDeactivated())	// can't deactivate yet
+			{
+				return;
+			}
+		}
+		if (toolIndex != -1)
+		{
+			if (!m_tools[toolIndex]->OnActivated())
+			{
+				return;
+			}
+		}
+		m_activeTool = toolIndex;
 	}
 
 	void WorldEditorWindow::UpdateMainMenu()
