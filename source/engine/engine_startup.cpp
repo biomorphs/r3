@@ -10,6 +10,7 @@
 #include "systems/model_data_system.h"
 #include "systems/static_mesh_system.h"
 #include "systems/static_mesh_simple_renderer.h"
+#include "systems/lights_system.h"
 #include "systems/job_system.h"
 #include "render/render_system.h"
 #include "entities/systems/entity_system.h"
@@ -37,6 +38,7 @@ namespace R3
 		s.RegisterSystem<ModelDataSystem>();
 		s.RegisterSystem<StaticMeshSystem>();
 		s.RegisterSystem<StaticMeshSimpleRenderer>();
+		s.RegisterSystem<LightsSystem>();
 	}
 
 	// the default frame graph
@@ -58,6 +60,7 @@ namespace R3
 		{
 			auto& varUpdate = fg.m_root.AddSequence("VariableUpdate");
 			varUpdate.AddFn("Entities::RunGC");
+			varUpdate.AddFn("LightsSystem::DrawLightBounds");
 		}
 		{
 			auto& guiUpdate = fg.m_root.AddSequence("ImGuiUpdate");

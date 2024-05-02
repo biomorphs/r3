@@ -72,6 +72,20 @@ namespace R3
 		return false;
 	}
 
+	bool UndoRedoInspector::InspectColour(std::string_view label, glm::vec3 currentValue, std::function<void(glm::vec3)> setFn)
+	{
+		glm::vec3 val = currentValue;
+		if (ImGui::ColorEdit4(label.data(), glm::value_ptr(val)))
+		{
+			if (val != currentValue)
+			{
+				m_cmds.Push(std::make_unique<SetValueCommand<glm::vec3>>(label, currentValue, val, setFn));
+				return true;
+			}
+		}
+		return false;
+	}
+
 	bool UndoRedoInspector::InspectFile(std::string_view label, std::string_view path, std::string_view filter, std::function<void(const std::string&)> setFn)
 	{
 		std::string txt = std::format("{} - {}", label, path);
