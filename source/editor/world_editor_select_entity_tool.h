@@ -11,6 +11,7 @@ namespace R3
 		WorldEditorSelectEntityTool(WorldEditorWindow* w);
 		virtual std::string_view GetToolbarButtonText() { return "S"; };
 		virtual std::string_view GetTooltipText() { return "Select Entities"; }
+		virtual bool Update(Entities::World&, EditorCommandList&);
 	private:
 		WorldEditorWindow* m_window = nullptr;
 	};

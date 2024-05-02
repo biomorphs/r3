@@ -17,8 +17,6 @@
 #include "engine/entity_inspector_widget.h"
 #include "engine/imgui_menubar_helper.h"
 #include "engine/systems/model_data_system.h"
-#include "engine/systems/static_mesh_system.h"
-#include "engine/systems/input_system.h"
 #include "engine/systems/imgui_system.h"
 #include "engine/components/transform.h"
 #include "engine/components/static_mesh.h"
@@ -195,8 +193,6 @@ namespace R3
 	void WorldEditorWindow::CreateTools()
 	{
 		m_tools.push_back(std::make_unique<WorldEditorSelectEntityTool>(this));
-		m_tools.push_back(std::make_unique<WorldEditorSelectEntityTool>(this));
-		m_tools.push_back(std::make_unique<WorldEditorSelectEntityTool>(this));
 	}
 
 	void WorldEditorWindow::ActivateTool(int toolIndex)
@@ -209,14 +205,14 @@ namespace R3
 
 		if (m_activeTool != -1)
 		{
-			if (!m_tools[m_activeTool]->OnDeactivated())	// can't deactivate yet
+			if (!m_tools[m_activeTool]->OnDeactivated(*GetWorld(), *m_cmds))	// can't deactivate yet
 			{
 				return;
 			}
 		}
 		if (toolIndex != -1 && toolIndex != m_activeTool)
 		{
-			if (!m_tools[toolIndex]->OnActivated())
+			if (!m_tools[toolIndex]->OnActivated(*GetWorld(), *m_cmds))
 			{
 				return;
 			}
@@ -290,43 +286,6 @@ namespace R3
 		return m_titleString;
 	}
 
-	void WorldEditorWindow::UpdateSelected()
-	{
-		R3_PROF_EVENT();
-		auto theWorld = GetWorld();
-		auto staticMeshes = Systems::GetSystem<StaticMeshSystem>();
-		auto inputSystem = Systems::GetSystem<InputSystem>();
-		static bool middleButtonWasDown = false;
-		bool isMiddleButtonDown = inputSystem->GetMouseState().m_buttonState & MiddleButton;
-		Entities::EntityHandle hitEntity;
-		if (isMiddleButtonDown || middleButtonWasDown)
-		{
-			glm::vec3 selectionRayStart, selectionRayEnd;
-			MouseCursorToWorldspaceRay(100000.0f, selectionRayStart, selectionRayEnd);		// fire a ray out into the world
-			hitEntity = staticMeshes->FindClosestActiveEntityIntersectingRay(selectionRayStart, selectionRayEnd);
-		}
-		if (hitEntity.GetID() != -1)
-		{
-			DrawEntityBounds(*theWorld, hitEntity, { 0,1,1,1 });
-		}
-		if (isMiddleButtonDown)
-		{
-			middleButtonWasDown = true;
-		}
-		else if (middleButtonWasDown)	// just released
-		{
-			middleButtonWasDown = false;
-			if (hitEntity.GetID() != -1)
-			{
-				bool append = inputSystem->GetKeyboardState().m_keyPressed[KEY_LCTRL];
-				auto selectCmd = std::make_unique<WorldEditorSelectEntitiesCommand>(this);
-				selectCmd->m_appendToSelection = append;
-				selectCmd->m_toSelect.push_back(hitEntity);
-				m_cmds->Push(std::move(selectCmd));
-			}
-		}
-	}
-
 	void WorldEditorWindow::DrawSelected()
 	{
 		R3_PROF_EVENT();
@@ -352,9 +311,13 @@ namespace R3
 		{
 			m_showCommandsWindow = m_cmds->ShowWidget();
 		}
-		m_cmds->RunNext();
 		DrawSelected();
-		UpdateSelected();
+
+		if (m_activeTool != -1 && m_activeTool < m_tools.size())
+		{
+			m_tools[m_activeTool]->Update(*GetWorld(), *m_cmds);
+		}
+		m_cmds->RunNext();
 	}
 
 	EditorWindow::CloseStatus WorldEditorWindow::PrepareToClose()
