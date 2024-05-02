@@ -21,7 +21,7 @@ namespace R3
 		auto staticMeshes = Systems::GetSystem<StaticMeshSystem>();
 		auto inputSystem = Systems::GetSystem<InputSystem>();
 		static bool buttonWasDown = false;
-		bool isButtonDown = inputSystem->GetMouseState().m_buttonState & LeftButton;
+		bool isButtonDown = !inputSystem->IsGuiCapturingInput() && inputSystem->GetMouseState().m_buttonState & LeftButton;
 		Entities::EntityHandle hitEntity;
 		if (isButtonDown || buttonWasDown)
 		{

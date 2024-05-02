@@ -312,17 +312,12 @@ namespace R3
 	bool RenderSystem::ShowGui()
 	{
 		R3_PROF_EVENT();
-		ImGui::Begin("Render System", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
-		{
-			auto str = std::format("Swap chain extents: {}x{}", m_swapChain->GetExtents().width, m_swapChain->GetExtents().height);
-			ImGui::Text(str.c_str());
-			str = std::format("Swap chain images: {}", m_swapChain->GetImages().size());
-			ImGui::Text(str.c_str());
-			auto timeSys = GetSystem<TimeSystem>();
-			str = std::format("FPS/Frame Time: {:.1f} / {:.4f}ms", 1.0 / timeSys->GetVariableDeltaTime(), timeSys->GetVariableDeltaTime());
-			ImGui::Text(str.c_str());
-		}
-		ImGui::End();
+
+		auto timeSys = GetSystem<TimeSystem>();
+		auto str = std::format("FPS/Frame Time: {:.1f} / {:.4f}ms", 1.0 / timeSys->GetVariableDeltaTime(), timeSys->GetVariableDeltaTime());
+		auto strSizePixels = ImGui::CalcTextSize(str.data());
+		ImGui::GetForegroundDrawList()->AddText({ GetWindowExtents().x - strSizePixels.x - 2,2}, 0xffffffff, str.c_str());
+
 		return true;
 	}
 
@@ -368,7 +363,8 @@ namespace R3
 		}
 
 		// If running with low battery, wait a bit!
-		if (Platform::GetSystemPowerState().m_batteryPercentageRemaining < 80)
+		auto powerState = Platform::GetSystemPowerState();
+		if (powerState.m_isRunningOnBattery && powerState.m_batteryPercentageRemaining < 80)
 		{
 			R3_PROF_EVENT("StopKillingBattery");
 			SDL_Delay(10);
