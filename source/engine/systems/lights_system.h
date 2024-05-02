@@ -10,8 +10,6 @@ namespace R3
 	{
 		glm::vec4 m_positionDistance;	// w = distance used for attenuation/culling
 		glm::vec4 m_colourBrightness;	// w = brightness
-		float m_attenuation;			// adjusts falloff curve
-		float m_padding[3];
 	};
 
 	class LightsSystem : public System

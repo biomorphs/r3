@@ -84,7 +84,6 @@ namespace R3
 			Pointlight newlight;
 			newlight.m_colourBrightness = {pl.m_colour, pl.m_brightness};
 			newlight.m_positionDistance = {t.GetPosition(), pl.m_distance};
-			newlight.m_attenuation = pl.m_attenuation;
 			allPointlights.push_back(newlight);
 			return true;
 		};
