@@ -3,6 +3,7 @@
 #include "editor_utils.h"
 #include "editor/commands/world_editor_set_entity_positions_cmd.h"
 #include "entities/world.h"
+#include "engine/systems/camera_system.h"
 #include "engine/components/transform.h"
 #include "engine/systems/input_system.h"
 #include "engine/intersection_tests.h"
@@ -51,6 +52,18 @@ namespace R3
 			}
 		}
 		m_currentEntities = entities;
+
+		// rescale the widget based on current distance to camera
+		const float scaleMin = 0.1f;
+		const float scaleMax = 256.0f;
+		const float scaleMaxDist = 1000.0f;
+		auto camPos = Systems::GetSystem<CameraSystem>()->GetMainCamera().Position();
+		float distanceToCam = glm::length(glm::vec3(m_widgetTransform[3]) - camPos);
+		if (distanceToCam > 0.001f)
+		{
+			float mixT = glm::min(distanceToCam / scaleMaxDist, 1.0f);
+			m_widgetScale = glm::mix(scaleMin, scaleMax, mixT);
+		}
 	}
 
 	void WorldEditorTransformWidget::RestoreEntityTransforms()
@@ -146,8 +159,6 @@ namespace R3
 	void WorldEditorTransformWidget::Update(const std::vector<Entities::EntityHandle>& entities)
 	{
 		R3_PROF_EVENT();
-		const float widgetScale = 128.0f;	// todo - rescale based on screen space size
-		const float barWidth = 2.0f;	// rescale from ss size
 		auto input = Systems::GetSystem<InputSystem>();
 		auto world = m_editorWindow->GetWorld();
 		auto& imRender = Systems::GetSystem<RenderSystem>()->GetImRenderer();
@@ -168,6 +179,9 @@ namespace R3
 			{
 				leftBtnDown = input->GetMouseState().m_buttonState & MouseButtons::LeftButton;
 			}
+
+			float widgetScale = m_widgetScale;
+			float barWidth = m_widgetScale / 32.0f;
 
 			// dragging...
 			if (m_mouseBtnDownLastFrame && m_dragAxis != Axis::None)

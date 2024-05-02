@@ -36,6 +36,7 @@ namespace R3
 		glm::vec3 m_mouseClickPosOnAxis;		// position on the original axis where drag started
 		bool m_mouseBtnDownLastFrame = false;
 		Axis m_dragAxis = Axis::None;
+		float m_widgetScale = 1.0f;
 		WorldEditorWindow* m_editorWindow = nullptr;
 	};
 }

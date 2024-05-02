@@ -241,21 +241,31 @@ namespace R3
 		}
 		if (activeWorld)
 		{
+			StaticMeshGpuData currentMeshData;
+			ModelDataHandle currentMeshDataHandle;
 			auto forEach = [&](const Entities::EntityHandle& e, StaticMeshComponent& s, TransformComponent& t) 
 			{
-				StaticMeshGpuData meshData;
-				if (staticMeshes->GetMeshDataForModel(s.GetModel(), meshData))
+				if (s.GetModel().m_index != currentMeshDataHandle.m_index)
 				{
-					for (uint32_t part = 0; part < meshData.m_meshPartCount; ++part)
+					if (staticMeshes->GetMeshDataForModel(s.GetModel(), currentMeshData))
 					{
-						StaticMeshPart partData;
-						if (staticMeshes->GetMeshPart(meshData.m_firstMeshPartOffset + part, partData))
-						{
-							pc.m_materialIndex = partData.m_materialIndex;
-							pc.m_instanceTransform = t.GetWorldspaceMatrix() * partData.m_transform;
-							vkCmdPushConstants(cmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-							vkCmdDrawIndexed(cmds, partData.m_indexCount, 1, (uint32_t)partData.m_indexStartOffset, (uint32_t)meshData.m_vertexDataOffset, 0);
-						}
+						currentMeshDataHandle = s.GetModel();
+					}
+					else
+					{
+						currentMeshData = {};
+					}
+				}
+				const uint32_t partCount = currentMeshData.m_meshPartCount;
+				for (uint32_t part = 0; part < partCount; ++part)
+				{
+					StaticMeshPart partData;
+					if (staticMeshes->GetMeshPart(currentMeshData.m_firstMeshPartOffset + part, partData))
+					{
+						pc.m_materialIndex = partData.m_materialIndex;
+						pc.m_instanceTransform = t.GetWorldspaceMatrix() * partData.m_transform;
+						vkCmdPushConstants(cmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
+						vkCmdDrawIndexed(cmds, partData.m_indexCount, 1, (uint32_t)partData.m_indexStartOffset, (uint32_t)currentMeshData.m_vertexDataOffset, 0);
 					}
 				}
 
