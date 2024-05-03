@@ -44,9 +44,9 @@ vec3 PBRDirectLighting(
 	vec3 lightRadiance = lightColour * lightAttenuation;
 	
 	// cook-torrence BRDF
-	float ndf = NormalDistributionGGX(worldNormal, worldToCamera, material.m_roughness);
+	float ndf = NormalDistributionGGX(worldNormal, halfVec, material.m_roughness);
 	float geomTerm = GeometrySmithDirect(worldNormal, worldToCamera, lightToPixel, material.m_roughness);
-	vec3 fresnel = FresnelSchlick(nDotL, F0);
+	vec3 fresnel = FresnelSchlick(max(dot(halfVec, worldToCamera), 0.0), F0);
 	
 	// specular amount comes from fresnel value. diffuse amount calculated from it
 	vec3 specularAmount = fresnel;
