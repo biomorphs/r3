@@ -4,6 +4,7 @@
 #include "model_data_system.h"
 #include "engine/intersection_tests.h"
 #include "engine/components/static_mesh.h"
+#include "engine/components/static_mesh_materials.h"
 #include "engine/components/transform.h"
 #include "entities/systems/entity_system.h"
 #include "entities/world.h"
@@ -45,7 +46,7 @@ namespace R3
 		std::vector<HitEntityRecord> hitEntities;
 		auto forEachEntity = [&](const Entities::EntityHandle& e, StaticMeshComponent& smc, TransformComponent& t)
 		{
-			const auto modelData = GetSystem<ModelDataSystem>()->GetModelData(smc.GetModel());
+			const auto modelData = GetSystem<ModelDataSystem>()->GetModelData(smc.m_modelHandle);
 			if (modelData.m_data)
 			{
 				// transform the ray into model space so we can do a simple AABB test
@@ -175,20 +176,20 @@ namespace R3
 			newMesh.m_modelHandleIndex = handle.m_index;
 			{
 				ScopedLock lock(m_allDataMutex);
-				newMesh.m_firstMaterialOffset = static_cast<uint32_t>(m_allMaterials.size());
-				m_allMaterials.resize(m_allMaterials.size() + newMesh.m_materialCount);
 				uint64_t gpuIndex = m_allMaterialsGpu.Allocate(newMesh.m_materialCount);
-				assert(gpuIndex == newMesh.m_firstMaterialOffset);
-				for (uint32_t mat = 0; mat < newMesh.m_materialCount; ++mat)
+				newMesh.m_materialArrayIndex = static_cast<uint32_t>(m_allMaterials.size());
+				newMesh.m_materialGpuIndex = static_cast<uint32_t>(gpuIndex);
+				m_allMaterials.resize(m_allMaterials.size() + newMesh.m_materialCount);
+				for (uint32_t mat = 0; mat < newMesh.m_materialCount; ++mat)	// write cpu materials offset from m_materialArrayIndex
 				{
-					auto& md = m_allMaterials[mat + newMesh.m_firstMaterialOffset];
+					auto& md = m_allMaterials[mat + newMesh.m_materialArrayIndex];
 					md.m_albedoOpacity = { m->m_materials[mat].m_albedo, m->m_materials[mat].m_opacity };
 					md.m_metallic = m->m_materials[mat].m_metallic;
 					md.m_roughness = m->m_materials[mat].m_roughness;
 				}
-				if (gpuIndex != -1 && gpuIndex == newMesh.m_firstMaterialOffset)
+				if (gpuIndex != -1)
 				{
-					m_allMaterialsGpu.Write(gpuIndex, newMesh.m_materialCount, &m_allMaterials[newMesh.m_firstMaterialOffset]);
+					m_allMaterialsGpu.Write(gpuIndex, newMesh.m_materialCount, &m_allMaterials[newMesh.m_materialArrayIndex]);
 				}
 				
 				newMesh.m_firstMeshPartOffset = static_cast<uint32_t>(m_allParts.size());
@@ -201,7 +202,7 @@ namespace R3
 					pt.m_boundsMin = m->m_meshes[part].m_boundsMin;
 					pt.m_indexCount = m->m_meshes[part].m_indexCount;
 					pt.m_indexStartOffset = newMesh.m_indexDataOffset + m->m_meshes[part].m_indexDataOffset;
-					pt.m_materialIndex = newMesh.m_firstMaterialOffset + m->m_meshes[part].m_materialIndex;
+					pt.m_materialIndex = newMesh.m_materialGpuIndex + m->m_meshes[part].m_materialIndex;	// GPU index!
 					pt.m_vertexCount = m->m_meshes[part].m_vertexCount;
 					pt.m_vertexStartOffset = newMesh.m_vertexDataOffset + m->m_meshes[part].m_vertexDataOffset;
 				}
@@ -244,6 +245,27 @@ namespace R3
 			if (!m_allMaterialsGpu.Create(d, c_maxMaterialsToStore, c_maxMaterialsToStore, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 			{
 				LogError("Failed to create material buffer");
+			}
+		}
+		{
+			R3_PROF_EVENT("UploadInstanceMaterials");
+			auto entities = Systems::GetSystem<Entities::EntitySystem>();
+			auto forEachEntity = [&](const Entities::EntityHandle& e, StaticMeshMaterialsComponent& smc)
+			{
+				if (smc.m_gpuDataIndex == -1 && smc.m_materials.size() > 0)
+				{
+					smc.m_gpuDataIndex = m_allMaterialsGpu.Allocate(smc.m_materials.size());
+				}
+				if(smc.m_gpuDataIndex != -1)	// update all instance mats each frame (probably bad)
+				{
+					m_allMaterialsGpu.Write(smc.m_gpuDataIndex, smc.m_materials.size(), smc.m_materials.data());
+				}
+				return true;
+			};
+			
+			if (entities->GetActiveWorld())
+			{
+				Entities::Queries::ForEach<StaticMeshMaterialsComponent>(entities->GetActiveWorld(), forEachEntity);
 			}
 		}
 		{

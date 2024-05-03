@@ -4,6 +4,7 @@
 #include "lights_system.h"
 #include "engine/components/transform.h"
 #include "engine/components/static_mesh.h"
+#include "engine/components/static_mesh_materials.h"
 #include "entities/systems/entity_system.h"
 #include "entities/world.h"
 #include "entities/queries.h"
@@ -40,8 +41,8 @@ namespace R3
 	{
 		glm::mat4 m_instanceTransform;
 		VkDeviceAddress m_globalConstantsAddress;
-		int m_globalIndex;
-		int m_materialIndex;
+		uint32_t m_globalIndex;
+		uint32_t m_materialIndex;
 	};
 
 	StaticMeshSimpleRenderer::StaticMeshSimpleRenderer()
@@ -254,7 +255,7 @@ namespace R3
 			StaticMeshPart partData;
 			auto forEach = [&](const Entities::EntityHandle& e, StaticMeshComponent& s, TransformComponent& t) 
 			{
-				if (s.m_modelHandle.m_index != currentMeshDataHandle.m_index)
+				if (s.m_modelHandle.m_index != -1 && s.m_modelHandle.m_index != currentMeshDataHandle.m_index)
 				{
 					if (staticMeshes->GetMeshDataForModel(s.m_modelHandle, currentMeshData))
 					{
@@ -265,15 +266,20 @@ namespace R3
 						currentMeshData = {};
 					}
 				}
-				const uint32_t partCount = currentMeshData.m_meshPartCount;
-				for (uint32_t part = 0; part < partCount; ++part)
+				if (s.m_modelHandle.m_index != -1 && currentMeshDataHandle.m_index == s.m_modelHandle.m_index)
 				{
-					if (staticMeshes->GetMeshPart(currentMeshData.m_firstMeshPartOffset + part, partData))
+					const uint32_t partCount = currentMeshData.m_meshPartCount;
+					const auto* matCmp = activeWorld->GetComponent<StaticMeshMaterialsComponent>(s.m_materialOverride);
+					bool useOverrides = matCmp && matCmp->m_gpuDataIndex != -1 && matCmp->m_materials.size() >= partCount;
+					for (uint32_t part = 0; part < partCount; ++part)
 					{
-						pc.m_materialIndex = partData.m_materialIndex;
-						pc.m_instanceTransform = t.GetWorldspaceMatrix() * partData.m_transform;
-						vkCmdPushConstants(cmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-						vkCmdDrawIndexed(cmds, partData.m_indexCount, 1, (uint32_t)partData.m_indexStartOffset, (uint32_t)currentMeshData.m_vertexDataOffset, 0);
+						if (staticMeshes->GetMeshPart(currentMeshData.m_firstMeshPartOffset + part, partData))
+						{
+							pc.m_materialIndex = useOverrides ? ((uint32_t)matCmp->m_gpuDataIndex + part) : partData.m_materialIndex;
+							pc.m_instanceTransform = t.GetWorldspaceMatrix() * partData.m_transform;
+							vkCmdPushConstants(cmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
+							vkCmdDrawIndexed(cmds, partData.m_indexCount, 1, (uint32_t)partData.m_indexStartOffset, (uint32_t)currentMeshData.m_vertexDataOffset, 0);
+						}
 					}
 				}
 

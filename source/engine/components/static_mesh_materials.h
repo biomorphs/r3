@@ -1,10 +1,12 @@
 #pragma once
 
 #include "entities/component_helpers.h"
+#include "engine/systems/static_mesh_system.h"	// gross
 #include <vector>
 
 namespace R3
 {
+	struct StaticMeshMaterial;
 	class StaticMeshMaterialsComponent
 	{
 	public:
@@ -14,13 +16,7 @@ namespace R3
 		void SerialiseJson(JsonSerialiser& s);
 		void Inspect(const Entities::EntityHandle& e, Entities::World* w, ValueInspector& i);
 
-		struct MaterialOverride {	// 1 per model in a static mesh
-			void SerialiseJson(JsonSerialiser& s);
-			glm::vec3 m_albedo;
-			float m_opacity;
-			float m_metallic;
-			float m_roughness;
-		};
-		std::vector<MaterialOverride> m_materials;
+		std::vector<StaticMeshMaterial> m_materials;
+		uint64_t m_gpuDataIndex = -1;	// indexes into StaticMeshSystem::m_allMaterialsGpu
 	};
 }

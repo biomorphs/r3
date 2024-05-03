@@ -39,7 +39,8 @@ namespace R3
 		uint64_t m_indexDataOffset;				// one giant index buffer
 		uint32_t m_totalVertices;
 		uint32_t m_totalIndices;
-		uint32_t m_firstMaterialOffset;			// one giant material buffer
+		uint32_t m_materialArrayIndex;			// index into the cpu-side array of materials
+		uint32_t m_materialGpuIndex;			// index into the gpu-side array of materials, only use on gpu!!
 		uint32_t m_materialCount;
 		uint32_t m_firstMeshPartOffset;			// one big buffer
 		uint32_t m_meshPartCount;
