@@ -6,6 +6,12 @@
 
 namespace R3
 {
+	namespace Entities
+	{
+		class EntityHandle;
+		class World;
+	}
+
 	// Base interface used for inspecting/modifying values in the ui
 	// Try to use one of these wherever possible to ensure a unified look/feel
 	// This is also the easiest way to add undo/redo
@@ -20,5 +26,6 @@ namespace R3
 		virtual bool InspectColour(std::string_view label, glm::vec4 currentValue, std::function<void(glm::vec4)> setFn) = 0;
 		virtual bool InspectColour(std::string_view label, glm::vec3 currentValue, std::function<void(glm::vec3)> setFn) = 0;
 		virtual bool InspectFile(std::string_view label, std::string_view path, std::string_view filter, std::function<void(const std::string&)> setFn) = 0;
+		virtual bool InspectEntity(std::string_view label, Entities::EntityHandle current, Entities::World* w, std::function<void(Entities::EntityHandle)> setFn) = 0;
 	};
 }

@@ -1,5 +1,7 @@
 #include "basic_value_inspector.h"
 #include "engine/file_dialogs.h"
+#include "entities/entity_handle.h"
+#include "entities/systems/entity_system.h"
 #include "imgui.h"
 #include <filesystem>
 
@@ -100,6 +102,18 @@ namespace R3
 				setFn(relativePath.string());
 				return true;
 			}
+		}
+		return false;
+	}
+
+	bool BasicValueInspector::InspectEntity(std::string_view label, Entities::EntityHandle current, std::function<void(Entities::EntityHandle)> setFn)
+	{
+		auto entities = Systems::GetSystem<Entities::EntitySystem>();
+		std::string entityName(entities->GetName());
+		std::string txt = std::format("{} - {}", label, entityName);
+		if (ImGui::Button(txt.c_str()))
+		{
+
 		}
 		return false;
 	}

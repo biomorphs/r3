@@ -6,6 +6,7 @@ namespace R3
 	void StaticMeshComponent::SerialiseJson(JsonSerialiser& s)
 	{
 		s("Model", m_modelHandle);
+		s("MaterialsOverride", m_materialOverride);
 	}
 
 	void StaticMeshComponent::Inspect(const Entities::EntityHandle& e, Entities::World* w, ValueInspector& i)
@@ -13,16 +14,7 @@ namespace R3
 		auto modelSys = Systems::GetSystem<ModelDataSystem>();
 		std::string currentPath = modelSys->GetModelName(m_modelHandle);
 		i.InspectFile("Model Path", currentPath, "gltf,fbx,obj,usda", InspectProperty(&StaticMeshComponent::SetModelFromPath, e, w));
-	}
-
-	void StaticMeshComponent::SetModel(ModelDataHandle s)
-	{
-		m_modelHandle = s;
-	}
-
-	ModelDataHandle StaticMeshComponent::GetModel() const
-	{
-		return m_modelHandle;
+		i.InspectEntity("Material Override", m_materialOverride, w, InspectProperty(&StaticMeshComponent::m_materialOverride, e, w));
 	}
 
 	void StaticMeshComponent::SetModelFromPath(const std::string& path)

@@ -254,11 +254,11 @@ namespace R3
 			StaticMeshPart partData;
 			auto forEach = [&](const Entities::EntityHandle& e, StaticMeshComponent& s, TransformComponent& t) 
 			{
-				if (s.GetModel().m_index != currentMeshDataHandle.m_index)
+				if (s.m_modelHandle.m_index != currentMeshDataHandle.m_index)
 				{
-					if (staticMeshes->GetMeshDataForModel(s.GetModel(), currentMeshData))
+					if (staticMeshes->GetMeshDataForModel(s.m_modelHandle, currentMeshData))
 					{
-						currentMeshDataHandle = s.GetModel();
+						currentMeshDataHandle = s.m_modelHandle;
 					}
 					else
 					{

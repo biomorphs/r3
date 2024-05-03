@@ -14,7 +14,10 @@ namespace R3
 		virtual bool InspectColour(std::string_view label, glm::vec4 currentValue, std::function<void(glm::vec4)> setFn);
 		virtual bool InspectColour(std::string_view label, glm::vec3 currentValue, std::function<void(glm::vec3)> setFn);
 		virtual bool InspectFile(std::string_view label, std::string_view path, std::string_view filter, std::function<void(const std::string&)> setFn);
+		virtual bool InspectEntity(std::string_view label, Entities::EntityHandle current, Entities::World* w, std::function<void(Entities::EntityHandle)> setFn);
+
 	private:
 		EditorCommandList& m_cmds;
+		bool m_entitySelectorOpen = false;
 	};
 }

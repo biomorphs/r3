@@ -33,7 +33,7 @@ namespace R3
 		auto staticMeshCmp = w.GetComponent<StaticMeshComponent>(e);
 		if (transformCmp && staticMeshCmp)
 		{
-			auto modelHandle = staticMeshCmp->GetModel();
+			auto modelHandle = staticMeshCmp->m_modelHandle;
 			auto modelData = modelDataSys->GetModelData(modelHandle);
 			if (modelData.m_data)
 			{

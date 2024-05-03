@@ -118,14 +118,17 @@ namespace Entities
 
 		auto RecreateHandle = [&](EntityHandle& e)
 		{
-			auto foundRemap = oldEntityToNewEntity.find(e.GetID());
-			if (foundRemap != oldEntityToNewEntity.end())
+			if (e.GetID() != -1)
 			{
-				e = foundRemap->second;
-			}
-			else
-			{
-				LogError("Entity handle references ID ({}) that doesn't exist in the loaded world!", e.GetID());
+				auto foundRemap = oldEntityToNewEntity.find(e.GetID());
+				if (foundRemap != oldEntityToNewEntity.end())
+				{
+					e = foundRemap->second;
+				}
+				else
+				{
+					LogError("Entity handle references ID ({}) that doesn't exist in the loaded world!", e.GetID());
+				}
 			}
 		};
 		EntityHandle::SetOnLoadFinishCallback(RecreateHandle);

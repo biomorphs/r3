@@ -2,6 +2,8 @@
 #include "commands/set_value_cmd.h"
 #include "editor/editor_command_list.h"
 #include "engine/file_dialogs.h"
+#include "entities/entity_handle.h"
+#include "entities/world.h"
 #include "core/log.h"
 #include "imgui.h"
 #include <filesystem>
@@ -102,6 +104,45 @@ namespace R3
 			}
 		}
 		return false;
+	}
+
+	bool UndoRedoInspector::InspectEntity(std::string_view label, Entities::EntityHandle current, Entities::World* w, std::function<void(Entities::EntityHandle)> setFn)
+	{
+		std::string entityName(w->GetEntityDisplayName(current));
+		std::string txt = std::format("{} - {}", label, entityName);
+		bool newValSet = false;
+		if (ImGui::Button(txt.c_str()))
+		{
+			m_entitySelectorOpen = true;
+		}
+		if (m_entitySelectorOpen)
+		{
+			std::string windowName = std::format("Select {} Entity", label);
+			ImGui::OpenPopup(windowName.c_str());
+			uint32_t popupFlags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings;
+			if (ImGui::BeginPopupModal(windowName.data(), nullptr, popupFlags))
+			{
+				if (ImGui::Button("None"))
+				{
+					setFn({});
+					m_entitySelectorOpen = false;
+					newValSet = true;
+				}
+				std::vector<Entities::EntityHandle> allEntities = w->GetActiveEntities();
+				for (const auto& e : allEntities)
+				{
+					std::string txt = std::format("{}##{}", w->GetEntityDisplayName(e), e.GetID());
+					if (ImGui::Button(txt.c_str()))
+					{
+						setFn(e);
+						m_entitySelectorOpen = false;
+						newValSet = true;
+					}
+				}
+				ImGui::EndPopup();
+			}
+		}
+		return newValSet;
 	}
 
 }
