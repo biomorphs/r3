@@ -1,5 +1,3 @@
-TestScriptComponent = {} 
-
 function TestScript_OnFixedUpdate()
 	print('Hello from fixed update!')
 end
