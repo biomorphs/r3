@@ -46,13 +46,16 @@ namespace R3
 		{
 			return false;
 		}
+		if (sizeBytes > m_stagingMaxSize)
+		{
+			return false;
+		}
 
 		uint64_t stagingOffset = m_stagingEndOffset.fetch_add(sizeBytes);
 		// if staging buffer is full, reset it
 		// this is NOT safe, we need multiple staging buffers to do it properly
 		if (stagingOffset + sizeBytes >= m_stagingMaxSize)
 		{
-			// LogInfo("Staging buffer full, resetting");
 			m_stagingEndOffset.store(0);
 			stagingOffset = 0;
 		}

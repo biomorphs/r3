@@ -228,7 +228,7 @@ namespace R3
 		auto models = Systems::GetSystem<ModelDataSystem>();
 		if (!m_allVertices.IsCreated())
 		{
-			if (!m_allVertices.Create(d, c_maxVerticesToStore, c_maxVerticesToStore / 2, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT))
+			if (!m_allVertices.Create(d, c_maxVerticesToStore, c_maxVerticesToStore, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT))
 			{
 				LogError("Failed to create vertex buffer");
 			}
