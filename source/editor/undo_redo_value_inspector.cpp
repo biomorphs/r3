@@ -12,6 +12,29 @@ namespace R3
 {
 	constexpr float c_floatEpsilon = 0.00001f;		// smallest change to a float value we register as a modification
 
+	bool UndoRedoInspector::Inspect(std::string label, bool currentValue, std::function<void(bool)> setFn)
+	{
+		bool newVal = currentValue;
+		if (ImGui::Checkbox(label.data(), &newVal))
+		{
+			m_cmds.Push(std::make_unique<SetValueCommand<bool>>(label, currentValue, newVal, setFn));
+			return true;
+		}
+		return false;
+	}
+
+	bool UndoRedoInspector::Inspect(std::string_view label, std::string_view currentValue, std::function<void(std::string)> setFn)
+	{
+		char textBuffer[1024 * 16] = { '\0' };
+		strcpy_s(textBuffer, currentValue.data());
+		if (ImGui::InputText(label.data(), textBuffer, sizeof(textBuffer)))
+		{
+			m_cmds.Push(std::make_unique<SetValueCommand<std::string>>(label, std::string(currentValue), std::string(textBuffer), setFn));
+			return true;
+		}
+		return false;
+	}
+
 	bool UndoRedoInspector::Inspect(std::string_view label, int currentValue, std::function<void(int)> setFn, int step, int minv, int maxv)
 	{
 		int val = currentValue;
@@ -88,7 +111,7 @@ namespace R3
 		return false;
 	}
 
-	bool UndoRedoInspector::InspectFile(std::string_view label, std::string_view path, std::string_view filter, std::function<void(const std::string&)> setFn)
+	bool UndoRedoInspector::InspectFile(std::string_view label, std::string_view path, std::string_view filter, std::function<void(std::string_view)> setFn)
 	{
 		std::string txt = std::format("{} - {}", label, path);
 		if (ImGui::Button(txt.c_str()))

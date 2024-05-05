@@ -12,6 +12,7 @@
 		  "features": [ "vulkan-binding", "sdl2-binding" ]
 	  },
     "sol2",
+	"lua",
     "glm",
 	"assimp",
 	"vulkan-memory-allocator",

@@ -159,7 +159,7 @@ namespace R3
 				}
 
 				aiColor3D albedo(0.f, 0.f, 0.f);
-				float opacity = 1.0f, metallic = 0.0f, roughness = 0.0f;
+				float opacity = 1.0f, metallic = 0.0f, roughness = 0.1f;
 				sceneMat->Get(AI_MATKEY_COLOR_DIFFUSE, albedo);			// maybe use AI_MATKEY_BASE_COLOR
 				sceneMat->Get(AI_MATKEY_OPACITY, opacity);
 				sceneMat->Get(AI_MATKEY_METALLIC_FACTOR, metallic);		

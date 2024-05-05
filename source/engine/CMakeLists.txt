@@ -53,6 +53,8 @@ set(EngineLib_SourceFiles
 	systems/static_mesh_simple_renderer.cpp
 	systems/lights_system.h
 	systems/lights_system.cpp
+	systems/lua_system.h
+	systems/lua_system.cpp
 	components/point_light.h
 	components/point_light.cpp
 	components/environment_settings.h
@@ -65,10 +67,12 @@ set(EngineLib_SourceFiles
 	components/static_mesh.cpp
 	components/static_mesh_materials.h
 	components/static_mesh_materials.cpp
+	components/lua_script.h
+	components/lua_script.cpp
 )
 
 add_library(Engine ${EngineLib_SourceFiles})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/../ FILES ${EngineLib_SourceFiles})
 target_include_directories(Engine PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../)
 target_include_directories(Engine PRIVATE ${Vulkan_INCLUDE_DIRS})
-target_link_libraries(Engine PRIVATE Core Optick::OptickCore SDL2::SDL2 glm::glm assimp::assimp imgui::imgui unofficial::nativefiledialog::nfd) 
+target_link_libraries(Engine PRIVATE Core Optick::OptickCore SDL2::SDL2 glm::glm assimp::assimp imgui::imgui unofficial::nativefiledialog::nfd ${LUA_LIBRARIES})

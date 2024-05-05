@@ -7,6 +7,29 @@
 
 namespace R3
 {
+	bool BasicValueInspector::Inspect(std::string label, bool currentValue, std::function<void(bool)> setFn)
+	{
+		bool newVal = currentValue;
+		if (ImGui::Checkbox(label.data(), &newVal))
+		{
+			setFn(newVal);
+			return true;
+		}
+		return false;
+	}
+
+	bool BasicValueInspector::Inspect(std::string_view label, std::string_view currentValue, std::function<void(std::string)> setFn)
+	{
+		char textBuffer[1024 * 16] = { '\0' };
+		strcpy_s(textBuffer, currentValue.data());
+		if (ImGui::InputText(label.data(), textBuffer, sizeof(textBuffer)))
+		{
+			setFn(textBuffer);
+			return true;
+		}
+		return false;
+	}
+
 	bool BasicValueInspector::Inspect(std::string_view label, int currentValue, std::function<void(int)> setFn, int step, int minv, int maxv)
 	{
 		int val = currentValue;
@@ -88,7 +111,7 @@ namespace R3
 		return false;
 	}
 
-	bool BasicValueInspector::InspectFile(std::string_view label, std::string_view path, std::string_view filter, std::function<void(const std::string&)> setFn)
+	bool BasicValueInspector::InspectFile(std::string_view label, std::string_view path, std::string_view filter, std::function<void(std::string_view)> setFn)
 	{
 		std::string txt = std::format("{} - {}", label, path);
 		if (ImGui::Button(txt.c_str()))

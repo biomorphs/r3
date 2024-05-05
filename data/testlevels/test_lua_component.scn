@@ -1,0 +1,29 @@
+{
+ "AllEntities": [
+  {
+   "EnvironmentSettings": {
+    "Clear Colour": {
+     "W": 0.0,
+     "X": 0.04006243497133255,
+     "Y": 0.6209677457809448,
+     "Z": 0.2977219521999359
+    }
+   },
+   "ID": 0
+  },
+  {
+   "ID": 1,
+   "Lua Script": {
+    "OnFixedUpdate": {
+     "EntryPoint": "TestScript_OnFixedUpdate",
+     "SourcePath": "testlevels\\scripts\\test_script_component.lua"
+    },
+    "OnVariableUpdate": {
+     "EntryPoint": "TestScript_OnVariableUpdate",
+     "SourcePath": "testlevels\\scripts\\test_script_component.lua"
+    }
+   }
+  }
+ ],
+ "WorldName": "New World"
+}

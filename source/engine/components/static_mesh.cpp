@@ -17,9 +17,9 @@ namespace R3
 		i.InspectEntity("Material Override", m_materialOverride, w, InspectProperty(&StaticMeshComponent::m_materialOverride, e, w));
 	}
 
-	void StaticMeshComponent::SetModelFromPath(const std::string& path)
+	void StaticMeshComponent::SetModelFromPath(std::string_view path)
 	{
 		auto modelSys = Systems::GetSystem<ModelDataSystem>();
-		m_modelHandle = modelSys->LoadModel(path.c_str());
+		m_modelHandle = modelSys->LoadModel(path.data());
 	}
 }

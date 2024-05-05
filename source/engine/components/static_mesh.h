@@ -11,7 +11,7 @@ namespace R3
 		static std::string_view GetTypeName() { return "Static Mesh"; }
 		void SerialiseJson(JsonSerialiser& s);
 		void Inspect(const Entities::EntityHandle& e, Entities::World* w, ValueInspector& i);
-		void SetModelFromPath(const std::string& path);
+		void SetModelFromPath(std::string_view path);
 
 		ModelDataHandle m_modelHandle;
 		Entities::EntityHandle m_materialOverride;

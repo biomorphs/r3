@@ -12,6 +12,7 @@
 #include "systems/static_mesh_simple_renderer.h"
 #include "systems/lights_system.h"
 #include "systems/job_system.h"
+#include "systems/lua_system.h"
 #include "render/render_system.h"
 #include "entities/systems/entity_system.h"
 #include "core/platform.h"
@@ -39,6 +40,7 @@ namespace R3
 		s.RegisterSystem<StaticMeshSystem>();
 		s.RegisterSystem<StaticMeshSimpleRenderer>();
 		s.RegisterSystem<LightsSystem>();
+		s.RegisterSystem<LuaSystem>();
 	}
 
 	// the default frame graph
@@ -55,10 +57,12 @@ namespace R3
 		{
 			auto& fixedUpdate = fg.m_root.AddFixedUpdateSequence("FixedUpdate");
 			fixedUpdate.AddFn("Cameras::FixedUpdate");
+			fixedUpdate.AddFn("LuaSystem::RunFixedUpdateScripts");
 			fixedUpdate.AddFn("Time::FixedUpdateEnd");
 		}
 		{
 			auto& varUpdate = fg.m_root.AddSequence("VariableUpdate");
+			varUpdate.AddFn("LuaSystem::RunVariableUpdateScripts");
 			varUpdate.AddFn("Entities::RunGC");
 			varUpdate.AddFn("LightsSystem::DrawLightBounds");
 		}
