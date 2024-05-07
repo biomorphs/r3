@@ -9,6 +9,10 @@ namespace R3
 {
 	namespace FileIO
 	{
+		// returns a path relative to data root (or nothing if the path is not under the root)
+		// you should call this if you wish to do anything with the path (use it for a key in a map, load a file, etc)
+		std::string SanitisePath(std::string_view filePath);
+
 		// paths can be relative to base path(s) or absolute
 		bool LoadTextFromFile(std::string_view filePath, std::string& resultBuffer);
 		bool SaveTextToFile(std::string_view filePath, const std::string& src);

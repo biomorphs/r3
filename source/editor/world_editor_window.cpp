@@ -13,10 +13,12 @@
 #include "commands/world_editor_add_component_cmd.h"
 #include "commands/world_editor_delete_component_cmd.h"
 #include "commands/world_editor_clone_entities_cmd.h"
+#include "commands/world_editor_add_entity_from_mesh_cmd.h"
 #include "engine/systems.h"
 #include "engine/entity_list_widget.h"
 #include "engine/entity_inspector_widget.h"
 #include "engine/imgui_menubar_helper.h"
+#include "engine/file_dialogs.h"
 #include "engine/systems/model_data_system.h"
 #include "engine/systems/imgui_system.h"
 #include "engine/systems/input_system.h"
@@ -25,6 +27,7 @@
 #include "entities/systems/entity_system.h"
 #include "render/render_system.h"
 #include "render/immediate_renderer.h"
+#include "core/file_io.h"
 #include "imgui.h"
 #include <format>
 
@@ -91,6 +94,11 @@ namespace R3
 		m_selectedEntities.clear();
 	}
 
+	void WorldEditorWindow::WorldEditorWindow::AddStaticMeshEntity()
+	{
+
+	}
+
 	void WorldEditorWindow::UpdateMainContextMenu()
 	{
 		R3_PROF_EVENT();
@@ -100,6 +108,14 @@ namespace R3
 		auto& addEntityMenu = contextMenu.GetSubmenu("Add Entity");
 		addEntityMenu.AddItem("Empty Entity", [this, world]() {
 			m_cmds->Push(std::make_unique<WorldEditorAddEmptyEntityCommand>(this));
+		});
+		addEntityMenu.AddItem("From Mesh", [this, world]() {
+			std::string meshPath = FileLoadDialog("", "gltf,glb,fbx,obj");
+			meshPath = FileIO::SanitisePath(meshPath);
+			if (meshPath.length() > 0)
+			{
+				m_cmds->Push(std::make_unique<WorldEditorAddEntityFromMeshCommand>(this, meshPath));
+			}
 		});
 		contextMenu.AddItem("Select all", [this]() {
 			auto selectCmd = std::make_unique<WorldEditorSelectEntitiesCommand>(this);

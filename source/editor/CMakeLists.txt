@@ -36,6 +36,8 @@ set(EditorLib_SourceFiles
 	commands/world_editor_delete_component_cmd.cpp
 	commands/world_editor_clone_entities_cmd.h
 	commands/world_editor_clone_entities_cmd.cpp
+	commands/world_editor_add_entity_from_mesh_cmd.h
+	commands/world_editor_add_entity_from_mesh_cmd.cpp
 	commands/set_value_cmd.h
 )
 

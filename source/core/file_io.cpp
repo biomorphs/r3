@@ -82,6 +82,13 @@ namespace R3
 			return true;
 		}
 
+		std::string SanitisePath(std::string_view filePath)
+		{
+			auto currentPath = std::filesystem::current_path();
+			auto relativePath = std::filesystem::relative(filePath, currentPath);
+			return relativePath.string();
+		}
+
 		bool LoadTextFromFile(std::string_view fileSrcPath, std::string& resultBuffer)
 		{
 			R3_PROF_EVENT();

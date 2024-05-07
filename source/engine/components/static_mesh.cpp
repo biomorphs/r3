@@ -13,7 +13,7 @@ namespace R3
 	{
 		auto modelSys = Systems::GetSystem<ModelDataSystem>();
 		std::string currentPath = modelSys->GetModelName(m_modelHandle);
-		i.InspectFile("Model Path", currentPath, "gltf,glb,fbx,obj,usda", InspectProperty(&StaticMeshComponent::SetModelFromPath, e, w));
+		i.InspectFile("Model Path", currentPath, "gltf,glb,fbx,obj", InspectProperty(&StaticMeshComponent::SetModelFromPath, e, w));
 		i.InspectEntity("Material Override", m_materialOverride, w, InspectProperty(&StaticMeshComponent::m_materialOverride, e, w));
 	}
 
