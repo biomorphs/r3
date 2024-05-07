@@ -22,7 +22,7 @@ void main() {
 	mat.m_metallic = myMaterial.m_metallic;
 	mat.m_roughness = myMaterial.m_roughness;
 	mat.m_ao = 1.0;
-	mat.m_ambientMulti = 0.03;
+	mat.m_ambientMulti = 0.0001;
 	
 	uint pointLightCount = globals.m_pointLightCount;
 	vec3 directLight = vec3(0.0,0.0,0.0);
@@ -40,5 +40,5 @@ void main() {
 	// should be a separate fullscreen pass
     finalLight = finalLight / (finalLight + vec3(1.0));
 	
-	outColour = vec4(LinearToSRGB(directLight),myMaterial.m_albedoOpacity.a);
+	outColour = vec4(LinearToSRGB(finalLight),myMaterial.m_albedoOpacity.a);
 }

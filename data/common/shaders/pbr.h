@@ -20,7 +20,7 @@ const float PI = 3.14159265359;
 
 vec3 PBRGetAmbientLighting(PBRMaterial material)
 {
-	return material.m_ambientMulti * material.m_albedo * material.m_ao;
+	return material.m_ambientMulti * material.m_ao * material.m_albedo;
 }
 
 vec3 PBRDirectLighting(
