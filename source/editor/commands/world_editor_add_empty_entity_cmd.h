@@ -8,7 +8,7 @@ namespace R3
 {
 	class WorldEditorWindow;
 
-	// represents a list of entities to select and deselect
+	// create an entity, call a user callback on creation
 	class WorldEditorAddEmptyEntityCommand : public EditorCommand
 	{
 	public:
@@ -18,9 +18,14 @@ namespace R3
 		virtual bool CanUndoRedo() { return true; }
 		virtual Result Undo();
 		virtual Result Redo();
+
+		using OnEntityCreated = std::function<void(const Entities::EntityHandle&)>;
+		void SetOnCreate(OnEntityCreated fn);
+
 	private:
 		Entities::EntityHandle m_createdEntity;
 		std::vector<Entities::EntityHandle> m_oldSelection;
 		WorldEditorWindow* m_window = nullptr;
+		OnEntityCreated m_onEntityCreated;
 	};
 }

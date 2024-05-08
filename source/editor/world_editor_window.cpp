@@ -24,6 +24,7 @@
 #include "engine/systems/input_system.h"
 #include "engine/components/transform.h"
 #include "engine/components/static_mesh.h"
+#include "engine/components/point_light.h"
 #include "entities/systems/entity_system.h"
 #include "render/render_system.h"
 #include "render/immediate_renderer.h"
@@ -116,6 +117,15 @@ namespace R3
 			{
 				m_cmds->Push(std::make_unique<WorldEditorAddEntityFromMeshCommand>(this, meshPath));
 			}
+		});
+		addEntityMenu.AddItem("Point Light", [this, world]() {
+			auto addPointlight = [world](const Entities::EntityHandle& e) {
+				world->AddComponent<PointLightComponent>(e);
+				world->AddComponent<TransformComponent>(e);
+			};
+			auto addCmd = std::make_unique<WorldEditorAddEmptyEntityCommand>(this);
+			addCmd->SetOnCreate(addPointlight);
+			m_cmds->Push(std::move(addCmd));
 		});
 		contextMenu.AddItem("Select all", [this]() {
 			auto selectCmd = std::make_unique<WorldEditorSelectEntitiesCommand>(this);

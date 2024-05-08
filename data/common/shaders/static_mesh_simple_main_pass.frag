@@ -18,11 +18,11 @@ void main() {
 	
 	StaticMeshMaterial myMaterial = globals.m_materialBuffer.materials[materialIndex];
 	PBRMaterial mat;
-	mat.m_albedo = vec4(myMaterial.m_albedoOpacity.xyz,1).xyz;
+	mat.m_albedo = myMaterial.m_albedoOpacity.xyz;
 	mat.m_metallic = myMaterial.m_metallic;
 	mat.m_roughness = myMaterial.m_roughness;
 	mat.m_ao = 1.0;
-	mat.m_ambientMulti = 0.0001;
+	mat.m_ambientMulti = 0.00001;
 	
 	uint pointLightCount = globals.m_pointLightCount;
 	vec3 directLight = vec3(0.0,0.0,0.0);

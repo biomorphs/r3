@@ -18,6 +18,10 @@ namespace R3
 		{
 			m_createdEntity = world->AddEntity();
 		}
+		if (m_onEntityCreated && m_createdEntity.GetID() != -1)
+		{
+			m_onEntityCreated(m_createdEntity);
+		}
 		m_window->DeselectAll();
 		m_window->SelectEntity(m_createdEntity);
 		return EditorCommand::Result::Succeeded;
@@ -38,5 +42,8 @@ namespace R3
 		return Execute();
 	}
 
-
+	void WorldEditorAddEmptyEntityCommand::SetOnCreate(OnEntityCreated fn)
+	{
+		m_onEntityCreated = fn;
+	}
 }
