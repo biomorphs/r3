@@ -24,7 +24,7 @@ namespace R3
 
 		glm::mat4 GetWorldspaceMatrix() const;				// this value is probably set in fixed update once every few frames
 		glm::mat4 GetWorldspaceInterpolated() const;		// interpolate between the previous + current version, based on fixed delta time remaining
-		void StorePreviousFrameMatrix();					// caches m_matrix into m_prevMatrix. should be called at start of fixed update
+		void StorePreviousFrameData();						// call at start of fixed update!
 
 	private:
 		void RebuildMatrix();
@@ -32,6 +32,8 @@ namespace R3
 		glm::quat m_orientation = glm::identity<glm::quat>();
 		glm::vec3 m_scale = { 1.0f,1.0f,1.0f };
 		glm::mat4 m_matrix = glm::identity<glm::mat4>();		// local -> parent transform
-		glm::mat4 m_prevMatrix = glm::identity<glm::mat4>();	// matrix from end of previous fixed update
+		glm::vec3 m_prevPosition = { 0.0f,0.0f,0.0f };			// values from previous fixed update
+		glm::quat m_prevOrientation = glm::identity<glm::quat>();
+		glm::vec3 m_prevScale = { 1.0f,1.0f,1.0f };
 	};
 }

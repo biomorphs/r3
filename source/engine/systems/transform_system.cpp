@@ -22,7 +22,7 @@ namespace R3
 		if (world)
 		{
 			Entities::Queries::ForEach<TransformComponent>(world, [](const Entities::EntityHandle& e, TransformComponent& cmp) {
-				cmp.StorePreviousFrameMatrix();
+				cmp.StorePreviousFrameData();
 				return true;
 			});
 		}

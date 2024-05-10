@@ -11,7 +11,7 @@ namespace R3
 		if (s.GetMode() == JsonSerialiser::Read)
 		{
 			RebuildMatrix();
-			StorePreviousFrameMatrix();		// just copy the new transform
+			StorePreviousFrameData();		// just copy the new transform
 		}
 	}
 
@@ -31,15 +31,23 @@ namespace R3
 
 	glm::mat4 TransformComponent::GetWorldspaceInterpolated() const
 	{
-		R3_PROF_EVENT();
+		glm::mat4 result;
 		static auto time = Systems::GetSystem<TimeSystem>();
 		double accumulator = time->GetFixedUpdateCatchupTime() / time->GetFixedUpdateDelta();
-		return InterpolateMat4(m_prevMatrix, m_matrix, static_cast<float>(accumulator));
+		const glm::vec3 pos = glm::mix(m_prevPosition, m_position, accumulator);
+		const glm::vec3 scale = glm::mix(m_prevScale, m_scale, accumulator);
+		const glm::quat rot = glm::slerp(m_prevOrientation, m_orientation, static_cast<float>(accumulator));
+		result = glm::translate(glm::identity<glm::mat4>(), pos);
+		result = result * glm::toMat4(rot);
+		result = glm::scale(result, scale);
+		return result;
 	}
 
-	void TransformComponent::StorePreviousFrameMatrix()
+	void TransformComponent::StorePreviousFrameData()
 	{
-		m_prevMatrix = m_matrix;
+		m_prevPosition = m_position;
+		m_prevOrientation = m_orientation;
+		m_prevScale = m_scale;
 	}
 
 	void TransformComponent::RebuildMatrix()
