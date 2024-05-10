@@ -268,6 +268,7 @@ namespace R3
 				}
 				if (s.m_modelHandle.m_index != -1 && currentMeshDataHandle.m_index == s.m_modelHandle.m_index)
 				{
+					glm::mat4 compTransform = t.GetWorldspaceInterpolated();
 					const uint32_t partCount = currentMeshData.m_meshPartCount;
 					const auto* matCmp = activeWorld->GetComponent<StaticMeshMaterialsComponent>(s.m_materialOverride);
 					bool useOverrides = matCmp && matCmp->m_gpuDataIndex != -1 && matCmp->m_materials.size() >= partCount;
@@ -276,7 +277,7 @@ namespace R3
 						if (staticMeshes->GetMeshPart(currentMeshData.m_firstMeshPartOffset + part, partData))
 						{
 							pc.m_materialIndex = useOverrides ? ((uint32_t)matCmp->m_gpuDataIndex + part) : partData.m_materialIndex;
-							pc.m_instanceTransform = t.GetWorldspaceInterpolated() * partData.m_transform;
+							pc.m_instanceTransform = compTransform * partData.m_transform;
 							vkCmdPushConstants(cmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 							vkCmdDrawIndexed(cmds, partData.m_indexCount, 1, (uint32_t)partData.m_indexStartOffset, (uint32_t)currentMeshData.m_vertexDataOffset, 0);
 						}

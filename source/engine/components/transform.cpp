@@ -31,7 +31,8 @@ namespace R3
 
 	glm::mat4 TransformComponent::GetWorldspaceInterpolated() const
 	{
-		auto time = Systems::GetSystem<TimeSystem>();
+		R3_PROF_EVENT();
+		static auto time = Systems::GetSystem<TimeSystem>();
 		double accumulator = time->GetFixedUpdateCatchupTime() / time->GetFixedUpdateDelta();
 		return InterpolateMat4(m_prevMatrix, m_matrix, static_cast<float>(accumulator));
 	}
