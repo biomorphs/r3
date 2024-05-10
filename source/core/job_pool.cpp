@@ -64,7 +64,21 @@ namespace R3
 	int JobPool::JobsPending()
 	{
 		return m_jobsPending.load();
-	}	
+	}
+
+	bool JobPool::RunJobImmediate()
+	{
+		JobFn task;
+		if (m_jobs.try_dequeue(task)) 
+		{
+			task();
+			m_jobsPending.fetch_add(-1, std::memory_order_release);
+			return true;
+		}
+
+		return false;
+	}
+
 
 	void JobPool::WaitUntilComplete()
 	{
@@ -74,7 +88,8 @@ namespace R3
 		JobFn task;
 		while (m_jobsPending.load(std::memory_order_acquire) != 0) 
 		{
-			if (!m_jobs.try_dequeue(task)) {
+			if (!m_jobs.try_dequeue(task)) 
+			{
 				continue;
 			}
 			task();

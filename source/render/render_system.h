@@ -44,6 +44,7 @@ namespace R3
 		CallbackArray<ShutdownCallback> m_onShutdownCbs;
 
 	private:
+		bool AcquireSwapImage();
 		void RecordMainPass(int swapImageIndex);
 		void DrawImgui(int swapImageIndex);
 		void ProcessEnvironmentSettings();
@@ -70,6 +71,7 @@ namespace R3
 		struct VkStuff;
 		std::unique_ptr<VkStuff> m_vk;
 		glm::vec4 m_mainPassClearColour = { 0,0,0,1 };
+		uint32_t m_currentSwapImage = -1;
 		DeletionQueue m_mainDeleters;	// only ran when the render system shuts down
 	};
 }

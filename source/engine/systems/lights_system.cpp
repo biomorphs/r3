@@ -58,7 +58,7 @@ namespace R3
 			auto drawLights = [&](const Entities::EntityHandle& e, PointLightComponent& pl, TransformComponent& t) {
 				imRender.AddSphere(t.GetPosition(), pl.m_distance, { pl.m_colour, 1 });
 				return true;
-				};
+			};
 			if (entities->GetActiveWorld())
 			{
 				Entities::Queries::ForEach<PointLightComponent, TransformComponent>(entities->GetActiveWorld(), drawLights);

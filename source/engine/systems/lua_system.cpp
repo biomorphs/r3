@@ -35,6 +35,9 @@ namespace R3
 		RegisterTick("LuaSystem::RunVariableUpdateScripts", [this]() {
 			return RunVariableUpdateScripts();
 		});
+		RegisterTick("LuaSystem::RunGC", [this]() {
+			return RunGC();
+		});
 	}
 
 	bool LuaSystem::Init()
@@ -80,6 +83,13 @@ namespace R3
 			}
 		}
 		return {};
+	}
+
+	bool LuaSystem::RunGC()
+	{
+		R3_PROF_EVENT();
+		m_internals->m_globalState.collect_garbage();
+		return true;
 	}
 
 	bool LuaSystem::RunFixedUpdateScripts()

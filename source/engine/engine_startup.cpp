@@ -56,32 +56,41 @@ namespace R3
 			frameStart.AddFn("Input::FrameStart");
 			frameStart.AddFn("ImGui::FrameStart");
 		}
+		auto& runAcquireAndUpdateAsync = fg.m_root.AddAsync("RunAcquireAndUpdate");	// first entry always runs on main thread
 		{
-			auto& fixedUpdate = fg.m_root.AddFixedUpdateSequence("FixedUpdate");
-			fixedUpdate.AddFn("Transforms::OnFixedUpdate");
-			fixedUpdate.AddFn("Cameras::FixedUpdate");
-			fixedUpdate.AddFn("LuaSystem::RunFixedUpdateScripts");
+			runAcquireAndUpdateAsync.AddFn("Render::AcquireSwapImage");	
+			auto& updateSequence = runAcquireAndUpdateAsync.AddSequence("Upddate");
+			auto& fixedUpdate = updateSequence.AddFixedUpdateSequence("FixedUpdate");
+			{
+				fixedUpdate.AddFn("Transforms::OnFixedUpdate");						// must run before any modifications
+				fixedUpdate.AddFn("Cameras::FixedUpdate");
+				fixedUpdate.AddFn("LuaSystem::RunFixedUpdateScripts");
+			}
+			auto& varUpdate = updateSequence.AddSequence("VariableUpdate");
+			{
+				varUpdate.AddFn("LuaSystem::RunVariableUpdateScripts");
+				varUpdate.AddFn("Entities::RunGC");
+				varUpdate.AddFn("LightsSystem::DrawLightBounds");
+			}
+			{
+				auto& guiUpdate = updateSequence.AddSequence("ImGuiUpdate");
+				guiUpdate.AddFn("Render::ShowGui");
+				guiUpdate.AddFn("Entities::ShowGui");
+				guiUpdate.AddFn("Cameras::ShowGui");
+				guiUpdate.AddFn("Jobs::ShowGui");
+				guiUpdate.AddFn("StaticMeshes::ShowGui");
+				guiUpdate.AddFn("ModelData::ShowGui");
+				guiUpdate.AddFn("StaticMeshSimpleRenderer::ShowGui");
+			}
 		}
+		auto& runRenderAndGC = fg.m_root.AddAsync("RenderAndGC");	// first entry always runs on main thread
 		{
-			auto& varUpdate = fg.m_root.AddSequence("VariableUpdate");
-			varUpdate.AddFn("LuaSystem::RunVariableUpdateScripts");
-			varUpdate.AddFn("Entities::RunGC");
-			varUpdate.AddFn("LightsSystem::DrawLightBounds");
-		}
-		{
-			auto& guiUpdate = fg.m_root.AddSequence("ImGuiUpdate");
-			guiUpdate.AddFn("Render::ShowGui");
-			guiUpdate.AddFn("Entities::ShowGui");
-			guiUpdate.AddFn("Cameras::ShowGui");
-			guiUpdate.AddFn("Jobs::ShowGui");
-			guiUpdate.AddFn("StaticMeshes::ShowGui");
-			guiUpdate.AddFn("ModelData::ShowGui");
-			guiUpdate.AddFn("StaticMeshSimpleRenderer::ShowGui");
-		}
-		{
-			auto& render = fg.m_root.AddSequence("Render");
-			render.AddFn("Cameras::PreRenderUpdate");
-			render.AddFn("Render::DrawFrame");
+			auto& render = runRenderAndGC.AddSequence("Render");
+			{
+				render.AddFn("Cameras::PreRenderUpdate");
+				render.AddFn("Render::DrawFrame");
+			}
+			runRenderAndGC.AddFn("LuaSystem::RunGC");
 		}
 	}
 

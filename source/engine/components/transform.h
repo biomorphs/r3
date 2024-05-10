@@ -28,10 +28,10 @@ namespace R3
 
 	private:
 		void RebuildMatrix();
+		glm::mat4 m_matrix = glm::identity<glm::mat4>();		// local -> parent transform
 		glm::vec3 m_position = { 0.0f,0.0f,0.0f };
 		glm::quat m_orientation = glm::identity<glm::quat>();
 		glm::vec3 m_scale = { 1.0f,1.0f,1.0f };
-		glm::mat4 m_matrix = glm::identity<glm::mat4>();		// local -> parent transform
 		glm::vec3 m_prevPosition = { 0.0f,0.0f,0.0f };			// values from previous fixed update
 		glm::quat m_prevOrientation = glm::identity<glm::quat>();
 		glm::vec3 m_prevScale = { 1.0f,1.0f,1.0f };

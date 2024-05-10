@@ -18,6 +18,7 @@ namespace R3
 		virtual void Shutdown();
 
 	private:
+		bool RunGC();
 		bool RunFixedUpdateScripts();
 		bool RunVariableUpdateScripts();
 		struct Internals;

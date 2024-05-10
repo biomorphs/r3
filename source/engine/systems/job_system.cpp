@@ -43,6 +43,17 @@ namespace R3
 		m_jobPools[poolType]->PushJob(std::move(fn));
 	}
 
+	void JobSystem::ProcessJobImmediate()
+	{
+		for (int i = 0; i < m_jobPools.size(); ++i)
+		{
+			if (m_jobPools[i]->RunJobImmediate())
+			{
+				return;
+			}
+		}
+	}
+
 	bool JobSystem::ShowGui()
 	{
 		R3_PROF_EVENT();

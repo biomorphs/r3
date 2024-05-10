@@ -20,6 +20,7 @@ namespace R3
 		};
 		using JobFn = std::function<void()>;
 		void PushJob(ThreadPool poolType, JobFn&&);
+		void ProcessJobImmediate();		// tries to pop a job off one of the pools and run it
 
 	private:
 		bool ShowGui();

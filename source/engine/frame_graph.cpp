@@ -1,7 +1,7 @@
 #include "frame_graph.h"
 #include "systems.h"
 #include "systems/time_system.h"
-//#include "job_system.h"
+#include "systems/job_system.h"
 #include "core/profiler.h"
 
 namespace R3
@@ -46,53 +46,56 @@ namespace R3
 	}
 
 	bool FrameGraph::AsyncNode::Run() {
+		bool result = true;
 		char debugName[1024] = { '\0' };
 		sprintf_s(debugName, "%s", m_displayName.c_str());
 		R3_PROF_EVENT_DYN(debugName);
-		// static auto jobs = GetSystem<JobSystem>("Jobs");
-		// 
-		// // kick off jobs asap
-		// struct JobDesc {
-		// 	bool m_ran = false;
-		// 	bool m_result = false;
-		// };
-		// std::vector<JobDesc> jobDescs;
-		// std::atomic<int> jobRunCount = std::max((int)m_children.size() - 1, 0);
-		// if (m_children.size() > 1)
-		// {
-		// 	jobDescs.resize(m_children.size() - 1);
-		// 	for (int j = 1; j < m_children.size(); ++j)
-		// 	{
-		// 		jobs->PushSlowJob([&jobDescs, j, &jobRunCount, this](void*) {
-		// 			SDE_PROF_EVENT();
-		// 			jobDescs[j - 1].m_result = m_children[j]->Run();
-		// 			jobDescs[j - 1].m_ran = true;
-		// 			jobRunCount--;
-		// 		});
-		// 	}
-		// }
-		// // run first job on current thread but after jobs were submitted
-		// // (cheaper than kicking out a job)
-		// bool result = true;
-		// if (m_children.size() > 0)
-		// {
-		// 	if (!m_children[0]->Run())
-		// 	{
-		// 		result = false;
-		// 	}
-		// }
-		// 
-		// // wait for the results
-		// while (jobRunCount > 0)
-		// {
-		// 	jobs->ProcessJobThisThread();
-		// }
-		// 
-		// for (int i = 0; i < jobDescs.size() && result == true; ++i)
-		// {
-		// 	result &= (jobDescs[i].m_ran == true && jobDescs[i].m_result == true);
-		// }
-		return true;
+		if (m_children.size() == 0)
+		{
+			return true;
+		}
+		auto jobs = Systems::GetSystem<JobSystem>();
+		// kick off jobs asap
+		struct JobDesc {
+			bool m_ran = false;
+			bool m_result = false;
+		};
+		std::vector<JobDesc> jobDescs;
+		std::atomic<int> jobRunCount = std::max((int)m_children.size() - 1, 0);
+		if (m_children.size() > 1)
+		{
+			jobDescs.resize(m_children.size() - 1);
+			for (int j = 1; j < m_children.size(); ++j)
+			{
+				jobs->PushJob(JobSystem::ThreadPool::FastJobs, [&jobDescs, j, &jobRunCount, this]() {
+					jobDescs[j - 1].m_result = m_children[j]->Run();
+					jobDescs[j - 1].m_ran = true;
+					jobRunCount--;
+				});
+			}
+		}
+
+		// run first job on current thread but after jobs were submitted
+		if (!m_children[0]->Run())
+		{
+			result = false;
+		}
+		
+		// wait for everything to finish
+		{
+			R3_PROF_STALL("Wait for completion");
+			while (jobRunCount > 0)
+			{
+				jobs->ProcessJobImmediate();
+			}
+		}
+		
+		// collect results
+		for (int i = 0; i < jobDescs.size() && result == true; ++i)
+		{
+			result &= (jobDescs[i].m_ran == true && jobDescs[i].m_result == true);
+		}
+		return result;
 	}
 
 	bool FrameGraph::FnNode::Run() 

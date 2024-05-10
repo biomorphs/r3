@@ -16,6 +16,7 @@ namespace R3
 		using JobFn = std::function<void()>;
 		void PushJob(JobFn&& fn);
 		int JobsPending();
+		bool RunJobImmediate();	// try to run a job now on this thread, return true if it ran anything
 		void StopAndWait();	// does not wait for pending jobs to finish
 		std::string_view GetName() { return m_name; }
 	private:

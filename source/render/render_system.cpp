@@ -289,6 +289,9 @@ namespace R3
 		RegisterTick("Render::DrawFrame", [this]() {
 			return DrawFrame();
 		});
+		RegisterTick("Render::AcquireSwapImage", [this]() {
+			return AcquireSwapImage();
+		});
 		RegisterTick("Render::ShowGui", [this]() {
 			return ShowGui();
 		});
@@ -331,6 +334,7 @@ namespace R3
 
 	bool RenderSystem::PrepareSwapchain()
 	{
+		R3_PROF_EVENT();
 		if (m_isWindowMinimised)
 		{
 			return false;
@@ -347,14 +351,9 @@ namespace R3
 		return true;
 	}
 
-	bool RenderSystem::DrawFrame()
+	bool RenderSystem::AcquireSwapImage()
 	{
 		R3_PROF_EVENT();
-
-		ProcessEnvironmentSettings();
-
-		// Always 'render' the ImGui frame so we can begin the next one, even if we wont actually draw anything
-		ImGui::Render();
 
 		// Nothing to draw this frame if this returns false
 		if (!PrepareSwapchain())
@@ -364,7 +363,7 @@ namespace R3
 
 		// If running with low battery, wait a bit!
 		auto powerState = Platform::GetSystemPowerState();
-		if (powerState.m_isRunningOnBattery && powerState.m_batteryPercentageRemaining < 80)
+		if (powerState.m_isRunningOnBattery && powerState.m_batteryPercentageRemaining < 50)
 		{
 			R3_PROF_EVENT("StopKillingBattery");
 			SDL_Delay(10);
@@ -375,26 +374,25 @@ namespace R3
 			R3_PROF_STALL("Wait for previous frame fence");
 			// wait for the previous frame to finish with infinite timeout (blocking call)
 			CheckResult(vkWaitForFences(m_device->GetVkDevice(), 1, &fd.m_inFlightFence, VK_TRUE, UINT64_MAX));
-			
-			// run any deleters that need to happen this frame
-			fd.m_deleters.DeleteAll();
 		}
 
-		uint32_t swapImageIndex = 0;
+		m_currentSwapImage = -1;
 		{
 			R3_PROF_EVENT("Acquire swap image");
 			// acquire the next swap chain image (blocks with infinite timeout)
 			// m_imageAvailableSemaphore will be signalled when we are able to draw to the image
 			// note that fences can also be passed here
-			auto r = vkAcquireNextImageKHR(m_device->GetVkDevice(), m_swapChain->GetSwapchain(), UINT64_MAX, fd.m_imageAvailableSemaphore, VK_NULL_HANDLE, &swapImageIndex);
+			auto r = vkAcquireNextImageKHR(m_device->GetVkDevice(), m_swapChain->GetSwapchain(), UINT64_MAX, fd.m_imageAvailableSemaphore, VK_NULL_HANDLE, &m_currentSwapImage);
 			if (r == VK_ERROR_OUT_OF_DATE_KHR)
 			{
 				m_recreateSwapchain = true;
+				m_currentSwapImage = -1;
 				return true; // dont continue
 			}
 			else if (!CheckResult(r))
 			{
 				LogError("Failed to aqcuire next swap chain image index");
+				m_currentSwapImage = -1;
 				return false;
 			}
 		}
@@ -402,12 +400,35 @@ namespace R3
 		// at this point we are definitely going to draw, so reset the inflight fence
 		CheckResult(vkResetFences(m_device->GetVkDevice(), 1, &fd.m_inFlightFence));
 
-		// reset + record the cmd buffer
-		// (its safe since we waited on the inflight fence earlier)
+		return true;
+	}
+
+	bool RenderSystem::DrawFrame()
+	{
+		R3_PROF_EVENT();
+
+		// Nothing to draw this frame if this returns false
+		if (!PrepareSwapchain() || m_currentSwapImage == -1)
 		{
+			return true;
+		}
+		
+		// Updates bg colour
+		ProcessEnvironmentSettings();
+
+		// Always 'render' the ImGui frame so we can begin the next one, even if we wont actually draw anything
+		{
+			R3_PROF_EVENT("ImGui::Render");
+			ImGui::Render();
+		}
+		
+		auto& fd = m_vk->ThisFrameData();
+		{
+			// reset + record the cmd buffer
+			// (its safe since we waited on the inflight fence earlier in AcquireSwapImage)
 			R3_PROF_EVENT("Reset/Record cmd buffer");
 			CheckResult(vkResetCommandBuffer(fd.m_graphicsCmdBuffer, 0));
-			RecordCommandBuffer(swapImageIndex);
+			RecordCommandBuffer(m_currentSwapImage);
 		}
 
 		// submit the cmd buffer to the graphics queue
@@ -448,7 +469,7 @@ namespace R3
 		presentInfo.swapchainCount = 1;
 		presentInfo.pWaitSemaphores = &fd.m_renderFinishedSemaphore;		// wait on this semaphore before presenting
 		presentInfo.waitSemaphoreCount = 1;
-		presentInfo.pImageIndices = &swapImageIndex;
+		presentInfo.pImageIndices = &m_currentSwapImage;
 		{
 			R3_PROF_EVENT("Present");
 			auto r = vkQueuePresentKHR(m_device->GetPresentQueue(), &presentInfo);
@@ -495,8 +516,10 @@ namespace R3
 
 	bool RenderSystem::CreateDevice()
 	{
+		constexpr bool c_enableDynamicRendering = true;		// allows us to bypass renderpasses/subpasses
+		bool enableValidationLayers = Platform::GetCmdLine().find("-debugvulkan") != std::string::npos;
 		m_device = std::make_unique<Device>(m_mainWindow.get());
-		return m_device->Initialise(true);
+		return m_device->Initialise(enableValidationLayers, c_enableDynamicRendering);
 	}
 
 	bool RenderSystem::Init()

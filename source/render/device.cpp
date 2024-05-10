@@ -20,9 +20,10 @@ namespace R3
 		Destroy();
 	}
 
-	bool Device::Initialise(bool enableDynamicRendering)
+	bool Device::Initialise(bool enableValidationLayer, bool enableDynamicRendering)
 	{
 		m_createInstanceParams.m_enableDynamicRendering = enableDynamicRendering;
+		m_createInstanceParams.m_enableValidationLayers = enableValidationLayer;
 		m_vkInstance = VulkanHelpers::CreateVkInstance(*m_window, m_createInstanceParams);
 		if (m_vkInstance == VK_NULL_HANDLE)
 		{
