@@ -20,7 +20,7 @@ namespace Entities
 		virtual void RegisterTickFns();
 
 		template<class ComponentType>
-		void RegisterComponentType();
+		void RegisterComponentType(uint32_t initialCapacity = 1024);
 
 		World* CreateWorld(const std::string& id, std::string_view worldName="New World");
 		World* GetWorld(const std::string& id);
@@ -49,12 +49,12 @@ namespace Entities
 	};
 
 	template<class ComponentType>
-	void EntitySystem::RegisterComponentType()
+	void EntitySystem::RegisterComponentType(uint32_t initialCapacity)
 	{
 		auto& typeRegistry = ComponentTypeRegistry::GetInstance();
 		uint32_t newIndex = typeRegistry.Register<ComponentType>();
-		typeRegistry.SetStorageFactory(ComponentType::GetTypeName(), [newIndex](World* w) {
-			return std::make_unique<LinearComponentStorage<ComponentType>>(w, newIndex);
+		typeRegistry.SetStorageFactory(ComponentType::GetTypeName(), [newIndex, initialCapacity](World* w) {
+			return std::make_unique<LinearComponentStorage<ComponentType>>(w, newIndex, initialCapacity);
 		});
 
 		// If the component has a 'Inspect' member function, register an inspector

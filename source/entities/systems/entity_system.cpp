@@ -2,6 +2,7 @@
 #include "entities/world.h"
 #include "core/profiler.h"
 #include <cassert>
+#include <imgui.h>
 
 namespace R3
 {
@@ -62,6 +63,24 @@ namespace Entities
 	bool EntitySystem::ShowGui()
 	{
 		R3_PROF_EVENT();
+		if (ImGui::Begin("Entities"))
+		{
+			const auto& alltypes = ComponentTypeRegistry::GetInstance().AllTypes();
+			for (auto& w : m_worlds)
+			{
+				ImGui::SeparatorText(w.first.c_str());
+				for (const auto& t : alltypes)
+				{
+					auto storage = w.second->GetStorage(t.m_name);
+					if (storage != nullptr && storage->GetTotalCount() > 0)
+					{
+						std::string txt = std::format("{}: {}", t.m_name, storage->GetTotalCount());
+						ImGui::Text(txt.c_str());
+					}
+				}
+			}
+		}
+		ImGui::End();
 		return true;
 	}
 

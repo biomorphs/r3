@@ -37,6 +37,11 @@ namespace R3
 		return m_fixedUpdateDeltaTime / double(m_tickFrequency);
 	}
 
+	double TimeSystem::GetFixedUpdateInterpolation() const
+	{
+		return m_fixedUpdateInterpolation;
+	}
+
 	bool TimeSystem::OnFrameStart()
 	{
 		R3_PROF_EVENT();
@@ -52,6 +57,7 @@ namespace R3
 		uint64_t elapsed = m_thisFrameTickTime - m_lastTickTime;
 		
 		m_fixedUpdateCatchup += elapsed;
+		m_fixedUpdateInterpolation = (m_fixedUpdateCatchup / m_fixedUpdateDeltaTime) / (double)m_tickFrequency;
 
 		return true;
 	}
@@ -60,6 +66,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		m_fixedUpdateCatchup -= m_fixedUpdateDeltaTime;
+		m_fixedUpdateInterpolation = (m_fixedUpdateCatchup / m_fixedUpdateDeltaTime) / (double)m_tickFrequency;
 		return true;
 	}
 

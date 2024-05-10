@@ -20,8 +20,8 @@ namespace R3
 	JobSystem::JobSystem()
 	{
 		R3_PROF_EVENT();
-		m_jobPools.emplace_back(std::make_unique<JobPool>(4, "Fast Jobs"));	// Fast jobs
-		m_jobPools.emplace_back(std::make_unique<JobPool>(4, "Slow Jobs"));	// Slow jobs
+		m_jobPools.emplace_back(std::make_unique<JobPool>(6, JobPool::Priority::TimeCritical, "Fast Jobs"));	// Fast jobs
+		m_jobPools.emplace_back(std::make_unique<JobPool>(4, JobPool::Priority::Normal, "Slow Jobs"));			// Slow jobs
 	}
 
 	JobSystem::~JobSystem()

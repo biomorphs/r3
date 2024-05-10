@@ -14,12 +14,12 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		auto entities = Systems::GetSystem<Entities::EntitySystem>();
-		entities->RegisterComponentType<EnvironmentSettingsComponent>();
-		entities->RegisterComponentType<TransformComponent>();
-		entities->RegisterComponentType<CameraComponent>();
-		entities->RegisterComponentType<StaticMeshComponent>();
-		entities->RegisterComponentType<StaticMeshMaterialsComponent>();
-		entities->RegisterComponentType<PointLightComponent>();
-		entities->RegisterComponentType<LuaScriptComponent>();
+		entities->RegisterComponentType<EnvironmentSettingsComponent>(8);
+		entities->RegisterComponentType<TransformComponent>(1024 * 32);
+		entities->RegisterComponentType<CameraComponent>(32);
+		entities->RegisterComponentType<StaticMeshComponent>(1024 * 32);
+		entities->RegisterComponentType<StaticMeshMaterialsComponent>(1024);
+		entities->RegisterComponentType<PointLightComponent>(1024 * 16);
+		entities->RegisterComponentType<LuaScriptComponent>(1024);
 	}
 }

@@ -11,7 +11,13 @@ namespace R3
 	class JobPool
 	{
 	public:
-		explicit JobPool(int threadCount, std::string_view name);
+		enum class Priority {
+			Low,
+			Normal,
+			High,
+			TimeCritical
+		};
+		explicit JobPool(int threadCount, Priority p, std::string_view name);
 		~JobPool();
 		using JobFn = std::function<void()>;
 		void PushJob(JobFn&& fn);
@@ -21,7 +27,7 @@ namespace R3
 		std::string_view GetName() { return m_name; }
 	private:
 		void WaitUntilComplete();
-		void JobPoolThread(std::stop_token stoken);
+		void JobPoolThread(std::stop_token stoken, Priority p);
 		std::vector<std::jthread> m_threads;
 		moodycamel::BlockingConcurrentQueue<JobFn> m_jobs;
 		std::atomic<int> m_jobsPending = 0;

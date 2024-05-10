@@ -33,13 +33,11 @@ namespace R3
 	{
 		glm::mat4 result;
 		static auto time = Systems::GetSystem<TimeSystem>();
-		double accumulator = time->GetFixedUpdateCatchupTime() / time->GetFixedUpdateDelta();
+		double accumulator = time->GetFixedUpdateInterpolation();
 		const glm::vec3 pos = glm::mix(m_prevPosition, m_position, accumulator);
 		const glm::vec3 scale = glm::mix(m_prevScale, m_scale, accumulator);
 		const glm::quat rot = glm::slerp(m_prevOrientation, m_orientation, static_cast<float>(accumulator));
-		result = glm::translate(glm::identity<glm::mat4>(), pos);
-		result = result * glm::toMat4(rot);
-		result = glm::scale(result, scale);
+		result = glm::scale(glm::translate(glm::identity<glm::mat4>(), pos) * glm::mat4_cast(rot), scale);
 		return result;
 	}
 

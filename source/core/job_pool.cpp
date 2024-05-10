@@ -1,5 +1,7 @@
 #include "job_pool.h"
 #include "core/profiler.h"
+#include "core/log.h"
+#include <SDL_thread.h>
 
 namespace R3
 {
@@ -16,9 +18,30 @@ namespace R3
 		m_threads.clear();
 	}
 
-	void JobPool::JobPoolThread(std::stop_token stoken)
+	void JobPool::JobPoolThread(std::stop_token stoken, Priority p)
 	{
 		R3_PROF_THREAD(GetName().data());
+		SDL_ThreadPriority prio = SDL_ThreadPriority::SDL_THREAD_PRIORITY_NORMAL;
+		switch (p)
+		{
+		case Priority::Low:
+			prio = SDL_ThreadPriority::SDL_THREAD_PRIORITY_LOW;
+			break;
+		case Priority::Normal:
+			prio = SDL_ThreadPriority::SDL_THREAD_PRIORITY_NORMAL;
+			break;
+		case Priority::High:
+			prio = SDL_ThreadPriority::SDL_THREAD_PRIORITY_HIGH;
+			break;
+		case Priority::TimeCritical:
+			prio = SDL_ThreadPriority::SDL_THREAD_PRIORITY_TIME_CRITICAL;
+			break;
+		}
+		if (SDL_SetThreadPriority(prio) != 0)
+		{
+			LogWarn("Failed to set priority for thread - {}", SDL_GetError());
+		}
+
 		while (!stoken.stop_requested())
 		{
 			JobFn task;
@@ -35,7 +58,7 @@ namespace R3
 		}
 	}
 
-	JobPool::JobPool(int threadCount, std::string_view name)
+	JobPool::JobPool(int threadCount, Priority p, std::string_view name)
 		: m_name(name)
 	{
 		R3_PROF_EVENT();
@@ -44,8 +67,8 @@ namespace R3
 		m_threads.reserve(threadCount);
 		for (int i = 0; i < threadCount; ++i)
 		{
-			m_threads.emplace_back([this](std::stop_token stoken) {
-				JobPoolThread(stoken);
+			m_threads.emplace_back([this, p](std::stop_token stoken) {
+				JobPoolThread(stoken, p);
 			});
 		}
 	}

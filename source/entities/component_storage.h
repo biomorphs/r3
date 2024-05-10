@@ -40,7 +40,7 @@ namespace Entities
 	class LinearComponentStorage : public ComponentStorage
 	{
 	public:
-		LinearComponentStorage(World* w, uint32_t typeIndex) : ComponentStorage(w, typeIndex) {}
+		LinearComponentStorage(World* w, uint32_t typeIndex, uint32_t initialCapacity = 1024 * 32);
 		virtual uint32_t GetTotalCount() { return static_cast<uint32_t>(m_owners.size()); }
 		virtual uint32_t Create(const EntityHandle& e);
 		virtual void Destroy(const EntityHandle& e, uint32_t index);
@@ -69,6 +69,14 @@ namespace Entities
 		int32_t m_iterationDepth = 0;	// this is a safety net to catch if we delete during iteration
 		uint64_t m_generation = 1;		// increases every time the existing pointers/storage are changed 
 	};
+
+	template<class ComponentType>
+	LinearComponentStorage< ComponentType>::LinearComponentStorage(World* w, uint32_t typeIndex, uint32_t initialCapacity)
+		: ComponentStorage(w, typeIndex)
+	{
+		m_owners.reserve(initialCapacity);
+		m_components.reserve(initialCapacity);
+	}
 
 	template<class ComponentType>
 	void LinearComponentStorage<ComponentType>::Serialise(const EntityHandle& e, uint32_t index, JsonSerialiser& s)

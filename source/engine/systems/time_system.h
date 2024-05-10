@@ -16,6 +16,7 @@ namespace R3
 		double GetVariableDeltaTime() const;		// variable time delta from previous frame
 		double GetFixedUpdateCatchupTime() const;	// how much time does fixed update need to catch up
 		double GetFixedUpdateDelta() const;			// fixed update delta time
+		double GetFixedUpdateInterpolation() const;	// GetFixedUpdateCatchupTime / GetFixedUpdateDelta
 
 	private:
 		bool OnFrameStart();		// call this early in frame
@@ -27,6 +28,7 @@ namespace R3
 		uint64_t m_fixedUpdateCatchup = 0;
 		uint64_t m_fixedUpdateDeltaTime = 0;
 		uint64_t m_fixedUpdateCurrentTime = 0;
+		double m_fixedUpdateInterpolation = 0.0;	// 0.0 to 1.0, used to interpolate values updated in fixed update
 		static constexpr int m_fixedUpdateFPS = 60;
 		static constexpr double m_updateFrequency = 1.0 / (double)m_fixedUpdateFPS;
 
