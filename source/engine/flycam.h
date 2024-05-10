@@ -20,7 +20,7 @@ namespace R3
 		void Update(const ControllerRawState& controllerState, double timeDelta);
 		void Update(const MouseRawState& mouseState, double timeDelta);
 		void Update(const KeyboardState& kbState, double timeDelta);
-
+		void StorePreviousFrameData();
 		inline void SetPosition(const glm::vec3& pos) { m_position = pos; }
 		inline void SetYaw(float y) { m_yaw = y; }
 		inline void SetPitch(float p) { m_pitch = p; }
@@ -40,6 +40,8 @@ namespace R3
 		glm::vec3 m_position;
 		glm::vec3 m_lookDirection;
 		glm::vec3 m_right;
+		glm::vec3 m_prevFramePosition;
+		glm::vec3 m_prevFrameLookDirection;
 		float m_pitch;
 		float m_yaw;
 	};

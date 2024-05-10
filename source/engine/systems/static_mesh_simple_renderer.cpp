@@ -276,7 +276,7 @@ namespace R3
 						if (staticMeshes->GetMeshPart(currentMeshData.m_firstMeshPartOffset + part, partData))
 						{
 							pc.m_materialIndex = useOverrides ? ((uint32_t)matCmp->m_gpuDataIndex + part) : partData.m_materialIndex;
-							pc.m_instanceTransform = t.GetWorldspaceMatrix() * partData.m_transform;
+							pc.m_instanceTransform = t.GetWorldspaceInterpolated() * partData.m_transform;
 							vkCmdPushConstants(cmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 							vkCmdDrawIndexed(cmds, partData.m_indexCount, 1, (uint32_t)partData.m_indexStartOffset, (uint32_t)currentMeshData.m_vertexDataOffset, 0);
 						}

@@ -92,6 +92,7 @@ namespace R3
 		{
 			auto input = GetSystem<InputSystem>();
 			double delta = GetSystem<TimeSystem>()->GetFixedUpdateDelta();
+			m_flyCam->StorePreviousFrameData();
 			m_flyCam->Update(input->ControllerState(0), delta);
 			if (!input->IsGuiCapturingInput())
 			{

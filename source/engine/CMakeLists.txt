@@ -55,6 +55,8 @@ set(EngineLib_SourceFiles
 	systems/lights_system.cpp
 	systems/lua_system.h
 	systems/lua_system.cpp
+	systems/transform_system.h
+	systems/transform_system.cpp
 	components/point_light.h
 	components/point_light.cpp
 	components/environment_settings.h

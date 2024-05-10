@@ -9,6 +9,7 @@ namespace R3
 		static std::string_view GetName() { return "Time"; }
 		virtual void RegisterTickFns();
 		virtual bool Init();
+		bool OnFixedUpdateEnd();					// call this after each fixed update
 
 		double GetElapsedTimeReal() const;			// return the actual elapsed time
 		double GetElapsedTime() const;				// total time from first tick to current variable tick
@@ -18,8 +19,6 @@ namespace R3
 
 	private:
 		bool OnFrameStart();		// call this early in frame
-		bool OnFixedUpdateEnd();	// call this after each fixed update
-
 		uint64_t m_tickFrequency = 0;
 		uint64_t m_initTime = 0;
 		uint64_t m_firstTickTime = 0;

@@ -1,5 +1,6 @@
 #include "flycam.h"
 #include "engine/systems/input_system.h"
+#include "engine/systems/time_system.h"
 #include "render/camera.h"
 #include "core/profiler.h"
 
@@ -23,9 +24,13 @@ namespace R3
 	void Flycam::ApplyToCamera(Camera& target)
 	{
 		glm::vec3 up(0.0f, 1.0f, 0.0f);
+		auto time = Systems::GetSystem<TimeSystem>();
 
-		// we should interpolate out based on difference between current tick + last fixed update
-		target.LookAt(m_position, m_position + m_lookDirection, up);
+		double accumulator = time->GetFixedUpdateCatchupTime() / time->GetFixedUpdateDelta();
+		auto pos = glm::mix(m_prevFramePosition, m_position, accumulator);
+		auto lookAt = glm::mix(m_prevFrameLookDirection, m_lookDirection, accumulator);
+
+		target.LookAt(pos, pos + lookAt, up);
 	}
 
 	void Flycam::Update(const MouseRawState& mouse, double timeDelta)
@@ -103,6 +108,12 @@ namespace R3
 		// strafe
 		const float strafe = speedMul * strafeAmount * m_strafeSpeed * timeDeltaF;
 		m_position += m_right * strafe;
+	}
+
+	void Flycam::StorePreviousFrameData()
+	{
+		m_prevFramePosition = m_position;
+		m_prevFrameLookDirection = m_lookDirection;
 	}
 
 	void Flycam::Update(const ControllerRawState& controllerState, double timeDelta)

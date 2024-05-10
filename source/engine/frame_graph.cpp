@@ -24,6 +24,7 @@ namespace R3
 					return false;
 				}
 			}
+			timeSys->OnFixedUpdateEnd();
 		}
 		return true;
 	}

@@ -10,9 +10,6 @@ namespace R3
 		Systems::GetInstance().RegisterTick("Time::FrameStart", [this]() {
 			return OnFrameStart();
 		});
-		Systems::GetInstance().RegisterTick("Time::FixedUpdateEnd", [this]() {
-			return OnFixedUpdateEnd();
-		});
 	}
 
 	double TimeSystem::GetElapsedTimeReal() const
@@ -47,7 +44,6 @@ namespace R3
 		{
 			m_firstTickTime = R3::Time::HighPerformanceCounterTicks();
 			m_thisFrameTickTime = m_firstTickTime;
-			m_lastTickTime = m_thisFrameTickTime;
 			m_firstTick = false;
 		}
 

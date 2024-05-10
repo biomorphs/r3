@@ -1,4 +1,5 @@
 #include "transform.h"
+#include "engine/systems/time_system.h"
 
 namespace R3
 {
@@ -10,6 +11,7 @@ namespace R3
 		if (s.GetMode() == JsonSerialiser::Read)
 		{
 			RebuildMatrix();
+			StorePreviousFrameMatrix();		// just copy the new transform
 		}
 	}
 
@@ -25,6 +27,18 @@ namespace R3
 	glm::mat4 TransformComponent::GetWorldspaceMatrix() const
 	{
 		return m_matrix;	// later on we will want some kind of heirarchy
+	}
+
+	glm::mat4 TransformComponent::GetWorldspaceInterpolated() const
+	{
+		auto time = Systems::GetSystem<TimeSystem>();
+		double accumulator = time->GetFixedUpdateCatchupTime() / time->GetFixedUpdateDelta();
+		return InterpolateMat4(m_prevMatrix, m_matrix, static_cast<float>(accumulator));
+	}
+
+	void TransformComponent::StorePreviousFrameMatrix()
+	{
+		m_prevMatrix = m_matrix;
 	}
 
 	void TransformComponent::RebuildMatrix()

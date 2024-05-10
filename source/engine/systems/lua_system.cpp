@@ -158,7 +158,6 @@ namespace R3
 		assert(m_internals != nullptr);
 		ScopedLock lock(m_internals->m_globalStateMutex);
 		m_internals->m_globalState.open_libraries(sol::lib::base,
-			sol::lib::jit,
 			sol::lib::math,
 			sol::lib::package,
 			sol::lib::os,
