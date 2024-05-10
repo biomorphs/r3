@@ -14,6 +14,10 @@ namespace Queries
 	// It = bool(const EntityHandle& e, ComponentType1& cmp, ComponentType2& cmp)
 	template<class ComponentType1, class ComponentType2, class It>
 	void ForEach(World* w, const It&);
+
+	// It = void(const EntityHandle& e, ComponentType1& cmp)
+	template<class ComponentType, class It>
+	void ForEachAsync(World* w, uint32_t componentsPerJob, const It&);
 }
 }
 }

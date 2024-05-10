@@ -54,6 +54,36 @@ namespace R3
 		}
 	}
 
+	void JobSystem::ForEachAsync(ThreadPool poolType, int start, int end, int step, int stepsPerJob, ForEachJobFn fn)
+	{
+		R3_PROF_EVENT();
+		std::atomic<int> jobsRemaining = 0;
+		for (int32_t i = start; i < end; i += stepsPerJob)
+		{
+			const uint32_t startIndex = i;
+			const uint32_t endIndex = std::min(i + stepsPerJob, end);
+			auto runJob = [startIndex, endIndex, &jobsRemaining, &fn](void) {
+				R3_PROF_EVENT("ForEachAsync");
+				for (uint32_t c = startIndex; c < endIndex; ++c)
+				{
+					fn(c);
+				}
+				jobsRemaining--;
+			};
+			jobsRemaining++;
+			PushJob(poolType, runJob);
+		}
+
+		// wait for the results
+		{
+			R3_PROF_STALL("WaitForResults");
+			while (jobsRemaining > 0)
+			{
+				ProcessJobImmediate();
+			}
+		}
+	}
+
 	bool JobSystem::ShowGui()
 	{
 		R3_PROF_EVENT();

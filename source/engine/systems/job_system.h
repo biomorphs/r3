@@ -22,6 +22,9 @@ namespace R3
 		void PushJob(ThreadPool poolType, JobFn&&);
 		void ProcessJobImmediate();		// tries to pop a job off one of the pools and run it
 
+		using ForEachJobFn = std::function<void(uint32_t)>;	// param = index of current thing in loop
+		void ForEachAsync(ThreadPool poolType, int start, int end, int step, int stepsPerJob, ForEachJobFn fn);
+
 	private:
 		bool ShowGui();
 		bool m_showGui = false;

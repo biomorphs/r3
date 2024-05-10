@@ -21,10 +21,14 @@ namespace R3
 		auto world = Systems::GetSystem<Entities::EntitySystem>()->GetActiveWorld();
 		if (world)
 		{
-			Entities::Queries::ForEach<TransformComponent>(world, [](const Entities::EntityHandle& e, TransformComponent& cmp) {
+			// we want to run a few cache lines per job
+			constexpr size_t c_cacheLineSize = 32 * 1024;
+			constexpr size_t c_cacheLineCount = 8;
+			constexpr size_t c_componentsPerJob = (c_cacheLineSize * c_cacheLineCount) / sizeof(TransformComponent);
+			auto storePrevFrameData = [](const Entities::EntityHandle& e, TransformComponent& cmp) {
 				cmp.StorePreviousFrameData();
-				return true;
-			});
+			};
+			Entities::Queries::ForEachAsync<TransformComponent>(world, c_componentsPerJob, storePrevFrameData);
 		}
 
 		return true;

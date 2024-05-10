@@ -4,6 +4,7 @@
 #include "component_storage.h"
 #include "entity_handle.h"
 #include "world.h"
+#include "queries.h"
 
 namespace R3
 {
@@ -61,6 +62,16 @@ namespace Queries
 				return true;
 			};
 			ForEach<ComponentType2>(w, forEachCmp2);
+		}
+	}
+	template<class ComponentType, class It>
+	void Queries::ForEachAsync(World* w, uint32_t componentsPerJob, const It& fn)
+	{
+		R3_PROF_EVENT();
+		LinearComponentStorage<ComponentType>* storage = w->GetStorage<ComponentType>();
+		if (storage != nullptr)
+		{
+			storage->ForEachAsync(componentsPerJob, fn);
 		}
 	}
 }

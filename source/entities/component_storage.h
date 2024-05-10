@@ -4,6 +4,7 @@
 #include "world.h"
 #include "core/profiler.h"
 #include "core/log.h"
+#include "engine/systems/job_system.h"
 #include "engine/serialiser.h"
 #include <vector>
 #include <unordered_map>
@@ -57,6 +58,11 @@ namespace Entities
 		template<class It>
 		void ForEach(const It& fn);
 
+		// It = bool(const EntityHandle& e, ComponentType& cmp)
+		// Returns early if an iterator returns false
+		template<class It>
+		void ForEachAsync(uint32_t componentsPerJob, const It& fn);
+
 	private:
 		std::vector<EntityHandle> m_owners;	// these are entity IDs
 		std::vector<ComponentType> m_components;
@@ -85,6 +91,35 @@ namespace Entities
 	{
 		assert(index < m_components.size());
 		return &m_components[index];
+	}
+
+	template<class ComponentType>
+	template<class It>
+	void LinearComponentStorage<ComponentType>::ForEachAsync(uint32_t componentsPerJob, const It& fn)
+	{
+		R3_PROF_EVENT();
+
+		// We need to ensure the integrity of the list during iterations
+		// You can safely add components during iteration, but you CANNOT delete them!
+		++m_iterationDepth;
+		assert(m_owners.size() == m_components.size());
+
+		// more safety nets, ensure storage doesn't move
+		void* storagePtr = m_components.data();
+
+		auto jobs = Systems::GetSystem<JobSystem>();
+		jobs->ForEachAsync(JobSystem::ThreadPool::FastJobs, 0, (uint32_t)m_components.size(), 1, componentsPerJob, [this, fn](uint32_t i) {
+			fn(m_owners[i], m_components[i]);
+		});
+
+		if (storagePtr != m_components.data())
+		{
+			LogError("NO! Storage ptr was changed during iteration!");
+			assert(!"NO! Storage ptr was changed during iteration!");
+			*((int*)0x0) = 3;	// force crash
+		}
+
+		--m_iterationDepth;
 	}
 
 	template<class ComponentType>
