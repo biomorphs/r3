@@ -110,9 +110,11 @@ namespace R3
 		auto renderSys = GetSystem<RenderSystem>();
 		const auto windowSize = renderSys->GetWindowExtents();
 		const float aspectRatio = windowSize.x / windowSize.y;
-		const glm::vec3 lookUp = transCmp.GetOrientation() * glm::vec3(0.0f, 1.0f, 0.0f);
-		const glm::vec3 lookDirection = transCmp.GetOrientation() * glm::vec3(0.0f, 0.0f, 1.0f);
-		const glm::vec3 wsPosition = glm::vec3(transCmp.GetWorldspaceMatrix() * glm::vec4(0, 0, 0, 1));
+		const glm::mat4 interpolatedTransform = transCmp.GetWorldspaceInterpolated();
+		glm::mat3 rotationPart(interpolatedTransform);
+		const glm::vec3 lookUp = rotationPart * glm::vec3(0.0f, 1.0f, 0.0f);
+		const glm::vec3 lookDirection = rotationPart * glm::vec3(0.0f, 0.0f, 1.0f);
+		const glm::vec3 wsPosition(interpolatedTransform[3]);
 		target.SetProjection(camCmp.m_fov, aspectRatio, camCmp.m_nearPlane, camCmp.m_farPlane);
 		target.LookAt(wsPosition, wsPosition + lookDirection, lookUp);
 	}
