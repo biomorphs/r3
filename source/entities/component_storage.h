@@ -25,6 +25,7 @@ namespace Entities
 		virtual ~ComponentStorage() {};
 
 		// Base API does not know anything about the underlying component type
+		virtual void GetMemoryUsage(size_t& totalBytesAllocated, size_t& totalBytesUsed) = 0;
 		virtual uint32_t GetTotalCount() = 0;
 		virtual uint32_t Create(const EntityHandle& e) = 0;	// return index into storage
 		virtual void Destroy(const EntityHandle& e, uint32_t index) = 0;	// you must know the index to destroy a component (for speed)
@@ -41,6 +42,7 @@ namespace Entities
 	{
 	public:
 		LinearComponentStorage(World* w, uint32_t typeIndex, uint32_t initialCapacity = 1024 * 32);
+		virtual void GetMemoryUsage(size_t& totalBytesAllocated, size_t& totalBytesUsed);
 		virtual uint32_t GetTotalCount() { return static_cast<uint32_t>(m_owners.size()); }
 		virtual uint32_t Create(const EntityHandle& e);
 		virtual void Destroy(const EntityHandle& e, uint32_t index);
@@ -76,6 +78,17 @@ namespace Entities
 	{
 		m_owners.reserve(initialCapacity);
 		m_components.reserve(initialCapacity);
+	}
+
+	template<class ComponentType>
+	inline void LinearComponentStorage<ComponentType>::GetMemoryUsage(size_t& totalBytesAllocated, size_t& totalBytesUsed)
+	{
+		const size_t entityMemTotal = m_owners.capacity() * sizeof(Entities::EntityHandle);
+		const size_t entityMemUsed = m_owners.size() * sizeof(Entities::EntityHandle);
+		const size_t cmpMemTotal = m_components.capacity() * sizeof(ComponentType);
+		const size_t cmpMemUsed = m_components.size() * sizeof(ComponentType);
+		totalBytesAllocated = entityMemTotal + cmpMemTotal;
+		totalBytesUsed = entityMemUsed + cmpMemUsed;
 	}
 
 	template<class ComponentType>

@@ -63,21 +63,40 @@ namespace Entities
 	bool EntitySystem::ShowGui()
 	{
 		R3_PROF_EVENT();
+		constexpr auto sizeMb = [](size_t v) -> float
+		{
+			return (float)v / (1024.0f * 1024.0f);
+		};
 		if (ImGui::Begin("Entities"))
 		{
 			const auto& alltypes = ComponentTypeRegistry::GetInstance().AllTypes();
+			std::string txt;
 			for (auto& w : m_worlds)
 			{
-				ImGui::SeparatorText(w.first.c_str());
+				size_t worldTotalBytes = 0, worldBytesUsed = 0;
+				txt = std::format("{} ({})", w.second->GetName(), w.first.c_str());
+				ImGui::SeparatorText(txt.c_str());
 				for (const auto& t : alltypes)
 				{
 					auto storage = w.second->GetStorage(t.m_name);
 					if (storage != nullptr && storage->GetTotalCount() > 0)
-					{
-						std::string txt = std::format("{}: {}", t.m_name, storage->GetTotalCount());
+					{	
+						size_t totalBytes = 0, bytesUsed = 0;
+						storage->GetMemoryUsage(totalBytes, bytesUsed);
+						txt = std::format("{}: {} ({:.2f} mb in use, {:.2f} mb allocated)", t.m_name, storage->GetTotalCount(), sizeMb(bytesUsed), sizeMb(totalBytes));
 						ImGui::Text(txt.c_str());
+						worldTotalBytes += totalBytes;
+						worldBytesUsed += bytesUsed;
 					}
 				}
+				std::string txt = std::format("World Memory: ({:.2f} mb in use, {:.2f} mb allocated)", sizeMb(worldBytesUsed), sizeMb(worldTotalBytes));
+				ImGui::Text(txt.c_str());
+				txt = std::format("Active entities: {}", w.second->GetActiveEntityCount());
+				ImGui::Text(txt.c_str());
+				txt = std::format("Entities Pending Delete: {}", w.second->GetPendingDeleteCount());
+				ImGui::Text(txt.c_str());
+				txt = std::format("Reserved Handles: {}", w.second->GetReservedHandleCount());
+				ImGui::Text(txt.c_str());
 			}
 		}
 		ImGui::End();
