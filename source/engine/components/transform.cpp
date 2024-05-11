@@ -32,12 +32,19 @@ namespace R3
 	glm::mat4 TransformComponent::GetWorldspaceInterpolated() const
 	{
 		glm::mat4 result;
-		static auto time = Systems::GetSystem<TimeSystem>();
-		double accumulator = time->GetFixedUpdateInterpolation();
-		const glm::vec3 pos = glm::mix(m_prevPosition, m_position, accumulator);
-		const glm::vec3 scale = glm::mix(m_prevScale, m_scale, accumulator);
-		const glm::quat rot = glm::slerp(m_prevOrientation, m_orientation, static_cast<float>(accumulator));
-		result = glm::scale(glm::translate(glm::identity<glm::mat4>(), pos) * glm::mat4_cast(rot), scale);
+		if (m_prevPosition == m_position && m_prevScale == m_scale && m_prevOrientation == m_orientation)
+		{
+			result = m_matrix;
+		}
+		else
+		{
+			static auto time = Systems::GetSystem<TimeSystem>();
+			double accumulator = time->GetFixedUpdateInterpolation();
+			const glm::vec3 pos = glm::mix(m_prevPosition, m_position, accumulator);
+			const glm::vec3 scale = glm::mix(m_prevScale, m_scale, accumulator);
+			const glm::quat rot = glm::slerp(m_prevOrientation, m_orientation, static_cast<float>(accumulator));
+			result = glm::scale(glm::translate(glm::identity<glm::mat4>(), pos) * glm::mat4_cast(rot), scale);
+		}
 		return result;
 	}
 
