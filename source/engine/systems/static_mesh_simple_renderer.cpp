@@ -17,13 +17,6 @@
 
 namespace R3
 {
-	// todo 
-	// add materials data WriteOnlyGpuArray
-	//	make sure per-instance material-override is possible
-	//	 allocate material entry per-instance?
-	// add lights data WriteOnlyGpuArray
-	//	or most likely, a lights system
-
 	// stored in a buffer
 	struct StaticMeshSimpleRenderer::GlobalConstants
 	{
