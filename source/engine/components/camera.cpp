@@ -1,7 +1,17 @@
 #include "camera.h"
+#include "engine/systems/lua_system.h"
 
 namespace R3
 {
+	void CameraComponent::RegisterScripts(class LuaSystem& l)
+	{
+		l.RegisterType<CameraComponent>(GetTypeName(),
+			"m_nearPlane", &CameraComponent::m_nearPlane,
+			"m_farPlane", &CameraComponent::m_farPlane,
+			"m_fov", &CameraComponent::m_fov
+		);
+	}
+
 	void CameraComponent::SerialiseJson(JsonSerialiser& s)
 	{
 		s("Near Plane", m_nearPlane);

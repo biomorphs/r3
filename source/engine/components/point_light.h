@@ -6,7 +6,7 @@ namespace R3
 	class PointLightComponent
 	{
 	public:
-		static std::string_view GetTypeName() { return "Point Light"; }
+		static std::string_view GetTypeName() { return "PointLight"; }
 		void SerialiseJson(JsonSerialiser& s);
 		void Inspect(const Entities::EntityHandle& e, Entities::World* w, ValueInspector& i);
 

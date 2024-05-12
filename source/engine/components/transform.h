@@ -7,6 +7,7 @@ namespace R3
 	{
 	public:
 		static std::string_view GetTypeName() { return "Transform"; }
+		static void RegisterScripts(class LuaSystem&);
 		void SerialiseJson(JsonSerialiser& s);
 		void Inspect(const Entities::EntityHandle& e, Entities::World* w, ValueInspector& i);
 

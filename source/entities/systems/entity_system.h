@@ -1,7 +1,9 @@
 #pragma once
 #include "engine/systems.h"
+#include "engine/systems/lua_system.h"
 #include "entities/component_type_registry.h"
 #include "entities/component_storage.h"
+#include "entities/world.h"
 #include <memory>
 #include <unordered_map>
 
@@ -10,7 +12,6 @@ namespace R3
 class ValueInspector;
 namespace Entities
 {
-	class World;
 	class EntitySystem : public System
 	{
 	public:
@@ -18,6 +19,7 @@ namespace Entities
 		virtual ~EntitySystem();
 		static std::string_view GetName() { return "Entities"; }
 		virtual void RegisterTickFns();
+		virtual bool Init();
 
 		template<class ComponentType>
 		void RegisterComponentType(uint32_t initialCapacity = 1024);
@@ -48,6 +50,17 @@ namespace Entities
 		enum { value = sizeof(test<T>(0)) == sizeof(char) };
 	};
 
+	template <typename T>		// SFINAE trick to detect RegisterScripts member fn
+	class ComponentHasScripts
+	{
+		typedef char one;
+		typedef long two;
+		template <typename C> static one test(decltype(&C::RegisterScripts));
+		template <typename C> static two test(...);
+	public:
+		enum { value = sizeof(test<T>(0)) == sizeof(char) };
+	};
+
 	template<class ComponentType>
 	void EntitySystem::RegisterComponentType(uint32_t initialCapacity)
 	{
@@ -68,6 +81,40 @@ namespace Entities
 				}
 			};
 			typeRegistry.SetInspector(ComponentType::GetTypeName(), std::move(inspectorGlue));
+		}
+
+		// If the component has a 'RegisterScripts' function, call it now
+		// Then register script accessors (scripts can only touch the active world)
+		if constexpr (ComponentHasScripts<ComponentType>::value)
+		{
+			auto scripts = Systems::GetSystem<LuaSystem>();
+			if (scripts)
+			{
+				ComponentType::RegisterScripts(*scripts);
+				scripts->AddTypeMember<World>("World", std::format("AddComponent_{}", ComponentType::GetTypeName()), 
+					[this](Entities::EntityHandle e) -> ComponentType*
+				{
+					ComponentType* ptr = nullptr;
+					auto world = GetActiveWorld();
+					if (world)
+					{
+						world->AddComponent<ComponentType>(e);
+						ptr = world->GetComponent<ComponentType>(e);
+					}
+					return ptr;
+				});
+				scripts->AddTypeMember<World>("World", std::format("GetComponent_{}", ComponentType::GetTypeName()),
+					[this](Entities::EntityHandle e) -> ComponentType*
+				{
+					ComponentType* ptr = nullptr;
+					auto world = GetActiveWorld();
+					if (world)
+					{
+						ptr = world->GetComponent<ComponentType>(e);
+					}
+					return ptr;
+				});
+			}
 		}
 	}
 }

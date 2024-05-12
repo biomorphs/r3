@@ -1,0 +1,77 @@
+{
+ "AllEntities": [
+  {
+   "ID": 0,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": -1.0,
+     "Z": 0.0
+    },
+    "Scale": {
+     "X": 64.0,
+     "Y": 2.0,
+     "Z": 64.0
+    }
+   }
+  },
+  {
+   "ID": 1,
+   "PointLight": {
+    "Brightness": 8.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 32.0
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 14.72006607055664,
+     "Z": 0.0
+    },
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 2,
+   "LuaScript": {
+    "OnFixedUpdate": {
+     "EntryPoint": "MakeARotatingCube_FixedUpdate",
+     "SourcePath": "testlevels\\scripts\\make_a_rotating_cube.lua"
+    },
+    "OnVariableUpdate": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    }
+   }
+  }
+ ],
+ "WorldName": "New World"
+}

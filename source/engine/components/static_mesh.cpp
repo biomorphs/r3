@@ -1,8 +1,16 @@
 #include "static_mesh.h"
 #include "engine/systems/model_data_system.h"
+#include "engine/systems/lua_system.h"
 
 namespace R3
 {
+	void StaticMeshComponent::RegisterScripts(LuaSystem& l)
+	{
+		l.RegisterType<StaticMeshComponent>(GetTypeName(),
+			"SetModelFromPath", &StaticMeshComponent::SetModelFromPath
+		);
+	}
+
 	void StaticMeshComponent::SerialiseJson(JsonSerialiser& s)
 	{
 		s("Model", m_modelHandle);

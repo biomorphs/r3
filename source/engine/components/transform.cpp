@@ -1,8 +1,23 @@
 #include "transform.h"
 #include "engine/systems/time_system.h"
+#include "engine/systems/lua_system.h"
 
 namespace R3
 {
+	void TransformComponent::RegisterScripts(LuaSystem& l)
+	{
+		l.RegisterType<TransformComponent>(GetTypeName(),
+			"SetPosition", &TransformComponent::SetPosition,
+			"GetPosition", &TransformComponent::GetPosition,
+			"SetOrientation", &TransformComponent::SetOrientation,
+			"GetOrientation", &TransformComponent::GetOrientation,
+			"SetScale", &TransformComponent::SetScale,
+			"GetScale", &TransformComponent::GetScale,
+			"GetWorldspaceMatrix", &TransformComponent::GetWorldspaceMatrix,
+			"GetWorldspaceInterpolated", &TransformComponent::GetWorldspaceInterpolated
+		);
+	}
+
 	void TransformComponent::SerialiseJson(JsonSerialiser& s)
 	{
 		s("Position", m_position);

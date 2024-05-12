@@ -12,7 +12,7 @@ namespace R3
 	public:
 		StaticMeshMaterialsComponent();
 		virtual ~StaticMeshMaterialsComponent();
-		static std::string_view GetTypeName() { return "Static Mesh Materials"; }
+		static std::string_view GetTypeName() { return "StaticMeshMaterials"; }
 		void SerialiseJson(JsonSerialiser& s);
 		void Inspect(const Entities::EntityHandle& e, Entities::World* w, ValueInspector& i);
 

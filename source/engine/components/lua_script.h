@@ -8,7 +8,8 @@ namespace R3
 	class LuaScriptComponent
 	{
 	public:
-		static std::string_view GetTypeName() { return "Lua Script"; }
+		static std::string_view GetTypeName() { return "LuaScript"; }
+		static void RegisterScripts(class LuaSystem&);
 		void SerialiseJson(JsonSerialiser& s);
 		void Inspect(const Entities::EntityHandle& e, Entities::World* w, ValueInspector& i);
 

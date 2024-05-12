@@ -1,13 +1,27 @@
 #include "lua_script.h"
+#include "engine/systems/lua_system.h"
 #include <imgui.h>
 #include <sol/sol.hpp>
 
 namespace R3
 {
+	void LuaScriptComponent::RegisterScripts(LuaSystem& l)
+	{
+		l.RegisterType<LuaScriptComponent>(GetTypeName(),
+			"SetFixedUpdateSource", &LuaScriptComponent::SetFixedUpdateSource,
+			"SetFixedUpdateEntrypoint", &LuaScriptComponent::SetFixedUpdateEntrypoint,
+			"SetVariableUpdateSource", &LuaScriptComponent::SetVariableUpdateSource,
+			"SetVariableUpdateEntrypoint", &LuaScriptComponent::SetVariableUpdateEntrypoint,
+			"m_needsRecompile", &LuaScriptComponent::m_needsRecompile,
+			"m_isActive", &LuaScriptComponent::m_isActive
+		);
+	}
+
 	void LuaScriptComponent::SerialiseJson(JsonSerialiser& s)
 	{
 		s("OnFixedUpdate", m_onFixedUpdate);
 		s("OnVariableUpdate", m_onVariableUpdate);
+		s("IsActive", m_isActive);
 		if (s.GetMode() == JsonSerialiser::Read)
 		{
 			m_needsRecompile = true;

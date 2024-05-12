@@ -3,7 +3,6 @@
 #include "entities/systems/entity_system.h"
 #include "entities/world.h"
 #include "entities/queries.h"
-#include "core/mutex.h"
 #include "core/profiler.h"
 #include "core/file_io.h"
 #include <cassert>
@@ -13,14 +12,10 @@
 
 namespace R3
 {
-	struct LuaSystem::Internals
-	{
-		Mutex m_globalStateMutex;
-		sol::state m_globalState;
-	};
-
 	LuaSystem::LuaSystem()
 	{
+		m_globalState = std::make_unique<sol::state>();
+		InitialiseGlobalState();
 	}
 
 	LuaSystem::~LuaSystem()
@@ -38,14 +33,6 @@ namespace R3
 		RegisterTick("LuaSystem::RunGC", [this]() {
 			return RunGC();
 		});
-	}
-
-	bool LuaSystem::Init()
-	{
-		R3_PROF_EVENT();
-		m_internals = std::make_unique<Internals>();
-		InitialiseGlobalState();
-		return true;
 	}
 
 	void LuaSystem::Shutdown()
@@ -88,7 +75,7 @@ namespace R3
 	bool LuaSystem::RunGC()
 	{
 		R3_PROF_EVENT();
-		m_internals->m_globalState.collect_garbage();
+		m_globalState->collect_garbage();
 		return true;
 	}
 
@@ -101,7 +88,7 @@ namespace R3
 				R3_PROF_EVENT_DYN(lc.m_onFixedUpdate.m_entryPointName.c_str());
 				try
 				{
-					sol::protected_function_result result = lc.m_onFixedUpdate.m_fn();	// todo, pass entity handle
+					sol::protected_function_result result = lc.m_onFixedUpdate.m_fn(e);
 					if (!result.valid())
 					{
 						sol::error err = result;
@@ -124,6 +111,31 @@ namespace R3
 		return true;
 	}
 
+	void LuaSystem::RegisterBuiltinTypes()
+	{
+		m_globalState->new_usertype<glm::vec2>("vec2",
+			sol::constructors<glm::vec2(), glm::vec2(float), glm::vec2(float, float), glm::vec2(glm::vec2)>()
+		);
+		m_globalState->new_usertype<glm::vec3>("vec3",
+			sol::constructors<glm::vec3(), glm::vec3(float), glm::vec3(float, float, float), glm::vec3(glm::vec3)>()
+		);
+		m_globalState->new_usertype<glm::vec4>("vec4",
+			sol::constructors<glm::vec4(), glm::vec4(float), glm::vec4(float, float, float, float), glm::vec4(glm::vec4)>()
+		);
+		m_globalState->new_usertype<glm::mat3>("mat3",
+			sol::constructors<glm::mat3(), glm::mat3(glm::mat3)>()
+		);
+		m_globalState->new_usertype<glm::mat4>("mat4",
+			sol::constructors<glm::mat4(), glm::mat4(glm::mat4)>()
+		);
+		m_globalState->new_usertype<glm::quat>("quat",
+			sol::constructors<glm::quat(), glm::quat(glm::quat)>()
+		);
+		RegisterFunction("RotateQuat", [](const glm::quat& q, float angleDegrees, glm::vec3 axis) -> glm::quat {
+			return glm::rotate(q, angleDegrees, axis);
+		});
+	}
+
 	bool LuaSystem::RunVariableUpdateScripts()
 	{
 		R3_PROF_EVENT();
@@ -132,15 +144,15 @@ namespace R3
 			if (lc.m_needsRecompile)
 			{
 				lc.m_needsRecompile = false;
-				lc.m_onFixedUpdate.m_fn = LoadScriptAndGetEntrypoint(m_internals->m_globalState, lc.m_onFixedUpdate.m_sourcePath, lc.m_onFixedUpdate.m_entryPointName);
-				lc.m_onVariableUpdate.m_fn = LoadScriptAndGetEntrypoint(m_internals->m_globalState, lc.m_onVariableUpdate.m_sourcePath, lc.m_onVariableUpdate.m_entryPointName);
+				lc.m_onFixedUpdate.m_fn = LoadScriptAndGetEntrypoint(*m_globalState, lc.m_onFixedUpdate.m_sourcePath, lc.m_onFixedUpdate.m_entryPointName);
+				lc.m_onVariableUpdate.m_fn = LoadScriptAndGetEntrypoint(*m_globalState, lc.m_onVariableUpdate.m_sourcePath, lc.m_onVariableUpdate.m_entryPointName);
 			}
 			if (lc.m_onVariableUpdate.m_fn.valid() && lc.m_isActive)
 			{
 				R3_PROF_EVENT_DYN(lc.m_onVariableUpdate.m_entryPointName.c_str());
 				try
 				{
-					sol::protected_function_result result = lc.m_onVariableUpdate.m_fn();	// todo, pass entity handle
+					sol::protected_function_result result = lc.m_onVariableUpdate.m_fn(e);	// todo, pass entity handle
 					if (!result.valid())
 					{
 						sol::error err = result;
@@ -165,9 +177,8 @@ namespace R3
 	bool LuaSystem::InitialiseGlobalState()
 	{
 		R3_PROF_EVENT();
-		assert(m_internals != nullptr);
-		ScopedLock lock(m_internals->m_globalStateMutex);
-		m_internals->m_globalState.open_libraries(sol::lib::base,
+		ScopedLock lock(m_globalStateMutex);
+		m_globalState->open_libraries(sol::lib::base,
 			sol::lib::math,
 			sol::lib::package,
 			sol::lib::os,
@@ -177,7 +188,9 @@ namespace R3
 			sol::lib::debug,
 			sol::lib::table,
 			sol::lib::string);
-		
+
+		RegisterBuiltinTypes();
+
 		return true;
 	}
 

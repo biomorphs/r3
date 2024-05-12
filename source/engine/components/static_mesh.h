@@ -8,7 +8,8 @@ namespace R3
 	class StaticMeshComponent
 	{
 	public:
-		static std::string_view GetTypeName() { return "Static Mesh"; }
+		static std::string_view GetTypeName() { return "StaticMesh"; }
+		static void RegisterScripts(class LuaSystem&);
 		void SerialiseJson(JsonSerialiser& s);
 		void Inspect(const Entities::EntityHandle& e, Entities::World* w, ValueInspector& i);
 		void SetModelFromPath(std::string_view path);

@@ -27,6 +27,27 @@ namespace Entities
 		});
 	}
 
+	bool EntitySystem::Init()
+	{
+		auto scripts = Systems::GetSystem<LuaSystem>();
+		if (scripts)
+		{
+			scripts->RegisterType<EntityHandle>("EntityHandle",
+				sol::constructors<EntityHandle()>(),
+				"GetID", &EntityHandle::GetID
+			);
+			scripts->RegisterType<World>("World",
+				"AddEntity", &World::AddEntity, 
+				"RemoveEntity", &World::RemoveEntity,
+				"IsHandleValid", &World::IsHandleValid
+			);
+			scripts->RegisterFunction("ActiveWorld", [this]() -> Entities::World* {
+				return GetActiveWorld();
+			});
+		}
+		return true;
+	}
+
 	World* EntitySystem::CreateWorld(const std::string& id, std::string_view worldName)
 	{
 		R3_PROF_EVENT();
