@@ -20,9 +20,9 @@ namespace R3
 		virtual void Shutdown();
 
 		// Register a type with internals states using sol::new_usertype<>
-		// args can constain constructors (via sol::constructors), member functions, member variables, etc
+		// args can contain constructors (via sol::constructors), member functions, member variables, etc
 		// Typical use
-		// RegisterType<vec2>("vec2", sol::constructors<vec2(), vec2(float), vec2(float,float)>>, "x", &vec2::x, "y", &vec2::y, "Length", &vec2::Length
+		// RegisterType<vec2>("vec2", sol::constructors<vec2(), vec2(float), vec2(float,float)>>, "x", &vec2::x, "y", &vec2::y, "Length", &vec2::Length)
 		template<class UserType, class... SolArgs>
 		void RegisterType(std::string_view typeName, SolArgs&&... args);
 

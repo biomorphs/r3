@@ -38,14 +38,14 @@ namespace R3
 			if (modelData.m_data)
 			{
 				glm::vec3 bounds[2] = { modelData.m_data->m_boundsMin, modelData.m_data->m_boundsMax };
-				glm::mat4 transform = transformCmp->GetWorldspaceMatrix();
+				glm::mat4 transform = transformCmp->GetWorldspaceInterpolated();
 				imRender.DrawAABB(bounds[0], bounds[1], transform, colour);
 				return;
 			}
 		}
 		if(transformCmp)
 		{
-			imRender.AddAxisAtPoint(transformCmp->GetPosition(), 1.0f, transformCmp->GetWorldspaceMatrix());
+			imRender.AddAxisAtPoint(transformCmp->GetPosition(), 1.0f, transformCmp->GetWorldspaceInterpolated());
 		}
 	}
 }

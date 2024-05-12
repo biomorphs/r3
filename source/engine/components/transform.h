@@ -12,10 +12,13 @@ namespace R3
 		void Inspect(const Entities::EntityHandle& e, Entities::World* w, ValueInspector& i);
 
 		void SetOrientation(glm::quat q) { m_orientation = glm::normalize(q); RebuildMatrix(); }
+		void SetOrientationNoInterpolation(glm::quat q) { SetOrientation(q); m_prevOrientation = m_orientation; }
 		void SetOrientationRadians(glm::vec3 r) { SetOrientation(glm::quat(r)); }
 		void SetOrientationDegrees(glm::vec3 rotation) { SetOrientation(glm::quat(glm::radians(rotation))); }
 		void SetPosition(glm::vec3 p) { m_position = p; RebuildMatrix(); }
+		void SetPositionNoInterpolation(glm::vec3 p) { SetPosition(p); m_prevPosition = m_position; }
 		void SetScale(glm::vec3 s) { m_scale = s; RebuildMatrix(); }
+		void SetScaleNoInterpolation(glm::vec3 p) { SetScale(p); m_prevScale = m_scale; }
 
 		glm::quat GetOrientation() const { return m_orientation; }
 		glm::vec3 GetPosition() const { return m_position; }

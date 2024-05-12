@@ -11,7 +11,7 @@ function RotateCubePls(e)
 		return;
 	end
 	local myRotation = myTransform:GetOrientation()
-	myRotation = R3.RotateQuat(myRotation, 0.05, vec3.new(0,1,0))
+	myRotation = R3.RotateQuat(myRotation, R3.GetFixedUpdateDelta() * math.pi, vec3.new(0,1,0))
 	myTransform:SetOrientation(myRotation)
 end
 
@@ -25,7 +25,7 @@ function MakeARotatingCube_FixedUpdate(e)
 	local newCube = world:AddEntity()
 	
 	local newTransform = world.AddComponent_Transform(newCube)
-	newTransform:SetPosition(vec3.new(-16.0 + math.random() * 32.0,1.0 + math.random() * 4.0,-16.0 + math.random() * 32.0))
+	newTransform:SetPositionNoInterpolation(vec3.new(-16.0 + math.random() * 32.0,1.0 + math.random() * 4.0,-16.0 + math.random() * 32.0))
 	
 	local newMesh = world.AddComponent_StaticMesh(newCube)
 	newMesh:SetModelFromPath("common/models/cube.fbx")

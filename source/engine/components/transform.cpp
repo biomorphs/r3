@@ -8,10 +8,13 @@ namespace R3
 	{
 		l.RegisterType<TransformComponent>(GetTypeName(),
 			"SetPosition", &TransformComponent::SetPosition,
+			"SetPositionNoInterpolation", &TransformComponent::SetPositionNoInterpolation,
 			"GetPosition", &TransformComponent::GetPosition,
 			"SetOrientation", &TransformComponent::SetOrientation,
+			"SetOrientationNoInterpolation", &TransformComponent::SetOrientationNoInterpolation,
 			"GetOrientation", &TransformComponent::GetOrientation,
 			"SetScale", &TransformComponent::SetScale,
+			"SetScaleNoInterpolation", &TransformComponent::SetScaleNoInterpolation,
 			"GetScale", &TransformComponent::GetScale,
 			"GetWorldspaceMatrix", &TransformComponent::GetWorldspaceMatrix,
 			"GetWorldspaceInterpolated", &TransformComponent::GetWorldspaceInterpolated

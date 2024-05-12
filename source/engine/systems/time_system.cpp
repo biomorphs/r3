@@ -1,4 +1,5 @@
 #include "time_system.h"
+#include "engine/systems/lua_system.h"
 #include "core/time.h"
 #include "core/profiler.h"
 
@@ -57,7 +58,10 @@ namespace R3
 		uint64_t elapsed = m_thisFrameTickTime - m_lastTickTime;
 		
 		m_fixedUpdateCatchup += elapsed;
-		m_fixedUpdateInterpolation = (m_fixedUpdateCatchup / m_fixedUpdateDeltaTime) / (double)m_tickFrequency;
+
+		const double catchUpSeconds = (double)m_fixedUpdateCatchup / (double)m_tickFrequency;
+		const double fuDeltaSeconds = (double)m_fixedUpdateDeltaTime / (double)m_tickFrequency;
+		m_fixedUpdateInterpolation = catchUpSeconds / fuDeltaSeconds;
 
 		return true;
 	}
@@ -66,7 +70,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		m_fixedUpdateCatchup -= m_fixedUpdateDeltaTime;
-		m_fixedUpdateInterpolation = (m_fixedUpdateCatchup / m_fixedUpdateDeltaTime) / (double)m_tickFrequency;
+		m_fixedUpdateInterpolation = ((double)m_fixedUpdateCatchup / (double)m_fixedUpdateDeltaTime) / (double)m_tickFrequency;
 		return true;
 	}
 
@@ -76,6 +80,19 @@ namespace R3
 		m_tickFrequency = R3::Time::HighPerformanceCounterFrequency();
 		m_initTime = R3::Time::HighPerformanceCounterTicks();
 		m_fixedUpdateDeltaTime = m_tickFrequency / m_fixedUpdateFPS;
+
+		auto scripts = Systems::GetSystem<LuaSystem>();
+		if (scripts)
+		{
+			scripts->RegisterFunction("GetFixedUpdateDelta", [this]() -> double {
+				return GetFixedUpdateDelta();
+			});
+			scripts->RegisterFunction("GetVariableDelta", [this]() -> double {
+				return GetVariableDeltaTime();
+			});
+		}
+		return true;
+
 		return true;
 	}
 }
