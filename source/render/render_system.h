@@ -62,6 +62,7 @@ namespace R3
 		void OnSystemEvent(void* ev);
 		bool CreateDevice();
 		bool CreateSwapchain();
+		bool ShouldEnableVsync();
 		bool m_isWindowMinimised = false;
 		bool m_recreateSwapchain = false;
 		std::unique_ptr<Window> m_mainWindow;

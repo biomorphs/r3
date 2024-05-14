@@ -327,9 +327,14 @@ namespace R3
 	bool RenderSystem::CreateSwapchain()
 	{
 		m_swapChain = std::make_unique<Swapchain>();
+		return m_swapChain->Initialise(*m_device, *m_mainWindow, ShouldEnableVsync());
+	}
+
+	bool RenderSystem::ShouldEnableVsync()
+	{
 		bool useVsync = Platform::GetCmdLine().find("-vsync") != std::string::npos;
 		useVsync |= Platform::GetSystemPowerState().m_isRunningOnBattery;	// enable vsync if running on battery
-		return m_swapChain->Initialise(*m_device, *m_mainWindow, useVsync);
+		return useVsync;
 	}
 
 	bool RenderSystem::PrepareSwapchain()
@@ -719,7 +724,7 @@ namespace R3
 		vmaDestroyImage(m_device->GetVMA(), m_vk->m_backBufferImage.m_image, m_vk->m_backBufferImage.m_allocation);
 		m_swapChain->Destroy(*m_device);
 
-		if (!m_swapChain->Initialise(*m_device, *m_mainWindow))
+		if (!m_swapChain->Initialise(*m_device, *m_mainWindow, ShouldEnableVsync()))
 		{
 			LogError("Failed to create swapchain");
 			return false;
