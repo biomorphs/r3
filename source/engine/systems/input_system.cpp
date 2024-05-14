@@ -58,6 +58,7 @@ namespace R3
 		{ SDLK_DOWN, KEY_DOWN },
 		{ SDLK_LCTRL, KEY_LCTRL },
 		{ SDLK_RCTRL, KEY_RCTRL },
+		{ SDLK_LALT, KEY_LALT },
 		{ SDLK_ESCAPE, KEY_ESCAPE }
 	};
 
@@ -107,6 +108,7 @@ namespace R3
 		{"KEY_DOWN", Key::KEY_DOWN },
 		{"KEY_LCTRL", Key::KEY_LCTRL },
 		{"KEY_RCTRL", Key::KEY_RCTRL },
+		{"KEY_LALT", Key::KEY_LALT },
 		{"KEY_ESCAPE", Key::KEY_ESCAPE}
 	};
 

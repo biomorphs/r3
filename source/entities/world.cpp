@@ -383,9 +383,21 @@ namespace Entities
 		}
 	}
 
+	void World::GetAllChildren(const EntityHandle& parent, std::vector<EntityHandle>& results) const
+	{
+		for (int e = 0; e < m_allEntities.size(); ++e)
+		{
+			if (m_allEntities[e].m_parent == parent)
+			{
+				EntityHandle newHandle(m_allEntities[e].m_publicID, e);
+				results.push_back(newHandle);
+				GetAllChildren(newHandle, results);
+			}
+		}
+	}
+
 	bool World::SetParent(const EntityHandle& child, const EntityHandle& parent)
 	{
-		assert(HasParent(child, parent) == false);
 		if (IsHandleValid(child))
 		{
 			if (IsHandleValid(parent) && HasParent(child, parent))

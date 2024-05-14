@@ -66,4 +66,16 @@ namespace R3
 			DrawParentLines(w, parent, colour * 0.9f);
 		}
 	}
+
+	void DrawEntityChildren(Entities::World& w, const Entities::EntityHandle& e, glm::vec4 boxColour, glm::vec4 lineColour)
+	{
+		std::vector<Entities::EntityHandle> results;
+		w.GetChildren(e, results);
+		for (int c = 0; c < results.size(); ++c)
+		{
+			DrawParentLines(w, results[c], lineColour);
+			DrawEntityChildren(w, results[c], boxColour, lineColour);
+		}
+		DrawEntityBounds(w, e, boxColour);
+	}
 }

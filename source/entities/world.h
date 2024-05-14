@@ -28,7 +28,8 @@ namespace Entities
 		EntityHandle GetParent(const EntityHandle& child) const;				// entity parent is purely a logistical thing, nothing in the sim changes unless it specifically acts on children
 		bool SetParent(const EntityHandle& child, const EntityHandle& parent);	// returns false if failed (loops, etc)
 		bool HasParent(const EntityHandle& child, const EntityHandle& parent) const;
-		void GetChildren(const EntityHandle& parent, std::vector<EntityHandle>& results) const;	// is vector really the best thing here?
+		void GetChildren(const EntityHandle& parent, std::vector<EntityHandle>& results) const;	// immediate children
+		void GetAllChildren(const EntityHandle& parent, std::vector<EntityHandle>& results) const;	// all children (recursive)
 
 		// RemoveEntity defers deletion until CollectGarbage() called.
 		// reserveHandle = dont add this entity handle to the free list, this slot is reserved until the exact same handle is recreated
