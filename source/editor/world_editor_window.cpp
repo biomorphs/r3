@@ -14,6 +14,7 @@
 #include "commands/world_editor_delete_component_cmd.h"
 #include "commands/world_editor_clone_entities_cmd.h"
 #include "commands/world_editor_add_entity_from_mesh_cmd.h"
+#include "commands/world_editor_set_entity_parent_cmd.h"
 #include "engine/systems.h"
 #include "engine/entity_list_widget.h"
 #include "engine/entity_inspector_widget.h"
@@ -95,11 +96,6 @@ namespace R3
 		m_selectedEntities.clear();
 	}
 
-	void WorldEditorWindow::WorldEditorWindow::AddStaticMeshEntity()
-	{
-
-	}
-
 	void WorldEditorWindow::UpdateMainContextMenu()
 	{
 		R3_PROF_EVENT();
@@ -146,6 +142,9 @@ namespace R3
 			contextMenu.AddItem(deleteStr, [this]() {
 				auto deleteCmd = std::make_unique<WorldEditorDeleteEntitiesCmd>(this);
 				m_cmds->Push(std::move(deleteCmd));
+			});
+			contextMenu.AddItem("Set Parent Entity", [this]() {
+				m_isSelectParentActive = true;
 			});
 		}
 		contextMenu.DisplayContextMenu();
@@ -325,6 +324,35 @@ namespace R3
 		return m_titleString;
 	}
 
+	void WorldEditorWindow::UpdateSelectParentWindow()
+	{
+		R3_PROF_EVENT();
+
+		uint32_t popupFlags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings;
+		std::string windowName("Select Parent Entity");
+		ImGui::OpenPopup(windowName.c_str());
+		if (ImGui::BeginPopupModal(windowName.c_str(), nullptr, popupFlags))
+		{
+			if (ImGui::Button("None"))
+			{
+				m_cmds->Push(std::make_unique<WorldEditorSetEntityParentCmd>(this, Entities::EntityHandle()));
+				m_isSelectParentActive = false;
+			}
+			auto w = GetWorld();
+			std::vector<Entities::EntityHandle> allEntities = w->GetActiveEntities();
+			for (const auto& e : allEntities)
+			{
+				std::string txt = std::format("{}##{}", w->GetEntityDisplayName(e), e.GetID());
+				if (ImGui::Button(txt.c_str()))
+				{
+					m_cmds->Push(std::make_unique<WorldEditorSetEntityParentCmd>(this, e));
+					m_isSelectParentActive = false;
+				}
+			}
+			ImGui::EndPopup();
+		}
+	}
+
 	void WorldEditorWindow::DrawSelected()
 	{
 		R3_PROF_EVENT();
@@ -334,6 +362,7 @@ namespace R3
 		for (auto& theEntity : m_selectedEntities)
 		{
 			DrawEntityBounds(*theWorld, theEntity, { 1,1,0,1 });
+			DrawParentLines(*theWorld, theEntity, { 0.1f,0.1f,0.3f,1.0f });
 		}
 	}
 
@@ -351,7 +380,10 @@ namespace R3
 			m_showCommandsWindow = m_cmds->ShowWidget();
 		}
 		DrawSelected();
-
+		if (m_isSelectParentActive)
+		{
+			UpdateSelectParentWindow();
+		}
 		if (m_activeTool != -1 && m_activeTool < m_tools.size())
 		{
 			m_tools[m_activeTool]->Update(*GetWorld(), *m_cmds);

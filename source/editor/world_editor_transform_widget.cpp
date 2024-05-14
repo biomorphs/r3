@@ -70,7 +70,7 @@ namespace R3
 	void WorldEditorTransformWidget::CommitTranslation(glm::vec3 translation)
 	{
 		auto cmd = std::make_unique<WorldEditorSetEntityPositionsCommand>(m_editorWindow);
-		for (auto it : m_trackedEntities)
+		for (const auto& it : m_trackedEntities)
 		{
 			cmd->AddEntity(it.m_entity, it.m_originalPosition, it.m_originalPosition + translation);
 		}
@@ -198,7 +198,7 @@ namespace R3
 					if (leftBtnDown)
 					{
 						m_widgetTransform = glm::translate(originalPos);
-						for (auto it : m_trackedEntities)
+						for (const auto& it : m_trackedEntities)
 						{
 							auto transformCmp = world->GetComponent<TransformComponent>(it.m_entity);
 							if (transformCmp)

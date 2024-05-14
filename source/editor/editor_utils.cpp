@@ -48,4 +48,22 @@ namespace R3
 			imRender.AddAxisAtPoint(transformCmp->GetPosition(), 1.0f, transformCmp->GetWorldspaceInterpolated());
 		}
 	}
+
+	void DrawParentLines(Entities::World& w, const Entities::EntityHandle& e, glm::vec4 colour)
+	{
+		auto& imRender = Systems::GetSystem<RenderSystem>()->GetImRenderer();
+		auto childCmp = w.GetComponent<TransformComponent>(e);
+		const auto parent = w.GetParent(e);
+		if (parent.GetID() != -1 && childCmp != nullptr)
+		{
+			auto parentCmp = w.GetComponent<TransformComponent>(parent);
+			ImmediateRenderer::PerVertexData verts[2];
+			verts[0].m_position = childCmp->GetWorldspaceInterpolated()[3];
+			verts[0].m_colour = colour;
+			verts[1].m_position = parentCmp->GetWorldspaceInterpolated()[3];
+			verts[1].m_colour = colour * 0.9f;
+			imRender.AddLine(verts);
+			DrawParentLines(w, parent, colour * 0.9f);
+		}
+	}
 }

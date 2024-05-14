@@ -27,6 +27,8 @@ namespace Entities
 		assert(IsHandleValid(e));
 		auto entityID = e.GetID();
 		target("ID", entityID);
+		auto parentID = GetParent(e).GetID();
+		target("Parent", parentID);
 
 		const auto& ped = m_allEntities[e.GetPrivateIndex()];
 		for (int typeIndex = 0; typeIndex < ped.m_componentIndices.size(); ++typeIndex)
@@ -137,12 +139,16 @@ namespace Entities
 			JsonSerialiser childSerialiser(JsonSerialiser::Read);
 			for (int e = 0; e < json.GetJson().size(); ++e)	// for each entity
 			{
+				// remap any per-entity IDs to their new values
 				const uint32_t oldID = json.GetJson()[e]["ID"];
 				const EntityHandle& actualHandle = oldEntityToNewEntity[oldID];
+				const uint32_t oldParent = json.GetJson()[e].value("Parent", (uint32_t)-1);
+				EntityHandle actualParent = oldParent != -1 ? oldEntityToNewEntity[oldParent] : EntityHandle();
+				SetParent(actualHandle, actualParent);
 				childSerialiser.GetJson() = std::move(json.GetJson()[e]);
 				for (auto childJson = childSerialiser.GetJson().begin(); childJson != childSerialiser.GetJson().end(); childJson++)
 				{
-					if (childJson.key() != "ID")
+					if (childJson.key() != "ID" && childJson.key() != "Parent")
 					{
 						if (AddComponent(actualHandle, childJson.key()))
 						{
@@ -343,6 +349,66 @@ namespace Entities
 		return {};
 	}
 
+	bool World::HasParent(const EntityHandle& child, const EntityHandle& parent) const
+	{
+		R3_PROF_EVENT();
+		EntityHandle thisParent = GetParent(child); 
+		if (!IsHandleValid(child) || !IsHandleValid(parent))
+		{
+			return false;
+		}
+		if (thisParent == parent || thisParent == child)
+		{
+			return true;
+		}
+		else if (IsHandleValid(thisParent))
+		{
+			return HasParent(parent, thisParent);
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	void World::GetChildren(const EntityHandle& parent, std::vector<EntityHandle>& results) const
+	{
+		// slow!
+		for (int e = 0;e<m_allEntities.size();++e)
+		{
+			if (m_allEntities[e].m_parent == parent)
+			{
+				results.push_back(EntityHandle(m_allEntities[e].m_publicID, e));
+			}
+		}
+	}
+
+	bool World::SetParent(const EntityHandle& child, const EntityHandle& parent)
+	{
+		assert(HasParent(child, parent) == false);
+		if (IsHandleValid(child))
+		{
+			if (IsHandleValid(parent) && HasParent(child, parent))
+			{
+				return false;	// loop detection
+			}
+			auto& theEntity = m_allEntities[child.GetPrivateIndex()];
+			theEntity.m_parent = parent;
+			return true;
+		}
+		return false;
+	}
+
+	EntityHandle World::GetParent(const EntityHandle& child) const
+	{
+		if (IsHandleValid(child))
+		{
+			auto& theEntity = m_allEntities[child.GetPrivateIndex()];
+			return theEntity.m_parent;
+		}
+		return EntityHandle();
+	}
+
 	void World::RemoveEntity(const EntityHandle& h, bool reserveHandle)
 	{
 		R3_PROF_EVENT();
@@ -481,6 +547,7 @@ namespace Entities
 		return false;
 	}
 
+	// should we be resetting child entities parents for deleted handles?
 	void World::CollectGarbage()
 	{
 		R3_PROF_EVENT();

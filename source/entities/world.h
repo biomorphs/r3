@@ -25,6 +25,11 @@ namespace Entities
 		// Entity stuff. EntityHandle is essentially an opaque-ish ID
 		EntityHandle AddEntity();
 		EntityHandle AddEntityFromHandle(const EntityHandle& handleToRestore);	// restore a previously deleted reserved entity handle. only for tools
+		EntityHandle GetParent(const EntityHandle& child) const;				// entity parent is purely a logistical thing, nothing in the sim changes unless it specifically acts on children
+		bool SetParent(const EntityHandle& child, const EntityHandle& parent);	// returns false if failed (loops, etc)
+		bool HasParent(const EntityHandle& child, const EntityHandle& parent) const;
+		void GetChildren(const EntityHandle& parent, std::vector<EntityHandle>& results) const;	// is vector really the best thing here?
+
 		// RemoveEntity defers deletion until CollectGarbage() called.
 		// reserveHandle = dont add this entity handle to the free list, this slot is reserved until the exact same handle is recreated
 		// only useful for editors to recreate deleted entities while preserving references
@@ -85,6 +90,7 @@ namespace Entities
 			uint32_t m_publicID = -1;						// used to publicaly identify an entity in a world
 			ComponentBitsetType m_ownedComponentBits = 0;	// each bit represents a component type that this entity owns/contains
 			std::vector<uint32_t> m_componentIndices;		// index into component storage per type. take care!
+			EntityHandle m_parent;							// if a parent exists, it should have a EntityChildrenComponent!
 		};
 		struct PendingDeleteEntity 
 		{

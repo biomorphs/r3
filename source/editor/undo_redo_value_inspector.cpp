@@ -147,7 +147,8 @@ namespace R3
 			{
 				if (ImGui::Button("None"))
 				{
-					setFn({});
+					Entities::EntityHandle noEntity;
+					m_cmds.Push(std::make_unique<SetValueCommand<Entities::EntityHandle>>(label, current, noEntity, setFn));
 					m_entitySelectorOpen = false;
 					newValSet = true;
 				}
@@ -157,7 +158,7 @@ namespace R3
 					std::string txt = std::format("{}##{}", w->GetEntityDisplayName(e), e.GetID());
 					if (ImGui::Button(txt.c_str()))
 					{
-						setFn(e);
+						m_cmds.Push(std::make_unique<SetValueCommand<Entities::EntityHandle>>(label, current, e, setFn));
 						m_entitySelectorOpen = false;
 						newValSet = true;
 					}

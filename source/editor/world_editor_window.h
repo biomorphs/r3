@@ -39,7 +39,7 @@ namespace R3
 		void SelectAll();
 		void DeleteSelected();
 	private:
-		void AddStaticMeshEntity();
+		void UpdateSelectParentWindow();
 		void DrawSelected();
 		void UpdateMainContextMenu();
 		void UpdateMainMenu();
@@ -61,5 +61,6 @@ namespace R3
 		std::unique_ptr<ValueInspector> m_valueInspector;
 		std::unique_ptr<EditorCommandList> m_cmds;
 		std::vector<Entities::EntityHandle> m_selectedEntities;
+		bool m_isSelectParentActive = false;	// if active, a 'select parent entity' window is displayed
 	};
 }
