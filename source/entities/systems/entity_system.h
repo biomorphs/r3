@@ -35,6 +35,7 @@ namespace Entities
 	private:
 		bool ShowGui();
 		bool RunGC();
+		bool m_showGui = false;
 		std::unordered_map<std::string, std::unique_ptr<World>> m_worlds;
 		std::string m_activeWorldId;
 	};

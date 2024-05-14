@@ -83,6 +83,10 @@ namespace Entities
 
 	bool EntitySystem::ShowGui()
 	{
+		if (!m_showGui)
+		{
+			return true;
+		}
 		R3_PROF_EVENT();
 		constexpr auto sizeMb = [](size_t v) -> float
 		{
