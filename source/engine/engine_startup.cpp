@@ -8,6 +8,7 @@
 #include "systems/imgui_system.h"
 #include "systems/camera_system.h"
 #include "systems/model_data_system.h"
+#include "systems/texture_system.h"
 #include "systems/static_mesh_system.h"
 #include "systems/static_mesh_simple_renderer.h"
 #include "systems/lights_system.h"
@@ -38,6 +39,7 @@ namespace R3
 		s.RegisterSystem<JobSystem>();
 		s.RegisterSystem<Entities::EntitySystem>();
 		s.RegisterSystem<ModelDataSystem>();
+		s.RegisterSystem<TextureSystem>();
 		s.RegisterSystem<StaticMeshSystem>();
 		s.RegisterSystem<StaticMeshSimpleRenderer>();
 		s.RegisterSystem<LightsSystem>();
@@ -81,12 +83,14 @@ namespace R3
 				guiUpdate.AddFn("StaticMeshes::ShowGui");
 				guiUpdate.AddFn("ModelData::ShowGui");
 				guiUpdate.AddFn("StaticMeshSimpleRenderer::ShowGui");
+				guiUpdate.AddFn("Textures::ShowGui");
 			}
 		}
 		auto& runRenderAndGC = fg.m_root.AddAsync("RenderAndGC");	// first entry always runs on main thread
 		{
 			auto& render = runRenderAndGC.AddSequence("Render");
 			{
+				render.AddFn("Textures::ProcessLoaded");
 				render.AddFn("Cameras::PreRenderUpdate");
 				render.AddFn("Render::DrawFrame");
 			}

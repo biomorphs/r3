@@ -6,6 +6,8 @@ set(EngineLib_SourceFiles
 	callback_array.h
 	model_data.h
 	model_data.cpp
+	texture_handle.h
+	texture_handle.cpp
 	model_data_handle.h
 	model_data_handle.cpp
 	engine_startup.h
@@ -33,6 +35,8 @@ set(EngineLib_SourceFiles
 	flycam.cpp
 	register_engine_components.h
 	register_engine_components.cpp
+	systems/texture_system.h
+	systems/texture_system.cpp
 	systems/time_system.h
 	systems/time_system.cpp
 	systems/event_system.h
