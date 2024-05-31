@@ -68,15 +68,21 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		ScopedLock lock(m_texturesMutex);	// is this a good idea???
-		LoadedTexture t;
+		std::unique_ptr<LoadedTexture> t;
 		while (m_loadedTextures.try_dequeue(t))
 		{
 			assert(t.m_destination.m_index != -1 && t.m_destination.m_index < m_textures.size());
-			auto& dst = m_textures[t.m_destination.m_index];
-			dst.m_width = t.m_width;
-			dst.m_height = t.m_height;
-			dst.m_channels = t.m_channels;
-			LogInfo("Texture {} loaded, about to free {} bytes", dst.m_name, t.m_data.size());
+			auto& dst = m_textures[t->m_destination.m_index];
+			dst.m_width = t->m_width;
+			dst.m_height = t->m_height;
+			dst.m_channels = t->m_channels;
+			LogInfo("Texture {} loaded, about to free {} bytes", dst.m_name, t->m_data.size());
+			// take ownership of the ptr and delete it ourselves
+			LoadedTexture* dataToFree = t.release();
+			GetSystem<JobSystem>()->PushJob(JobSystem::SlowJobs, [dataToFree]() {
+				R3_PROF_EVENT("DeleteLoadedTexture");
+				delete dataToFree;
+			});
 		}
 		return true;
 	}
@@ -107,17 +113,17 @@ namespace R3
 
 		// Copy the texture data to our own buffer to free up stbi memory
 		const size_t imgDataSize = w * h * components * sizeof(uint8_t);
-		LoadedTexture loadedData;
+		auto loadedData = std::make_unique<LoadedTexture>();
 		{
 			R3_PROF_EVENT("CopyImageData");
-			loadedData.m_data.resize(imgDataSize);
-			memcpy(loadedData.m_data.data(), rawData, imgDataSize);
+			loadedData->m_data.resize(imgDataSize);
+			memcpy(loadedData->m_data.data(), rawData, imgDataSize);
 		}
 		stbi_image_free(rawData);
-		loadedData.m_destination = targetHandle;
-		loadedData.m_width = w;
-		loadedData.m_height = h;
-		loadedData.m_channels = components;
+		loadedData->m_destination = targetHandle;
+		loadedData->m_width = w;
+		loadedData->m_height = h;
+		loadedData->m_channels = components;
 		m_loadedTextures.enqueue(std::move(loadedData));
 
 		return true;

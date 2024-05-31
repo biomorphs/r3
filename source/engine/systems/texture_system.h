@@ -36,7 +36,7 @@ namespace R3
 		bool LoadTextureInternal(std::string_view path, TextureHandle targetHandle);
 		TextureHandle FindExistingMatchingName(std::string name);	// locks the mutex
 
-		moodycamel::ConcurrentQueue<LoadedTexture> m_loadedTextures;
+		moodycamel::ConcurrentQueue<std::unique_ptr<LoadedTexture>> m_loadedTextures;
 
 		Mutex m_texturesMutex;
 		std::vector<TextureDesc> m_textures;
