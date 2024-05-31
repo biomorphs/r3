@@ -43,15 +43,9 @@ namespace R3
 		m_jobPools[poolType]->PushJob(std::move(fn));
 	}
 
-	void JobSystem::ProcessJobImmediate()
+	void JobSystem::ProcessJobImmediate(ThreadPool pooltype)
 	{
-		for (int i = 0; i < m_jobPools.size(); ++i)
-		{
-			if (m_jobPools[i]->RunJobImmediate())
-			{
-				return;
-			}
-		}
+		m_jobPools[static_cast<int>(pooltype)]->RunJobImmediate();
 	}
 
 	void JobSystem::ForEachAsync(ThreadPool poolType, int start, int end, int step, int stepsPerJob, ForEachJobFn fn)
@@ -79,7 +73,7 @@ namespace R3
 			R3_PROF_STALL("WaitForResults");
 			while (jobsRemaining > 0)
 			{
-				ProcessJobImmediate();
+				ProcessJobImmediate(poolType);
 			}
 		}
 	}

@@ -14,20 +14,3 @@
 		- build + run install (release)
 5. Run setup-msvc.bat
 	Open build/R3.sln
-	
-### Goals
- - simple installation/setup
- - most/all middleware should be hooked up with vcpkg
-	- glm, SDL2, Lua, Sol, Vulkan, Imgui, Json, Assimp, etc
- - job system/thread pool with per-thread masks
-	- frame described using frame graph
- - simplified systems API
- - asset loading/baking
-	- json metadata + binary data
- - vulkan renderer
-	- tiled light culling
-	- deferred PBR lighting
-	- multiple shadow maps
-	- SSAO
-	- debug renderer (lines)
-	- text rendering

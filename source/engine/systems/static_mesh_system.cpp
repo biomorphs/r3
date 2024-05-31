@@ -1,4 +1,5 @@
 #include "static_mesh_system.h"
+#include "engine/systems/texture_system.h"
 #include "render/render_system.h"
 #include "render/device.h"
 #include "model_data_system.h"
@@ -151,6 +152,7 @@ namespace R3
 		auto prepMeshData = [this, handle]() {
 			R3_PROF_EVENT("PrepareStaticMeshForUpload");
 			auto mdata = Systems::GetSystem<ModelDataSystem>()->GetModelData(handle);
+			auto textures = Systems::GetSystem<TextureSystem>();
 			auto& m = mdata.m_data;
 
 			LogInfo("Model {} contains {} verts, {} indices",
@@ -186,6 +188,14 @@ namespace R3
 					md.m_albedoOpacity = { m->m_materials[mat].m_albedo, m->m_materials[mat].m_opacity };
 					md.m_metallic = m->m_materials[mat].m_metallic;
 					md.m_roughness = m->m_materials[mat].m_roughness;
+
+					// what do we do with the textures?
+					// do we use the handle ID to reference them globally?
+					//	in which case any unloaded textures still need an entry gpu-side
+					for (const auto& diffTex : m->m_materials[mat].m_diffuseMaps)
+					{
+						textures->LoadTexture(diffTex);
+					}
 				}
 				if (gpuIndex != -1)
 				{

@@ -86,7 +86,7 @@ namespace R3
 			R3_PROF_STALL("Wait for completion");
 			while (jobRunCount > 0)
 			{
-				jobs->ProcessJobImmediate();
+				jobs->ProcessJobImmediate(JobSystem::ThreadPool::FastJobs);
 			}
 		}
 		

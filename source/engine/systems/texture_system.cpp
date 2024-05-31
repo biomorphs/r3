@@ -26,7 +26,7 @@ namespace R3
 	TextureHandle TextureSystem::LoadTexture(std::string path)
 	{
 		R3_PROF_EVENT();
-		auto actualPath = FileIO::SanitisePath(path);
+		auto actualPath = path;	// FileIO::SanitisePath(path);
 		if (actualPath.empty())
 		{
 			return TextureHandle::Invalid();
@@ -44,7 +44,7 @@ namespace R3
 		TextureHandle newHandle;
 		{
 			ScopedLock lock(m_texturesMutex);
-			m_textures.push_back({ path });
+			m_textures.push_back({ actualPath });
 			newHandle = TextureHandle{ static_cast<uint32_t>(m_textures.size() - 1) };
 		}
 
@@ -67,8 +67,7 @@ namespace R3
 	bool TextureSystem::ProcessLoadedTextures()
 	{
 		R3_PROF_EVENT();
-		ScopedLock lock(m_texturesMutex);
-
+		ScopedLock lock(m_texturesMutex);	// is this a good idea???
 		LoadedTexture t;
 		while (m_loadedTextures.try_dequeue(t))
 		{
@@ -77,6 +76,7 @@ namespace R3
 			dst.m_width = t.m_width;
 			dst.m_height = t.m_height;
 			dst.m_channels = t.m_channels;
+			LogInfo("Texture {} loaded, about to free {} bytes", dst.m_name, t.m_data.size());
 		}
 		return true;
 	}

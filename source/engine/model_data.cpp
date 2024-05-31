@@ -132,7 +132,15 @@ namespace R3
 		}
 	}
 
-	bool ParseMaterials(const aiScene* scene, ModelData& result)
+	// material texture paths are relative to the model path (or absolute, yuk)
+	// we want to get a path from the data root to the texture via the model path
+	std::string FixupTexturePath(const std::filesystem::path& modelPath, std::string texturePath)
+	{
+		auto texPath = modelPath.parent_path().append(texturePath);
+		return FileIO::SanitisePath(texPath.string());
+	}
+
+	bool ParseMaterials(const std::filesystem::path& modelPathAbsolute, const aiScene* scene, ModelData& result)
 	{
 		R3_PROF_EVENT();
 		if (scene->HasMaterials())
@@ -147,7 +155,7 @@ namespace R3
 				{
 					aiString texturePath;
 					sceneMat->GetTexture(aiTextureType_DIFFUSE, t, &texturePath);
-					newMaterial.m_diffuseMaps.push_back(texturePath.C_Str());
+					newMaterial.m_diffuseMaps.push_back(FixupTexturePath(modelPathAbsolute, texturePath.C_Str()));
 				}
 				// normal maps
 				uint32_t normalTextureCount = sceneMat->GetTextureCount(aiTextureType_NORMALS);
@@ -155,7 +163,7 @@ namespace R3
 				{
 					aiString texturePath;
 					sceneMat->GetTexture(aiTextureType_NORMALS, t, &texturePath);
-					newMaterial.m_normalMaps.push_back(texturePath.C_Str());
+					newMaterial.m_normalMaps.push_back(FixupTexturePath(modelPathAbsolute, texturePath.C_Str()));
 				}
 
 				aiColor3D albedo(0.f, 0.f, 0.f);
@@ -220,7 +228,7 @@ namespace R3
 		{
 			R3_PROF_EVENT("Parse");
 			glm::mat4 nodeTransform = ToGlmMatrix(scene->mRootNode->mTransformation);
-			ParseMaterials(scene, result);
+			ParseMaterials(absolutePath, scene, result);
 			ParseSceneNode(scene, scene->mRootNode, result, nodeTransform);
 			CalculateAABB(result, result.m_boundsMin, result.m_boundsMax);
 		}
