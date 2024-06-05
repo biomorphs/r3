@@ -43,6 +43,11 @@ namespace R3
 		return m_fixedUpdateInterpolation;
 	}
 
+	uint64_t TimeSystem::GetFrameIndex() const
+	{
+		return m_frameIndex;
+	}
+
 	bool TimeSystem::OnFrameStart()
 	{
 		R3_PROF_EVENT();
@@ -52,7 +57,7 @@ namespace R3
 			m_thisFrameTickTime = m_firstTickTime;
 			m_firstTick = false;
 		}
-
+		m_frameIndex++;
 		m_lastTickTime = m_thisFrameTickTime;
 		m_thisFrameTickTime = R3::Time::HighPerformanceCounterTicks();
 		uint64_t elapsed = m_thisFrameTickTime - m_lastTickTime;

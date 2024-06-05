@@ -17,6 +17,7 @@ namespace R3
 		double GetFixedUpdateCatchupTime() const;	// how much time does fixed update need to catch up
 		double GetFixedUpdateDelta() const;			// fixed update delta time
 		double GetFixedUpdateInterpolation() const;	// GetFixedUpdateCatchupTime / GetFixedUpdateDelta
+		uint64_t GetFrameIndex() const;				// Global frame counter
 
 	private:
 		bool OnFrameStart();		// call this early in frame
@@ -24,6 +25,7 @@ namespace R3
 		uint64_t m_initTime = 0;
 		uint64_t m_firstTickTime = 0;
 		uint64_t m_lastTickTime = 0;
+		uint64_t m_frameIndex = 0;	// a frame counter
 		uint64_t m_thisFrameTickTime = 0;
 		uint64_t m_fixedUpdateCatchup = 0;
 		uint64_t m_fixedUpdateDeltaTime = 0;

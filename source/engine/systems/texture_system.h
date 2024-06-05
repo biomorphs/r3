@@ -7,36 +7,29 @@
 
 namespace R3
 {
+	class Device;
 	class TextureSystem : public System
 	{
 	public:
+		TextureSystem();
+		virtual ~TextureSystem();
 		static std::string_view GetName() { return "Textures"; }
 		virtual void RegisterTickFns();
-
+		
 		TextureHandle LoadTexture(std::string path);
 
 	private:
-		struct TextureDesc {
-			std::string m_name;	// can be a path or a user-defined name
-			uint32_t m_width = 0;
-			uint32_t m_height = 0;
-			uint32_t m_channels = 0;
-		};
-		struct LoadedTexture
-		{
-			TextureHandle m_destination;
-			std::vector<uint8_t> m_data;
-			uint32_t m_width;
-			uint32_t m_height;
-			uint32_t m_channels;
-		};
+		struct TextureDesc;
+		struct LoadedTexture;
 
-		bool ProcessLoadedTextures();
+		void Shutdown();
+		bool ProcessLoadedTextures(Device& d, struct VkCommandBuffer_T* cmdBuffer);
 		bool ShowGui();
 		bool LoadTextureInternal(std::string_view path, TextureHandle targetHandle);
 		TextureHandle FindExistingMatchingName(std::string name);	// locks the mutex
 
 		moodycamel::ConcurrentQueue<std::unique_ptr<LoadedTexture>> m_loadedTextures;
+		std::atomic<int> m_texturesLoading = 0;
 
 		Mutex m_texturesMutex;
 		std::vector<TextureDesc> m_textures;

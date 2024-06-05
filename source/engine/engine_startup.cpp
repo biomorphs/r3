@@ -92,7 +92,6 @@ namespace R3
 		{
 			auto& render = runRenderAndGC.AddSequence("Render");
 			{
-				render.AddFn("Textures::ProcessLoaded");
 				render.AddFn("Cameras::PreRenderUpdate");
 				render.AddFn("Render::DrawFrame");
 			}

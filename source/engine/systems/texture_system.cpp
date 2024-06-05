@@ -1,6 +1,10 @@
 #include "texture_system.h"
 #include "job_system.h"
 #include "engine/imgui_menubar_helper.h"
+#include "render/vulkan_helpers.h"
+#include "render/render_system.h"
+#include "render/buffer_pool.h"
+#include "render/device.h"
 #include "core/profiler.h"
 #include "core/file_io.h"
 #include "core/log.h"
@@ -14,15 +18,48 @@
 
 namespace R3
 {
+	struct TextureSystem::TextureDesc 
+	{
+		std::string m_name;	// can be a path or a user-defined name
+		uint32_t m_width = 0;
+		uint32_t m_height = 0;
+		uint32_t m_channels = 0;
+		VkImage m_image = VK_NULL_HANDLE;
+		VmaAllocation m_allocation = nullptr;
+		VkImageView m_imageView = VK_NULL_HANDLE;
+	};
+
+	struct TextureSystem::LoadedTexture
+	{
+		TextureHandle m_destination;
+		uint32_t m_width = 0;
+		uint32_t m_height = 0;
+		uint32_t m_channels = 0;
+		PooledBuffer m_stagingBuffer;
+		VkImage m_image = VK_NULL_HANDLE;
+		VmaAllocation m_allocation = nullptr;
+		VkImageView m_imageView = VK_NULL_HANDLE;
+	};
+
 	void TextureSystem::RegisterTickFns()
 	{
 		R3_PROF_EVENT();
 		RegisterTick("Textures::ShowGui", [this]() {
 			return ShowGui();
 		});
-		RegisterTick("Textures::ProcessLoaded", [this]() {
-			return ProcessLoadedTextures();
+
+		auto render = GetSystem<RenderSystem>();
+		render->m_onMainPassBegin.AddCallback([this](Device& d, VkCommandBuffer_T* cmdBuffer) {
+			ProcessLoadedTextures(d, cmdBuffer);
 		});
+	}
+
+	TextureSystem::~TextureSystem()
+	{
+	}
+
+	TextureSystem::TextureSystem()
+	{
 	}
 
 	TextureHandle TextureSystem::LoadTexture(std::string path)
@@ -60,31 +97,57 @@ namespace R3
 			{
 				LogError("Failed to load texture {}", actualPath);
 			}
+			m_texturesLoading--;
 		};
+		m_texturesLoading++;
 		GetSystem<JobSystem>()->PushJob(JobSystem::SlowJobs, loadTextureJob);
 
 		return TextureHandle();
 	}
 
-	bool TextureSystem::ProcessLoadedTextures()
+	void TextureSystem::Shutdown()
 	{
 		R3_PROF_EVENT();
+		auto device = GetSystem<RenderSystem>()->GetDevice();
+		while (m_texturesLoading > 0)	// wait for all texture loads to finish
+		{
+			GetSystem<JobSystem>()->ProcessJobImmediate(JobSystem::SlowJobs);
+		}
+
+		{
+			ScopedLock lock(m_texturesMutex);
+			for (int t = 0; t < m_textures.size(); ++t)
+			{
+				vkDestroyImageView(device->GetVkDevice(), m_textures[t].m_imageView, nullptr);
+				vmaDestroyImage(device->GetVMA(), m_textures[t].m_image, m_textures[t].m_allocation);
+			}
+		}
+	}
+
+	bool TextureSystem::ProcessLoadedTextures(Device& d, VkCommandBuffer_T* cmdBuffer)
+	{
+		R3_PROF_EVENT();
+		auto render = GetSystem<RenderSystem>();
 		ScopedLock lock(m_texturesMutex);	// is this a good idea???
 		std::unique_ptr<LoadedTexture> t;
 		while (m_loadedTextures.try_dequeue(t))
 		{
-			assert(t.m_destination.m_index != -1 && t.m_destination.m_index < m_textures.size());
+			assert(t->m_destination.m_index != -1 && t->m_destination.m_index < m_textures.size());
 			auto& dst = m_textures[t->m_destination.m_index];
 			dst.m_width = t->m_width;
 			dst.m_height = t->m_height;
 			dst.m_channels = t->m_channels;
-			LogInfo("Texture {} loaded, about to free {} bytes", dst.m_name, t->m_data.size());
-			// take ownership of the ptr and delete it ourselves
-			LoadedTexture* dataToFree = t.release();
-			GetSystem<JobSystem>()->PushJob(JobSystem::SlowJobs, [dataToFree]() {
-				R3_PROF_EVENT("DeleteLoadedTexture");
-				delete dataToFree;
-			});
+			dst.m_allocation = t->m_allocation;
+			dst.m_image = t->m_image;
+			dst.m_imageView = t->m_imageView;
+
+			// todo, kick off transfer from staging -> actual image via graphics cmd buffer + image transition
+			// pipeline barrier?
+			// todo, update global textures descriptor set ready for drawing
+
+			LogInfo("Texture {} loaded", dst.m_name);
+
+			render->GetStagingBufferPool()->Release(t->m_stagingBuffer);
 		}
 		return true;
 	}
@@ -120,33 +183,65 @@ namespace R3
 	bool TextureSystem::LoadTextureInternal(std::string_view path, TextureHandle targetHandle)
 	{
 		R3_PROF_EVENT();
+		auto render = GetSystem<RenderSystem>();
+		auto device = render->GetDevice();
+
 		stbi_set_flip_vertically_on_load(true);		// do we need this with vulkan?
 
-		// load as 8-bit per channel image by default
+		// load as 8-bit RGBA image by default
 		//	we need to call stbi_loadf to load floating point, or stbi_load_16 for half float
-		int w, h, components;
-		unsigned char* rawData = stbi_load(path.data(), &w, &h, &components, 0);
+		int w, h, components;	// components is ignored, we always load rgba
+		unsigned char* rawData = stbi_load(path.data(), &w, &h, &components, 4);
 		if (rawData == nullptr)
 		{
 			LogError("Failed to load texture file '{}'", path);
 			return false;
 		}
+		// Todo (maybe) - generate mips on cpu?
 
-		// Copy the texture data to our own buffer to free up stbi memory
-		const size_t imgDataSize = w * h * components * sizeof(uint8_t);
+		// get a staging buffer + copy the data to it
 		auto loadedData = std::make_unique<LoadedTexture>();
+		const size_t stagingSize = w * h * 4 * sizeof(uint8_t);
+		auto stagingBuffer = render->GetStagingBufferPool()->GetBuffer(stagingSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO);
+		if (!stagingBuffer.has_value())
 		{
-			R3_PROF_EVENT("CopyImageData");
-			loadedData->m_data.resize(imgDataSize);
-			memcpy(loadedData->m_data.data(), rawData, imgDataSize);
+			LogError("Failed to get staging buffer of size {}", stagingSize);
+			return false;
+		}
+		{
+			R3_PROF_EVENT("CopyToStaging");
+			memcpy(stagingBuffer->m_mappedBuffer, rawData, stagingSize);
 		}
 		stbi_image_free(rawData);
+		loadedData->m_stagingBuffer = std::move(*stagingBuffer);
+		
+		// Create the vulkan image and image-view now
+		VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+		VkExtent3D extents = {
+			(uint32_t)w, (uint32_t)h, 1
+		};
+		auto imageCreateInfo = VulkanHelpers::CreateImage2DNoMSAANoMips(VK_FORMAT_R8G8B8A8_UNORM, usage, extents);
+		VmaAllocationCreateInfo allocInfo = { };
+		allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+		allocInfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);	// fast gpu memory
+		auto r = vmaCreateImage(device->GetVMA(), &imageCreateInfo, &allocInfo, &loadedData->m_image, &loadedData->m_allocation, nullptr);
+		if (!VulkanHelpers::CheckResult(r))
+		{
+			LogError("Failed to allocate memory for texture {}", path);
+			return false;
+		}
+		auto viewCreateInfo = VulkanHelpers::CreateImageView2DNoMSAANoMips(VK_FORMAT_R8G8B8A8_UNORM, loadedData->m_image, VK_IMAGE_ASPECT_COLOR_BIT);
+		r = vkCreateImageView(device->GetVkDevice(), &viewCreateInfo, nullptr, &loadedData->m_imageView);
+		if (!VulkanHelpers::CheckResult(r))
+		{
+			LogError("Failed to create image view for texture {}", path);
+			return false;
+		}
 		loadedData->m_destination = targetHandle;
 		loadedData->m_width = w;
 		loadedData->m_height = h;
-		loadedData->m_channels = components;
+		loadedData->m_channels = 4;
 		m_loadedTextures.enqueue(std::move(loadedData));
-
 		return true;
 	}
 

@@ -17,6 +17,7 @@
 #include "engine/components/environment_settings.h"
 #include "engine/model_data.h"
 #include "vulkan_helpers.h"
+#include "buffer_pool.h"
 #include "pipeline_builder.h"
 #include <vulkan/vulkan.h>
 #include <vulkan/vk_enum_string_helper.h>
@@ -79,6 +80,10 @@ namespace R3
 	RenderSystem::RenderSystem()
 	{
 		m_vk = std::make_unique<VkStuff>();
+		m_stagingBuffers = std::make_unique<BufferPool>();
+		m_mainDeleters.PushDeleter([this]() {
+			m_stagingBuffers = nullptr;
+		});
 	}
 
 	RenderSystem::~RenderSystem()
@@ -281,6 +286,16 @@ namespace R3
 	VkFormat RenderSystem::GetMainDepthStencilFormat()
 	{
 		return m_vk->m_depthBufferFormat;
+	}
+
+	Device* RenderSystem::GetDevice()
+	{
+		return m_device.get();
+	}
+
+	BufferPool* RenderSystem::GetStagingBufferPool()
+	{
+		return m_stagingBuffers.get();
 	}
 
 	void RenderSystem::RegisterTickFns()

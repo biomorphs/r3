@@ -13,6 +13,7 @@ namespace R3
 	class Window;
 	class Swapchain;
 	class ImmediateRenderer;
+	class BufferPool;
 	class RenderSystem : public System
 	{
 	public:
@@ -26,6 +27,8 @@ namespace R3
 		ImmediateRenderer& GetImRenderer() { return *m_imRenderer; }
 		VkFormat GetMainColourTargetFormat();
 		VkFormat GetMainDepthStencilFormat();
+		Device* GetDevice();
+		BufferPool* GetStagingBufferPool();
 
 		// Called from imgui system
 		bool InitImGui();
@@ -69,6 +72,7 @@ namespace R3
 		std::unique_ptr<Device> m_device;
 		std::unique_ptr<Swapchain> m_swapChain;
 		std::unique_ptr<ImmediateRenderer> m_imRenderer;
+		std::unique_ptr<BufferPool> m_stagingBuffers;
 		struct VkStuff;
 		std::unique_ptr<VkStuff> m_vk;
 		glm::vec4 m_mainPassClearColour = { 0,0,0,1 };
