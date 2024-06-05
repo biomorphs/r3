@@ -8,7 +8,9 @@
 #include "core/profiler.h"
 #include "core/file_io.h"
 #include "core/log.h"
+#include <vulkan/vulkan.h>
 #include <imgui.h>
+#include <imgui_impl_vulkan.h>
 #include <cassert>
 
 // STB IMAGE linkage
@@ -27,6 +29,7 @@ namespace R3
 		VkImage m_image = VK_NULL_HANDLE;
 		VmaAllocation m_allocation = nullptr;
 		VkImageView m_imageView = VK_NULL_HANDLE;
+		VkDescriptorSet m_imGuiDescSet = VK_NULL_HANDLE;	// used to draw textures via imgui
 	};
 
 	struct TextureSystem::LoadedTexture
@@ -52,6 +55,9 @@ namespace R3
 		render->m_onMainPassBegin.AddCallback([this](Device& d, VkCommandBuffer_T* cmdBuffer) {
 			ProcessLoadedTextures(d, cmdBuffer);
 		});
+		render->m_onShutdownCbs.AddCallback([this](Device& d) {
+			Shutdown(d);
+		});
 	}
 
 	TextureSystem::~TextureSystem()
@@ -62,10 +68,30 @@ namespace R3
 	{
 	}
 
+	bool TextureSystem::Init()
+	{
+		R3_PROF_EVENT();
+
+		auto render = GetSystem<RenderSystem>();
+		VkSamplerCreateInfo sampler = {};
+		sampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		sampler.magFilter = VK_FILTER_LINEAR;
+		sampler.minFilter = VK_FILTER_LINEAR;
+		sampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		sampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		if (!VulkanHelpers::CheckResult(vkCreateSampler(render->GetDevice()->GetVkDevice(), &sampler, nullptr, &m_imguiSampler)))
+		{
+			LogError("Failed to create sampler");
+			return false;
+		}
+
+		return true;
+	}
+
 	TextureHandle TextureSystem::LoadTexture(std::string path)
 	{
 		R3_PROF_EVENT();
-		auto actualPath = path;	// FileIO::SanitisePath(path);
+		auto actualPath = FileIO::SanitisePath(path);
 		if (actualPath.empty())
 		{
 			return TextureHandle::Invalid();
@@ -105,10 +131,9 @@ namespace R3
 		return TextureHandle();
 	}
 
-	void TextureSystem::Shutdown()
+	void TextureSystem::Shutdown(Device& d)
 	{
 		R3_PROF_EVENT();
-		auto device = GetSystem<RenderSystem>()->GetDevice();
 		while (m_texturesLoading > 0)	// wait for all texture loads to finish
 		{
 			GetSystem<JobSystem>()->ProcessJobImmediate(JobSystem::SlowJobs);
@@ -118,17 +143,22 @@ namespace R3
 			ScopedLock lock(m_texturesMutex);
 			for (int t = 0; t < m_textures.size(); ++t)
 			{
-				vkDestroyImageView(device->GetVkDevice(), m_textures[t].m_imageView, nullptr);
-				vmaDestroyImage(device->GetVMA(), m_textures[t].m_image, m_textures[t].m_allocation);
+				if (m_textures[t].m_imGuiDescSet != VK_NULL_HANDLE)
+				{
+					ImGui_ImplVulkan_RemoveTexture(m_textures[t].m_imGuiDescSet);
+				}
+				vkDestroyImageView(d.GetVkDevice(), m_textures[t].m_imageView, nullptr);
+				vmaDestroyImage(d.GetVMA(), m_textures[t].m_image, m_textures[t].m_allocation);
 			}
 		}
+		vkDestroySampler(d.GetVkDevice(), m_imguiSampler, nullptr);
 	}
 
 	bool TextureSystem::ProcessLoadedTextures(Device& d, VkCommandBuffer_T* cmdBuffer)
 	{
 		R3_PROF_EVENT();
 		auto render = GetSystem<RenderSystem>();
-		ScopedLock lock(m_texturesMutex);	// is this a good idea???
+		ScopedLock lock(m_texturesMutex);
 		std::unique_ptr<LoadedTexture> t;
 		while (m_loadedTextures.try_dequeue(t))
 		{
@@ -179,7 +209,7 @@ namespace R3
 
 			// todo, update global textures descriptor set ready for drawing
 
-			LogInfo("Texture {} loaded", dst.m_name);
+			dst.m_imGuiDescSet = ImGui_ImplVulkan_AddTexture(m_imguiSampler, dst.m_imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 			render->GetStagingBufferPool()->Release(t->m_stagingBuffer);
 		}
@@ -204,8 +234,13 @@ namespace R3
 					ImGui::Text(txt.c_str());
 					for (const auto& t : m_textures)
 					{
+						if (t.m_imGuiDescSet != VK_NULL_HANDLE)
+						{
+							ImVec2 size((float)t.m_width * 0.25f, (float)t.m_height * 0.25f);
+							ImGui::Image(t.m_imGuiDescSet, size);
+						}
 						txt = std::format("{} ({}x{}x{}", t.m_name, t.m_width, t.m_height, t.m_channels);
-						ImGui::Text(txt.c_str());
+						ImGui::SeparatorText(txt.c_str());
 					}
 				}
 			}

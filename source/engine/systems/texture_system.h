@@ -6,6 +6,7 @@
 #include <concurrentqueue/concurrentqueue.h>
 
 struct VkCommandBuffer_T;
+struct VkSampler_T;
 namespace R3
 {
 	class Device;
@@ -16,6 +17,7 @@ namespace R3
 		virtual ~TextureSystem();
 		static std::string_view GetName() { return "Textures"; }
 		virtual void RegisterTickFns();
+		virtual bool Init();
 		
 		TextureHandle LoadTexture(std::string path);
 
@@ -23,7 +25,7 @@ namespace R3
 		struct TextureDesc;
 		struct LoadedTexture;
 
-		void Shutdown();
+		void Shutdown(Device& d);
 		bool ProcessLoadedTextures(Device& d, VkCommandBuffer_T* cmdBuffer);
 		bool ShowGui();
 		bool LoadTextureInternal(std::string_view path, TextureHandle targetHandle);
@@ -35,6 +37,7 @@ namespace R3
 		Mutex m_texturesMutex;
 		std::vector<TextureDesc> m_textures;
 
+		VkSampler_T* m_imguiSampler = nullptr;
 		bool m_showGui = false;
 	};
 }

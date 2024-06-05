@@ -21,6 +21,7 @@ namespace R3
 		for (int r = 0; r < m_releasedBuffers.size(); ++r)
 		{
 			auto& buf = m_releasedBuffers[r];
+			vmaUnmapMemory(d->GetVMA(), buf.m_pooledBuffer.m_buffer.m_allocation);
 			vmaDestroyBuffer(d->GetVMA(), buf.m_pooledBuffer.m_buffer.m_buffer, buf.m_pooledBuffer.m_buffer.m_allocation);
 		}
 	}
@@ -83,6 +84,7 @@ namespace R3
 				totalBytes += buf.m_pooledBuffer.sizeBytes;
 				if (totalBytes > m_totalBudget && buf.m_frameReleased + c_framesBeforeAvailable < frameIndex)
 				{
+					vmaUnmapMemory(d.GetVMA(), buf.m_pooledBuffer.m_buffer.m_allocation);
 					vmaDestroyBuffer(d.GetVMA(), buf.m_pooledBuffer.m_buffer.m_buffer, buf.m_pooledBuffer.m_buffer.m_allocation);
 					m_releasedBuffers.erase(m_releasedBuffers.begin() + r);
 					return;
