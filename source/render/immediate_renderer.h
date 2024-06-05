@@ -8,6 +8,7 @@ namespace R3
 	class Device;
 	class Swapchain;
 	class Frustum;
+	class BufferPool;
 
 	// handles a dynamic vertex buffer of triangles + draw calls
 	class ImmediateRenderer
@@ -24,7 +25,7 @@ namespace R3
 		bool Initialise(Device& d, VkFormat colourBufferFormat, VkFormat depthBufferFormat, uint32_t maxVerticesPerFrame = 1024 * 256);
 		void Destroy(Device& d);
 		
-		void WriteVertexData(Device& d, VkCommandBuffer& cmdBuffer);	// call this before calling draw! must be called outside of rendering
+		void WriteVertexData(Device& d, BufferPool& stagingBuffers, VkCommandBuffer& cmdBuffer);	// call this before calling draw! must be called outside of rendering
 		void Draw(glm::mat4 vertexToScreen, Device& d, VkExtent2D viewportSize, VkCommandBuffer& cmdBuffer);
 		void Flush();	// call at end of frame, clears out previous tri data
 
@@ -52,8 +53,6 @@ namespace R3
 		size_t m_maxVertices = 0;
 		AllocatedBuffer m_allVertexData;		// contains c_framesInFlight x max vertices
 		VkDeviceAddress m_allvertsBufferAddress;
-		AllocatedBuffer m_stagingVertexData;	// contains max vertices for 1 frame, host visible, coherant
-		void* m_mappedStagingBuffer = nullptr;
 		std::vector<PerVertexData> m_thisFrameVertices;
 		std::vector<DrawData> m_thisFrameTriangles;
 		std::vector<DrawData> m_thisFrameLines;

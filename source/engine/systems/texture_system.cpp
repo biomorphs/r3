@@ -141,8 +141,42 @@ namespace R3
 			dst.m_image = t->m_image;
 			dst.m_imageView = t->m_imageView;
 
-			// todo, kick off transfer from staging -> actual image via graphics cmd buffer + image transition
-			// pipeline barrier?
+			// transition the newly loaded image to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+			auto transferbarrier = VulkanHelpers::MakeImageBarrier(dst.m_image,
+				VK_IMAGE_ASPECT_COLOR_BIT,
+				VK_ACCESS_NONE,
+				VK_ACCESS_TRANSFER_WRITE_BIT,
+				VK_IMAGE_LAYOUT_UNDEFINED,
+				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+			);
+			// VK_PIPELINE_STAGE_TRANSFER_BIT = any time before transfers run
+			vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &transferbarrier);
+
+			// now copy from staging to the final image
+			VkBufferImageCopy copyRegion = {};
+			copyRegion.bufferOffset = 0;
+			copyRegion.bufferRowLength = 0;
+			copyRegion.bufferImageHeight = 0;
+			copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			copyRegion.imageSubresource.mipLevel = 0;
+			copyRegion.imageSubresource.baseArrayLayer = 0;
+			copyRegion.imageSubresource.layerCount = 1;
+			copyRegion.imageExtent = { dst.m_width, dst.m_height, 1 };
+
+			// copy the buffer into the image
+			vkCmdCopyBufferToImage(cmdBuffer, t->m_stagingBuffer.m_buffer.m_buffer, dst.m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
+				&copyRegion);
+
+			// now transition to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL after the transfer completes + before fragment shader
+			auto readbarrier = VulkanHelpers::MakeImageBarrier(dst.m_image,
+				VK_IMAGE_ASPECT_COLOR_BIT,
+				VK_ACCESS_TRANSFER_WRITE_BIT,
+				VK_ACCESS_SHADER_READ_BIT,
+				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+			);
+			vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &readbarrier);
+
 			// todo, update global textures descriptor set ready for drawing
 
 			LogInfo("Texture {} loaded", dst.m_name);

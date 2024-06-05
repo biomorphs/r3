@@ -127,7 +127,7 @@ namespace R3
 		m_onMainPassBegin.Run(*m_device, cmdBuffer);
 
 		// push immediate renderer vertices to gpu outside of render pass 
-		m_imRenderer->WriteVertexData(*m_device, cmdBuffer);
+		m_imRenderer->WriteVertexData(*m_device, *m_stagingBuffers.get(), cmdBuffer);
 
 		// pipeline dynamic state
 		VkViewport viewport = { 0 };

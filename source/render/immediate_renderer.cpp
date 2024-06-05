@@ -3,6 +3,7 @@
 #include "device.h"
 #include "swap_chain.h"
 #include "pipeline_builder.h"
+#include "buffer_pool.h"
 #include "engine/frustum.h"
 #include "core/log.h"
 #include "core/profiler.h"
@@ -243,37 +244,48 @@ namespace R3
 		AddLine(verts);
 	}
 
-	void ImmediateRenderer::WriteVertexData(Device& d, VkCommandBuffer& cmdBuffer)
+	void ImmediateRenderer::WriteVertexData(Device& d, BufferPool& stagingBuffers, VkCommandBuffer& cmdBuffer)
 	{
 		R3_PROF_EVENT();
 		auto& pfd = m_perFrameData[m_currentFrameIndex];
 		size_t dataToCopy = glm::min(m_maxVertices, m_thisFrameVertices.size()) * sizeof(PerVertexData);
 		if (dataToCopy > 0)
 		{
-			// host write is coherant, so no flush is required, just memcpy the current frame data
-			// the write is guaranteed to complete when the cmd buffer is submitted to the queue
-			memcpy(m_mappedStagingBuffer, m_thisFrameVertices.data(), dataToCopy);
+			auto staging = stagingBuffers.GetBuffer(dataToCopy, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO);
+			if (staging)
+			{
+				// host write is coherant, so no flush is required, just memcpy the current frame data
+				// the write is guaranteed to complete when the cmd buffer is submitted to the queue
+				memcpy(staging->m_mappedBuffer, m_thisFrameVertices.data(), dataToCopy);
 
-			// now we need to copy the data from staging to the actual buffer using the graphics queue
-			VkBufferCopy copyRegion{};
-			copyRegion.srcOffset = 0;
-			copyRegion.dstOffset = pfd.m_vertexOffset * sizeof(PerVertexData);
-			copyRegion.size = dataToCopy;	// may need to adjust for alignment?
-			vkCmdCopyBuffer(cmdBuffer, m_stagingVertexData.m_buffer, m_allVertexData.m_buffer, 1, &copyRegion);
+				// now we need to copy the data from staging to the actual buffer using the graphics queue
+				VkBufferCopy copyRegion{};
+				copyRegion.srcOffset = 0;
+				copyRegion.dstOffset = pfd.m_vertexOffset * sizeof(PerVertexData);
+				copyRegion.size = dataToCopy;	// may need to adjust for alignment?
+				vkCmdCopyBuffer(cmdBuffer, staging->m_buffer.m_buffer, m_allVertexData.m_buffer, 1, &copyRegion);
 
-			// use a memory barrier to ensure the transfer finishes before we draw
-			VkMemoryBarrier writeBarrier = { 0 };
-			writeBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-			writeBarrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
-			writeBarrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-			vkCmdPipelineBarrier(cmdBuffer,
-				VK_PIPELINE_STAGE_TRANSFER_BIT,		// src stage = transfer
-				VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,	// dst stage = vertex shader input
-				0,									// dependency flags
-				1,
-				&writeBarrier,
-				0, nullptr, 0, nullptr
-			);
+				// use a memory barrier to ensure the transfer finishes before we draw
+				VkMemoryBarrier writeBarrier = { 0 };
+				writeBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+				writeBarrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
+				writeBarrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+				vkCmdPipelineBarrier(cmdBuffer,
+					VK_PIPELINE_STAGE_TRANSFER_BIT,		// src stage = transfer
+					VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,	// dst stage = vertex shader input
+					0,									// dependency flags
+					1,
+					&writeBarrier,
+					0, nullptr, 0, nullptr
+				);
+
+				// release the staging buffer, we are done
+				stagingBuffers.Release(*staging);
+			}
+			else
+			{
+				LogError("Failed to allocate staging buffer");
+			}
 		}
 	}
 
@@ -417,20 +429,6 @@ namespace R3
 			LogError("Failed to create vertex buffer of size {} bytes", bufferSize);
 			return false;
 		}
-		m_stagingVertexData = VulkanHelpers::CreateBuffer(d.GetVMA(), maxVerticesPerFrame * sizeof(PerVertexData), 
-			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			VMA_MEMORY_USAGE_AUTO,
-			VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);	// host coherant, write combined)
-		if (m_stagingVertexData.m_allocation == VK_NULL_HANDLE)
-		{
-			LogError("Failed to create staging buffer");
-			return false;
-		}
-		if (!CheckResult(vmaMapMemory(d.GetVMA(), m_stagingVertexData.m_allocation, &m_mappedStagingBuffer)))
-		{
-			LogError("Failed to map staging buffer memory");
-			return false;
-		}
 		m_thisFrameVertices.reserve(maxVerticesPerFrame);
 		m_maxVertices = maxVerticesPerFrame;
 		for (int f = 0; f < c_framesInFlight; ++f)
@@ -472,10 +470,7 @@ namespace R3
 		vkDestroyPipeline(d.GetVkDevice(), m_depthReadDisabledLinesPipeline, nullptr);
 		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayout, nullptr);
 
-		vmaUnmapMemory(d.GetVMA(), m_stagingVertexData.m_allocation);
-
 		// Destroy the vertex buffers
 		vmaDestroyBuffer(d.GetVMA(), m_allVertexData.m_buffer, m_allVertexData.m_allocation);
-		vmaDestroyBuffer(d.GetVMA(), m_stagingVertexData.m_buffer, m_stagingVertexData.m_allocation);
 	}
 }
