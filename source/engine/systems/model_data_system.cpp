@@ -1,5 +1,6 @@
 #include "model_data_system.h"
 #include "engine/async.h"
+#include "engine/imgui_menubar_helper.h"
 #include "core/profiler.h"
 #include <imgui.h>
 #include <format>
@@ -17,6 +18,10 @@ namespace R3
 	bool ModelDataSystem::ShowGui()
 	{
 		R3_PROF_EVENT();
+		auto& debugMenu = MenuBar::MainMenu().GetSubmenu("Debug");
+		debugMenu.AddItem("Model Data", [this]() {
+			m_showGui = !m_showGui;
+		});
 		if (m_showGui)
 		{
 			ImGui::Begin("ModelData", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar);

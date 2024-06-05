@@ -1,4 +1,5 @@
 #include "lights_system.h"
+#include "engine/imgui_menubar_helper.h"
 #include "engine/components/point_light.h"
 #include "engine/components/transform.h"
 #include "entities/world.h"
@@ -8,6 +9,7 @@
 #include "render/immediate_renderer.h"
 #include "core/log.h"
 #include "core/profiler.h"
+#include <imgui.h>
 
 namespace R3
 {
@@ -17,6 +19,9 @@ namespace R3
 
 		RegisterTick("LightsSystem::DrawLightBounds", [this]() {
 			return DrawLightBounds();
+		});
+		RegisterTick("LightsSystem::ShowGui", [this]() {
+			return ShowGui();
 		});
 
 		// Register render functions
@@ -47,6 +52,27 @@ namespace R3
 	uint32_t LightsSystem::GetTotalPointlightsThisFrame()
 	{
 		return m_totalPointlightsThisFrame;
+	}
+
+	bool LightsSystem::ShowGui()
+	{
+		R3_PROF_EVENT();
+		auto& debugMenu = MenuBar::MainMenu().GetSubmenu("Debug");
+		auto& lights = debugMenu.GetSubmenu("Lights");
+		lights.AddItem("Show GUI", [this]() {
+			m_showGui = !m_showGui;
+		});
+		lights.AddItem("Draw Bounds", [this]() {
+			m_drawBounds = !m_drawBounds;
+		});
+		if (m_showGui)
+		{
+			ImGui::Begin("Lights");
+			std::string txt = std::format("Active lights: {}", m_totalPointlightsThisFrame);
+			ImGui::Text(txt.c_str());
+			ImGui::End();
+		}
+		return true;
 	}
 
 	bool LightsSystem::DrawLightBounds()

@@ -1,8 +1,10 @@
 #include "texture_system.h"
 #include "job_system.h"
+#include "engine/imgui_menubar_helper.h"
 #include "core/profiler.h"
 #include "core/file_io.h"
 #include "core/log.h"
+#include <imgui.h>
 #include <cassert>
 
 // STB IMAGE linkage
@@ -90,8 +92,27 @@ namespace R3
 	bool TextureSystem::ShowGui()
 	{
 		R3_PROF_EVENT();
+		auto& debugMenu = MenuBar::MainMenu().GetSubmenu("Debug");
+		debugMenu.AddItem("Textures", [this]() {
+			m_showGui = !m_showGui;
+		});
 		if (m_showGui)
 		{
+			ImGui::Begin("Textures");
+			{
+				ScopedTryLock lock(m_texturesMutex);
+				if (lock.IsLocked())
+				{
+					std::string txt = std::format("{} textures loaded", m_textures.size());
+					ImGui::Text(txt.c_str());
+					for (const auto& t : m_textures)
+					{
+						txt = std::format("{} ({}x{}x{}", t.m_name, t.m_width, t.m_height, t.m_channels);
+						ImGui::Text(txt.c_str());
+					}
+				}
+			}
+			ImGui::End();
 		}
 		return true;
 	}

@@ -22,8 +22,10 @@ namespace R3
 		uint32_t GetFirstPointlightOffset();
 		uint32_t GetTotalPointlightsThisFrame();
 	private:
+		bool ShowGui();
 		bool DrawLightBounds();
 		void OnMainPassBegin(class Device& d, VkCommandBuffer cmds);
+		bool m_showGui = false;
 		bool m_drawBounds = false;
 		uint64_t m_onMainPassBeginToken = -1;
 		const uint32_t c_maxLights = 1024 * 32;

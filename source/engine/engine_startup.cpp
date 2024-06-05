@@ -84,6 +84,8 @@ namespace R3
 				guiUpdate.AddFn("ModelData::ShowGui");
 				guiUpdate.AddFn("StaticMeshSimpleRenderer::ShowGui");
 				guiUpdate.AddFn("Textures::ShowGui");
+				guiUpdate.AddFn("LightsSystem::ShowGui");
+				guiUpdate.AddFn("LuaSystem::ShowGui");
 			}
 		}
 		auto& runRenderAndGC = fg.m_root.AddAsync("RenderAndGC");	// first entry always runs on main thread

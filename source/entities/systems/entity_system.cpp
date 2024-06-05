@@ -1,5 +1,6 @@
 #include "entity_system.h"
 #include "entities/world.h"
+#include "engine/imgui_menubar_helper.h"
 #include "core/profiler.h"
 #include <cassert>
 #include <imgui.h>
@@ -83,6 +84,10 @@ namespace Entities
 
 	bool EntitySystem::ShowGui()
 	{
+		auto& debugMenu = MenuBar::MainMenu().GetSubmenu("Debug");
+		debugMenu.AddItem("Entities", [this]() {
+			m_showGui = !m_showGui;
+		});
 		if (!m_showGui)
 		{
 			return true;

@@ -2,6 +2,7 @@
 #include "static_mesh_system.h"
 #include "camera_system.h"
 #include "lights_system.h"
+#include "engine/imgui_menubar_helper.h"
 #include "engine/components/transform.h"
 #include "engine/components/static_mesh.h"
 #include "engine/components/static_mesh_materials.h"
@@ -82,6 +83,10 @@ namespace R3
 	bool StaticMeshSimpleRenderer::ShowGui()
 	{
 		R3_PROF_EVENT();
+		auto& debugMenu = MenuBar::MainMenu().GetSubmenu("Debug");
+		debugMenu.AddItem("Static Mesh Renderer", [this]() {
+			m_showGui = !m_showGui;
+		});
 		if (m_showGui)
 		{
 			ImGui::Begin("Static Mesh Simple Renderer");

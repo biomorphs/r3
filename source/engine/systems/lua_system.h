@@ -35,11 +35,13 @@ namespace R3
 		void RegisterFunction(std::string_view name, Fn fn, std::string_view nameSpace = "R3");
 
 	private:
+		bool ShowGui();
 		void RegisterBuiltinTypes();
 		bool RunGC();
 		bool RunFixedUpdateScripts();
 		bool RunVariableUpdateScripts();
 		bool InitialiseGlobalState();
+		bool m_showGui = false;
 		Mutex m_globalStateMutex;
 		std::unique_ptr<sol::state> m_globalState;
 	};

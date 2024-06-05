@@ -282,10 +282,10 @@ namespace R3
 		editMenu.AddItem("Redo", [this]() {
 			m_cmds->Redo();
 			}, "", m_cmds->CanRedo());
-		auto& settingsMenu = MenuBar::MainMenu().GetSubmenu("Settings");
-		settingsMenu.AddItem("Show Command List", [this]() {
+		auto& debugMenu = MenuBar::MainMenu().GetSubmenu("Debug");
+		debugMenu.AddItem("Editor Command History", [this]() {
 			m_showCommandsWindow = true;
-			});
+		});
 	}
 
 	void WorldEditorWindow::DrawSideBarLeft(Entities::World* w)

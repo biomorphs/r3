@@ -1,4 +1,5 @@
 #include "job_system.h"
+#include "engine/imgui_menubar_helper.h"
 #include "core/profiler.h"
 #include "core/job_pool.h"
 #include <imgui.h>
@@ -81,6 +82,10 @@ namespace R3
 	bool JobSystem::ShowGui()
 	{
 		R3_PROF_EVENT();
+		auto& debugMenu = MenuBar::MainMenu().GetSubmenu("Debug");
+		debugMenu.AddItem("Job System", [this]() {
+			m_showGui = !m_showGui;
+		});
 		if (m_showGui)
 		{
 			ImGui::Begin("Jobs");

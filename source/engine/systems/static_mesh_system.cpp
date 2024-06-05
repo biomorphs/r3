@@ -4,6 +4,7 @@
 #include "render/device.h"
 #include "model_data_system.h"
 #include "engine/intersection_tests.h"
+#include "engine/imgui_menubar_helper.h"
 #include "engine/components/static_mesh.h"
 #include "engine/components/static_mesh_materials.h"
 #include "engine/components/transform.h"
@@ -290,6 +291,10 @@ namespace R3
 	bool StaticMeshSystem::ShowGui()
 	{
 		R3_PROF_EVENT();
+		auto& debugMenu = MenuBar::MainMenu().GetSubmenu("Debug");
+		debugMenu.AddItem("Static Meshes", [this]() {
+			m_showGui = !m_showGui;
+		});
 		if (m_showGui)
 		{
 			std::string txt;
