@@ -30,7 +30,6 @@ namespace R3
 			LogError("Failed to create VK instance");
 			return false;
 		}
-
 		if (!CreateSurface())
 		{
 			LogError("Failed to create surface");

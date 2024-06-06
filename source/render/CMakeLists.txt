@@ -18,6 +18,8 @@ set(RenderLib_SourceFiles
 	camera.inl
 	buffer_pool.h
 	buffer_pool.cpp
+	descriptors.h
+	descriptors.cpp
 	deletion_queue.h
 	deletion_queue.cpp
 	writeonly_gpu_buffer.h

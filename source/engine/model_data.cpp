@@ -78,7 +78,7 @@ namespace R3
 			auto tangentPadding = (mesh->mTangents != nullptr) ? glm::vec4(mesh->mTangents[v].x, mesh->mTangents[v].y, mesh->mTangents[v].z, 0) : glm::vec4(0);
 			memcpy(newVertex.m_positionU0, glm::value_ptr(posu0), sizeof(float) * 4);
 			memcpy(newVertex.m_normalV0, glm::value_ptr(normalv0), sizeof(float) * 4);
-			memcpy(newVertex.m_tangentPad, glm::value_ptr(tangentPadding), sizeof(float) * 3);
+			memcpy(newVertex.m_tangentPad, glm::value_ptr(tangentPadding), sizeof(float) * 4);
 			boundsMin = glm::min(boundsMin, glm::vec3(posu0));
 			boundsMax = glm::max(boundsMax, glm::vec3(posu0));
 			model.m_vertices.push_back(newVertex);

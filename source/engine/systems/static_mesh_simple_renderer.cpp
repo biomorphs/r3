@@ -2,6 +2,7 @@
 #include "static_mesh_system.h"
 #include "camera_system.h"
 #include "lights_system.h"
+#include "texture_system.h"
 #include "engine/imgui_menubar_helper.h"
 #include "engine/components/transform.h"
 #include "engine/components/static_mesh.h"
@@ -69,12 +70,22 @@ namespace R3
 			Cleanup(d);
 		});
 
+		m_descriptorAllocator = std::make_unique<DescriptorSetSimpleAllocator>();
+		std::vector<VkDescriptorPoolSize> poolSizes = {
+			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1024 * 8}
+		};
+		if (!m_descriptorAllocator->Initialise(*render->GetDevice(), 1024, poolSizes))
+		{
+			LogError("Failed to create descriptor allocator");
+			return false;
+		}
 		return true;
 	}
 
 	void StaticMeshSimpleRenderer::Cleanup(Device& d)
 	{
 		R3_PROF_EVENT();
+		m_descriptorAllocator = {};
 		vkDestroyPipeline(d.GetVkDevice(), m_simpleTriPipeline, nullptr);
 		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayout, nullptr);
 		m_globalConstantsBuffer.Destroy(d);
@@ -98,15 +109,23 @@ namespace R3
 	bool StaticMeshSimpleRenderer::CreatePipelineData(Device& d)
 	{
 		R3_PROF_EVENT();
+
+		auto textures = GetSystem<TextureSystem>();
+
 		// Create pipeline layout
 		VkPushConstantRange constantRange;
 		constantRange.offset = 0;	// needs to match in the shader if >0!
 		constantRange.size = sizeof(PushConstants);
 		constantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo = { 0 };
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipelineLayoutInfo.pushConstantRangeCount = 1;
 		pipelineLayoutInfo.pPushConstantRanges = &constantRange;
+
+		VkDescriptorSetLayout setLayouts{ textures->GetDescriptorsLayout()  };
+		pipelineLayoutInfo.pSetLayouts = &setLayouts;
+		pipelineLayoutInfo.setLayoutCount = 1;
 		if (!VulkanHelpers::CheckResult(vkCreatePipelineLayout(d.GetVkDevice(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout)))
 		{
 			LogInfo("Failed to create pipeline layout");
@@ -207,6 +226,17 @@ namespace R3
 			m_globalConstantsBuffer.Write(m_currentGlobalConstantsBuffer, 1, &globals);
 			m_globalConstantsBuffer.Flush(d, cmds);
 		}
+
+		// write all texture handles to a new global set
+		auto textures = GetSystem<TextureSystem>();
+		m_allTexturesSet = m_descriptorAllocator->Allocate(d, textures->GetDescriptorsLayout());
+		
+		// temp, we dont need to do this with proper bindless (sparse bindings)
+		if (!textures->WriteAllTextureDescriptors(cmds, m_pipelineLayout, m_allTexturesSet))
+		{
+			m_descriptorAllocator->Release(m_allTexturesSet, textures->GetDescriptorsLayout());
+			m_allTexturesSet = nullptr;
+		}
 	}
 
 	void StaticMeshSimpleRenderer::MainPassDraw(Device& d, VkCommandBuffer cmds, const VkExtent2D& e)
@@ -219,6 +249,7 @@ namespace R3
 		auto cameras = GetSystem<CameraSystem>();
 		auto staticMeshes = GetSystem<StaticMeshSystem>();
 		auto entities = Systems::GetSystem<Entities::EntitySystem>();
+		auto textures = GetSystem<TextureSystem>();
 		auto activeWorld = entities->GetActiveWorld();
 		const auto viewProjMat = cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix();
 
@@ -237,6 +268,11 @@ namespace R3
 		vkCmdSetViewport(cmds, 0, 1, &viewport);
 		vkCmdSetScissor(cmds, 0, 1, &scissor);
 		vkCmdBindIndexBuffer(cmds, staticMeshes->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+
+		if (m_allTexturesSet != nullptr)
+		{
+			vkCmdBindDescriptorSets(cmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_allTexturesSet, 0, 0);
+		}
 		
 		// pass the vertex buffer and model-view-proj matrix via push constants for each instance
 		PushConstants pc;
@@ -286,6 +322,11 @@ namespace R3
 				return true;
 			};
 			Entities::Queries::ForEach<StaticMeshComponent, TransformComponent>(activeWorld, forEach);
+		}
+		// now release the current set
+		if (m_allTexturesSet != nullptr)
+		{
+			m_descriptorAllocator->Release(m_allTexturesSet, textures->GetDescriptorsLayout());
 		}
 	}
 }

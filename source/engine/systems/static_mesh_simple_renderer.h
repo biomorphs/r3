@@ -2,6 +2,7 @@
 #include "engine/systems.h"
 #include "render/vulkan_helpers.h"
 #include "render/writeonly_gpu_buffer.h"
+#include "render/descriptors.h"
 
 namespace R3
 {
@@ -22,6 +23,8 @@ namespace R3
 		bool CreatePipelineData(Device&);
 
 		struct GlobalConstants;
+		std::unique_ptr<DescriptorSetSimpleAllocator> m_descriptorAllocator;
+		VkDescriptorSet m_allTexturesSet;	// invalidated/released each frame (copy on write)
 		WriteOnlyGpuArray<GlobalConstants> m_globalConstantsBuffer;
 		const int c_maxGlobalConstantBuffers = 3;	// ring buffer writes to avoid synchronisation
 		int m_currentGlobalConstantsBuffer = 0;

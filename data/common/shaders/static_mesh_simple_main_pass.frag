@@ -1,5 +1,6 @@
 #version 450
 #extension GL_EXT_buffer_reference : require
+//#extension GL_EXT_nonuniform_qualifier : enable
 
 #include "static_mesh_simple_shared.h"
 #include "pbr.h"
@@ -7,6 +8,7 @@
 
 layout(location = 0) in vec3 inWorldSpacePos;
 layout(location = 1) in vec3 inWorldspaceNormal;
+layout(location = 2) in vec2 inUV;
 layout(location = 0) out vec4 outColour;
 
 void main() {
@@ -18,7 +20,14 @@ void main() {
 	
 	StaticMeshMaterial myMaterial = globals.m_materialBuffer.materials[materialIndex];
 	PBRMaterial mat;
-	mat.m_albedo = myMaterial.m_albedoOpacity.xyz;
+	if(myMaterial.m_albedoTexture != -1)
+	{
+		mat.m_albedo = myMaterial.m_albedoOpacity.xyz * SRGBToLinear(texture(allTextures[myMaterial.m_albedoTexture],inUV)).xyz;
+	}
+	else
+	{
+		mat.m_albedo = myMaterial.m_albedoOpacity.xyz;
+	}
 	mat.m_metallic = myMaterial.m_metallic;
 	mat.m_roughness = myMaterial.m_roughness;
 	mat.m_ao = 1.0;
@@ -40,5 +49,9 @@ void main() {
 	// should be a separate fullscreen pass
     finalLight = finalLight / (finalLight + vec3(1.0));
 	
-	outColour = vec4(LinearToSRGB(finalLight),myMaterial.m_albedoOpacity.a);
+#ifdef R3_CONVERT_OUTPUT_TO_SRGB
+	finalLight = LinearToSRGB(finalLight);
+#endif
+
+	outColour = vec4(finalLight,myMaterial.m_albedoOpacity.a);
 }

@@ -7,6 +7,9 @@
 
 struct VkCommandBuffer_T;
 struct VkSampler_T;
+struct VkDescriptorSetLayout_T;
+struct VkPipelineLayout_T;
+struct VkDescriptorSet_T;
 namespace R3
 {
 	class Device;
@@ -20,6 +23,9 @@ namespace R3
 		virtual bool Init();
 		
 		TextureHandle LoadTexture(std::string path);
+		
+		bool WriteAllTextureDescriptors(VkCommandBuffer_T* buf, VkPipelineLayout_T* layout, VkDescriptorSet_T* set);	// return true if it wrote anything
+		VkDescriptorSetLayout_T* GetDescriptorsLayout();				// used to create pipelines that accept the array of textures
 
 	private:
 		struct TextureDesc;
@@ -34,10 +40,13 @@ namespace R3
 		moodycamel::ConcurrentQueue<std::unique_ptr<LoadedTexture>> m_loadedTextures;
 		std::atomic<int> m_texturesLoading = 0;
 
+		const uint32_t c_maxTextures = 1024;
+
 		Mutex m_texturesMutex;
 		std::vector<TextureDesc> m_textures;
 
 		VkSampler_T* m_imguiSampler = nullptr;
+		VkDescriptorSetLayout_T* m_allTexturesDescriptorLayout = nullptr;
 		bool m_showGui = false;
 	};
 }

@@ -458,6 +458,7 @@ namespace R3
 			CheckResult(result);
 			return newInstance;
 		}
+
 		std::vector<PhysicalDeviceDescriptor> EnumeratePhysicalDevices(VkInstance& instance)
 		{
 			R3_PROF_EVENT();
@@ -495,6 +496,7 @@ namespace R3
 		{
 			return {
 				VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+				VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME
 			};
 		}
 

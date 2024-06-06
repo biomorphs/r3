@@ -24,3 +24,6 @@ layout(push_constant) uniform constants
 	int m_globalIndex;		// index into m_allGlobals
 	int m_materialIndex;	// index into m_materials
 } PushConstants;
+
+// all textures passed in one big array (index matches handle index)
+layout (set = 0, binding = 0) uniform sampler2D allTextures[1024];

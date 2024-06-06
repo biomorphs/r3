@@ -5,6 +5,7 @@
 #include "render/render_system.h"
 #include "render/buffer_pool.h"
 #include "render/device.h"
+#include "render/descriptors.h"
 #include "core/profiler.h"
 #include "core/file_io.h"
 #include "core/log.h"
@@ -68,11 +69,58 @@ namespace R3
 	{
 	}
 
+	bool TextureSystem::WriteAllTextureDescriptors(VkCommandBuffer_T* buf, VkPipelineLayout_T* layout, VkDescriptorSet set)
+	{
+		R3_PROF_EVENT();
+		if (m_textures.size() == 0)
+		{
+			return false;
+		}
+		VkImageView defaultTexture = m_textures[0].m_imageView;
+		if (defaultTexture == 0)
+		{
+			return false;	// tmp, can't risk not setting a image view
+		}
+		std::vector<VkDescriptorImageInfo> imageInfos(m_textures.size());
+		std::vector< VkWriteDescriptorSet> writes(m_textures.size());
+		for (int i = 0; i < m_textures.size(); ++i)
+		{
+			VkDescriptorImageInfo newImgInfo = {};
+			newImgInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			newImgInfo.imageView = m_textures[i].m_imageView ? m_textures[i].m_imageView : defaultTexture;	// todo, proper bindless makes this go away
+			newImgInfo.sampler = m_imguiSampler;	// todo, want to separate samplers from textures...
+			imageInfos[i] = newImgInfo;
+
+			VkWriteDescriptorSet writeTextures = {};
+			writeTextures.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writeTextures.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			writeTextures.descriptorCount = 1;
+			writeTextures.dstArrayElement = i;
+			writeTextures.dstBinding = 0;
+			writeTextures.dstSet = set;
+			writeTextures.pImageInfo = &imageInfos[i];
+			writes[i] = writeTextures;
+		}
+		if (writes.size() > 0)
+		{
+			auto render = GetSystem<RenderSystem>();
+			vkUpdateDescriptorSets(render->GetDevice()->GetVkDevice(), (uint32_t)writes.size(), writes.data(), 0, nullptr);
+		}
+		return writes.size() > 0;
+	}
+
+	VkDescriptorSetLayout_T* TextureSystem::GetDescriptorsLayout()
+	{
+		return m_allTexturesDescriptorLayout;
+	}
+
 	bool TextureSystem::Init()
 	{
 		R3_PROF_EVENT();
 
 		auto render = GetSystem<RenderSystem>();
+
+		// create sampler for imgui
 		VkSamplerCreateInfo sampler = {};
 		sampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 		sampler.magFilter = VK_FILTER_LINEAR;
@@ -83,6 +131,21 @@ namespace R3
 		{
 			LogError("Failed to create sampler");
 			return false;
+		}
+
+		DescriptorLayoutBuilder layoutBuilder;
+		layoutBuilder.AddBinding(0, c_maxTextures, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+		m_allTexturesDescriptorLayout = layoutBuilder.Create(*render->GetDevice());
+		if(m_allTexturesDescriptorLayout==nullptr)
+		{
+			LogError("Failed to create descriptor set layout for textures");
+			return false;
+		}
+
+		auto defaultTexture = LoadTexture("common/textures/white_4x4.png");
+		if (defaultTexture.m_index != 0)
+		{
+			LogWarn("Default texture did not get index 0!");	// not the end of the world
 		}
 
 		return true;
@@ -102,6 +165,12 @@ namespace R3
 		if (foundHandle.m_index != -1)
 		{
 			return foundHandle;
+		}
+
+		if (m_textures.size() + 1 > c_maxTextures)
+		{
+			LogWarn("Max texture handles reached");
+			return TextureHandle::Invalid();
 		}
 
 		// make a new handle entry even if the load fails
@@ -128,7 +197,7 @@ namespace R3
 		m_texturesLoading++;
 		GetSystem<JobSystem>()->PushJob(JobSystem::SlowJobs, loadTextureJob);
 
-		return TextureHandle();
+		return newHandle;
 	}
 
 	void TextureSystem::Shutdown(Device& d)
@@ -152,6 +221,7 @@ namespace R3
 			}
 		}
 		vkDestroySampler(d.GetVkDevice(), m_imguiSampler, nullptr);
+		vkDestroyDescriptorSetLayout(d.GetVkDevice(), m_allTexturesDescriptorLayout, nullptr);
 	}
 
 	bool TextureSystem::ProcessLoadedTextures(Device& d, VkCommandBuffer_T* cmdBuffer)
@@ -255,7 +325,7 @@ namespace R3
 		auto render = GetSystem<RenderSystem>();
 		auto device = render->GetDevice();
 
-		stbi_set_flip_vertically_on_load(true);		// do we need this with vulkan?
+		stbi_set_flip_vertically_on_load(true);
 
 		// load as 8-bit RGBA image by default
 		//	we need to call stbi_loadf to load floating point, or stbi_load_16 for half float

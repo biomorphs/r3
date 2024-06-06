@@ -189,13 +189,9 @@ namespace R3
 					md.m_albedoOpacity = { m->m_materials[mat].m_albedo, m->m_materials[mat].m_opacity };
 					md.m_metallic = m->m_materials[mat].m_metallic;
 					md.m_roughness = m->m_materials[mat].m_roughness;
-
-					// what do we do with the textures?
-					// do we use the handle ID to reference them globally?
-					//	in which case any unloaded textures still need an entry gpu-side
-					for (const auto& diffTex : m->m_materials[mat].m_diffuseMaps)
+					if (m->m_materials[mat].m_diffuseMaps.size() > 0)
 					{
-						textures->LoadTexture(diffTex);
+						md.m_albedoTexture = textures->LoadTexture(m->m_materials[mat].m_diffuseMaps[0]).m_index;
 					}
 				}
 				if (gpuIndex != -1)
