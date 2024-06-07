@@ -9,6 +9,7 @@
 layout(location = 0) in vec3 inWorldSpacePos;
 layout(location = 1) in vec3 inWorldspaceNormal;
 layout(location = 2) in vec2 inUV;
+layout(location = 3) in mat3 inTBN;
 layout(location = 0) out vec4 outColour;
 
 void main() {
@@ -17,8 +18,15 @@ void main() {
 	vec3 normal = normalize(inWorldspaceNormal);
 	vec3 viewDir = normalize(globals.m_cameraWorldSpacePos.xyz - worldPos);
 	int materialIndex = PushConstants.m_materialIndex;
-	
 	StaticMeshMaterial myMaterial = globals.m_materialBuffer.materials[materialIndex];
+	
+	if(myMaterial.m_normalTexture != -1)	// normal mapping
+	{
+		normal = texture(allTextures[myMaterial.m_normalTexture],inUV).xyz;
+		normal = normalize(normal * 2.0 - 1.0);
+		normal = normalize(inTBN * normal);
+	}
+	
 	PBRMaterial mat;
 	if(myMaterial.m_albedoTexture != -1)
 	{

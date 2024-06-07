@@ -1,5 +1,4 @@
-# r3
- R3		
+# r3		
  
  ![Screenshot of the editor with a basic scene loaded](screenshots/materialoverrides.jpg)
 
