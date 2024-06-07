@@ -197,6 +197,7 @@ namespace R3
 			m_textures.push_back({ actualPath });
 			newHandle = TextureHandle{ static_cast<uint32_t>(m_textures.size() - 1) };
 		}
+		m_descriptorsNeedUpdate = true;	// ensure a new entry is written to the descriptor set (or gpu will crash if it tries to read an unset one)
 
 		// push a job to load the texture data
 		auto loadTextureJob = [actualPath, newHandle, this]()
@@ -299,10 +300,15 @@ namespace R3
 			dst.m_imGuiDescSet = ImGui_ImplVulkan_AddTexture(m_imguiSampler, dst.m_imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 			render->GetStagingBufferPool()->Release(t->m_stagingBuffer);
+			m_descriptorsNeedUpdate = true;	// update the descriptors now
 		}
 
 		// for now just write all descriptors each frame
-		WriteAllTextureDescriptors(cmdBuffer);
+		if (m_descriptorsNeedUpdate)
+		{
+			WriteAllTextureDescriptors(cmdBuffer);
+			m_descriptorsNeedUpdate = false;
+		}
 
 		return true;
 	}

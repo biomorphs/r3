@@ -50,7 +50,7 @@ namespace R3
 		VkDescriptorSetLayout_T* m_allTexturesDescriptorLayout = nullptr;
 		std::unique_ptr<DescriptorSetSimpleAllocator> m_descriptorAllocator;
 		VkDescriptorSet_T* m_allTexturesSet = nullptr;	// the global set (bindless!)
-
+		bool m_descriptorsNeedUpdate = false;
 		bool m_showGui = false;
 	};
 }
