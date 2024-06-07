@@ -156,10 +156,6 @@ namespace R3
 			auto textures = Systems::GetSystem<TextureSystem>();
 			auto& m = mdata.m_data;
 
-			LogInfo("Model {} contains {} verts, {} indices",
-				Systems::GetSystem<ModelDataSystem>()->GetModelName(handle),
-				m->m_vertices.size(), m->m_indices.size());
-
 			// allocate the mesh data + fill in what we can while we have the lock
 			StaticMeshGpuData newMesh;
 			newMesh.m_vertexDataOffset = m_allVertices.Allocate(m->m_vertices.size());

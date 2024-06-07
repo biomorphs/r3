@@ -16,7 +16,8 @@ namespace R3
 	};
 	struct KeyboardState
 	{
-		std::array<bool, KEY_MAX> m_keyPressed = { false };
+		std::array<bool, KEY_MAX> m_keyPressed = { false };		// key is currently pressed
+		std::array<bool, KEY_MAX> m_keyReleased = { false };	// key was released in the last frame
 	};
 
 	enum ControllerButtons
@@ -65,11 +66,14 @@ namespace R3
 		const KeyboardState& GetKeyboardState() const { return m_keysState;	}
 		bool IsKeyDown(Key key);
 		bool IsKeyDown(const char* keyStr);
+		bool WasKeyReleased(Key key);
+		bool WasKeyReleased(const char* keyStr);
 		void SetKeyboardEnabled(bool enabled) { m_keysEnabled = enabled; }
 		bool IsGuiCapturingInput();	// returns true if mouse or keyboard interacting with imgui
 
 	private:
 		bool OnFrameStart();
+		bool OnFrameEnd();
 		void UpdateControllerState();
 		void EnumerateControllers();
 		float ApplyDeadZone(float input, float deadZone) const;

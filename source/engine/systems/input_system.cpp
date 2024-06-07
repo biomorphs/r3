@@ -125,6 +125,10 @@ namespace R3
 			if (mappedKey != c_keyMapping.end())
 			{
 				m_keysState.m_keyPressed[mappedKey->second] = theEvent->key.state == SDL_PRESSED ? true : false;
+				if (theEvent->type == SDL_KEYUP)
+				{
+					m_keysState.m_keyReleased[mappedKey->second] = theEvent->key.state == SDL_RELEASED ? true : false;
+				}
 			}
 		}
 	}
@@ -135,6 +139,9 @@ namespace R3
 
 		RegisterTick("Input::FrameStart", [this]() {
 			return OnFrameStart();
+		});
+		RegisterTick("Input::FrameEnd", [this]() {
+			return OnFrameEnd();
 		});
 	}
 
@@ -149,6 +156,15 @@ namespace R3
 
 		EnumerateControllers();
 
+		return true;
+	}
+
+	bool InputSystem::OnFrameEnd()
+	{
+		R3_PROF_EVENT();
+
+		// reset released state of all keys
+		m_keysState.m_keyReleased = { false };
 		return true;
 	}
 
@@ -265,6 +281,29 @@ namespace R3
 		if (foundKeyLookup != c_keyStringMapping.end())
 		{
 			return GetKeyboardState().m_keyPressed[foundKeyLookup->second];
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	bool InputSystem::WasKeyReleased(Key key)
+	{
+		if (key >= KEY_0 && key < KEY_MAX)
+		{
+			return GetKeyboardState().m_keyReleased[key];
+		}
+		return false;
+	}
+
+	bool InputSystem::WasKeyReleased(const char* keyStr)
+	{
+		const auto foundKeyLookup = c_keyStringMapping.find(keyStr);
+		assert(foundKeyLookup != c_keyStringMapping.end());
+		if (foundKeyLookup != c_keyStringMapping.end())
+		{
+			return GetKeyboardState().m_keyReleased[foundKeyLookup->second];
 		}
 		else
 		{

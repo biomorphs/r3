@@ -220,7 +220,7 @@ namespace R3
 		for (int t = 0; t < m_tools.size() && t < 9; ++t)
 		{
 			Key testKey = static_cast<Key>(t + static_cast<int>(KEY_1));
-			if (t != m_activeTool && input->IsKeyDown(testKey))
+			if (input->WasKeyReleased(testKey))
 			{
 				ActivateTool(t);
 			}

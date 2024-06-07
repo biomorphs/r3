@@ -55,7 +55,7 @@ namespace R3
 			auto& frameStart = fg.m_root.AddSequence("FrameStart");
 			frameStart.AddFn("Time::FrameStart");
 			frameStart.AddFn("Events::FrameStart");
-			frameStart.AddFn("Input::FrameStart");
+			frameStart.AddFn("Input::FrameStart");	// after events so any input updates are already sent
 			frameStart.AddFn("ImGui::FrameStart");
 		}
 		auto& runAcquireAndUpdateAsync = fg.m_root.AddAsync("RunAcquireAndUpdate");	// first entry always runs on main thread
@@ -86,6 +86,10 @@ namespace R3
 				guiUpdate.AddFn("Textures::ShowGui");
 				guiUpdate.AddFn("LightsSystem::ShowGui");
 				guiUpdate.AddFn("LuaSystem::ShowGui");
+			}
+			{
+				auto& endUpdate = updateSequence.AddSequence("EndFrame");
+				endUpdate.AddFn("Input::FrameEnd");
 			}
 		}
 		auto& runRenderAndGC = fg.m_root.AddAsync("RenderAndGC");	// first entry always runs on main thread

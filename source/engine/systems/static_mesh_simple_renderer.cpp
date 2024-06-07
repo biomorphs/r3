@@ -117,7 +117,7 @@ namespace R3
 		pipelineLayoutInfo.setLayoutCount = 1;
 		if (!VulkanHelpers::CheckResult(vkCreatePipelineLayout(d.GetVkDevice(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout)))
 		{
-			LogInfo("Failed to create pipeline layout");
+			LogError("Failed to create pipeline layout");
 			return false;
 		}
 

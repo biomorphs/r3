@@ -56,7 +56,6 @@ namespace R3
 		// Make sure its triangles!
 		if (!(mesh->mPrimitiveTypes & aiPrimitiveType_TRIANGLE))
 		{
-			LogError("Can't handle this primitive type, sorry! Triangles only");
 			return;
 		}
 
@@ -168,17 +167,6 @@ namespace R3
 				getTexture(aiTextureType_METALNESS, newMaterial.m_metalnessMaps);
 				getTexture(aiTextureType_DIFFUSE_ROUGHNESS, newMaterial.m_roughnessMaps);
 				getTexture(aiTextureType_AMBIENT_OCCLUSION, newMaterial.m_aoMaps);
-
-				for (int i = 0; i < AI_TEXTURE_TYPE_MAX; ++i)
-				{
-					uint32_t count = sceneMat->GetTextureCount((aiTextureType)i);
-					for (uint32_t t = 0; t < count; ++t)
-					{
-						aiString texturePath;
-						sceneMat->GetTexture(aiTextureType_UNKNOWN, t, &texturePath);
-						LogInfo("{}: {}", aiTextureTypeToString((aiTextureType)i), texturePath.C_Str());
-					}
-				}			
 
 				aiColor3D albedo(0.f, 0.f, 0.f);
 				float opacity = 1.0f, metallic = 0.0f, roughness = 0.15f;

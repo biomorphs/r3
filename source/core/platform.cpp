@@ -51,7 +51,6 @@ namespace R3
 
 			ProcessCommandLine();
 
-			LogInfo("Initialising SDL");
 			{
 				R3_PROF_EVENT("SDL_Init");
 				int sdlResult = SDL_Init(SDL_INIT_EVERYTHING);
@@ -69,8 +68,6 @@ namespace R3
 		ShutdownResult Shutdown()
 		{
 			R3_PROF_EVENT();
-
-			LogInfo("Shutting down SDL");
 
 			SDL_Quit();
 
