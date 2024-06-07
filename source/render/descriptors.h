@@ -12,7 +12,7 @@ namespace R3
 	{
 	public:
 		void AddBinding(uint32_t binding, uint32_t count, VkDescriptorType type, VkShaderStageFlags stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT);
-		VkDescriptorSetLayout Create(Device& d, VkDescriptorSetLayoutCreateFlags flags = 0);
+		VkDescriptorSetLayout Create(Device& d, bool enableBindless);
 
 	private:
 		std::vector<VkDescriptorSetLayoutBinding> m_bindings;

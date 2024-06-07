@@ -487,6 +487,11 @@ namespace R3
 				newDesc.m_supportedExtensions.resize(extensionCount);
 				vkEnumerateDeviceExtensionProperties(it, nullptr, &extensionCount, newDesc.m_supportedExtensions.data());
 
+				VkPhysicalDeviceDescriptorIndexingFeatures indexing_features{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT, nullptr };
+				VkPhysicalDeviceFeatures2 device_features{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2, &indexing_features };
+				vkGetPhysicalDeviceFeatures2(it, &device_features);
+				newDesc.m_bindlessSupported = indexing_features.descriptorBindingPartiallyBound && indexing_features.runtimeDescriptorArray;
+
 				results.push_back(newDesc);
 			}
 			return results;
@@ -519,6 +524,18 @@ namespace R3
 		int ChooseGraphicsPhysicalDevice(const std::vector<PhysicalDeviceDescriptor>& devices, VkSurfaceKHR surface)
 		{
 			R3_PROF_EVENT();
+
+			bool bindlessSupported = false;
+			for (int i = 0; i < devices.size(); ++i)
+			{
+				bindlessSupported |= devices[i].m_bindlessSupported;
+			}
+			if (!bindlessSupported)
+			{
+				LogError("No physical device with bindless support found! Update your drivers!");
+				return -1;
+			}
+
 			for (int i = 0; i < devices.size(); ++i)
 			{
 				// is it discrete?
@@ -528,7 +545,7 @@ namespace R3
 					QueueFamilyIndices qfi = FindQueueFamilyIndices(devices[i], surface);
 					bool hasQueueFamilies = qfi.m_graphicsIndex != -1 && qfi.m_presentIndex != -1;
 					bool extensionsSupported = AreExtensionsSupported(devices[i].m_supportedExtensions, GetRequiredDeviceExtensions());
-					if (hasQueueFamilies && extensionsSupported)
+					if (hasQueueFamilies && extensionsSupported && devices[i].m_bindlessSupported == true)
 					{
 						// does it support a valid swap chain for the surface?
 						SwapchainDescriptor swapChainSupport = GetMatchingSwapchains(devices[i].m_device, surface);
@@ -616,11 +633,21 @@ namespace R3
 				pddr.dynamicRendering = true;
 				deviceCreate.pNext = &pddr;
 			}
+
 			// Enable buffer addresses
 			VkPhysicalDeviceBufferDeviceAddressFeatures bAddr = { };
 			bAddr.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
 			bAddr.bufferDeviceAddress = true;
 			pddr.pNext = &bAddr;
+
+			// Force-enable bindless indexing features  (and any other indexing features supported)
+			VkPhysicalDeviceDescriptorIndexingFeatures indexingFeatures = {};
+			indexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
+			VkPhysicalDeviceFeatures2 device_features{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2, &indexingFeatures };
+			vkGetPhysicalDeviceFeatures2(pdd.m_device, &device_features);
+			indexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;		// allow binding of a descriptor set where we didn't write all entries
+			indexingFeatures.runtimeDescriptorArray = VK_TRUE;				// allow indexing into 
+			bAddr.pNext = &indexingFeatures;
 
 			VkDevice newDevice = nullptr;
 			VkResult r = vkCreateDevice(pdd.m_device, &deviceCreate, nullptr, &newDevice);

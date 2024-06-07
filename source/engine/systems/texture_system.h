@@ -12,6 +12,7 @@ struct VkPipelineLayout_T;
 struct VkDescriptorSet_T;
 namespace R3
 {
+	class DescriptorSetSimpleAllocator;
 	class Device;
 	class TextureSystem : public System
 	{
@@ -23,14 +24,14 @@ namespace R3
 		virtual bool Init();
 		
 		TextureHandle LoadTexture(std::string path);
-		
-		bool WriteAllTextureDescriptors(VkCommandBuffer_T* buf, VkPipelineLayout_T* layout, VkDescriptorSet_T* set);	// return true if it wrote anything
 		VkDescriptorSetLayout_T* GetDescriptorsLayout();				// used to create pipelines that accept the array of textures
+		VkDescriptorSet_T* GetAllTexturesSet();
 
 	private:
 		struct TextureDesc;
 		struct LoadedTexture;
 
+		bool WriteAllTextureDescriptors(VkCommandBuffer_T* buf);
 		void Shutdown(Device& d);
 		bool ProcessLoadedTextures(Device& d, VkCommandBuffer_T* cmdBuffer);
 		bool ShowGui();
@@ -47,6 +48,9 @@ namespace R3
 
 		VkSampler_T* m_imguiSampler = nullptr;
 		VkDescriptorSetLayout_T* m_allTexturesDescriptorLayout = nullptr;
+		std::unique_ptr<DescriptorSetSimpleAllocator> m_descriptorAllocator;
+		VkDescriptorSet_T* m_allTexturesSet = nullptr;	// the global set (bindless!)
+
 		bool m_showGui = false;
 	};
 }

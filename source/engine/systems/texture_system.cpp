@@ -69,10 +69,10 @@ namespace R3
 	{
 	}
 
-	bool TextureSystem::WriteAllTextureDescriptors(VkCommandBuffer_T* buf, VkPipelineLayout_T* layout, VkDescriptorSet set)
+	bool TextureSystem::WriteAllTextureDescriptors(VkCommandBuffer_T* buf)
 	{
 		R3_PROF_EVENT();
-		if (m_textures.size() == 0)
+		if (m_textures.size() == 0 || m_allTexturesSet == nullptr)
 		{
 			return false;
 		}
@@ -97,7 +97,7 @@ namespace R3
 			writeTextures.descriptorCount = 1;
 			writeTextures.dstArrayElement = i;
 			writeTextures.dstBinding = 0;
-			writeTextures.dstSet = set;
+			writeTextures.dstSet = m_allTexturesSet;
 			writeTextures.pImageInfo = &imageInfos[i];
 			writes[i] = writeTextures;
 		}
@@ -114,13 +114,18 @@ namespace R3
 		return m_allTexturesDescriptorLayout;
 	}
 
+	VkDescriptorSet_T* TextureSystem::GetAllTexturesSet()
+	{
+		return m_allTexturesSet;
+	}
+
 	bool TextureSystem::Init()
 	{
 		R3_PROF_EVENT();
 
 		auto render = GetSystem<RenderSystem>();
 
-		// create sampler for imgui
+		// create default sampler
 		VkSamplerCreateInfo sampler = {};
 		sampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 		sampler.magFilter = VK_FILTER_LINEAR;
@@ -134,13 +139,24 @@ namespace R3
 		}
 
 		DescriptorLayoutBuilder layoutBuilder;
-		layoutBuilder.AddBinding(0, c_maxTextures, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-		m_allTexturesDescriptorLayout = layoutBuilder.Create(*render->GetDevice());
+		layoutBuilder.AddBinding(0, c_maxTextures, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);		// one array of all textures
+		m_allTexturesDescriptorLayout = layoutBuilder.Create(*render->GetDevice(), true);			// true = enable bindless
 		if(m_allTexturesDescriptorLayout==nullptr)
 		{
 			LogError("Failed to create descriptor set layout for textures");
 			return false;
 		}
+
+		m_descriptorAllocator = std::make_unique<DescriptorSetSimpleAllocator>();
+		std::vector<VkDescriptorPoolSize> poolSizes = {
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, c_maxTextures }
+		};
+		if (!m_descriptorAllocator->Initialise(*render->GetDevice(), c_maxTextures, poolSizes))
+		{
+			LogError("Failed to create descriptor allocator");
+			return false;
+		}
+		m_allTexturesSet = m_descriptorAllocator->Allocate(*render->GetDevice(), m_allTexturesDescriptorLayout);
 
 		auto defaultTexture = LoadTexture("common/textures/white_4x4.png");
 		if (defaultTexture.m_index != 0)
@@ -221,6 +237,7 @@ namespace R3
 			}
 		}
 		vkDestroySampler(d.GetVkDevice(), m_imguiSampler, nullptr);
+		m_descriptorAllocator = {};
 		vkDestroyDescriptorSetLayout(d.GetVkDevice(), m_allTexturesDescriptorLayout, nullptr);
 	}
 
@@ -283,6 +300,10 @@ namespace R3
 
 			render->GetStagingBufferPool()->Release(t->m_stagingBuffer);
 		}
+
+		// for now just write all descriptors each frame
+		WriteAllTextureDescriptors(cmdBuffer);
+
 		return true;
 	}
 

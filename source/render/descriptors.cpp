@@ -18,23 +18,35 @@ namespace R3
 		m_bindings.push_back(b);
 	}
 
-	VkDescriptorSetLayout DescriptorLayoutBuilder::Create(Device& d, VkDescriptorSetLayoutCreateFlags flags)
+	VkDescriptorSetLayout DescriptorLayoutBuilder::Create(Device& d, bool enableBindless)
 	{
 		R3_PROF_EVENT();
 		VkDescriptorSetLayout newLayout = nullptr;
 		VkDescriptorSetLayoutCreateInfo createDescLayout = {};
+		VkDescriptorSetLayoutBindingFlagsCreateInfoEXT bindingFlagInfo{ VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT, nullptr };
 		createDescLayout.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		createDescLayout.flags = flags;
+		createDescLayout.flags = enableBindless ? VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT : 0;
 		createDescLayout.bindingCount = static_cast<uint32_t>(m_bindings.size());
 		createDescLayout.pBindings = m_bindings.data();
+
+		VkDescriptorBindingFlags bindingFlags = VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT		// enable sparse writes
+			| VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT;							// enable update after bind
+			// | VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT					// enable variable size arrays
+		if (enableBindless)
+		{
+			bindingFlagInfo.bindingCount = static_cast<uint32_t>(m_bindings.size());
+			bindingFlagInfo.pBindingFlags = &bindingFlags;
+			createDescLayout.pNext = &bindingFlagInfo;
+		}
+
 		if (!VulkanHelpers::CheckResult(vkCreateDescriptorSetLayout(d.GetVkDevice(), &createDescLayout, nullptr, &newLayout)))
 		{
 			LogError("Failed to create descriptor set layout!");
 			newLayout = nullptr;
 		}
+
 		return newLayout;
 	}
-
 
 	DescriptorSetSimpleAllocator::~DescriptorSetSimpleAllocator()
 	{
@@ -47,7 +59,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		VkDescriptorPoolCreateInfo pool_info = { .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
-		pool_info.flags = 0;
+		pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT_EXT;	// allow for update of a set after it has been bound (for bindless)
 		pool_info.maxSets = maxSets;
 		pool_info.poolSizeCount = (uint32_t)poolSizes.size();
 		pool_info.pPoolSizes = poolSizes.data();

@@ -69,23 +69,12 @@ namespace R3
 		render->m_onShutdownCbs.AddCallback([this](Device& d) {
 			Cleanup(d);
 		});
-
-		m_descriptorAllocator = std::make_unique<DescriptorSetSimpleAllocator>();
-		std::vector<VkDescriptorPoolSize> poolSizes = {
-			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1024 * 8}
-		};
-		if (!m_descriptorAllocator->Initialise(*render->GetDevice(), 1024, poolSizes))
-		{
-			LogError("Failed to create descriptor allocator");
-			return false;
-		}
 		return true;
 	}
 
 	void StaticMeshSimpleRenderer::Cleanup(Device& d)
 	{
 		R3_PROF_EVENT();
-		m_descriptorAllocator = {};
 		vkDestroyPipeline(d.GetVkDevice(), m_simpleTriPipeline, nullptr);
 		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayout, nullptr);
 		m_globalConstantsBuffer.Destroy(d);
@@ -226,17 +215,6 @@ namespace R3
 			m_globalConstantsBuffer.Write(m_currentGlobalConstantsBuffer, 1, &globals);
 			m_globalConstantsBuffer.Flush(d, cmds);
 		}
-
-		// write all texture handles to a new global set
-		auto textures = GetSystem<TextureSystem>();
-		m_allTexturesSet = m_descriptorAllocator->Allocate(d, textures->GetDescriptorsLayout());
-		
-		// temp, we dont need to do this with proper bindless (sparse bindings)
-		if (!textures->WriteAllTextureDescriptors(cmds, m_pipelineLayout, m_allTexturesSet))
-		{
-			m_descriptorAllocator->Release(m_allTexturesSet, textures->GetDescriptorsLayout());
-			m_allTexturesSet = nullptr;
-		}
 	}
 
 	void StaticMeshSimpleRenderer::MainPassDraw(Device& d, VkCommandBuffer cmds, const VkExtent2D& e)
@@ -269,9 +247,10 @@ namespace R3
 		vkCmdSetScissor(cmds, 0, 1, &scissor);
 		vkCmdBindIndexBuffer(cmds, staticMeshes->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
-		if (m_allTexturesSet != nullptr)
+		VkDescriptorSet allTextures = textures->GetAllTexturesSet();
+		if (allTextures != VK_NULL_HANDLE)
 		{
-			vkCmdBindDescriptorSets(cmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_allTexturesSet, 0, 0);
+			vkCmdBindDescriptorSets(cmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, 0);
 		}
 		
 		// pass the vertex buffer and model-view-proj matrix via push constants for each instance
@@ -322,11 +301,6 @@ namespace R3
 				return true;
 			};
 			Entities::Queries::ForEach<StaticMeshComponent, TransformComponent>(activeWorld, forEach);
-		}
-		// now release the current set
-		if (m_allTexturesSet != nullptr)
-		{
-			m_descriptorAllocator->Release(m_allTexturesSet, textures->GetDescriptorsLayout());
 		}
 	}
 }

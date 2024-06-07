@@ -73,6 +73,7 @@ namespace R3
 			VkPhysicalDeviceFeatures m_features = {};
 			std::vector<VkQueueFamilyProperties> m_queues;
 			std::vector<VkExtensionProperties> m_supportedExtensions;
+			bool m_bindlessSupported = false;
 		};
 		std::vector<PhysicalDeviceDescriptor> EnumeratePhysicalDevices(VkInstance& instance);
 		int ChooseGraphicsPhysicalDevice(const std::vector<PhysicalDeviceDescriptor>& devices, VkSurfaceKHR surface);	// return -1 if none found
