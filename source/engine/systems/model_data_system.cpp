@@ -127,7 +127,7 @@ namespace R3
 			assert(m_allModels[modelHandle.m_index].m_loadState == StoredModel::LoadedState::Loading);
 			assert(m_allModels[modelHandle.m_index].m_modelData == nullptr);
 			auto newData = std::make_unique<ModelData>();
-			bool modelLoaded = LoadModelData(pathCopy, *newData, true, updateProgress);
+			bool modelLoaded = LoadModelData(pathCopy, *newData, false, updateProgress);
 			{
 				ScopedLock lock(m_allModelsMutex);
 				if (modelLoaded)

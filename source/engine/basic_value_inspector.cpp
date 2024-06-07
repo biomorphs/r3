@@ -2,6 +2,7 @@
 #include "engine/file_dialogs.h"
 #include "entities/entity_handle.h"
 #include "entities/systems/entity_system.h"
+#include "engine/systems/texture_system.h"
 #include "imgui.h"
 #include <filesystem>
 
@@ -138,6 +139,12 @@ namespace R3
 		{
 
 		}
+		return false;
+	}
+
+	bool BasicValueInspector::InspectTexture(std::string_view label, TextureHandle current, std::function<void(TextureHandle)> setFn, glm::ivec2 dims)
+	{
+		assert("Todo");
 		return false;
 	}
 }

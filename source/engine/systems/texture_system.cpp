@@ -69,6 +69,46 @@ namespace R3
 	{
 	}
 
+	std::string_view TextureSystem::GetTextureName(const TextureHandle& t)
+	{
+		ScopedLock lock(m_texturesMutex);
+		if (t.m_index != -1 && t.m_index < m_textures.size())
+		{
+			return m_textures[t.m_index].m_name;
+		}
+		return "invalid";
+	}
+
+	glm::ivec2 TextureSystem::GetTextureDimensions(const TextureHandle& t)
+	{
+		ScopedLock lock(m_texturesMutex);
+		if (t.m_index != -1 && t.m_index < m_textures.size())
+		{
+			return { m_textures[t.m_index].m_width, m_textures[t.m_index].m_height };
+		}
+		return {-1,-1};
+	}
+
+	uint32_t TextureSystem::GetTextureChannels(const TextureHandle& t)
+	{
+		ScopedLock lock(m_texturesMutex);
+		if (t.m_index != -1 && t.m_index < m_textures.size())
+		{
+			return m_textures[t.m_index].m_channels;
+		}
+		return -1;
+	}
+
+	VkDescriptorSet_T* TextureSystem::GetTextureImguiSet(const TextureHandle& t)
+	{
+		ScopedLock lock(m_texturesMutex);
+		if (t.m_index != -1 && t.m_index < m_textures.size())
+		{
+			return m_textures[t.m_index].m_imGuiDescSet;
+		}
+		return nullptr;
+	}
+
 	bool TextureSystem::WriteAllTextureDescriptors(VkCommandBuffer_T* buf)
 	{
 		R3_PROF_EVENT();
@@ -167,7 +207,7 @@ namespace R3
 		return true;
 	}
 
-	TextureHandle TextureSystem::LoadTexture(std::string path)
+	TextureHandle TextureSystem::LoadTexture(std::string path, uint32_t componentCount)
 	{
 		R3_PROF_EVENT();
 		auto actualPath = FileIO::SanitisePath(path);
@@ -200,12 +240,12 @@ namespace R3
 		m_descriptorsNeedUpdate = true;	// ensure a new entry is written to the descriptor set (or gpu will crash if it tries to read an unset one)
 
 		// push a job to load the texture data
-		auto loadTextureJob = [actualPath, newHandle, this]()
+		auto loadTextureJob = [actualPath, newHandle, this, componentCount]()
 		{
 			char debugName[1024] = { '\0' };
 			sprintf_s(debugName, "LoadTexture %s", actualPath.c_str());
 			R3_PROF_EVENT_DYN(debugName);
-			if (!LoadTextureInternal(actualPath, newHandle))
+			if (!LoadTextureInternal(actualPath, componentCount, newHandle))
 			{
 				LogError("Failed to load texture {}", actualPath);
 			}
@@ -346,7 +386,7 @@ namespace R3
 		return true;
 	}
 
-	bool TextureSystem::LoadTextureInternal(std::string_view path, TextureHandle targetHandle)
+	bool TextureSystem::LoadTextureInternal(std::string_view path, uint32_t componentCount, TextureHandle targetHandle)
 	{
 		R3_PROF_EVENT();
 		auto render = GetSystem<RenderSystem>();
@@ -354,10 +394,17 @@ namespace R3
 
 		stbi_set_flip_vertically_on_load(true);
 
+		// vast majority of gpus will not support 3 component images! force them to rgba
+		assert(componentCount > 0 && componentCount <= 4);
+		if (componentCount == 3)
+		{
+			componentCount = 4;
+		}
+
 		// load as 8-bit RGBA image by default
 		//	we need to call stbi_loadf to load floating point, or stbi_load_16 for half float
 		int w, h, components;	// components is ignored, we always load rgba
-		unsigned char* rawData = stbi_load(path.data(), &w, &h, &components, 4);
+		unsigned char* rawData = stbi_load(path.data(), &w, &h, &components, componentCount);
 		if (rawData == nullptr)
 		{
 			LogError("Failed to load texture file '{}'", path);
@@ -367,7 +414,7 @@ namespace R3
 
 		// get a staging buffer + copy the data to it
 		auto loadedData = std::make_unique<LoadedTexture>();
-		const size_t stagingSize = w * h * 4 * sizeof(uint8_t);
+		const size_t stagingSize = w * h * componentCount * sizeof(uint8_t);
 		auto stagingBuffer = render->GetStagingBufferPool()->GetBuffer(stagingSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO);
 		if (!stagingBuffer.has_value())
 		{
@@ -386,9 +433,27 @@ namespace R3
 		VkExtent3D extents = {
 			(uint32_t)w, (uint32_t)h, 1
 		};
-		auto imageCreateInfo = VulkanHelpers::CreateImage2DNoMSAANoMips(VK_FORMAT_R8G8B8A8_UNORM, usage, extents);
+		VkFormat format;
+		switch (componentCount)
+		{
+		case 1:
+			format = VK_FORMAT_R8_UNORM;
+			break;
+		case 2:
+			format = VK_FORMAT_R8G8_UNORM;
+			break;
+		case 4:
+			format = VK_FORMAT_R8G8B8A8_UNORM;
+			break;
+		default:
+			LogError("Unsupported component count {}", components);
+			return false;
+		}
+
+		auto imageCreateInfo = VulkanHelpers::CreateImage2DNoMSAANoMips(format, usage, extents);
 		VmaAllocationCreateInfo allocInfo = { };
 		allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+
 		allocInfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);	// fast gpu memory
 		auto r = vmaCreateImage(device->GetVMA(), &imageCreateInfo, &allocInfo, &loadedData->m_image, &loadedData->m_allocation, nullptr);
 		if (!VulkanHelpers::CheckResult(r))
@@ -396,7 +461,7 @@ namespace R3
 			LogError("Failed to allocate memory for texture {}", path);
 			return false;
 		}
-		auto viewCreateInfo = VulkanHelpers::CreateImageView2DNoMSAANoMips(VK_FORMAT_R8G8B8A8_UNORM, loadedData->m_image, VK_IMAGE_ASPECT_COLOR_BIT);
+		auto viewCreateInfo = VulkanHelpers::CreateImageView2DNoMSAANoMips(format, loadedData->m_image, VK_IMAGE_ASPECT_COLOR_BIT);
 		r = vkCreateImageView(device->GetVkDevice(), &viewCreateInfo, nullptr, &loadedData->m_imageView);
 		if (!VulkanHelpers::CheckResult(r))
 		{

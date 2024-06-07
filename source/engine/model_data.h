@@ -32,6 +32,9 @@ namespace R3
 	{
 		std::vector<std::string> m_diffuseMaps;
 		std::vector<std::string> m_normalMaps;
+		std::vector<std::string> m_metalnessMaps;
+		std::vector<std::string> m_roughnessMaps;
+		std::vector<std::string> m_aoMaps;
 		glm::vec3 m_albedo;
 		float m_opacity;
 		float m_metallic;

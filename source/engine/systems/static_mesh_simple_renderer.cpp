@@ -284,7 +284,7 @@ namespace R3
 					glm::mat4 compTransform = t.GetWorldspaceInterpolated();
 					const uint32_t partCount = currentMeshData.m_meshPartCount;
 					const auto* matCmp = activeWorld->GetComponent<StaticMeshMaterialsComponent>(s.m_materialOverride);
-					bool useOverrides = matCmp && matCmp->m_gpuDataIndex != -1 && matCmp->m_materials.size() >= partCount;
+					bool useOverrides = matCmp && matCmp->m_gpuDataIndex != -1 && matCmp->m_materials.size() >= currentMeshData.m_materialCount;
 					for (uint32_t part = 0; part < partCount; ++part)
 					{
 						if (staticMeshes->GetMeshPart(currentMeshData.m_firstMeshPartOffset + part, partData))

@@ -28,10 +28,14 @@ namespace R3
 	struct StaticMeshMaterial
 	{
 		glm::vec4 m_albedoOpacity;
-		float m_metallic;						// 0.0 = dielectric, 1 = metallic
-		float m_roughness;						// 0 = perfectly smooth, 1 = max roughness
-		uint32_t m_albedoTexture;				// index into global textures, -1 = no texture
-		uint32_t m_padding;
+		float m_metallic = 0.0f;						// 0.0 = dielectric, 1 = metallic
+		float m_roughness = 0.25f;						// 0 = perfectly smooth, 1 = max roughness
+		uint32_t m_albedoTexture = -1;					// index into global textures, -1 = no texture
+		uint32_t m_roughnessTexture = -1;
+		uint32_t m_metalnessTexture = -1;
+		uint32_t m_normalTexture = -1;
+		uint32_t m_aoTexture = -1;
+		uint32_t m_padding = -1;
 	};
 	struct StaticMeshGpuData
 	{

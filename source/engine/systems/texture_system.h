@@ -3,6 +3,7 @@
 #include "engine/systems.h"
 #include "engine/texture_handle.h"
 #include "core/mutex.h"
+#include "core/glm_headers.h"
 #include <concurrentqueue/concurrentqueue.h>
 
 struct VkCommandBuffer_T;
@@ -23,7 +24,12 @@ namespace R3
 		virtual void RegisterTickFns();
 		virtual bool Init();
 		
-		TextureHandle LoadTexture(std::string path);
+		TextureHandle LoadTexture(std::string path, uint32_t componentCount  = 4);
+		std::string_view GetTextureName(const TextureHandle& t);
+		glm::ivec2 GetTextureDimensions(const TextureHandle& t);
+		uint32_t GetTextureChannels(const TextureHandle& t);
+		VkDescriptorSet_T* GetTextureImguiSet(const TextureHandle& t);
+
 		VkDescriptorSetLayout_T* GetDescriptorsLayout();				// used to create pipelines that accept the array of textures
 		VkDescriptorSet_T* GetAllTexturesSet();
 
@@ -35,7 +41,7 @@ namespace R3
 		void Shutdown(Device& d);
 		bool ProcessLoadedTextures(Device& d, VkCommandBuffer_T* cmdBuffer);
 		bool ShowGui();
-		bool LoadTextureInternal(std::string_view path, TextureHandle targetHandle);
+		bool LoadTextureInternal(std::string_view path, uint32_t componentCount, TextureHandle targetHandle);
 		TextureHandle FindExistingMatchingName(std::string name);	// locks the mutex
 
 		moodycamel::ConcurrentQueue<std::unique_ptr<LoadedTexture>> m_loadedTextures;

@@ -28,10 +28,31 @@ void main() {
 	{
 		mat.m_albedo = myMaterial.m_albedoOpacity.xyz;
 	}
-	mat.m_metallic = myMaterial.m_metallic;
-	mat.m_roughness = myMaterial.m_roughness;
-	mat.m_ao = 1.0;
-	mat.m_ambientMulti = 0.00001;
+	if(myMaterial.m_roughnessTexture != -1)
+	{
+		mat.m_roughness = texture(allTextures[myMaterial.m_roughnessTexture],inUV).y;	// assuming combined rough/metalness
+	}
+	else
+	{
+		mat.m_roughness = myMaterial.m_roughness;
+	}
+	if(myMaterial.m_metalnessTexture != -1)
+	{
+		mat.m_metallic = texture(allTextures[myMaterial.m_metalnessTexture],inUV).z;	// assuming combined rough/metalness
+	}
+	else
+	{
+		mat.m_metallic = myMaterial.m_metallic;
+	}
+	if(myMaterial.m_aoTexture != -1)
+	{
+		mat.m_ao = texture(allTextures[myMaterial.m_aoTexture],inUV).x;
+	}
+	else
+	{
+		mat.m_ao = 1.0;
+	}
+	mat.m_ambientMulti = 0.01;
 	
 	uint pointLightCount = globals.m_pointLightCount;
 	vec3 directLight = vec3(0.0,0.0,0.0);

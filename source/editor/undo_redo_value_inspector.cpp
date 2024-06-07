@@ -2,6 +2,7 @@
 #include "commands/set_value_cmd.h"
 #include "editor/editor_command_list.h"
 #include "engine/file_dialogs.h"
+#include "engine/systems/texture_system.h"
 #include "entities/entity_handle.h"
 #include "entities/world.h"
 #include "core/log.h"
@@ -167,6 +168,49 @@ namespace R3
 			}
 		}
 		return newValSet;
+	}
+
+	bool UndoRedoInspector::InspectTexture(std::string_view label, TextureHandle current, std::function<void(TextureHandle)> setFn, glm::ivec2 dims)
+	{
+		auto textures = Systems::GetSystem<TextureSystem>();
+		auto texName = textures->GetTextureName(current);
+		auto texImguiSet = textures->GetTextureImguiSet(current);
+		bool changeTex = false;
+		ImGui::SeparatorText(label.data());
+		if (texImguiSet != nullptr)
+		{
+			ImVec2 size((float)dims.x, (float)dims.y);
+			changeTex = ImGui::ImageButton(texImguiSet, size);
+			ImGui::Text(texName.data());
+		}
+		else
+		{
+			if (current.m_index != -1)
+			{
+				changeTex = ImGui::Button(std::format("{}##{}", texName.data(), label).c_str());
+			}
+			else
+			{
+				changeTex = ImGui::Button(std::format("Select a texture##{}", label).c_str());
+			}
+		}
+
+		if (changeTex)
+		{
+			const char* textureFilter = "";
+			std::string newPath = FileLoadDialog(texName, textureFilter);
+			if (newPath.length() > 0)
+			{
+				// sanitise path, only files relative to data root are allowed
+				auto currentPath = std::filesystem::current_path();
+				auto relativePath = std::filesystem::relative(newPath, currentPath);
+				auto newHandle = textures->LoadTexture(relativePath.string());
+				m_cmds.Push(std::make_unique<SetValueCommand<TextureHandle>>(label, current, newHandle, setFn));
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 }

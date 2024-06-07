@@ -193,6 +193,22 @@ namespace R3
 					{
 						md.m_albedoTexture = textures->LoadTexture(m->m_materials[mat].m_diffuseMaps[0]).m_index;
 					}
+					if (m->m_materials[mat].m_normalMaps.size() > 0)
+					{
+						md.m_normalTexture = textures->LoadTexture(m->m_materials[mat].m_normalMaps[0]).m_index;
+					}
+					if (m->m_materials[mat].m_roughnessMaps.size() > 0)
+					{
+						md.m_roughnessTexture = textures->LoadTexture(m->m_materials[mat].m_roughnessMaps[0]).m_index;
+					}
+					if (m->m_materials[mat].m_metalnessMaps.size() > 0)
+					{
+						md.m_metalnessTexture = textures->LoadTexture(m->m_materials[mat].m_metalnessMaps[0]).m_index;
+					}
+					if (m->m_materials[mat].m_aoMaps.size() > 0)
+					{
+						md.m_aoTexture = textures->LoadTexture(m->m_materials[mat].m_aoMaps[0]).m_index;
+					}
 				}
 				if (gpuIndex != -1)
 				{

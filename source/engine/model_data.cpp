@@ -150,21 +150,35 @@ namespace R3
 			{
 				MeshMaterial newMaterial;
 				const aiMaterial* sceneMat = scene->mMaterials[i];
-				uint32_t diffuseTextureCount = sceneMat->GetTextureCount(aiTextureType_DIFFUSE);	// diffuse
-				for (uint32_t t = 0; t < diffuseTextureCount; ++t)
+				auto getTexture = [&](aiTextureType type, std::vector<std::string>& out) {
+					uint32_t count = sceneMat->GetTextureCount(type);
+					for (uint32_t t = 0; t < count; ++t)
+					{
+						aiString texturePath;
+						sceneMat->GetTexture(type, t, &texturePath);
+						out.push_back(FixupTexturePath(modelPathAbsolute, texturePath.C_Str()));
+					}
+				};
+				getTexture(aiTextureType_BASE_COLOR, newMaterial.m_diffuseMaps);
+				if (newMaterial.m_diffuseMaps.size() == 0)
 				{
-					aiString texturePath;
-					sceneMat->GetTexture(aiTextureType_DIFFUSE, t, &texturePath);
-					newMaterial.m_diffuseMaps.push_back(FixupTexturePath(modelPathAbsolute, texturePath.C_Str()));
+					getTexture(aiTextureType_DIFFUSE, newMaterial.m_diffuseMaps);
 				}
-				// normal maps
-				uint32_t normalTextureCount = sceneMat->GetTextureCount(aiTextureType_NORMALS);
-				for (uint32_t t = 0; t < normalTextureCount; ++t)
+				getTexture(aiTextureType_NORMALS, newMaterial.m_normalMaps);
+				getTexture(aiTextureType_METALNESS, newMaterial.m_metalnessMaps);
+				getTexture(aiTextureType_DIFFUSE_ROUGHNESS, newMaterial.m_roughnessMaps);
+				getTexture(aiTextureType_AMBIENT_OCCLUSION, newMaterial.m_aoMaps);
+
+				for (int i = 0; i < AI_TEXTURE_TYPE_MAX; ++i)
 				{
-					aiString texturePath;
-					sceneMat->GetTexture(aiTextureType_NORMALS, t, &texturePath);
-					newMaterial.m_normalMaps.push_back(FixupTexturePath(modelPathAbsolute, texturePath.C_Str()));
-				}
+					uint32_t count = sceneMat->GetTextureCount((aiTextureType)i);
+					for (uint32_t t = 0; t < count; ++t)
+					{
+						aiString texturePath;
+						sceneMat->GetTexture(aiTextureType_UNKNOWN, t, &texturePath);
+						LogInfo("{}: {}", aiTextureTypeToString((aiTextureType)i), texturePath.C_Str());
+					}
+				}			
 
 				aiColor3D albedo(0.f, 0.f, 0.f);
 				float opacity = 1.0f, metallic = 0.0f, roughness = 0.15f;
@@ -217,7 +231,7 @@ namespace R3
 			aiProcess_SortByPType |
 			aiProcess_ValidateDataStructure |
 			aiProcess_OptimizeMeshes |
-			aiProcess_RemoveRedundantMaterials |
+			// aiProcess_RemoveRedundantMaterials |
 			(flattenMeshes ? aiProcess_PreTransformVertices : 0)
 		);
 		if (!scene)
