@@ -1,8 +1,10 @@
 # r3
  R3		
+ 
+ ![Screenshot of the editor with a basic scene loaded](screenshots/materialoverrides.jpg)
 
 # Setup
-1. Install cmake v3.21 or higher
+1. Install cmake v3.8 or higher
 2. Install vcpkg
 	- git clone https://github.com/Microsoft/vcpkg.git
 	- run .\vcpkg\bootstrap-vcpkg.bat
