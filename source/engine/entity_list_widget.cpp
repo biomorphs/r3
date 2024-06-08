@@ -21,7 +21,56 @@ namespace R3
 		}
 	}
 
-	bool EntityListWidget::DisplaySingleEntity(Entities::World& w, const Entities::EntityHandle& h, bool isSelected)
+	void EntityListWidget::DisplayEntityRecursive(Entities::World& w, const Entities::EntityHandle& h, const std::vector<Entities::EntityHandle>& selectedEntities, int depth)
+	{
+		std::string name = std::string(depth * 4, ' ') + w.GetEntityDisplayName(h);
+		bool selectionChanged = false;
+		bool isSelected = std::find(selectedEntities.begin(), selectedEntities.end(), h) != selectedEntities.end();
+		
+		if (ImGui::Selectable(name.c_str(), isSelected))
+		{
+			selectionChanged = true;
+		}
+		if (selectionChanged)
+		{
+			std::vector<Entities::EntityHandle> children;
+			w.GetAllChildren(h, children);
+			if (!isSelected && m_options.m_onSelected)
+			{
+				if (ImGui::GetIO().KeyAlt)	// alt = select all children
+				{
+					m_options.m_onSelected(h, true);	// always append children
+					for (const auto& c : children)
+					{
+						m_options.m_onSelected(c, true);	// append if ctrl pushed
+					}
+				}
+				else
+				{
+					m_options.m_onSelected(h, ImGui::GetIO().KeyCtrl);	// append if ctrl pushed
+				}
+			}
+			if (isSelected && m_options.m_onDeselected)
+			{
+				m_options.m_onDeselected(h);
+				if (ImGui::GetIO().KeyAlt)	// alt = select all children
+				{
+					for (const auto& c : children)
+					{
+						m_options.m_onDeselected(c);
+					}
+				}
+			}
+		}
+		std::vector<Entities::EntityHandle> children;
+		w.GetChildren(h, children);
+		for (int c = 0; c < children.size(); ++c)
+		{
+			DisplayEntityRecursive(w, children[c], selectedEntities, depth + 1);
+		}
+	}
+
+	void EntityListWidget::DisplaySingleEntity(Entities::World& w, const Entities::EntityHandle& h, bool isSelected)
 	{
 		R3_PROF_EVENT();
 		char entityName[256] = "";
@@ -56,21 +105,17 @@ namespace R3
 				selectionChanged = true;
 			}
 		}
-
 		if (selectionChanged)
 		{
 			if (!isSelected && m_options.m_onSelected)
 			{
 				m_options.m_onSelected(h, ImGui::GetIO().KeyCtrl);	// append if ctrl pushed
 			}
-
 			if (isSelected && m_options.m_onDeselected)
 			{
 				m_options.m_onDeselected(h);
 			}
 		}
-		
-		return true;
 	}
 
 	void EntityListWidget::DisplayFlatList(Entities::World& w, const std::vector<Entities::EntityHandle>& selectedEntities)
@@ -116,12 +161,38 @@ namespace R3
 		}
 		if (ImGui::BeginPopup("EntityListWidgetOptions"))
 		{
-			ImGui::Checkbox("Expandable", &m_options.m_canExpandEntities);
+			ImGui::Checkbox("Show Heirarchy", &m_options.m_showEntityHeirarchy);
 			ImGui::SameLine();
+			ImGui::Checkbox("Expandable", &m_options.m_canExpandEntities);
+			ImGui::SameLine();	
 			ImGui::Checkbox("Show Indices", &m_options.m_showInternalIndex);
 			ImGui::EndPopup();
 		}
 		ImGui::SameLine();
+	}
+
+	void EntityListWidget::DisplayHeirarchy(Entities::World& w, const std::vector<Entities::EntityHandle>& selectedEntities)
+	{
+		if (IsFilterActive())
+		{
+			for (int i = 0; i < m_filteredEntities.size(); ++i)
+			{
+				bool isSelected = std::find(selectedEntities.begin(), selectedEntities.end(), m_filteredEntities[i]) != selectedEntities.end();
+				DisplaySingleEntity(w, m_filteredEntities[i], isSelected);
+			}
+		}
+		else
+		{
+			std::vector<Entities::EntityHandle> all = w.GetActiveEntities();
+			for (int i = 0; i < all.size(); ++i)
+			{
+				// only process top-level entities
+				if (w.GetParent(all[i]).GetID() == -1)
+				{
+					DisplayEntityRecursive(w, all[i], selectedEntities);
+				}
+			}
+		}
 	}
 
 	void EntityListWidget::DisplayFilterContextMenu()
@@ -259,7 +330,14 @@ namespace R3
 			DisplayFilter();
 			if (ImGui::BeginChild("AllEntitiesList", ImGui::GetContentRegionAvail(), true))
 			{
-				DisplayFlatList(w, selectedEntities);
+				if (m_options.m_showEntityHeirarchy)
+				{
+					DisplayHeirarchy(w, selectedEntities);
+				}
+				else
+				{
+					DisplayFlatList(w, selectedEntities);
+				}
 			}
 			ImGui::EndChild();
 		}

@@ -26,7 +26,8 @@ namespace R3
 		};
 		struct Options {
 			FilterType m_filter = FilterType::ByName;
-			bool m_showInternalIndex = true;
+			bool m_showEntityHeirarchy = true;
+			bool m_showInternalIndex = false;
 			bool m_canExpandEntities = false;
 			bool m_showOptionsButton = true;
 			OnSelectedFn m_onSelected;
@@ -40,8 +41,10 @@ namespace R3
 		void DisplayFilterContextMenu();
 		void DisplayFilter();
 		void DisplayOptionsBar();
+		void DisplayHeirarchy(Entities::World& w, const std::vector<Entities::EntityHandle>& selectedEntities);
 		void DisplayFlatList(Entities::World& w, const std::vector<Entities::EntityHandle>& selectedEntities);
-		bool DisplaySingleEntity(Entities::World& w, const Entities::EntityHandle& h, bool isSelected);
+		void DisplayEntityRecursive(Entities::World& w, const Entities::EntityHandle& h, const std::vector<Entities::EntityHandle>& selectedEntities, int depth = 0);
+		void DisplaySingleEntity(Entities::World& w, const Entities::EntityHandle& h, bool isSelected);
 		void DisplayEntityExtended(Entities::World& w, const Entities::EntityHandle& h, bool isSelected);	// called if an entity is further expanded
 		std::string m_filterText = "";
 		uint64_t m_filterTypes = 0;	// mask of component types to filter

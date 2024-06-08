@@ -2,26 +2,13 @@
  "AllEntities": [
   {
    "ID": 0,
-   "Name": "",
-   "Parent": 4294967295
-  },
-  {
-   "ID": 1,
-   "Name": "erato.obj",
-   "Parent": 0,
-   "StaticMesh": {
-    "MaterialsOverride": {
-     "ID": 4294967295
-    },
-    "Model": {
-     "Path": "downloaded\\erato\\erato.obj"
-    }
-   },
+   "Name": "Root",
+   "Parent": 4294967295,
    "Transform": {
     "Orientation": {
-     "W": 0.7071068286895752,
+     "W": 1.0,
      "X": 0.0,
-     "Y": 0.7071068286895752,
+     "Y": 0.0,
      "Z": 0.0
     },
     "Position": {
@@ -30,24 +17,23 @@
      "Z": 0.0
     },
     "Scale": {
-     "X": 0.10000000149011612,
-     "Y": 0.10000000149011612,
-     "Z": 0.10000000149011612
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
     }
    }
   },
   {
-   "ID": 2,
-   "Name": "Point Light",
+   "ID": 1,
+   "Name": "My Sphere",
    "Parent": 0,
-   "PointLight": {
-    "Brightness": 1000.0,
-    "Colour": {
-     "X": 1.0,
-     "Y": 1.0,
-     "Z": 1.0
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 4294967295
     },
-    "Distance": 1000.0
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
    },
    "Transform": {
     "Orientation": {
@@ -57,14 +43,139 @@
      "Z": 0.0
     },
     "Position": {
-     "X": 6.185730934143066,
-     "Y": 3.4684977531433105,
-     "Z": 3.855998992919922
+     "X": 0.0,
+     "Y": 2.937605381011963,
+     "Z": 0.0
     },
     "Scale": {
      "X": 1.0,
      "Y": 1.0,
      "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 2,
+   "Name": "My Cube",
+   "Parent": 0,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 2.6677980422973633,
+     "Y": 2.127074718475342,
+     "Z": 0.0
+    },
+    "Scale": {
+     "X": 2.0,
+     "Y": 2.0,
+     "Z": 2.0
+    }
+   }
+  },
+  {
+   "ID": 3,
+   "Name": "Child Of Cube",
+   "Parent": 2,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "common\\models\\sphere.fbx"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -3.337522268295288,
+     "Y": 2.152144432067871,
+     "Z": 0.0
+    },
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 4,
+   "Name": "Point Light",
+   "Parent": 1,
+   "PointLight": {
+    "Brightness": 32.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 64.0
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 2.466022253036499,
+     "Y": 5.521535396575928,
+     "Z": -3.0549488067626953
+    },
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 5,
+   "Name": "Floor",
+   "Parent": 0,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Scale": {
+     "X": 16.0,
+     "Y": 1.0,
+     "Z": 16.0
     }
    }
   }

@@ -166,7 +166,7 @@ namespace Entities
 				const uint32_t oldParent = json.GetJson()[e].value("Parent", (uint32_t)-1);
 				EntityHandle actualParent = oldParent != -1 ? oldEntityToNewEntity[oldParent] : EntityHandle();
 				SetParent(actualHandle, actualParent);
-				std::string newName = json.GetJson()[e]["Name"];
+				std::string newName = json.GetJson()[e].value("Name", "");
 				SetEntityName(actualHandle, newName);
 				childSerialiser.GetJson() = std::move(json.GetJson()[e]);
 				for (auto childJson = childSerialiser.GetJson().begin(); childJson != childSerialiser.GetJson().end(); childJson++)
