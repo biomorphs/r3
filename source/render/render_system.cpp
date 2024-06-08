@@ -320,7 +320,7 @@ namespace R3
 		if (w)
 		{
 			auto getClearColour = [this](const Entities::EntityHandle& e, EnvironmentSettingsComponent& cmp) {
-				m_mainPassClearColour = cmp.m_clearColour;
+				m_mainPassClearColour = glm::vec4(cmp.m_skyColour, 1.0f);
 				return true;
 			};
 			Entities::Queries::ForEach<EnvironmentSettingsComponent>(w, getClearColour);

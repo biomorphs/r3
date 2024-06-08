@@ -20,22 +20,25 @@ void main() {
 	int materialIndex = PushConstants.m_materialIndex;
 	StaticMeshMaterial myMaterial = globals.m_materialBuffer.materials[materialIndex];
 	
-	if(myMaterial.m_normalTexture != -1)	// normal mapping
-	{
-		normal = texture(allTextures[myMaterial.m_normalTexture],inUV).xyz;
-		normal = normalize(normal * 2.0 - 1.0);
-		normal = normalize(inTBN * normal);
-	}
-	
 	PBRMaterial mat;
+	float finalAlpha = myMaterial.m_albedoOpacity.a;
 	if(myMaterial.m_albedoTexture != -1)
 	{
-		mat.m_albedo = myMaterial.m_albedoOpacity.xyz * SRGBToLinear(texture(allTextures[myMaterial.m_albedoTexture],inUV)).xyz;
+		vec4 albedoTex = texture(allTextures[myMaterial.m_albedoTexture],inUV);
+		mat.m_albedo = myMaterial.m_albedoOpacity.xyz * SRGBToLinear(albedoTex).xyz;
+		finalAlpha = finalAlpha * albedoTex.a;
 	}
 	else
 	{
 		mat.m_albedo = myMaterial.m_albedoOpacity.xyz;
 	}
+	
+	// early discard for punch-through alpha 
+	if(finalAlpha < 0.25)
+	{
+		discard;
+	}
+	
 	if(myMaterial.m_roughnessTexture != -1)
 	{
 		mat.m_roughness = texture(allTextures[myMaterial.m_roughnessTexture],inUV).y;	// assuming combined rough/metalness
@@ -60,19 +63,38 @@ void main() {
 	{
 		mat.m_ao = 1.0;
 	}
-	mat.m_ambientMulti = 0.01;
 	
+	if(myMaterial.m_normalTexture != -1)	// normal mapping
+	{
+		normal = texture(allTextures[myMaterial.m_normalTexture],inUV).xyz;
+		normal = normalize(normal * 2.0 - 1.0);
+		normal = normalize(inTBN * normal);
+	}
+	
+	// Apply sun direct light
+	vec3 sunRadiance = globals.m_sunColourAmbient.xyz * globals.m_sunDirectionBrightness.w;
+	vec3 directLight = PBRDirectLighting(mat, viewDir, -globals.m_sunDirectionBrightness.xyz, normal, sunRadiance, 1.0);
+	
+	// Apply point lights (direct)
 	uint pointLightCount = globals.m_pointLightCount;
-	vec3 directLight = vec3(0.0,0.0,0.0);
 	for(uint p=0;p<pointLightCount;++p)
 	{
 		Pointlight pl = globals.m_pointlightBuffer.lights[globals.m_firstPointLightOffset + p];
 		vec3 lightRadiance = pl.m_colourBrightness.xyz * pl.m_colourBrightness.w;
 		float attenuation = GetPointlightAttenuation(pl, worldPos);
-		directLight += PBRDirectLighting(mat, viewDir, worldPos, normal, pl.m_positionDistance.xyz, lightRadiance, attenuation);
+		vec3 lightToPixel = normalize(pl.m_positionDistance.xyz - worldPos);
+		directLight += PBRDirectLighting(mat, viewDir, lightToPixel, normal, lightRadiance, attenuation);
 	}
 	
-	vec3 finalLight = PBRGetAmbientLighting(mat) + directLight;	
+	// Ambient is a hack, tries to combine sky + sun colour somehow
+	vec3 ambient = PBRGetAmbientLighting(mat, 
+		globals.m_sunColourAmbient.xyz, 
+		globals.m_sunColourAmbient.w,
+		globals.m_skyColourAmbient.xyz,
+		globals.m_skyColourAmbient.w
+	);
+	
+	vec3 finalLight = ambient + directLight;	
 	
 	// tonemap using reinhard operator for now 
 	// should be a separate fullscreen pass
@@ -82,5 +104,5 @@ void main() {
 	finalLight = LinearToSRGB(finalLight);
 #endif
 
-	outColour = vec4(finalLight,myMaterial.m_albedoOpacity.a);
+	outColour = vec4(finalLight,finalAlpha);
 }

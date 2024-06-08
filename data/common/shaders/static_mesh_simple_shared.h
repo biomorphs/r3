@@ -4,6 +4,9 @@
 struct GlobalConstants { 
 	mat4 m_projViewTransform;
 	vec4 m_cameraWorldSpacePos;
+	vec4 m_sunColourAmbient;
+	vec4 m_sunDirectionBrightness;
+	vec4 m_skyColourAmbient;
 	VertexBuffer m_vertexBuffer;
 	MaterialBuffer m_materialBuffer;
 	PointlightBuffer m_pointlightBuffer;

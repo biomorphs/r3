@@ -7,6 +7,7 @@
 #include "engine/components/transform.h"
 #include "engine/components/static_mesh.h"
 #include "engine/components/static_mesh_materials.h"
+#include "engine/components/environment_settings.h"
 #include "entities/systems/entity_system.h"
 #include "entities/world.h"
 #include "entities/queries.h"
@@ -24,6 +25,9 @@ namespace R3
 	{
 		glm::mat4 m_projViewTransform;
 		glm::vec4 m_cameraWorldSpacePos;
+		glm::vec4 m_sunColourAmbient = {0,0,0,0};
+		glm::vec4 m_sunDirectionBrightness = { 0,-1,0,0 };
+		glm::vec4 m_skyColourAmbient = { 0,0,0,0 };
 		VkDeviceAddress m_vertexBufferAddress;
 		VkDeviceAddress m_materialBufferAddress;
 		VkDeviceAddress m_pointLightsBufferAddress;
@@ -180,6 +184,23 @@ namespace R3
 		return true;
 	}
 
+	void StaticMeshSimpleRenderer::ProcessEnvironmentSettings(GlobalConstants& g)
+	{
+		R3_PROF_EVENT();
+		auto entities = GetSystem<Entities::EntitySystem>();
+		auto w = entities->GetActiveWorld();
+		if (w)
+		{
+			auto getSettings = [&g](const Entities::EntityHandle& e, EnvironmentSettingsComponent& cmp) {
+				g.m_sunColourAmbient = { cmp.m_sunColour, cmp.m_sunAmbientFactor };
+				g.m_skyColourAmbient = { cmp.m_skyColour, cmp.m_skyAmbientFactor };
+				g.m_sunDirectionBrightness = { glm::normalize(cmp.m_sunDirection), cmp.m_sunBrightness };
+				return true;
+			};
+			Entities::Queries::ForEach<EnvironmentSettingsComponent>(w, getSettings);
+		}
+	}
+
 	void StaticMeshSimpleRenderer::MainPassBegin(Device& d, VkCommandBuffer cmds)
 	{
 		R3_PROF_EVENT();
@@ -212,6 +233,7 @@ namespace R3
 			globals.m_pointLightsBufferAddress = lights->GetPointlightsDeviceAddress();
 			globals.m_firstPointLightOffset = lights->GetFirstPointlightOffset();
 			globals.m_pointlightCount = lights->GetTotalPointlightsThisFrame();
+			ProcessEnvironmentSettings(globals);
 			m_globalConstantsBuffer.Write(m_currentGlobalConstantsBuffer, 1, &globals);
 			m_globalConstantsBuffer.Flush(d, cmds);
 		}

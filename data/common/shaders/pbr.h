@@ -4,7 +4,6 @@ struct PBRMaterial {
 	float m_metallic;
 	float m_roughness;
 	float m_ao;
-	float m_ambientMulti;
 };
 
 // Normal distribution function approximates area of surface aligned towards half vector given a roughness
@@ -18,21 +17,25 @@ vec3 FresnelSchlick(float nDotL, vec3 F0);
 
 const float PI = 3.14159265359;
 
+vec3 PBRGetAmbientLighting(PBRMaterial material, vec3 sunColour, float sunAmbient, vec3 skyColour, float skyAmbient)
+{
+	vec3 ambient = (sunColour * sunAmbient) + (skyColour * skyAmbient);
+	return ambient * material.m_ao * material.m_albedo;
+}
+
 vec3 PBRGetAmbientLighting(PBRMaterial material)
 {
-	return material.m_ambientMulti * material.m_ao * material.m_albedo;
+	return material.m_ao * material.m_albedo;
 }
 
 vec3 PBRDirectLighting(
 	PBRMaterial material,
 	vec3 worldToCamera, 
-	vec3 worldPos, 
+	vec3 lightToPixel,
 	vec3 worldNormal, 
-	vec3 lightPosWorldSpace,
 	vec3 lightColour,
 	float lightAttenuation)
 {
-	vec3 lightToPixel = normalize(lightPosWorldSpace - worldPos);
     vec3 halfVec = normalize(worldToCamera + lightToPixel);
 	float nDotL = max(dot(lightToPixel,worldNormal),0.0);
 	 

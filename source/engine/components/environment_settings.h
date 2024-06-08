@@ -5,7 +5,7 @@
 
 namespace R3
 {
-	// Contains global environment state
+	// Contains global (well, per world) environment settings
 	class EnvironmentSettingsComponent
 	{
 	public:
@@ -13,6 +13,11 @@ namespace R3
 		void SerialiseJson(JsonSerialiser& s);
 		void Inspect(const Entities::EntityHandle& e, Entities::World* w, ValueInspector& i);
 
-		glm::vec4 m_clearColour;	// controls clear colour of main render pass
+		glm::vec3 m_skyColour = {};
+		glm::vec3 m_sunDirection{ -.1,-1,-.1 };	// normalise before use
+		glm::vec3 m_sunColour = {1,1,1};
+		float m_sunBrightness = 1.0f;
+		float m_skyAmbientFactor = 0.005f;		// ambient from the sky 
+		float m_sunAmbientFactor = 0.008f;		// ambient from the sun
 	};
 }
