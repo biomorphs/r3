@@ -19,11 +19,13 @@ namespace R3
 		
 		using OnAddComponent = std::function<void(const Entities::EntityHandle& h, std::string_view typeName)>;
 		using OnRemoveComponent = std::function<void(const Entities::EntityHandle& h, std::string_view typeName)>;
+		using OnSetEntityName = std::function<void(const Entities::EntityHandle& h, std::string_view old, std::string_view newName)>;
 		OnAddComponent m_onAddComponent;
 		OnRemoveComponent m_onRemoveComponent;
+		OnSetEntityName m_onSetEntityName;
 	private:
-		bool ShowEntityHeader(std::string_view name, const Entities::EntityHandle& h, Entities::World& w);
-		void UpdateEntityContextMenu(std::string_view name, const Entities::EntityHandle& h, Entities::World& w);
+		bool ShowEntityHeader(const Entities::EntityHandle& h, Entities::World& w);
+		void UpdateEntityContextMenu(const Entities::EntityHandle& h, Entities::World& w);
 		void DisplayComponent(const Entities::EntityHandle& h, Entities::World& w, ValueInspector& v, int cmpTypeIndex);
 		std::unordered_map<uint32_t, float> m_entityIdToWindowHeight;	// to handle arbitrary sized child windows
 	};

@@ -6,6 +6,7 @@
 #include "world_editor_tool.h"
 #include "world_editor_select_entity_tool.h"
 #include "world_editor_move_entities_tool.h"
+#include "commands/set_value_cmd.h"
 #include "commands/world_editor_save_cmd.h"
 #include "commands/world_editor_select_entities_cmd.h"
 #include "commands/world_editor_add_empty_entity_cmd.h"
@@ -68,6 +69,15 @@ namespace R3
 			deleteCmd->m_targetEntities.push_back(h);
 			deleteCmd->m_componentType = typeName;
 			m_cmds->Push(std::move(deleteCmd));
+			};
+		m_inspectEntityWidget->m_onSetEntityName = [this](const Entities::EntityHandle& h, std::string_view oldName, std::string_view newName)
+		{
+			auto setNameFn = [this, h](std::string n) {
+				auto w = GetWorld();
+				w->SetEntityName(h, n);
+			};
+			auto newCmd = std::make_unique<SetValueCommand<std::string>>("Set Entity Name", std::string(oldName), std::string(newName), setNameFn);
+			m_cmds->Push(std::move(newCmd));
 		};
 
 		m_cmds = std::make_unique<EditorCommandList>();
@@ -119,7 +129,7 @@ namespace R3
 				world->AddComponent<PointLightComponent>(e);
 				world->AddComponent<TransformComponent>(e);
 			};
-			auto addCmd = std::make_unique<WorldEditorAddEmptyEntityCommand>(this);
+			auto addCmd = std::make_unique<WorldEditorAddEmptyEntityCommand>(this, "Point Light");
 			addCmd->SetOnCreate(addPointlight);
 			m_cmds->Push(std::move(addCmd));
 		});

@@ -1,0 +1,73 @@
+{
+ "AllEntities": [
+  {
+   "ID": 0,
+   "Name": "",
+   "Parent": 4294967295
+  },
+  {
+   "ID": 1,
+   "Name": "erato.obj",
+   "Parent": 0,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "downloaded\\erato\\erato.obj"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 0.7071068286895752,
+     "X": 0.0,
+     "Y": 0.7071068286895752,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Scale": {
+     "X": 0.10000000149011612,
+     "Y": 0.10000000149011612,
+     "Z": 0.10000000149011612
+    }
+   }
+  },
+  {
+   "ID": 2,
+   "Name": "Point Light",
+   "Parent": 0,
+   "PointLight": {
+    "Brightness": 1000.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 1000.0
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 6.185730934143066,
+     "Y": 3.4684977531433105,
+     "Z": 3.855998992919922
+    },
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  }
+ ],
+ "WorldName": "New World"
+}

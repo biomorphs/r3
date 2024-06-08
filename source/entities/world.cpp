@@ -16,10 +16,28 @@ namespace Entities
 	World::World()
 	{
 		m_allEntities.reserve(1024 * 1024);
+		m_allEntityNames.reserve(1024 * 1024);
 	}
 
 	World::~World()
 	{
+	}
+
+	void World::SetEntityName(const EntityHandle& h, std::string_view name)
+	{
+		if (IsHandleValid(h))
+		{
+			m_allEntityNames[h.GetPrivateIndex()] = name;
+		}
+	}
+
+	const std::string_view World::GetEntityName(const EntityHandle& h)
+	{
+		if (IsHandleValid(h))
+		{
+			return m_allEntityNames[h.GetPrivateIndex()];
+		}
+		return "";
 	}
 
 	void World::SerialiseEntity(const EntityHandle& e, JsonSerialiser& target)
@@ -29,7 +47,10 @@ namespace Entities
 		target("ID", entityID);
 		auto parentID = GetParent(e).GetID();
 		target("Parent", parentID);
-
+		if (e.GetPrivateIndex() != -1 && e.GetPrivateIndex() < m_allEntityNames.size())
+		{
+			target("Name", m_allEntityNames[e.GetPrivateIndex()]);
+		}
 		const auto& ped = m_allEntities[e.GetPrivateIndex()];
 		for (int typeIndex = 0; typeIndex < ped.m_componentIndices.size(); ++typeIndex)
 		{
@@ -145,10 +166,12 @@ namespace Entities
 				const uint32_t oldParent = json.GetJson()[e].value("Parent", (uint32_t)-1);
 				EntityHandle actualParent = oldParent != -1 ? oldEntityToNewEntity[oldParent] : EntityHandle();
 				SetParent(actualHandle, actualParent);
+				std::string newName = json.GetJson()[e]["Name"];
+				SetEntityName(actualHandle, newName);
 				childSerialiser.GetJson() = std::move(json.GetJson()[e]);
 				for (auto childJson = childSerialiser.GetJson().begin(); childJson != childSerialiser.GetJson().end(); childJson++)
 				{
-					if (childJson.key() != "ID" && childJson.key() != "Parent")
+					if (childJson.key() != "ID" && childJson.key() != "Parent" && childJson.key() != "Name")
 					{
 						if (AddComponent(actualHandle, childJson.key()))
 						{
@@ -234,7 +257,14 @@ namespace Entities
 		// annoyingly, good old printf is still way faster than std::format 
 		if (IsHandleValid(h))
 		{
-			return snprintf(nameBuffer, maxLength, "Entity %d", h.GetID());
+			if (m_allEntityNames[h.GetPrivateIndex()].size() != 0)
+			{
+				return snprintf(nameBuffer, maxLength, "%s (#%d)", m_allEntityNames[h.GetPrivateIndex()].c_str(), h.GetID());
+			}
+			else
+			{
+				return snprintf(nameBuffer, maxLength, "Entity %d", h.GetID());
+			}
 		}
 		else
 		{
@@ -308,13 +338,16 @@ namespace Entities
 			assert(m_allEntities[newIndex].m_ownedComponentBits == 0);
 			assert(m_allEntities[newIndex].m_componentIndices.size() == 0);
 			m_allEntities[newIndex].m_publicID = newId;
+			m_allEntityNames[newIndex].clear();
 		}
 		else
 		{
 			PerEntityData newEntityData;
 			newEntityData.m_publicID = newId;
 			m_allEntities.push_back(newEntityData);
+			m_allEntityNames.push_back("");
 			newIndex = static_cast<uint32_t>(m_allEntities.size() - 1);
+			assert(m_allEntityNames.size() == m_allEntities.size());
 		}
 		return EntityHandle(newId, newIndex);
 	}
@@ -342,6 +375,7 @@ namespace Entities
 				assert(m_allEntities[reservedIndex].m_ownedComponentBits == 0);
 				assert(m_allEntities[reservedIndex].m_componentIndices.size() == 0);
 				m_allEntities[reservedIndex].m_publicID = handleToRestore.GetID();
+				m_allEntityNames[reservedIndex].clear();
 				m_reservedSlots.erase(reservation);
 				return handleToRestore;
 			}

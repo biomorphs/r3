@@ -6,11 +6,12 @@
 #include "entities/world.h"
 #include "entities/entity_handle.h"
 #include "entities/component_type_registry.h"
-#include "imgui.h"
+#include <imgui.h>
+#include <format>
 
 namespace R3
 {
-	void EntityInspectorWidget::UpdateEntityContextMenu(std::string_view name, const Entities::EntityHandle& h, Entities::World& w)
+	void EntityInspectorWidget::UpdateEntityContextMenu(const Entities::EntityHandle& h, Entities::World& w)
 	{
 		Entities::ComponentTypeRegistry& cti = Entities::ComponentTypeRegistry::GetInstance();
 		MenuBar contextMenu;
@@ -24,19 +25,21 @@ namespace R3
 				});
 			}
 		}
-		contextMenu.DisplayContextMenu(false, name.data());
+		contextMenu.DisplayContextMenu(false);
 	}
 
-	bool EntityInspectorWidget::ShowEntityHeader(std::string_view name, const Entities::EntityHandle& h, Entities::World& w)
+	bool EntityInspectorWidget::ShowEntityHeader(const Entities::EntityHandle& h, Entities::World& w)
 	{
-		Systems::GetSystem<ImGuiSystem>()->PushLargeFont();
-		ImGui::PushID(name.data());	// Imgui::Text needs a ID for context menu to work
-		ImGui::Text(name.data());
-		ImGui::PopID();
-		ImGui::PopFont();
+		std::string oldName(w.GetEntityName(h));
+		char textBuffer[1024] = { '\0' };
+		strcpy_s(textBuffer, oldName.c_str());
+		if (ImGui::InputText(std::format("Name##EntName{}", h.GetID()).c_str(), textBuffer, 1024, ImGuiInputTextFlags_EnterReturnsTrue))
+		{
+			m_onSetEntityName(h, oldName, textBuffer);
+		}
 		if (m_onAddComponent)
 		{
-			UpdateEntityContextMenu(name, h, w);
+			UpdateEntityContextMenu(h, w);
 		}
 		return true;
 	}
@@ -44,12 +47,7 @@ namespace R3
 	void EntityInspectorWidget::Update(const Entities::EntityHandle& h, Entities::World& w, ValueInspector& v, bool embedAsChild)
 	{
 		R3_PROF_EVENT();
-		std::string entityName = ">Invalid handle!<";
-		if (w.IsHandleValid(h))
-		{
-			entityName = w.GetEntityDisplayName(h);
-		}
-
+		std::string displayName = w.GetEntityDisplayName(h);
 		// A limitation of imgui is fixed sized child windows. 
 		// This implements a collapsable window by storing the size of the contents from the previous frame
 		float actualChildSize = 0.0f;
@@ -63,10 +61,10 @@ namespace R3
 		{
 			actualChildSize = foundSize->second;
 		}
-		bool isOpen = embedAsChild ? ImGui::BeginChild(entityName.c_str(), {0,actualChildSize }, true) : ImGui::Begin(entityName.c_str());
+		bool isOpen = embedAsChild ? ImGui::BeginChild(displayName.c_str(), {0,actualChildSize }, true) : ImGui::Begin(displayName.c_str());
 		if (isOpen && w.IsHandleValid(h))
 		{
-			if (ShowEntityHeader(entityName, h, w))
+			if (ShowEntityHeader(h, w))
 			{
 				Entities::ComponentTypeRegistry& cti = Entities::ComponentTypeRegistry::GetInstance();
 				for (int cmpTypeIndex = 0; cmpTypeIndex < cti.AllTypes().size(); ++cmpTypeIndex)

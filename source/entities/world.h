@@ -43,6 +43,10 @@ namespace Entities
 		template<class It>	// bool(const EntityHandle& e)
 		void ForEachActiveEntity(const It&);	// slow! tools/debug only
 
+		// Entity names, try not to abuse this!
+		void SetEntityName(const EntityHandle& h, std::string_view name);
+		const std::string_view GetEntityName(const EntityHandle& h);
+
 		// Components slow path
 		bool AddComponent(const EntityHandle& e, std::string_view componentTypeName);
 		bool HasComponent(const EntityHandle& e, std::string_view componentTypeName);
@@ -106,6 +110,7 @@ namespace Entities
 		std::deque<uint32_t> m_freeEntityIndices;			// free list of entity data
 		std::vector<std::unique_ptr<ComponentStorage>> m_allComponents;	// storage for all components
 		std::vector<PendingDeleteEntity> m_pendingDelete;	// all entities to be deleted (these handles should still all be valid)
+		std::vector<std::string> m_allEntityNames;			// kept off hot data path (m_allEntities)
 	};
 
 	template<class It>	// bool(const EntityHandle& e)

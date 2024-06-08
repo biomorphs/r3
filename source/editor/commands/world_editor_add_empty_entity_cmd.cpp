@@ -18,9 +18,13 @@ namespace R3
 		{
 			m_createdEntity = world->AddEntity();
 		}
-		if (m_onEntityCreated && m_createdEntity.GetID() != -1)
+		if (m_createdEntity.GetID() != -1)
 		{
-			m_onEntityCreated(m_createdEntity);
+			world->SetEntityName(m_createdEntity, m_newName);
+			if (m_onEntityCreated)
+			{
+				m_onEntityCreated(m_createdEntity);
+			}
 		}
 		m_window->DeselectAll();
 		m_window->SelectEntity(m_createdEntity);

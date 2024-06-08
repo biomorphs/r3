@@ -48,6 +48,8 @@ namespace R3
 				}
 				if (m_createdEntity.GetID() != -1)
 				{
+					std::filesystem::path filePath(m_meshPath);
+					world->SetEntityName(m_createdEntity, filePath.filename().string());
 					world->AddComponent<TransformComponent>(m_createdEntity);
 					world->AddComponent<StaticMeshComponent>(m_createdEntity);
 					StaticMeshComponent* smc = world->GetComponent<StaticMeshComponent>(m_createdEntity);

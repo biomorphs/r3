@@ -54,9 +54,9 @@ namespace R3
 		auto& imRender = Systems::GetSystem<RenderSystem>()->GetImRenderer();
 		auto childCmp = w.GetComponent<TransformComponent>(e);
 		const auto parent = w.GetParent(e);
-		if (parent.GetID() != -1 && childCmp != nullptr)
+		auto parentCmp = w.GetComponent<TransformComponent>(parent);
+		if (parentCmp != nullptr && childCmp != nullptr)
 		{
-			auto parentCmp = w.GetComponent<TransformComponent>(parent);
 			ImmediateRenderer::PerVertexData verts[2];
 			verts[0].m_position = childCmp->GetWorldspaceInterpolated()[3];
 			verts[0].m_colour = colour;
