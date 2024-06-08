@@ -19,6 +19,8 @@ namespace R3
 		virtual void RegisterTickFns();
 		virtual void Shutdown();
 
+		void SetWorldScriptsActive(bool v);
+
 		// Register a type with internals states using sol::new_usertype<>
 		// args can contain constructors (via sol::constructors), member functions, member variables, etc
 		// Typical use
@@ -41,6 +43,7 @@ namespace R3
 		bool RunFixedUpdateScripts();
 		bool RunVariableUpdateScripts();
 		bool InitialiseGlobalState();
+		bool m_runActiveWorldScripts = false;
 		bool m_showGui = false;
 		Mutex m_globalStateMutex;
 		std::unique_ptr<sol::state> m_globalState;

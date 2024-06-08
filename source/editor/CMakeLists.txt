@@ -18,6 +18,8 @@ set(EditorLib_SourceFiles
 	world_editor_move_entities_tool.cpp
 	world_editor_transform_widget.h
 	world_editor_transform_widget.cpp
+	world_runner_window.h
+	world_runner_window.cpp
 	systems/editor_system.h
 	systems/editor_system.cpp
 	commands/world_editor_set_entity_positions_cmd.h

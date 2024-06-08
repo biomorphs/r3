@@ -59,6 +59,18 @@ namespace R3
 		{ SDLK_LCTRL, KEY_LCTRL },
 		{ SDLK_RCTRL, KEY_RCTRL },
 		{ SDLK_LALT, KEY_LALT },
+		{ SDLK_F1, KEY_F1 },
+		{ SDLK_F2, KEY_F2 },
+		{ SDLK_F3, KEY_F3 },
+		{ SDLK_F4, KEY_F4 },
+		{ SDLK_F5, KEY_F5 },
+		{ SDLK_F6, KEY_F6 },
+		{ SDLK_F7, KEY_F7 },
+		{ SDLK_F8, KEY_F8 },
+		{ SDLK_F9, KEY_F9 },
+		{ SDLK_F10, KEY_F10 },
+		{ SDLK_F11, KEY_F11 },
+		{ SDLK_F12, KEY_F12 },
 		{ SDLK_ESCAPE, KEY_ESCAPE }
 	};
 
@@ -109,6 +121,18 @@ namespace R3
 		{"KEY_LCTRL", Key::KEY_LCTRL },
 		{"KEY_RCTRL", Key::KEY_RCTRL },
 		{"KEY_LALT", Key::KEY_LALT },
+		{"KEY_F1", Key::KEY_F1 },
+		{"KEY_F2", Key::KEY_F2 },
+		{"KEY_F3", Key::KEY_F3 },
+		{"KEY_F4", Key::KEY_F4 },
+		{"KEY_F5", Key::KEY_F5 },
+		{"KEY_F6", Key::KEY_F6 },
+		{"KEY_F7", Key::KEY_F7 },
+		{"KEY_F8", Key::KEY_F8 },
+		{"KEY_F9", Key::KEY_F9 },
+		{"KEY_F10", Key::KEY_F10 },
+		{"KEY_F11", Key::KEY_F11 },
+		{"KEY_F12", Key::KEY_F12 },
 		{"KEY_ESCAPE", Key::KEY_ESCAPE}
 	};
 

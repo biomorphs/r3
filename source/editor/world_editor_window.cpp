@@ -1,5 +1,6 @@
 #include "world_editor_window.h"
 #include "editor_utils.h"
+#include "systems/editor_system.h"
 #include "world_info_widget.h"
 #include "editor_command_list.h"
 #include "undo_redo_value_inspector.h"
@@ -22,6 +23,7 @@
 #include "engine/entity_inspector_widget.h"
 #include "engine/imgui_menubar_helper.h"
 #include "engine/file_dialogs.h"
+#include "engine/systems/lua_system.h"
 #include "engine/systems/model_data_system.h"
 #include "engine/systems/imgui_system.h"
 #include "engine/systems/input_system.h"
@@ -86,6 +88,9 @@ namespace R3
 		m_valueInspector = std::make_unique<UndoRedoInspector>(*m_cmds);
 
 		CreateTools();
+
+		auto scripts = Systems::GetSystem<LuaSystem>();
+		scripts->SetWorldScriptsActive(false);	// don't run scripts in the editor
 	}
 
 	WorldEditorWindow::~WorldEditorWindow()
@@ -289,7 +294,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		auto& fileMenu = MenuBar::MainMenu().GetSubmenu("File");
-		fileMenu.AddItemAfter("Open World", "Save World", [this]() {
+		fileMenu.AddItemAfter("Edit World", "Save World", [this]() {
 			m_cmds->Push(std::make_unique<WorldEditorSaveCmd>(this, m_filePath));
 			});
 		fileMenu.AddItemAfter("Save World", "Save World As", [this]() {
@@ -408,6 +413,14 @@ namespace R3
 		{
 			m_tools[m_activeTool]->Update(*GetWorld(), *m_cmds);
 		}
+
+		auto input = Systems::GetSystem<InputSystem>();
+		auto editor = Systems::GetSystem<EditorSystem>();
+		if (input->WasKeyReleased(Key::KEY_F5) && m_filePath.size() != 0)
+		{
+			editor->RunWorld(m_filePath);
+		}
+
 		m_cmds->RunNext();
 	}
 
@@ -449,8 +462,10 @@ namespace R3
 
 	void WorldEditorWindow::OnFocusGained()
 	{
-		auto* entities = Systems::GetSystem<Entities::EntitySystem>();
+		auto entities = Systems::GetSystem<Entities::EntitySystem>();
+		auto scripts = Systems::GetSystem<LuaSystem>();
 		entities->SetActiveWorld(m_worldIdentifier);
+		scripts->SetWorldScriptsActive(false);	// don't run scripts in the editor
 	}
 
 	void WorldEditorWindow::PushCommand(std::unique_ptr<EditorCommand>&& cmd)

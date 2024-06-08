@@ -1,5 +1,6 @@
 #include "editor_system.h"
 #include "editor/world_editor_window.h"
+#include "editor/world_runner_window.h"
 #include "engine/imgui_menubar_helper.h"
 #include "engine/systems/event_system.h"
 #include "engine/file_dialogs.h"
@@ -59,6 +60,24 @@ namespace R3
 		}
 	}
 
+	void EditorSystem::RunWorld(std::string path)
+	{
+		R3_PROF_EVENT();
+		auto entities = GetSystem<Entities::EntitySystem>();
+		int newWorldNameId = m_worldInternalNameCounter++;
+		std::string worldInternalName = std::format("RunWorld_{}", newWorldNameId);
+		Entities::World* newWorld = entities->CreateWorld(worldInternalName);
+		if (newWorld && newWorld->Load(path))
+		{
+			m_allWindows.push_back(std::make_unique<WorldRunnerWindow>(worldInternalName, path));
+		}
+		else
+		{
+			LogError("Failed to load world file '{}'", path);
+			entities->DestroyWorld(worldInternalName);
+		}
+	}
+
 	void EditorSystem::OnNewWorld()
 	{
 		R3_PROF_EVENT();
@@ -70,6 +89,16 @@ namespace R3
 		{
 			newWorld->SetName("New World");
 			m_allWindows.push_back(std::make_unique<WorldEditorWindow>(worldInternalName));
+		}
+	}
+
+	void EditorSystem::OnRunWorld()
+	{
+		R3_PROF_EVENT();
+		std::string fileToOpen = FileLoadDialog("", "scn");
+		if (!fileToOpen.empty())
+		{
+			RunWorld(fileToOpen);
 		}
 	}
 
@@ -102,8 +131,11 @@ namespace R3
 		fileMenu.AddItem("New World", [this]() {
 			OnNewWorld();
 		});
-		fileMenu.AddItem("Open World", [this]() {
+		fileMenu.AddItem("Edit World", [this]() {
 			OnOpenWorld();
+		});
+		fileMenu.AddItem("Run World", [this] {
+			OnRunWorld();
 		});
 		fileMenu.AddItem("Exit", [this]() {
 			CloseAllWindows();

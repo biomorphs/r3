@@ -14,11 +14,13 @@ namespace R3
 		virtual bool Init();
 		virtual void Shutdown();
 		void CloseWindow(EditorWindow* window);
+		void RunWorld(std::string path);
 	private:
 		void CloseAllWindows();
 		void ProcessClosingWindows();
 		void OnNewWorld();
 		void OnOpenWorld();
+		void OnRunWorld();
 		void ShowMainMenu();
 		void ShowWindowTabs();
 		bool ShowGui();

@@ -24,6 +24,11 @@ namespace R3
 	{
 	}
 
+	void LuaSystem::SetWorldScriptsActive(bool v)
+	{
+		m_runActiveWorldScripts = v;
+	}
+
 	void LuaSystem::RegisterTickFns()
 	{
 		RegisterTick("LuaSystem::RunFixedUpdateScripts", [this]() {
@@ -94,6 +99,7 @@ namespace R3
 		if (m_showGui)
 		{
 			ImGui::Begin("Lua");
+			ImGui::Text(m_runActiveWorldScripts ? "World Scripts Active" : "World Scripts Deactivated");
 			ScopedTryLock lock(m_globalStateMutex);
 			if (lock.IsLocked())
 			{
@@ -157,31 +163,34 @@ namespace R3
 	bool LuaSystem::RunFixedUpdateScripts()
 	{
 		R3_PROF_EVENT();
-		auto forEachScriptCmp = [this](const Entities::EntityHandle& e, LuaScriptComponent& lc) {
-			if (lc.m_onFixedUpdate.m_fn.valid() && lc.m_isActive)
-			{
-				R3_PROF_EVENT_DYN(lc.m_onFixedUpdate.m_entryPointName.c_str());
-				try
+		if (m_runActiveWorldScripts)
+		{
+			auto forEachScriptCmp = [this](const Entities::EntityHandle& e, LuaScriptComponent& lc) {
+				if (lc.m_onFixedUpdate.m_fn.valid() && lc.m_isActive)
 				{
-					sol::protected_function_result result = lc.m_onFixedUpdate.m_fn(e);
-					if (!result.valid())
+					R3_PROF_EVENT_DYN(lc.m_onFixedUpdate.m_entryPointName.c_str());
+					try
 					{
-						sol::error err = result;
-						LogError("Script error: {}", err.what());
+						sol::protected_function_result result = lc.m_onFixedUpdate.m_fn(e);
+						if (!result.valid())
+						{
+							sol::error err = result;
+							LogError("Script error: {}", err.what());
+						}
+					}
+					catch (const sol::error& err)
+					{
+						std::string errorText = err.what();
+						LogError("Script Error: %s", errorText);
 					}
 				}
-				catch (const sol::error& err)
-				{
-					std::string errorText = err.what();
-					LogError("Script Error: %s", errorText);
-				}
+				return true;
+				};
+			auto entities = Systems::GetSystem<Entities::EntitySystem>();
+			if (entities->GetActiveWorld())
+			{
+				Entities::Queries::ForEach<LuaScriptComponent>(entities->GetActiveWorld(), forEachScriptCmp);
 			}
-			return true;
-		};
-		auto entities = Systems::GetSystem<Entities::EntitySystem>();
-		if (entities->GetActiveWorld())
-		{
-			Entities::Queries::ForEach<LuaScriptComponent>(entities->GetActiveWorld(), forEachScriptCmp);
 		}
 		return true;
 	}
@@ -214,37 +223,40 @@ namespace R3
 	bool LuaSystem::RunVariableUpdateScripts()
 	{
 		R3_PROF_EVENT();
-		auto entities = Systems::GetSystem<Entities::EntitySystem>();
-		auto forEachScriptCmp = [this](const Entities::EntityHandle& e, LuaScriptComponent& lc) {
-			if (lc.m_needsRecompile)
-			{
-				lc.m_needsRecompile = false;
-				lc.m_onFixedUpdate.m_fn = LoadScriptAndGetEntrypoint(*m_globalState, lc.m_onFixedUpdate.m_sourcePath, lc.m_onFixedUpdate.m_entryPointName);
-				lc.m_onVariableUpdate.m_fn = LoadScriptAndGetEntrypoint(*m_globalState, lc.m_onVariableUpdate.m_sourcePath, lc.m_onVariableUpdate.m_entryPointName);
-			}
-			if (lc.m_onVariableUpdate.m_fn.valid() && lc.m_isActive)
-			{
-				R3_PROF_EVENT_DYN(lc.m_onVariableUpdate.m_entryPointName.c_str());
-				try
+		if (m_runActiveWorldScripts)
+		{
+			auto entities = Systems::GetSystem<Entities::EntitySystem>();
+			auto forEachScriptCmp = [this](const Entities::EntityHandle& e, LuaScriptComponent& lc) {
+				if (lc.m_needsRecompile)
 				{
-					sol::protected_function_result result = lc.m_onVariableUpdate.m_fn(e);	// todo, pass entity handle
-					if (!result.valid())
+					lc.m_needsRecompile = false;
+					lc.m_onFixedUpdate.m_fn = LoadScriptAndGetEntrypoint(*m_globalState, lc.m_onFixedUpdate.m_sourcePath, lc.m_onFixedUpdate.m_entryPointName);
+					lc.m_onVariableUpdate.m_fn = LoadScriptAndGetEntrypoint(*m_globalState, lc.m_onVariableUpdate.m_sourcePath, lc.m_onVariableUpdate.m_entryPointName);
+				}
+				if (lc.m_onVariableUpdate.m_fn.valid() && lc.m_isActive)
+				{
+					R3_PROF_EVENT_DYN(lc.m_onVariableUpdate.m_entryPointName.c_str());
+					try
 					{
-						sol::error err = result;
-						LogError("Script error: {}", err.what());
+						sol::protected_function_result result = lc.m_onVariableUpdate.m_fn(e);	// todo, pass entity handle
+						if (!result.valid())
+						{
+							sol::error err = result;
+							LogError("Script error: {}", err.what());
+						}
+					}
+					catch (const sol::error& err)
+					{
+						std::string errorText = err.what();
+						LogError("Script Error: %s", errorText);
 					}
 				}
-				catch (const sol::error& err)
-				{
-					std::string errorText = err.what();
-					LogError("Script Error: %s", errorText);
-				}
+				return true;
+				};
+			if (entities->GetActiveWorld())
+			{
+				Entities::Queries::ForEach<LuaScriptComponent>(entities->GetActiveWorld(), forEachScriptCmp);
 			}
-			return true;
-		};
-		if (entities->GetActiveWorld())
-		{
-			Entities::Queries::ForEach<LuaScriptComponent>(entities->GetActiveWorld(), forEachScriptCmp);
 		}
 		return true;
 	}

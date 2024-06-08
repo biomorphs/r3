@@ -42,5 +42,10 @@ function MakeARotatingCube_FixedUpdate(e)
 	 	return
 	end
 	myScriptCmp.m_isActive = false
-	print('Bye!')
+end
+
+function MakeManyRotatingCubes_FixedUpdate(e)
+	for i=1,100 do
+		MakeARotatingCube_FixedUpdate(e)
+	end
 end
