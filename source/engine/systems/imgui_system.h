@@ -14,6 +14,7 @@ namespace R3
 		void PushBoldFont();		// call ImGui::PopFont(); when finished
 		void PushItalicFont();		// call ImGui::PopFont(); when finished
 		void PushLargeFont();		// call ImGui::PopFont(); when finished
+		void PushLargeBoldFont();	// call ImGui::PopFont(); when finished
 	private:
 		void OnSystemEvent(void*);
 		bool OnFrameStart();
@@ -22,5 +23,6 @@ namespace R3
 		ImFont* m_boldFont = nullptr;
 		ImFont* m_italicFont = nullptr;
 		ImFont* m_largeFont = nullptr;
+		ImFont* m_largeBoldFont = nullptr;
 	};
 }

@@ -23,6 +23,7 @@ namespace R3
 
 	void EntityListWidget::DisplayEntityRecursive(Entities::World& w, const Entities::EntityHandle& h, const std::vector<Entities::EntityHandle>& selectedEntities, int depth)
 	{
+		R3_PROF_EVENT();
 		std::string name = std::string(depth * 4, ' ') + w.GetEntityDisplayName(h);
 		bool selectionChanged = false;
 		bool isSelected = std::find(selectedEntities.begin(), selectedEntities.end(), h) != selectedEntities.end();
@@ -173,6 +174,7 @@ namespace R3
 
 	void EntityListWidget::DisplayHeirarchy(Entities::World& w, const std::vector<Entities::EntityHandle>& selectedEntities)
 	{
+		R3_PROF_EVENT();
 		if (IsFilterActive())
 		{
 			for (int i = 0; i < m_filteredEntities.size(); ++i)

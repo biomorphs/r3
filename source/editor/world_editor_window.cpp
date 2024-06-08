@@ -16,6 +16,7 @@
 #include "commands/world_editor_clone_entities_cmd.h"
 #include "commands/world_editor_add_entity_from_mesh_cmd.h"
 #include "commands/world_editor_set_entity_parent_cmd.h"
+#include "commands/world_editor_import_scene_cmd.h"
 #include "engine/systems.h"
 #include "engine/entity_list_widget.h"
 #include "engine/entity_inspector_widget.h"
@@ -42,6 +43,7 @@ namespace R3
 		: m_worldIdentifier(worldIdentifier)
 		, m_filePath(filePath)
 	{
+		R3_PROF_EVENT();
 		m_allEntitiesWidget = std::make_unique<EntityListWidget>();
 		m_allEntitiesWidget->m_options.m_canExpandEntities = false;
 		m_allEntitiesWidget->m_options.m_showInternalIndex = false;
@@ -133,6 +135,14 @@ namespace R3
 			addCmd->SetOnCreate(addPointlight);
 			m_cmds->Push(std::move(addCmd));
 		});
+		contextMenu.AddItem("Import Scene", [this]() {
+			std::string scnPath = FileLoadDialog("", "scn");
+			scnPath = FileIO::SanitisePath(scnPath);
+			if (scnPath.length() > 0)
+			{
+				m_cmds->Push(std::make_unique<WorldEditorImportSceneCmd>(this, scnPath));
+			}
+		});
 		contextMenu.AddItem("Select all", [this]() {
 			auto selectCmd = std::make_unique<WorldEditorSelectEntitiesCommand>(this);
 			selectCmd->m_selectAll = true;
@@ -206,7 +216,7 @@ namespace R3
 				bool isCurrentlyActive = m_activeTool == t;
 				if (isCurrentlyActive)
 				{
-					Systems::GetSystem<ImGuiSystem>()->PushBoldFont();
+					Systems::GetSystem<ImGuiSystem>()->PushLargeBoldFont();
 				}
 				if (ImGui::Selectable(btnText.c_str(), isCurrentlyActive, selectFlags, buttonExtents))
 				{

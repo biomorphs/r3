@@ -207,10 +207,39 @@ namespace Entities
 		}
 	}
 
+	bool World::Import(std::string_view path, std::vector<EntityHandle>& newEntities)
+	{
+		R3_PROF_EVENT();
+		JsonSerialiser loadedJson(JsonSerialiser::Read);
+		{
+			R3_PROF_EVENT("LoadFile");
+			std::string loadedJsonData;
+			if (FileIO::LoadTextFromFile(path, loadedJsonData))
+			{
+				loadedJson.LoadFromString(loadedJsonData);
+			}
+			else
+			{
+				LogError("Failed to load world file '{}'", path);
+				return false;
+			}
+		}
+		try
+		{
+			JsonSerialiser entityJson(JsonSerialiser::Read, std::move(loadedJson.GetJson()["AllEntities"]));
+			newEntities = SerialiseEntities(entityJson);
+		}
+		catch (std::exception e)
+		{
+			LogError("Failed to serialise entities - {}", e.what());
+			return false;
+		}
+		return true;
+	}
+
 	bool World::Load(std::string_view path)
 	{
 		R3_PROF_EVENT();
-
 		JsonSerialiser loadedJson(JsonSerialiser::Read);
 		{
 			R3_PROF_EVENT("LoadFile");
@@ -226,7 +255,6 @@ namespace Entities
 			}
 		}
 		loadedJson("WorldName", m_name);
-
 		try
 		{
 			JsonSerialiser entityJson(JsonSerialiser::Read, std::move(loadedJson.GetJson()["AllEntities"]));

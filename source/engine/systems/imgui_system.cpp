@@ -59,6 +59,7 @@ namespace R3
 		if (boldPath.size() > 0)
 		{
 			m_boldFont = io.Fonts->AddFontFromFileTTF(boldPath.c_str(), defaultSizePx);
+			m_largeBoldFont = io.Fonts->AddFontFromFileTTF(boldPath.c_str(), largeSizePx);
 		}
 		if (italicPath.size() > 0)
 		{
@@ -84,6 +85,11 @@ namespace R3
 	void ImGuiSystem::PushLargeFont()
 	{
 		ImGui::PushFont(m_largeFont);
+	}
+
+	void ImGuiSystem::PushLargeBoldFont()
+	{
+		ImGui::PushFont(m_largeBoldFont);
 	}
 
 	bool ImGuiSystem::OnFrameStart()
