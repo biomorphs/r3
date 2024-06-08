@@ -1,5 +1,6 @@
 #include "texture_system.h"
 #include "job_system.h"
+#include "engine/asset_file.h"
 #include "engine/imgui_menubar_helper.h"
 #include "render/vulkan_helpers.h"
 #include "render/render_system.h"
@@ -13,6 +14,7 @@
 #include <imgui.h>
 #include <imgui_impl_vulkan.h>
 #include <cassert>
+#include <algorithm>
 
 // STB IMAGE linkage
 #define STB_IMAGE_IMPLEMENTATION
@@ -21,6 +23,9 @@
 
 namespace R3
 {
+	constexpr uint32_t c_currentVersion = 0;
+	constexpr uint32_t c_minVersionSupported = 0;
+
 	struct TextureSystem::TextureDesc 
 	{
 		std::string m_name;	// can be a path or a user-defined name
@@ -67,6 +72,45 @@ namespace R3
 
 	TextureSystem::TextureSystem()
 	{
+	}
+
+	std::string TextureSystem::GetBakedAssetPath(std::string_view pathName)
+	{
+		// get the source path relative to data base directory
+		std::string relPath = FileIO::SanitisePath(pathName);
+
+		// replace any directory separators with '_'
+		std::replace(relPath.begin(), relPath.end(), '/', '_');
+		std::replace(relPath.begin(), relPath.end(), '\\', '_');
+
+		// add our own extension
+		relPath += ".btex";
+
+		// use the temp directory for baked data
+		relPath = FileIO::GetTempWritablePath() + "/" + relPath;
+		return std::filesystem::absolute(relPath).string();
+	}
+
+	AssetFile TextureSystem::CreateAsset(void* imgData, size_t sizeBytes, const LoadedTexture& srcInfo)
+	{
+		R3_PROF_EVENT();
+
+		AssetFile newFile;
+		newFile.m_header["AssetType"] = "Texture";
+		newFile.m_header["Version"] = c_currentVersion;
+		newFile.m_header["SourceFile"] = GetTextureName(srcInfo.m_destination);
+		newFile.m_header["Width"] = srcInfo.m_width;
+		newFile.m_header["Height"] = srcInfo.m_height;
+		newFile.m_header["Channels"] = srcInfo.m_channels;
+		newFile.m_header["PixelType"] = "u8";
+		
+		AssetFile::Blob dataBlob;
+		dataBlob.m_name = "ImageData";
+		dataBlob.m_data.resize(sizeBytes);
+		memcpy(dataBlob.m_data.data(), imgData, sizeBytes);
+		newFile.m_blobs.push_back(std::move(dataBlob));
+
+		return newFile;
 	}
 
 	std::string_view TextureSystem::GetTextureName(const TextureHandle& t)
@@ -403,17 +447,15 @@ namespace R3
 
 		// load as 8-bit RGBA image by default
 		//	we need to call stbi_loadf to load floating point, or stbi_load_16 for half float
-		int w, h, components;	// components is ignored, we always load rgba
+		int w, h, components;
 		unsigned char* rawData = stbi_load(path.data(), &w, &h, &components, componentCount);
 		if (rawData == nullptr)
 		{
 			LogError("Failed to load texture file '{}'", path);
 			return false;
 		}
-		// Todo (maybe) - generate mips on cpu?
 
 		// get a staging buffer + copy the data to it
-		auto loadedData = std::make_unique<LoadedTexture>();
 		const size_t stagingSize = w * h * componentCount * sizeof(uint8_t);
 		auto stagingBuffer = render->GetStagingBufferPool()->GetBuffer(stagingSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO);
 		if (!stagingBuffer.has_value())
@@ -425,6 +467,21 @@ namespace R3
 			R3_PROF_EVENT("CopyToStaging");
 			memcpy(stagingBuffer->m_mappedBuffer, rawData, stagingSize);
 		}
+		
+		auto loadedData = std::make_unique<LoadedTexture>();
+		loadedData->m_destination = targetHandle;
+		loadedData->m_width = w;
+		loadedData->m_height = h;
+		loadedData->m_channels = componentCount;
+
+		// at this point we could dump a baked asset
+		//auto assetFile = CreateAsset(rawData, stagingSize, *loadedData);
+		//std::string assetPath = GetBakedAssetPath(path);
+		//if (assetPath.size() != 0)
+		//{
+		//	SaveAssetFile(assetFile, assetPath);
+		//}
+
 		stbi_image_free(rawData);
 		loadedData->m_stagingBuffer = std::move(*stagingBuffer);
 		
@@ -468,10 +525,6 @@ namespace R3
 			LogError("Failed to create image view for texture {}", path);
 			return false;
 		}
-		loadedData->m_destination = targetHandle;
-		loadedData->m_width = w;
-		loadedData->m_height = h;
-		loadedData->m_channels = 4;
 		m_loadedTextures.enqueue(std::move(loadedData));
 		return true;
 	}

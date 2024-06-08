@@ -49,6 +49,11 @@ namespace R3
 			c_exeDirectory = std::string(SDL_GetBasePath()) + "\\";
 		}
 
+		const std::string GetTempWritablePath()
+		{
+			return std::filesystem::temp_directory_path().string();
+		}
+
 		void AddBasePath(std::string_view path)
 		{
 			std::string strPath(path);

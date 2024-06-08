@@ -15,6 +15,7 @@ namespace R3
 {
 	class DescriptorSetSimpleAllocator;
 	class Device;
+	class AssetFile;
 	class TextureSystem : public System
 	{
 	public:
@@ -37,6 +38,8 @@ namespace R3
 		struct TextureDesc;
 		struct LoadedTexture;
 
+		std::string GetBakedAssetPath(std::string_view pathName);
+		AssetFile CreateAsset(void* imgData, size_t sizeBytes, const LoadedTexture& srcInfo);
 		bool WriteAllTextureDescriptors(VkCommandBuffer_T* buf);
 		void Shutdown(Device& d);
 		bool ProcessLoadedTextures(Device& d, VkCommandBuffer_T* cmdBuffer);

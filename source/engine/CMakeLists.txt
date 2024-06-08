@@ -1,4 +1,6 @@
 set(EngineLib_SourceFiles
+	asset_file.h
+	asset_file.cpp
 	intersection_tests.h
 	intersection_tests.cpp
 	async.h

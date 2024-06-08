@@ -33,6 +33,14 @@
 
 namespace R3
 {
+	// Align up to a power of two value
+	template<class IntType>
+	constexpr IntType AlignUpPow2(IntType v, IntType alignment)
+	{
+		intptr_t int_ptr = static_cast<intptr_t>(v);
+		return int_ptr + (-int_ptr & (alignment - 1));
+	}
+
 	inline void Decompose4(const glm::mat4& m, glm::vec3& pos, glm::vec3& scale, glm::quat& rot)
 	{
 		glm::vec3 skew;	// we don't care about skew

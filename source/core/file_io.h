@@ -17,12 +17,14 @@ namespace R3
 		bool LoadTextFromFile(std::string_view filePath, std::string& resultBuffer);
 		bool SaveTextToFile(std::string_view filePath, const std::string& src);
 		bool LoadBinaryFile(std::string_view filePath, std::vector<uint8_t>& resultBuffer);
+		bool LoadBinaryFile(std::string_view filePath, std::vector<uint8_t>& resultBuffer);
 		bool SaveBinaryFile(std::string_view filePath, const std::vector<uint8_t>& src);
 
 		// system path stuff
 		void InitialisePaths();
 		void AddBasePath(std::string_view path);	// add a folder to search when loading files
 		const std::string_view GetBasePath();
+		const std::string GetTempWritablePath();	// temp path where we can write stuff
 
 		// queries/enumeration
 		std::string FindAbsolutePath(std::string_view filePath);	// find a file, return its absolute path (or empty string if not found)
