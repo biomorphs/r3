@@ -87,8 +87,8 @@ namespace R3
 		relPath += ".btex";
 
 		// use the temp directory for baked data
-		relPath = FileIO::GetTempWritablePath() + "/" + relPath;
-		return std::filesystem::absolute(relPath).string();
+		std::string bakedPath = std::string(FileIO::GetBasePath()) + "\\baked\\" + relPath;
+		return std::filesystem::absolute(bakedPath).string();
 	}
 
 	AssetFile TextureSystem::CreateAsset(void* imgData, size_t sizeBytes, const LoadedTexture& srcInfo)
@@ -430,33 +430,92 @@ namespace R3
 		return true;
 	}
 
+	std::optional<AssetFile> TextureSystem::BakeTexture(const AssetFile& srcTexture)
+	{
+		R3_PROF_EVENT();
+		return srcTexture;	// just copy for now
+	}
+
+	std::optional<AssetFile> TextureSystem::ConvertToBC1(const AssetFile& srcTexture)
+	{
+		R3_PROF_EVENT();
+		return srcTexture;	// lazy
+	}
+
+	std::optional<AssetFile> TextureSystem::LoadSourceAsset(std::string_view path, uint32_t componentCount)
+	{
+		R3_PROF_EVENT();
+
+		stbi_set_flip_vertically_on_load(true);
+		//	we need to call stbi_loadf to load floating point, or stbi_load_16 for half float
+		int w = 0, h = 0, components = 0;	// components is ignored (we override it)
+		unsigned char* rawData = stbi_load(path.data(), &w, &h, &components, componentCount);
+		if (rawData == nullptr)
+		{
+			LogError("Failed to load texture file '{}'", path);
+			return {};
+		}
+
+		LoadedTexture loadedData;
+		loadedData.m_width = w;
+		loadedData.m_height = h;
+		loadedData.m_channels = componentCount;
+		auto assetFile = CreateAsset(rawData, w * h * componentCount, loadedData);	
+		stbi_image_free(rawData);	// CreateAsset took a copy
+
+		return assetFile;
+	}
+
 	bool TextureSystem::LoadTextureInternal(std::string_view path, uint32_t componentCount, TextureHandle targetHandle)
 	{
 		R3_PROF_EVENT();
 		auto render = GetSystem<RenderSystem>();
 		auto device = render->GetDevice();
 
-		stbi_set_flip_vertically_on_load(true);
-
-		// vast majority of gpus will not support 3 component images! force them to rgba
-		assert(componentCount > 0 && componentCount <= 4);
-		if (componentCount == 3)
+		auto bakedTexturePath = GetBakedAssetPath(path);
+		auto bakedTexture = LoadAssetFile(bakedTexturePath);
+		if (!bakedTexture)
 		{
-			componentCount = 4;
+			auto srcTexture = LoadSourceAsset(path, componentCount);
+			if (!srcTexture)
+			{
+				LogError("Failed to load source texture {}", path);
+				return false;
+			}
+			if (m_enableBaking)
+			{
+				auto baked = BakeTexture(*srcTexture);
+				if (!baked)
+				{
+					LogError("Failed to bake texture {}", path);
+					return false;
+				}
+				if (!SaveAssetFile(baked.value(), bakedTexturePath))
+				{
+					LogError("Failed to save file {}", bakedTexturePath);
+					return false;
+				}
+				bakedTexture = std::move(baked);
+			}
+			else
+			{
+				bakedTexture = std::move(srcTexture);
+			}
 		}
-
-		// load as 8-bit RGBA image by default
-		//	we need to call stbi_loadf to load floating point, or stbi_load_16 for half float
-		int w, h, components;
-		unsigned char* rawData = stbi_load(path.data(), &w, &h, &components, componentCount);
-		if (rawData == nullptr)
+		if (!bakedTexture)
 		{
-			LogError("Failed to load texture file '{}'", path);
+			LogError("Failed to bake texture {}", path);
 			return false;
 		}
 
+		auto loadedData = std::make_unique<LoadedTexture>();
+		loadedData->m_destination = targetHandle;
+		loadedData->m_width = bakedTexture->m_header["Width"];
+		loadedData->m_height = bakedTexture->m_header["Height"];
+		loadedData->m_channels = bakedTexture->m_header["Channels"];
+
 		// get a staging buffer + copy the data to it
-		const size_t stagingSize = w * h * componentCount * sizeof(uint8_t);
+		const size_t stagingSize = bakedTexture->m_blobs[0].m_data.size();
 		auto stagingBuffer = render->GetStagingBufferPool()->GetBuffer(stagingSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO);
 		if (!stagingBuffer.has_value())
 		{
@@ -465,33 +524,17 @@ namespace R3
 		}
 		{
 			R3_PROF_EVENT("CopyToStaging");
-			memcpy(stagingBuffer->m_mappedBuffer, rawData, stagingSize);
+			memcpy(stagingBuffer->m_mappedBuffer, bakedTexture->m_blobs[0].m_data.data(), stagingSize);
 		}
-		
-		auto loadedData = std::make_unique<LoadedTexture>();
-		loadedData->m_destination = targetHandle;
-		loadedData->m_width = w;
-		loadedData->m_height = h;
-		loadedData->m_channels = componentCount;
-
-		// at this point we could dump a baked asset
-		//auto assetFile = CreateAsset(rawData, stagingSize, *loadedData);
-		//std::string assetPath = GetBakedAssetPath(path);
-		//if (assetPath.size() != 0)
-		//{
-		//	SaveAssetFile(assetFile, assetPath);
-		//}
-
-		stbi_image_free(rawData);
 		loadedData->m_stagingBuffer = std::move(*stagingBuffer);
-		
+
 		// Create the vulkan image and image-view now
 		VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 		VkExtent3D extents = {
-			(uint32_t)w, (uint32_t)h, 1
+			(uint32_t)loadedData->m_width, (uint32_t)loadedData->m_height, 1
 		};
 		VkFormat format;
-		switch (componentCount)
+		switch (loadedData->m_channels)
 		{
 		case 1:
 			format = VK_FORMAT_R8_UNORM;
@@ -503,7 +546,7 @@ namespace R3
 			format = VK_FORMAT_R8G8B8A8_UNORM;
 			break;
 		default:
-			LogError("Unsupported component count {}", components);
+			LogError("Unsupported component count {}", loadedData->m_channels);
 			return false;
 		}
 
@@ -526,6 +569,7 @@ namespace R3
 			return false;
 		}
 		m_loadedTextures.enqueue(std::move(loadedData));
+		
 		return true;
 	}
 

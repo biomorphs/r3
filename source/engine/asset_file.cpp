@@ -8,8 +8,8 @@
 
 namespace R3
 {
-    constexpr uint32_t c_currentVersion = 0;
-    constexpr uint32_t c_minSupportedVersion = 0;
+    constexpr uint32_t c_currentVersion = 1;
+    constexpr uint32_t c_minSupportedVersion = 1;
     constexpr uint64_t c_assetFileMarker = 0xA55A55B00BB00B13;
 
     struct AssetFileHeader
@@ -31,6 +31,10 @@ namespace R3
         uint64_t m_size = 0;
     };
 
+    // pre-calculate any interesting offsets/sizes
+    constexpr uint64_t c_headerSize = sizeof(AssetFileHeader);
+    constexpr uint64_t c_blobHeadersOffset = AlignUpPow2(c_headerSize, 64ull);
+
     bool SaveAssetFile(AssetFile& asset, std::string_view path)
     {
         R3_PROF_EVENT();
@@ -39,10 +43,7 @@ namespace R3
             LogError("Only absolute paths are accepted when writing files ('{}' is not valid)", path);
             return false;
         }
-
-        // pre-calculate any interesting offsets/sizes
-        constexpr uint64_t c_headerSize = sizeof(AssetFileHeader);
-        constexpr uint64_t c_blobHeadersOffset = AlignUpPow2(c_headerSize, 64ull);
+        
         const uint64_t blobHeadersEnd = c_blobHeadersOffset + asset.m_blobs.size() * sizeof(AssetBlobHeader);
         const uint64_t c_jsonOffset = AlignUpPow2(blobHeadersEnd, 64ull);
 
@@ -76,7 +77,7 @@ namespace R3
         // write to memory
         std::vector<uint8_t> dataOut(blobOffset);
         memcpy(dataOut.data(), &newHeader, sizeof(newHeader));
-        memcpy(dataOut.data() + c_blobHeadersOffset, asset.m_blobs.data(), asset.m_blobs.size() * sizeof(AssetBlobHeader));
+        memcpy(dataOut.data() + c_blobHeadersOffset, blobHeaders.data(), blobHeaders.size() * sizeof(AssetBlobHeader));
         memcpy(dataOut.data() + c_jsonOffset, jsonData.data(), jsonData.size());
         for (int b = 0; b < asset.m_blobs.size(); ++b)
         {
@@ -97,8 +98,38 @@ namespace R3
             return {};
         }
 
+        const auto fileHeader = reinterpret_cast<const AssetFileHeader*>(rawBuffer.data());
+        if (fileHeader->m_marker != c_assetFileMarker)
+        {
+            LogError("{} is not an asset file", path);
+            return {};
+        }
+        if (fileHeader->m_currentVersion < c_minSupportedVersion)
+        {
+            LogWarn("{} file version is too old (file = {}, current = {}", path, fileHeader->m_currentVersion, c_currentVersion);
+            return {};
+        }
 
-        return {};
+        const AssetBlobHeader* blobHeaders = reinterpret_cast<const AssetBlobHeader*>(rawBuffer.data() + fileHeader->m_blobHeaderOffset);
+        const auto blobCount = fileHeader->m_blobHeaderCount;
+        
+        // extract the json
+        std::vector<uint8_t> jsonData;
+        jsonData.resize(fileHeader->m_jsonSize);
+        memcpy(jsonData.data(), rawBuffer.data() + fileHeader->m_jsonOffset, fileHeader->m_jsonSize);
+
+        // extra the blobs
+        AssetFile newAsset;
+        newAsset.m_header = nlohmann::json::parse(jsonData);
+        newAsset.m_blobs.resize(blobCount);
+        for (int i = 0; i < blobCount; ++i)
+        {
+            newAsset.m_blobs[i].m_name = blobHeaders[i].m_name;
+            newAsset.m_blobs[i].m_data.resize(blobHeaders[i].m_size);
+            memcpy(newAsset.m_blobs[i].m_data.data(), rawBuffer.data() + blobHeaders[i].m_startOffset, blobHeaders[i].m_size);
+        }
+
+        return newAsset;
     }
 
     

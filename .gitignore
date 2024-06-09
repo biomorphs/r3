@@ -32,6 +32,7 @@
 *.app
 
 # Assets
+data/baked/*.*
 data/*.fbx
 data/*.png
 data/*.jpg
