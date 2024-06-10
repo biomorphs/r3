@@ -13,6 +13,9 @@ set(CMAKE_CXX_STANDARD 20)
 #Disable implicit conversions when using json lib
 set(nlohmann-json_IMPLICIT_CONVERSIONS OFF)
 
+# Enable all safety checks in sol 
+add_compile_definitions(SOL_ALL_SAFETIES_ON=1)
+
 # vcpkg dependencies
 find_package(SDL2 REQUIRED)
 find_package(sol2 REQUIRED)
