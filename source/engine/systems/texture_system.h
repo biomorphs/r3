@@ -40,10 +40,7 @@ namespace R3
 		struct LoadedTexture;
 
 		std::string GetBakedAssetPath(std::string_view pathName);
-		AssetFile CreateAsset(void* imgData, size_t sizeBytes, const LoadedTexture& srcInfo);
 		std::optional<AssetFile> LoadSourceAsset(std::string_view pathName, uint32_t componentCount);
-		std::optional<AssetFile> BakeTexture(const AssetFile& srcTexture);
-		std::optional<AssetFile> ConvertToBC1(const AssetFile& textureFile);
 		bool WriteAllTextureDescriptors(VkCommandBuffer_T* buf);
 		void Shutdown(Device& d);
 		bool ProcessLoadedTextures(Device& d, VkCommandBuffer_T* cmdBuffer);
@@ -65,6 +62,5 @@ namespace R3
 		VkDescriptorSet_T* m_allTexturesSet = nullptr;	// the global set (bindless!)
 		bool m_descriptorsNeedUpdate = false;
 		bool m_showGui = false;
-		bool m_enableBaking = false;
 	};
 }
