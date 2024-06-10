@@ -113,7 +113,7 @@ namespace R3
 			return true;
 		}
 
-		VkImageCreateInfo CreateImage2DNoMSAANoMips(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extents)
+		VkImageCreateInfo CreateImage2DNoMSAA(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extents, uint32_t mipLevels)
 		{
 			VkImageCreateInfo info = {};
 			info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -121,7 +121,7 @@ namespace R3
 			info.imageType = VK_IMAGE_TYPE_2D;
 			info.format = format;
 			info.extent = extents;
-			info.mipLevels = 1;
+			info.mipLevels = mipLevels;
 			info.arrayLayers = 1;
 			info.samples = VK_SAMPLE_COUNT_1_BIT;
 			info.tiling = VK_IMAGE_TILING_OPTIMAL;	// optimal for gpu
@@ -129,7 +129,17 @@ namespace R3
 			return info;
 		}
 
+		VkImageCreateInfo CreateImage2DNoMSAANoMips(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extents)
+		{
+			return CreateImage2DNoMSAA(format, usageFlags, extents, 1);
+		}
+
 		VkImageViewCreateInfo CreateImageView2DNoMSAANoMips(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags)
+		{
+			return CreateImageView2DNoMSAA(format, image, aspectFlags, 1);
+		}
+
+		VkImageViewCreateInfo CreateImageView2DNoMSAA(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags, uint32_t mipLevels)
 		{
 			VkImageViewCreateInfo vci = {};
 			vci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -137,7 +147,7 @@ namespace R3
 			vci.image = image;
 			vci.format = format;
 			vci.subresourceRange.baseMipLevel = 0;
-			vci.subresourceRange.levelCount = 1;
+			vci.subresourceRange.levelCount = mipLevels;
 			vci.subresourceRange.baseArrayLayer = 0;
 			vci.subresourceRange.layerCount = 1;
 			vci.subresourceRange.aspectMask = aspectFlags;
@@ -326,6 +336,11 @@ namespace R3
 
 		VkImageMemoryBarrier MakeImageBarrier(VkImage image, VkImageAspectFlags aspectFlags, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageLayout oldLayout, VkImageLayout newLayout)
 		{
+			return MakeImageBarrier(image, 1, aspectFlags, srcAccessMask, dstAccessMask, oldLayout, newLayout);
+		}
+
+		VkImageMemoryBarrier MakeImageBarrier(VkImage image, uint32_t miplevels, VkImageAspectFlags aspectFlags, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageLayout oldLayout, VkImageLayout newLayout)
+		{
 			VkImageMemoryBarrier barrier = { 0 };
 			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 			barrier.srcAccessMask = srcAccessMask;
@@ -338,10 +353,10 @@ namespace R3
 			range.aspectMask = aspectFlags;
 			range.layerCount = 1;
 			range.baseArrayLayer = 0;
-			range.levelCount = 1;
+			range.levelCount = miplevels;
 			range.baseMipLevel = 0;
 			barrier.subresourceRange = range;
-			
+
 			return barrier;
 		}
 

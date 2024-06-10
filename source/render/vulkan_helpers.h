@@ -30,7 +30,9 @@ namespace R3
 		// Images
 		bool BlitColourImageToImage(VkCommandBuffer cmds, VkImage srcImage, VkExtent2D srcSize, VkImage destImage, VkExtent2D destSize);
 		VkImageCreateInfo CreateImage2DNoMSAANoMips(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extents);
+		VkImageCreateInfo CreateImage2DNoMSAA(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extents, uint32_t mipLevels);
 		VkImageViewCreateInfo CreateImageView2DNoMSAANoMips(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags);
+		VkImageViewCreateInfo CreateImageView2DNoMSAA(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
 
 		// Buffers
 		VkDeviceAddress GetBufferDeviceAddress(VkDevice device, const AllocatedBuffer& b);
@@ -53,6 +55,7 @@ namespace R3
 
 		// Synchronisation helpers
 		VkImageMemoryBarrier MakeImageBarrier(VkImage image, VkImageAspectFlags aspectFlags, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageLayout oldLayout, VkImageLayout newLayout);
+		VkImageMemoryBarrier MakeImageBarrier(VkImage image, uint32_t miplevels, VkImageAspectFlags aspectFlags, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageLayout oldLayout, VkImageLayout newLayout);
 
 		// Initialisation helpers
 		struct CreateVkInstanceParams {

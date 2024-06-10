@@ -26,11 +26,13 @@ namespace R3
 		virtual void RegisterTickFns();
 		virtual bool Init();
 		
-		TextureHandle LoadTexture(std::string path, uint32_t componentCount  = 4);
+		TextureHandle LoadTexture(std::string path, uint32_t componentCount = 4, bool mipsEnabled = true);
 		std::string_view GetTextureName(const TextureHandle& t);
 		glm::ivec2 GetTextureDimensions(const TextureHandle& t);
 		uint32_t GetTextureChannels(const TextureHandle& t);
+		uint64_t GetTextureGpuSizeBytes(const TextureHandle& t);
 		VkDescriptorSet_T* GetTextureImguiSet(const TextureHandle& t);
+		uint64_t GetTotalGpuMemoryUsedBytes();
 
 		VkDescriptorSetLayout_T* GetDescriptorsLayout();				// used to create pipelines that accept the array of textures
 		VkDescriptorSet_T* GetAllTexturesSet();
@@ -41,11 +43,12 @@ namespace R3
 
 		std::string GetBakedAssetPath(std::string_view pathName);
 		std::optional<AssetFile> LoadSourceAsset(std::string_view pathName, uint32_t componentCount);
+		void GenerateMipsFromTopMip(Device& d, VkCommandBuffer_T* cmdBuffer, LoadedTexture& t);
 		bool WriteAllTextureDescriptors(VkCommandBuffer_T* buf);
 		void Shutdown(Device& d);
 		bool ProcessLoadedTextures(Device& d, VkCommandBuffer_T* cmdBuffer);
 		bool ShowGui();
-		bool LoadTextureInternal(std::string_view path, uint32_t componentCount, TextureHandle targetHandle);
+		bool LoadTextureInternal(std::string_view path, uint32_t componentCount, bool generateMips, TextureHandle targetHandle);
 		TextureHandle FindExistingMatchingName(std::string name);	// locks the mutex
 
 		moodycamel::ConcurrentQueue<std::unique_ptr<LoadedTexture>> m_loadedTextures;
@@ -56,11 +59,12 @@ namespace R3
 		Mutex m_texturesMutex;
 		std::vector<TextureDesc> m_textures;
 
-		VkSampler_T* m_imguiSampler = nullptr;
+		VkSampler_T* m_defaultSampler = nullptr;
 		VkDescriptorSetLayout_T* m_allTexturesDescriptorLayout = nullptr;
 		std::unique_ptr<DescriptorSetSimpleAllocator> m_descriptorAllocator;
 		VkDescriptorSet_T* m_allTexturesSet = nullptr;	// the global set (bindless!)
 		bool m_descriptorsNeedUpdate = false;
+		bool m_generateMips = true;
 		bool m_showGui = false;
 	};
 }
