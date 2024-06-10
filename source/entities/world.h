@@ -83,7 +83,7 @@ namespace Entities
 		std::vector<EntityHandle> SerialiseEntities(const JsonSerialiser& json, const std::vector<EntityHandle>& restoreHandles = {});	
 		void SerialiseComponent(const EntityHandle& e, std::string_view componentType, JsonSerialiser& json);		// helper for serialising individual components
 		
-		bool Import(std::string_view path, std::vector<EntityHandle>& newEntities);
+		std::vector<EntityHandle> Import(std::string_view path);
 		bool Load(std::string_view path);
 		bool Save(std::string_view path);
 		

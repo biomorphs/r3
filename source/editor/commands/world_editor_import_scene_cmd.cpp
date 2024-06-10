@@ -16,8 +16,7 @@ namespace R3
 		R3_PROF_EVENT();
 		auto world = m_window->GetWorld();
 		m_selectedEntities = m_window->GetSelectedEntities();
-		m_newEntities.clear();
-		world->Import(m_pathToLoad, m_newEntities);
+		m_newEntities = world->Import(m_pathToLoad);
 		m_window->DeselectAll();
 
 		auto newRoot = world->AddEntity();	// parent all new children to this

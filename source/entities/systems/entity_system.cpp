@@ -39,8 +39,13 @@ namespace Entities
 			);
 			scripts->RegisterType<World>("World",
 				"AddEntity", &World::AddEntity, 
+				"GetParent", &World::GetParent,
+				"SetParent", &World::SetParent,
 				"RemoveEntity", &World::RemoveEntity,
-				"IsHandleValid", &World::IsHandleValid
+				"IsHandleValid", &World::IsHandleValid,
+				"SetEntityName", &World::SetEntityName,
+				"GetEntityName", &World::GetEntityName,
+				"ImportScene", &World::Import
 			);
 			scripts->RegisterFunction("ActiveWorld", [this]() -> Entities::World* {
 				return GetActiveWorld();

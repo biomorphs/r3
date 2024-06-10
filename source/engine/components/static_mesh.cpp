@@ -7,7 +7,8 @@ namespace R3
 	void StaticMeshComponent::RegisterScripts(LuaSystem& l)
 	{
 		l.RegisterType<StaticMeshComponent>(GetTypeName(),
-			"SetModelFromPath", &StaticMeshComponent::SetModelFromPath
+			"SetModelFromPath", &StaticMeshComponent::SetModelFromPath,
+			"SetMaterialOverride", &StaticMeshComponent::SetMaterialOverride
 		);
 	}
 

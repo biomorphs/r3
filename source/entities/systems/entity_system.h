@@ -115,6 +115,15 @@ namespace Entities
 					}
 					return ptr;
 				});
+				scripts->AddTypeMember<World>("World", std::format("RemoveComponent_{}", ComponentType::GetTypeName()),
+				[this](Entities::EntityHandle e)
+				{
+					auto world = GetActiveWorld();
+					if (world)
+					{
+						world->RemoveComponent(e, ComponentType::GetTypeName());
+					}
+				});
 			}
 		}
 	}

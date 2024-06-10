@@ -207,9 +207,10 @@ namespace Entities
 		}
 	}
 
-	bool World::Import(std::string_view path, std::vector<EntityHandle>& newEntities)
+	std::vector<EntityHandle> World::Import(std::string_view path)
 	{
 		R3_PROF_EVENT();
+		std::vector<EntityHandle> newEntities;
 		JsonSerialiser loadedJson(JsonSerialiser::Read);
 		{
 			R3_PROF_EVENT("LoadFile");
@@ -221,7 +222,7 @@ namespace Entities
 			else
 			{
 				LogError("Failed to load world file '{}'", path);
-				return false;
+				return {};
 			}
 		}
 		try
@@ -232,9 +233,9 @@ namespace Entities
 		catch (std::exception e)
 		{
 			LogError("Failed to serialise entities - {}", e.what());
-			return false;
+			return {};
 		}
-		return true;
+		return newEntities;
 	}
 
 	bool World::Load(std::string_view path)

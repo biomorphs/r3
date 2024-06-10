@@ -1,9 +1,21 @@
 #include "environment_settings.h"
 #include "entities/component_storage.h"
-
+#include "engine/systems/lua_system.h"
 
 namespace R3
 {
+	void EnvironmentSettingsComponent::RegisterScripts(LuaSystem& l)
+	{
+		l.RegisterType<EnvironmentSettingsComponent>(GetTypeName(),
+			"m_skyColour", &EnvironmentSettingsComponent::m_skyColour,
+			"m_sunDirection", &EnvironmentSettingsComponent::m_sunDirection,
+			"m_sunColour", &EnvironmentSettingsComponent::m_sunColour,
+			"m_sunBrightness", &EnvironmentSettingsComponent::m_sunBrightness,
+			"m_skyAmbientFactor", &EnvironmentSettingsComponent::m_skyAmbientFactor,
+			"m_sunAmbientFactor", &EnvironmentSettingsComponent::m_sunAmbientFactor
+		);
+	}
+
 	void EnvironmentSettingsComponent::SerialiseJson(JsonSerialiser& s)
 	{
 		s("Sky Colour", m_skyColour);
