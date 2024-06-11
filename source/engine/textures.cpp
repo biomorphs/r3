@@ -1,5 +1,5 @@
 #include "textures.h"
-#include "engine/asset_file.h"
+#include "engine/dds_loader.h"
 #include "core/file_io.h"
 #include "core/log.h"
 #include "core/profiler.h"
@@ -161,7 +161,7 @@ namespace R3
 			auto fileExtension = std::filesystem::path(pathName).extension().string();
 			if (fileExtension == ".dds")
 			{
-				LogWarn("Todo - dds loader");
+				return LoadTexture_DDS(pathName);
 			}
 			else
 			{

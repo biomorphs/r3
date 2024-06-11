@@ -13,7 +13,9 @@ namespace R3
 			RG_U8,
 			RGB_U8,						// danger not really supported
 			RGBA_U8,
-			RGBA_BC7
+			RGBA_BC7,
+			RG_BC5,
+			R_BC4,
 		};
 		std::string_view FormatToString(Format f);
 

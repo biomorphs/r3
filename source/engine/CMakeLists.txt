@@ -1,4 +1,6 @@
 set(EngineLib_SourceFiles
+	dds_loader.h
+	dds_loader.cpp
 	asset_file.h
 	asset_file.cpp
 	intersection_tests.h

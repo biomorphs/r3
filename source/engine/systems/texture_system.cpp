@@ -427,7 +427,7 @@ namespace R3
 				VK_IMAGE_ASPECT_COLOR_BIT,
 				VK_ACCESS_TRANSFER_WRITE_BIT,
 				VK_ACCESS_SHADER_READ_BIT,
-				VK_IMAGE_LAYOUT_UNDEFINED,
+				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
 			);
 			vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &readbarrier);
@@ -525,7 +525,10 @@ namespace R3
 		loadedData->m_destination = targetHandle;
 		loadedData->m_data = std::move(*srcTexture);
 		loadedData->m_stagingBuffer = std::move(*stagingBuffer);
-		if (generateMips)
+		bool canGenerateRuntimeMips = loadedData->m_data.m_format != Textures::Format::RGBA_BC7
+			&& loadedData->m_data.m_format != Textures::Format::RG_BC5
+			&& loadedData->m_data.m_format != Textures::Format::R_BC4;
+		if (generateMips && canGenerateRuntimeMips)
 		{
 			loadedData->m_miplevels = static_cast<uint32_t>(std::floor(std::log2(std::max(loadedData->m_data.m_width, loadedData->m_data.m_height)))) + 1;
 		}
@@ -549,6 +552,15 @@ namespace R3
 			break;
 		case Textures::Format::RGBA_U8:
 			format = VK_FORMAT_R8G8B8A8_UNORM;
+			break;
+		case Textures::Format::RGBA_BC7:
+			format = VK_FORMAT_BC7_UNORM_BLOCK;
+			break;
+		case Textures::Format::RG_BC5:
+			format = VK_FORMAT_BC5_UNORM_BLOCK;
+			break;
+		case Textures::Format::R_BC4:
+			format = VK_FORMAT_BC4_UNORM_BLOCK;
 			break;
 		default:
 			LogError("Unsupported format {}", (int)loadedData->m_data.m_format);
