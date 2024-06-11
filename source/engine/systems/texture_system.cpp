@@ -1,6 +1,6 @@
 #include "texture_system.h"
 #include "job_system.h"
-#include "engine/asset_file.h"
+#include "engine/textures.h"
 #include "engine/imgui_menubar_helper.h"
 #include "render/vulkan_helpers.h"
 #include "render/render_system.h"
@@ -14,7 +14,6 @@
 #include <imgui.h>
 #include <imgui_impl_vulkan.h>
 #include <cassert>
-#include <algorithm>
 
 // STB IMAGE linkage
 #define STB_IMAGE_IMPLEMENTATION
@@ -31,7 +30,7 @@ namespace R3
 		std::string m_name;	// can be a path or a user-defined name
 		uint32_t m_width = 0;
 		uint32_t m_height = 0;
-		uint32_t m_channels = 0;
+		Textures::Format m_format;
 		uint32_t m_miplevels = 1;
 		VkImage m_image = VK_NULL_HANDLE;
 		VmaAllocation m_allocation = nullptr;
@@ -42,10 +41,8 @@ namespace R3
 	struct TextureSystem::LoadedTexture
 	{
 		TextureHandle m_destination;
-		uint32_t m_width = 0;
-		uint32_t m_height = 0;
-		uint32_t m_channels = 0;
-		uint32_t m_miplevels = 1;						// if > 1, mips will be generated on gpu after load
+		Textures::TextureData m_data;
+		uint32_t m_miplevels = 1;							// if > 1, mips will be generated on gpu after load
 		PooledBuffer m_stagingBuffer;
 		VkImage m_image = VK_NULL_HANDLE;
 		VmaAllocation m_allocation = nullptr;
@@ -76,60 +73,6 @@ namespace R3
 	{
 	}
 
-	std::string TextureSystem::GetBakedAssetPath(std::string_view pathName)
-	{
-		// get the source path relative to data base directory
-		std::string relPath = FileIO::SanitisePath(pathName);
-
-		// replace any directory separators with '_'
-		std::replace(relPath.begin(), relPath.end(), '/', '_');
-		std::replace(relPath.begin(), relPath.end(), '\\', '_');
-
-		// add our own extension
-		relPath += ".btex";
-
-		// use the temp directory for baked data
-		std::string bakedPath = std::string(FileIO::GetBasePath()) + "\\baked\\" + relPath;
-		return std::filesystem::absolute(bakedPath).string();
-	}
-
-	std::optional<AssetFile> TextureSystem::LoadSourceAsset(std::string_view path, uint32_t componentCount)
-	{
-		R3_PROF_EVENT();
-		AssetFile newFile;
-		stbi_set_flip_vertically_on_load_thread(true);
-		int w = 0, h = 0, components = 0;	// components is ignored (we override it)
-		unsigned char* rawData;
-		{
-			R3_PROF_EVENT("stbi_load");	// stbi_loadf to load floating point, or stbi_load_16 for half float
-			rawData = stbi_load(path.data(), &w, &h, &components, componentCount);
-			if (rawData == nullptr)
-			{
-				LogError("Failed to load texture file '{}'", path);
-				return {};
-			}
-		}
-		newFile.m_header["AssetType"] = "Texture";
-		newFile.m_header["Version"] = c_currentVersion;
-		newFile.m_header["SourceFile"] = path;
-		newFile.m_header["Width"] = w;
-		newFile.m_header["Height"] = h;
-		newFile.m_header["Channels"] = componentCount;
-		newFile.m_header["PixelType"] = "u8";
-		AssetFile::Blob dataBlob;
-		dataBlob.m_name = "ImageData";
-		dataBlob.m_data.resize(w * h * componentCount);
-		{
-			R3_PROF_EVENT("Copy Blob");
-			memcpy(dataBlob.m_data.data(), rawData, w * h * componentCount);
-		}
-		newFile.m_blobs.push_back(std::move(dataBlob));
-
-		stbi_image_free(rawData);
-
-		return newFile;
-	}
-
 	std::string_view TextureSystem::GetTextureName(const TextureHandle& t)
 	{
 		ScopedLock lock(m_texturesMutex);
@@ -150,14 +93,14 @@ namespace R3
 		return {-1,-1};
 	}
 
-	uint32_t TextureSystem::GetTextureChannels(const TextureHandle& t)
+	Textures::Format TextureSystem::GetTextureFormat(const TextureHandle& t)
 	{
 		ScopedLock lock(m_texturesMutex);
 		if (t.m_index != -1 && t.m_index < m_textures.size())
 		{
-			return m_textures[t.m_index].m_channels;
+			return m_textures[t.m_index].m_format;
 		}
-		return -1;
+		return Textures::Format::RGBA_U8;
 	}
 
 	uint64_t TextureSystem::GetTextureGpuSizeBytes(const TextureHandle& t)
@@ -168,12 +111,12 @@ namespace R3
 			const auto& tt = m_textures[t.m_index];
 			uint32_t imgWidth = tt.m_width;
 			uint32_t imgHeight = tt.m_height;
-			size_t sizeBytes = imgWidth * imgHeight * tt.m_channels;	// top mip 
+			size_t sizeBytes = Textures::GetMipSizeBytes(imgWidth, imgHeight, tt.m_format);
 			for (uint32_t mip = 1; mip < tt.m_miplevels; ++mip)
 			{
 				if (imgWidth > 1) imgWidth /= 2;
 				if (imgHeight > 1) imgHeight /= 2;
-				sizeBytes += imgWidth * imgHeight * tt.m_channels;
+				sizeBytes += Textures::GetMipSizeBytes(imgWidth, imgHeight, tt.m_format);
 			}
 			return sizeBytes;
 		}
@@ -302,7 +245,7 @@ namespace R3
 		return true;
 	}
 
-	TextureHandle TextureSystem::LoadTexture(std::string path, uint32_t componentCount, bool mipsEnabled)
+	TextureHandle TextureSystem::LoadTexture(std::string path, bool mipsEnabled)
 	{
 		R3_PROF_EVENT();
 		auto actualPath = FileIO::SanitisePath(path);
@@ -334,12 +277,12 @@ namespace R3
 		m_descriptorsNeedUpdate = true;	// ensure a new entry is written to the descriptor set (or gpu will crash if it tries to read an unset one)
 
 		// push a job to load the texture data
-		auto loadTextureJob = [actualPath, newHandle, this, componentCount, mipsEnabled]()
+		auto loadTextureJob = [actualPath, newHandle, this, mipsEnabled]()
 		{
 			char debugName[1024] = { '\0' };
 			sprintf_s(debugName, "LoadTexture %s", actualPath.c_str());
 			R3_PROF_EVENT_DYN(debugName);
-			if (!LoadTextureInternal(actualPath, componentCount, mipsEnabled && m_generateMips, newHandle))
+			if (!LoadTextureInternal(actualPath, mipsEnabled && m_generateMips, newHandle))
 			{
 				LogError("Failed to load texture {}", actualPath);
 			}
@@ -358,7 +301,6 @@ namespace R3
 		{
 			GetSystem<JobSystem>()->ProcessJobImmediate(JobSystem::SlowJobs);
 		}
-
 		{
 			ScopedLock lock(m_texturesMutex);
 			for (int t = 0; t < m_textures.size(); ++t)
@@ -390,8 +332,8 @@ namespace R3
 		barrier.subresourceRange.baseArrayLayer = 0;
 		barrier.subresourceRange.layerCount = 1;
 		barrier.subresourceRange.levelCount = 1;
-		int32_t mipWidth = t.m_width;
-		int32_t mipHeight = t.m_height;
+		int32_t mipWidth = t.m_data.m_width;
+		int32_t mipHeight = t.m_data.m_height;
 		for (uint32_t i = 1; i < t.m_miplevels; i++) 
 		{
 			// transition the src mip to transfer_src
@@ -441,9 +383,9 @@ namespace R3
 		{
 			assert(t->m_destination.m_index != -1 && t->m_destination.m_index < m_textures.size());
 			auto& dst = m_textures[t->m_destination.m_index];
-			dst.m_width = t->m_width;
-			dst.m_height = t->m_height;
-			dst.m_channels = t->m_channels;
+			dst.m_width = t->m_data.m_width;
+			dst.m_height = t->m_data.m_height;
+			dst.m_format= t->m_data.m_format;
 			dst.m_allocation = t->m_allocation;
 			dst.m_image = t->m_image;
 			dst.m_imageView = t->m_imageView;
@@ -539,7 +481,7 @@ namespace R3
 						auto sizeBytes = GetTextureGpuSizeBytes(TextureHandle(ti));
 						double sizeMb = (double)sizeBytes / (1024.0 * 1024.0);
 						totalMemoryMb += sizeMb;
-						txt = std::format("{} ({}x{}x{} - {:.3f}mb)", t.m_name, t.m_width, t.m_height, t.m_channels, sizeMb);
+						txt = std::format("{} ({}x{} - {:.3f}mb)", t.m_name, t.m_width, t.m_height, sizeMb);
 						ImGui::SeparatorText(txt.c_str());
 					}
 				}
@@ -549,19 +491,19 @@ namespace R3
 		return true;
 	}
 
-	bool TextureSystem::LoadTextureInternal(std::string_view path, uint32_t componentCount, bool generateMips, TextureHandle targetHandle)
+	bool TextureSystem::LoadTextureInternal(std::string_view path, bool generateMips, TextureHandle targetHandle)
 	{
 		R3_PROF_EVENT();
 		auto render = GetSystem<RenderSystem>();
 		auto device = render->GetDevice();
-		auto srcTexture = LoadSourceAsset(path, componentCount);
-		if (!srcTexture)
+		auto srcTexture = Textures::LoadTexture(path);
+		if (!srcTexture || srcTexture->m_mips.size() == 0)
 		{
 			LogError("Failed to load source texture {}", path);
 			return false;
 		}
-		// get a staging buffer + copy the data to it
-		const size_t stagingSize = srcTexture->m_blobs[0].m_data.size();
+		// for now upload mip 0 only + generate the rest ourselves
+		const size_t stagingSize = srcTexture->m_mips[0].m_sizeBytes;
 		auto stagingBuffer = render->GetStagingBufferPool()->GetBuffer(stagingSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO);
 		if (!stagingBuffer.has_value())
 		{
@@ -570,18 +512,16 @@ namespace R3
 		}
 		{
 			R3_PROF_EVENT("CopyToStaging");
-			memcpy(stagingBuffer->m_mappedBuffer, srcTexture->m_blobs[0].m_data.data(), stagingSize);
+			const uint8_t* srcData = srcTexture->m_imgData.data() + srcTexture->m_mips[0].m_offset;
+			memcpy(stagingBuffer->m_mappedBuffer, srcData, stagingSize);
 		}
-		
 		auto loadedData = std::make_unique<LoadedTexture>();
 		loadedData->m_destination = targetHandle;
-		loadedData->m_width = srcTexture->m_header["Width"];
-		loadedData->m_height = srcTexture->m_header["Height"];
-		loadedData->m_channels = srcTexture->m_header["Channels"];
+		loadedData->m_data = std::move(*srcTexture);
 		loadedData->m_stagingBuffer = std::move(*stagingBuffer);
 		if (generateMips)
 		{
-			loadedData->m_miplevels = static_cast<uint32_t>(std::floor(std::log2(std::max(loadedData->m_width, loadedData->m_height)))) + 1;
+			loadedData->m_miplevels = static_cast<uint32_t>(std::floor(std::log2(std::max(loadedData->m_data.m_width, loadedData->m_data.m_height)))) + 1;
 		}
 		// Create the vulkan image and image-view now
 		VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
@@ -590,25 +530,24 @@ namespace R3
 			usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;	// mips are copied from this texture
 		}
 		VkExtent3D extents = {
-			(uint32_t)loadedData->m_width, (uint32_t)loadedData->m_height, 1
+			(uint32_t)loadedData->m_data.m_width, (uint32_t)loadedData->m_data.m_height, 1
 		};
 		VkFormat format;
-		switch (loadedData->m_channels)
+		switch (loadedData->m_data.m_format)
 		{
-		case 1:
+		case Textures::Format::R_U8:
 			format = VK_FORMAT_R8_UNORM;
 			break;
-		case 2:
+		case Textures::Format::RG_U8:
 			format = VK_FORMAT_R8G8_UNORM;
 			break;
-		case 4:
+		case Textures::Format::RGBA_U8:
 			format = VK_FORMAT_R8G8B8A8_UNORM;
 			break;
 		default:
-			LogError("Unsupported component count {}", loadedData->m_channels);
+			LogError("Unsupported format {}", (int)loadedData->m_data.m_format);
 			return false;
 		}
-
 		auto imageCreateInfo = VulkanHelpers::CreateImage2DNoMSAA(format, usage, extents, loadedData->m_miplevels);
 		VmaAllocationCreateInfo allocInfo = { };
 		allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;

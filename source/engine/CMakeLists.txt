@@ -35,6 +35,8 @@ set(EngineLib_SourceFiles
 	frustum.cpp
 	flycam.h
 	flycam.cpp
+	textures.h
+	textures.cpp
 	register_engine_components.h
 	register_engine_components.cpp
 	systems/texture_system.h
