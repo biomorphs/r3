@@ -473,16 +473,16 @@ namespace R3
 					for (int ti=0;ti<m_textures.size();++ti)
 					{
 						auto& t = m_textures[ti];
+						auto sizeBytes = GetTextureGpuSizeBytes(TextureHandle(ti));
+						double sizeMb = (double)sizeBytes / (1024.0 * 1024.0);
+						totalMemoryMb += sizeMb;
+						txt = std::format("{} ({}x{}@{} - {:.3f}mb)", t.m_name, t.m_width, t.m_height, Textures::FormatToString(t.m_format), sizeMb);
+						ImGui::SeparatorText(txt.c_str());
 						if (t.m_imGuiDescSet != VK_NULL_HANDLE)
 						{
 							ImVec2 size((float)t.m_width * 0.25f, (float)t.m_height * 0.25f);
 							ImGui::Image(t.m_imGuiDescSet, size);
 						}
-						auto sizeBytes = GetTextureGpuSizeBytes(TextureHandle(ti));
-						double sizeMb = (double)sizeBytes / (1024.0 * 1024.0);
-						totalMemoryMb += sizeMb;
-						txt = std::format("{} ({}x{} - {:.3f}mb)", t.m_name, t.m_width, t.m_height, sizeMb);
-						ImGui::SeparatorText(txt.c_str());
 					}
 				}
 			}
@@ -496,7 +496,13 @@ namespace R3
 		R3_PROF_EVENT();
 		auto render = GetSystem<RenderSystem>();
 		auto device = render->GetDevice();
-		auto srcTexture = Textures::LoadTexture(path);
+		Textures::BakeTexture(path);	// bake the texture if needed
+		auto bakedPath = Textures::GetBakedTexturePath(path);
+		auto srcTexture = Textures::LoadTexture(bakedPath);
+		if (!srcTexture)
+		{
+			srcTexture = Textures::LoadTexture(path);	// load the original
+		}
 		if (!srcTexture || srcTexture->m_mips.size() == 0)
 		{
 			LogError("Failed to load source texture {}", path);

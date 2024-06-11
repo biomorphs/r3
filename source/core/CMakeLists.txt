@@ -16,6 +16,8 @@ set(CoreLib_SourceFiles
 	time.h
 	time.cpp
 	log.h
+	run_external_process.h
+	run_external_process.cpp
 )
 
 add_library(Core ${CoreLib_SourceFiles})

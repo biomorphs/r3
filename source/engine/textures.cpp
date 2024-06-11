@@ -3,6 +3,7 @@
 #include "core/file_io.h"
 #include "core/log.h"
 #include "core/profiler.h"
+#include "core/run_external_process.h"
 #include <stb_image.h>
 #include <algorithm>
 #include <filesystem>
@@ -11,6 +12,72 @@ namespace R3
 {
 	namespace Textures
 	{
+		bool BakeTexture(std::string_view pathName)
+		{
+			R3_PROF_EVENT();
+			std::string bakedPath = GetBakedTexturePath(pathName);
+			if (bakedPath.empty())
+			{
+				LogInfo("Invalid path for texture baking - {}", pathName);
+				return false;
+			}
+			if (std::filesystem::exists(bakedPath))
+			{
+				return true;	// already baked!
+			}
+
+			int w = 0, h = 0, srcComponents = 0;
+			if (stbi_info(pathName.data(), &w, &h, &srcComponents) == 0)
+			{
+				LogWarn("Failed to get texture info from {}", pathName);
+				return {};
+			}
+			// Use AMD Compressonator to bake the texture (top mip only for now)
+			bool useGPUCompression = true;
+			uint32_t mipCount = 1;
+			std::string outFileType = "dds";
+			std::string outEncoding;
+			switch (srcComponents)
+			{
+			case 1:
+				outEncoding = "BC4";
+				break;
+			case 2:
+				outEncoding = "BC5";
+				break;
+			default:
+				outEncoding = "BC7";
+				break;
+			}
+			const std::string c_appName = "compressonatorcli.exe";
+			std::string cmdLine = std::format("-nomipmap {} -fd {} {} {}", 
+				useGPUCompression ? "-EncodeWith GPU" : "",
+				outEncoding,
+				std::filesystem::absolute(pathName).string(),
+				bakedPath);
+			LogInfo("Running {} {}", c_appName, cmdLine);
+			return RunProcess(c_appName, cmdLine).value() == 0;
+		}
+
+		std::string_view FormatToString(Format f)
+		{
+			switch (f)
+			{
+			case Format::R_U8:
+				return "R8";
+			case Format::RG_U8:
+				return "RG8";
+			case Format::RGB_U8:
+				return "RGB8";
+			case Format::RGBA_U8:
+				return "RGBA8";
+			case Format::RGBA_BC7:
+				return "RGBA_BC7";
+			default:
+				return "Unknown";
+			}
+		}
+
 		std::string GetBakedTexturePath(std::string_view pathName)
 		{
 			// get the source path relative to data base directory
@@ -33,7 +100,7 @@ namespace R3
 			return std::filesystem::absolute(bakedPath).string();
 		}
 
-		std::optional<TextureData> LoadTexture(std::string_view pathName)
+		std::optional<TextureData> LoadTexture_stb_image(std::string_view pathName)
 		{
 			R3_PROF_EVENT();
 			stbi_set_flip_vertically_on_load_thread(true);
@@ -86,6 +153,20 @@ namespace R3
 			newTexture.m_mips.emplace_back(0, totalSize);
 			stbi_image_free(rawData);
 			return newTexture;
+		}
+
+		std::optional<TextureData> LoadTexture(std::string_view pathName)
+		{
+			R3_PROF_EVENT();
+			auto fileExtension = std::filesystem::path(pathName).extension().string();
+			if (fileExtension == ".dds")
+			{
+				LogWarn("Todo - dds loader");
+			}
+			else
+			{
+				return LoadTexture_stb_image(pathName);
+			}
 		}
 
 		uint64_t GetMipSizeBytes(uint32_t w, uint32_t h, Format f)

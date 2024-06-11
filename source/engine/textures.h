@@ -15,6 +15,7 @@ namespace R3
 			RGBA_U8,
 			RGBA_BC7
 		};
+		std::string_view FormatToString(Format f);
 
 		struct TextureData
 		{
@@ -32,12 +33,14 @@ namespace R3
 		// Helpers for loading + baking textures	
 		std::string GetBakedTexturePath(std::string_view pathName);
 
-		// Load an image containing 1 u8 per component
-		// set componentCount to override channel count in source
+		// Load a texture
 		std::optional<TextureData> LoadTexture(std::string_view pathName);
+
+		// Bake a texture file, blocks until completion
+		// output writes to GetBakedTexturePath(path)
+		bool BakeTexture(std::string_view pathName);
 
 		// Calculate the size in bytes of 1 mip level given a size and format
 		uint64_t GetMipSizeBytes(uint32_t w, uint32_t h, Format f);
 	}
-
 }
