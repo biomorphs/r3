@@ -219,6 +219,7 @@ namespace R3
 			aiProcess_SortByPType |
 			aiProcess_ValidateDataStructure |
 			aiProcess_OptimizeMeshes |
+			aiProcess_FlipUVs |
 			// aiProcess_RemoveRedundantMaterials |
 			(flattenMeshes ? aiProcess_PreTransformVertices : 0)
 		);

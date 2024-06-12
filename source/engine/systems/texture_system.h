@@ -67,6 +67,7 @@ namespace R3
 		VkDescriptorSet_T* m_allTexturesSet = nullptr;	// the global set (bindless!)
 		bool m_descriptorsNeedUpdate = false;
 		bool m_generateMips = true;
+		bool m_loadBakedTextures = true;
 		bool m_showGui = false;
 	};
 }

@@ -471,6 +471,7 @@ namespace R3
 			ImGui::Begin("Textures");
 			{
 				ImGui::Checkbox("Runtime mip generation", &m_generateMips);
+				ImGui::Checkbox("Load baked textures", &m_loadBakedTextures);
 				uint64_t totalMemUsed = GetTotalGpuMemoryUsedBytes();
 				double totalMemoryMb = (uint64_t)totalMemUsed / (1024.0 * 1024.0);
 				std::string txt = std::format("{:.3f}mb gpu memory used", totalMemoryMb);
@@ -506,9 +507,13 @@ namespace R3
 		R3_PROF_EVENT();
 		auto render = GetSystem<RenderSystem>();
 		auto device = render->GetDevice();
-		Textures::BakeTexture(path);	// bake the texture if needed
-		auto bakedPath = Textures::GetBakedTexturePath(path);
-		auto srcTexture = Textures::LoadTexture(bakedPath);
+		std::optional<Textures::TextureData> srcTexture;
+		if (m_loadBakedTextures)
+		{
+			Textures::BakeTexture(path);	// bake the texture if needed
+			auto bakedPath = Textures::GetBakedTexturePath(path);
+			srcTexture = Textures::LoadTexture(bakedPath);
+		}
 		if (!srcTexture)
 		{
 			srcTexture = Textures::LoadTexture(path);	// load the original

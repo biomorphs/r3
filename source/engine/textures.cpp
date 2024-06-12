@@ -110,7 +110,6 @@ namespace R3
 		std::optional<TextureData> LoadTexture_stb_image(std::string_view pathName)
 		{
 			R3_PROF_EVENT();
-			stbi_set_flip_vertically_on_load_thread(true);
 			int w = 0, h = 0, srcComponents = 0;
 			if (stbi_info(pathName.data(), &w, &h, &srcComponents) == 0)
 			{
