@@ -88,6 +88,7 @@ namespace R3
 		if (newWorld)
 		{
 			newWorld->SetName("New World");
+			newWorld->Load("editor/scene templates/new world.scn");
 			m_allWindows.push_back(std::make_unique<WorldEditorWindow>(worldInternalName));
 		}
 	}

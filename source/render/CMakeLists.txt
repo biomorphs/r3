@@ -24,6 +24,8 @@ set(RenderLib_SourceFiles
 	deletion_queue.cpp
 	writeonly_gpu_buffer.h
 	writeonly_gpu_buffer.cpp
+	command_buffer_allocator.h
+	command_buffer_allocator.cpp
 )
 
 add_library(Render ${RenderLib_SourceFiles})
