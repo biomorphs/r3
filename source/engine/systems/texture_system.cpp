@@ -42,7 +42,7 @@ namespace R3
 	{
 		TextureHandle m_destination;
 		Textures::TextureData m_data;
-		uint32_t m_miplevels = 1;							// if > 1, mips will be generated on gpu after load
+		uint32_t m_miplevels = 1;							// if > loaded mips, generate on gpu after load
 		PooledBuffer m_stagingBuffer;
 		VkImage m_image = VK_NULL_HANDLE;
 		VmaAllocation m_allocation = nullptr;
@@ -334,7 +334,7 @@ namespace R3
 		barrier.subresourceRange.levelCount = 1;
 		int32_t mipWidth = t.m_data.m_width;
 		int32_t mipHeight = t.m_data.m_height;
-		for (uint32_t i = 1; i < t.m_miplevels; i++) 
+		for (uint32_t i = 1; i < t.m_miplevels; i++)
 		{
 			// transition the src mip to transfer_src
 			barrier.subresourceRange.baseMipLevel = i - 1;
@@ -402,22 +402,32 @@ namespace R3
 			// VK_PIPELINE_STAGE_TRANSFER_BIT = any time before transfers run
 			vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &transferbarrier);
 
-			// now copy from staging to the final image mip 0
-			VkBufferImageCopy copyRegion = {};
-			copyRegion.bufferOffset = 0;
-			copyRegion.bufferRowLength = 0;
-			copyRegion.bufferImageHeight = 0;
-			copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			copyRegion.imageSubresource.mipLevel = 0;
-			copyRegion.imageSubresource.baseArrayLayer = 0;
-			copyRegion.imageSubresource.layerCount = 1;
-			copyRegion.imageExtent = { dst.m_width, dst.m_height, 1 };
+			// copy all loaded mips from staging to the final image
+			const auto loadedMipCount = t->m_data.m_mips.size();
+			uint32_t width = dst.m_width;
+			uint32_t height = dst.m_height;
+			std::vector<VkBufferImageCopy> imgCopies;
+			for (auto mip = 0; mip < loadedMipCount; ++mip)
+			{
+				// now copy from staging to the final image mip 0
+				VkBufferImageCopy copyRegion = {};
+				copyRegion.bufferOffset = t->m_data.m_mips[mip].m_offset;
+				copyRegion.bufferRowLength = 0;
+				copyRegion.bufferImageHeight = 0;
+				copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+				copyRegion.imageSubresource.mipLevel = mip;
+				copyRegion.imageSubresource.baseArrayLayer = 0;
+				copyRegion.imageSubresource.layerCount = 1;
+				copyRegion.imageExtent = { width, height, 1 };
+				imgCopies.push_back(copyRegion);
+				if (width > 1) width /= 2;
+				if (height > 1) height /= 2;
+			}
+			// copy the buffer regions into the image
+			vkCmdCopyBufferToImage(cmdBuffer, t->m_stagingBuffer.m_buffer.m_buffer, dst.m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+				(uint32_t)imgCopies.size(), imgCopies.data());
 
-			// copy the buffer into the image
-			vkCmdCopyBufferToImage(cmdBuffer, t->m_stagingBuffer.m_buffer.m_buffer, dst.m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
-				&copyRegion);
-
-			if (dst.m_miplevels > 1)
+			if (dst.m_miplevels > 1 && dst.m_miplevels < loadedMipCount)	// generate any missing mips
 			{
 				GenerateMipsFromTopMip(d, cmdBuffer, *t);
 			}
@@ -508,8 +518,8 @@ namespace R3
 			LogError("Failed to load source texture {}", path);
 			return false;
 		}
-		// for now upload mip 0 only + generate the rest ourselves
-		const size_t stagingSize = srcTexture->m_mips[0].m_sizeBytes;
+		// upload the entire buffer to staging + use the mip offsets to do the appropriate copies later on
+		const size_t stagingSize = srcTexture->m_imgData.size();
 		auto stagingBuffer = render->GetStagingBufferPool()->GetBuffer(stagingSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO);
 		if (!stagingBuffer.has_value())
 		{
@@ -518,8 +528,7 @@ namespace R3
 		}
 		{
 			R3_PROF_EVENT("CopyToStaging");
-			const uint8_t* srcData = srcTexture->m_imgData.data() + srcTexture->m_mips[0].m_offset;
-			memcpy(stagingBuffer->m_mappedBuffer, srcData, stagingSize);
+			memcpy(stagingBuffer->m_mappedBuffer, srcTexture->m_imgData.data(), stagingSize);
 		}
 		auto loadedData = std::make_unique<LoadedTexture>();
 		loadedData->m_destination = targetHandle;
@@ -528,10 +537,12 @@ namespace R3
 		bool canGenerateRuntimeMips = loadedData->m_data.m_format != Textures::Format::RGBA_BC7
 			&& loadedData->m_data.m_format != Textures::Format::RG_BC5
 			&& loadedData->m_data.m_format != Textures::Format::R_BC4;
+		uint32_t mipCount = (uint32_t)loadedData->m_data.m_mips.size();
 		if (generateMips && canGenerateRuntimeMips)
 		{
-			loadedData->m_miplevels = static_cast<uint32_t>(std::floor(std::log2(std::max(loadedData->m_data.m_width, loadedData->m_data.m_height)))) + 1;
+			mipCount = Textures::GetMipmapCount(loadedData->m_data.m_width, loadedData->m_data.m_height, loadedData->m_data.m_format);
 		}
+		loadedData->m_miplevels = mipCount;
 		// Create the vulkan image and image-view now
 		VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 		if (generateMips)
@@ -566,7 +577,7 @@ namespace R3
 			LogError("Unsupported format {}", (int)loadedData->m_data.m_format);
 			return false;
 		}
-		auto imageCreateInfo = VulkanHelpers::CreateImage2DNoMSAA(format, usage, extents, loadedData->m_miplevels);
+		auto imageCreateInfo = VulkanHelpers::CreateImage2DNoMSAA(format, usage, extents, mipCount);
 		VmaAllocationCreateInfo allocInfo = { };
 		allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 		allocInfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);	// fast gpu memory
@@ -576,7 +587,7 @@ namespace R3
 			LogError("Failed to allocate memory for texture {}", path);
 			return false;
 		}
-		auto viewCreateInfo = VulkanHelpers::CreateImageView2DNoMSAA(format, loadedData->m_image, VK_IMAGE_ASPECT_COLOR_BIT, loadedData->m_miplevels);
+		auto viewCreateInfo = VulkanHelpers::CreateImageView2DNoMSAA(format, loadedData->m_image, VK_IMAGE_ASPECT_COLOR_BIT, mipCount);
 		r = vkCreateImageView(device->GetVkDevice(), &viewCreateInfo, nullptr, &loadedData->m_imageView);
 		if (!VulkanHelpers::CheckResult(r))
 		{

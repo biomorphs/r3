@@ -15,3 +15,8 @@
 		- build + run install (release)
 5. Run setup-msvc.bat
 	Open build/R3.sln
+6. (Optional)
+	Install AMD Compressonator CLI executable from https://github.com/GPUOpen-Tools/Compressonator/releases/latest/
+	add the installation directory to the system PATH environment variable
+		e.g.
+			set PATH=%PATH%;C:\Compressonator_4.5.52\bin\CLI

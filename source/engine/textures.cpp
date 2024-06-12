@@ -32,9 +32,10 @@ namespace R3
 				LogWarn("Failed to get texture info from {}", pathName);
 				return {};
 			}
-			// Use AMD Compressonator to bake the texture (top mip only for now)
+			// Use AMD Compressonator to bake the texture
 			bool useGPUCompression = true;
-			uint32_t mipCount = 1;
+			bool generateMips = true;
+			uint32_t mipCount = generateMips ? static_cast<uint32_t>(std::floor(std::log2(std::max(w, h)))) + 1 : 1;
 			std::string outFileType = "dds";
 			std::string outEncoding;
 			switch (srcComponents)
@@ -49,8 +50,14 @@ namespace R3
 				outEncoding = "BC7";
 				break;
 			}
+			std::string mipOptions = "-nomipmap";
+			if (mipCount > 1)
+			{
+				mipOptions = std::format("-miplevels {}", mipCount);
+			}
 			const std::string c_appName = "compressonatorcli.exe";
-			std::string cmdLine = std::format("-nomipmap {} -fd {} {} {}", 
+			std::string cmdLine = std::format("{} {} -fd {} {} {}", 
+				mipOptions,
 				useGPUCompression ? "-EncodeWith GPU" : "",
 				outEncoding,
 				std::filesystem::absolute(pathName).string(),
@@ -186,6 +193,20 @@ namespace R3
 			default:
 				return 0;
 			}
+		}
+
+		uint32_t GetMipmapCount(uint32_t w, uint32_t h, Format f)
+		{
+			uint32_t mipCount = static_cast<uint32_t>(std::floor(std::log2(std::max(w, h)))) + 1;
+			if (f == Format::RGBA_BC7 || f == Format::RG_BC5 || f == Format::R_BC4)
+			{
+				// block compressed textures don't go smaller than 4x4, remove 2 mips
+				if (w >= 4 && h >= 4)
+				{
+					return mipCount - 2;
+				}
+			}
+			return mipCount;
 		}
 	}
 }

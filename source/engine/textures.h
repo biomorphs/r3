@@ -44,5 +44,8 @@ namespace R3
 
 		// Calculate the size in bytes of 1 mip level given a size and format
 		uint64_t GetMipSizeBytes(uint32_t w, uint32_t h, Format f);
+
+		// Calculate num mips in a texture
+		uint32_t GetMipmapCount(uint32_t w, uint32_t h, Format f);
 	}
 }

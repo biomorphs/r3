@@ -229,18 +229,34 @@ namespace R3
 		newTexture.m_width = header.m_widthPx;
 		newTexture.m_height = header.m_heightPx;
 		newTexture.m_format = GetEngineFormat(header, dx10Extension);
-		size_t mip0Offset = sizeof(header) + (dx10Extension ? sizeof(*dx10Extension) : 0);
+		size_t mipSrcOffset = sizeof(header) + (dx10Extension ? sizeof(*dx10Extension) : 0);
 		// we should not trust the pitch output by exporters according to MS
 		uint64_t imgPitch = glm::max(1u, ((header.m_widthPx + 3) / 4)) * GetBlockSizeBytes(newTexture.m_format);
 		size_t mip0Size = imgPitch * newTexture.m_height;
-		if (buffer.size() - mip0Offset < mip0Size)
+
+		// the image data is not aligned how we would like, so we need to remake it ourselves
+		// each mip level will be stored consecutively with 16 byte alignment
+		size_t maxDataSize = 0;
+		size_t mipSize = mip0Size;
+		for (uint32_t i = 0; i < header.m_mipCount; ++i)
 		{
-			LogWarn("Bad mip 0 offset");
-			return {};
+			maxDataSize += mipSize + 16;
+			mipSize = glm::max(GetBlockSizeBytes(newTexture.m_format), mipSize / 4);
 		}
-		newTexture.m_imgData = std::move(buffer);
-		newTexture.m_mips.emplace_back(mip0Offset, mip0Size);
-		assert(newTexture.m_mips[0].m_offset + newTexture.m_mips[0].m_sizeBytes < newTexture.m_imgData.size());
+		std::vector<uint8_t> imageDataAligned;
+		imageDataAligned.resize(maxDataSize);
+		size_t dstOffset = 0;
+		size_t srcOffset = mipSrcOffset;
+		mipSize = mip0Size;
+		for (uint32_t i = 0; i < header.m_mipCount; ++i)
+		{
+			memcpy(imageDataAligned.data() + dstOffset, buffer.data() + srcOffset, mipSize);
+			newTexture.m_mips.emplace_back(dstOffset, mipSize);
+			dstOffset = AlignUpPow2(dstOffset + mipSize, 16ull);
+			srcOffset += mipSize;
+			mipSize = glm::max(GetBlockSizeBytes(newTexture.m_format), mipSize / 4);
+		}
+		newTexture.m_imgData = std::move(imageDataAligned);
 		return newTexture;
 	}
 }
