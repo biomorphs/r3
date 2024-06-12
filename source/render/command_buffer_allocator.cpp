@@ -2,6 +2,7 @@
 #include "vulkan_helpers.h"
 #include "device.h"
 #include "render_system.h"
+#include "engine/systems/time_system.h"
 #include "core/log.h"
 #include "core/profiler.h"
 
@@ -28,7 +29,7 @@ namespace R3
 			auto queueFamilyIndices = VulkanHelpers::FindQueueFamilyIndices(d.GetPhysicalDevice(), d.GetMainSurface());
 			VkCommandPoolCreateInfo poolInfo = {};
 			poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-			poolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;				// we are going to allocate/free cmd buffers a lot
+			poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;	// we want to reset invdividual bufferss
 			poolInfo.queueFamilyIndex = queueFamilyIndices.m_graphicsIndex;		// graphics queue pls
 			if (!VulkanHelpers::CheckResult(vkCreateCommandPool(d.GetVkDevice(), &poolInfo, nullptr, &newThreadData.m_pool)))
 			{
@@ -41,9 +42,27 @@ namespace R3
 		return pool->second.m_pool;
 	}
 
-	VkCommandBuffer_T* CommandBufferAllocator::CreateCommandBuffer(Device& d, bool isPrimary)
+	std::optional<ManagedCommandBuffer> CommandBufferAllocator::CreateCommandBuffer(Device& d, bool isPrimary)
 	{
 		R3_PROF_EVENT();
+
+		// first check the free-list for the pool
+		const auto thisThreadID = std::this_thread::get_id();
+		auto ptd = m_perThreadData.find(thisThreadID);
+		if (ptd == m_perThreadData.end())
+		{
+			auto time = Systems::GetSystem<TimeSystem>();
+			uint64_t currentFrame = time->GetFrameIndex();
+			for (int i = 0; i < ptd->second.m_releasedBuffers.size(); ++i)
+			{
+				auto& r = ptd->second.m_releasedBuffers[i];
+				if ((currentFrame - c_framesBeforeReuse) > r.m_frameReleased)
+				{
+
+				}
+			}
+		}
+
 		auto pool = GetPool(d);
 		if (pool != VK_NULL_HANDLE)
 		{
@@ -52,15 +71,33 @@ namespace R3
 			allocInfo.commandPool = pool;
 			allocInfo.level = isPrimary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY;
 			allocInfo.commandBufferCount = 1;
-			VkCommandBuffer newCmdBuffer = nullptr;;
-			if (!VulkanHelpers::CheckResult(vkAllocateCommandBuffers(d.GetVkDevice(), &allocInfo, &newCmdBuffer)))
+			ManagedCommandBuffer newBuffer;
+			if (!VulkanHelpers::CheckResult(vkAllocateCommandBuffers(d.GetVkDevice(), &allocInfo, &newBuffer.m_cmdBuffer)))
 			{
 				LogError("failed to allocate command buffer!");
+				return {};
 			}
-			return newCmdBuffer;
+			newBuffer.m_ownerThread = std::this_thread::get_id();
+			newBuffer.m_isPrimary = isPrimary;
+			return newBuffer;
 		}
+		return {};
+	}
 
-		return nullptr;
+	void CommandBufferAllocator::Release(ManagedCommandBuffer cmdBuffer)
+	{
+		R3_PROF_EVENT();
+		auto time = Systems::GetSystem<TimeSystem>();
+		auto pool = m_perThreadData.find(cmdBuffer.m_ownerThread);
+		assert(pool != m_perThreadData.end());
+		if (pool != m_perThreadData.end())
+		{
+			ReleasedBuffer r;
+			r.m_buffer = cmdBuffer.m_cmdBuffer;
+			r.m_isPrimary = cmdBuffer.m_isPrimary;
+			r.m_frameReleased = time->GetFrameIndex();
+			pool->second.m_releasedBuffers.push_back(r);
+		}
 	}
 
 	void CommandBufferAllocator::Reset(Device& d)

@@ -63,7 +63,8 @@ namespace R3
 				std::filesystem::absolute(pathName).string(),
 				bakedPath);
 			LogInfo("Running {} {}", c_appName, cmdLine);
-			return RunProcess(c_appName, cmdLine).value() == 0;
+			auto runBakeResult = RunProcess(c_appName, cmdLine);
+			return runBakeResult.has_value() && runBakeResult.value() != 0;
 		}
 
 		std::string_view FormatToString(Format f)
