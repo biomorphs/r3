@@ -1,0 +1,131 @@
+{
+ "AllEntities": [
+  {
+   "ID": 0,
+   "Name": "Floor",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Scale": {
+     "X": 256.0,
+     "Y": 1.0,
+     "Z": 256.0
+    }
+   }
+  },
+  {
+   "EnvironmentSettings": {
+    "Sky Ambient": 0.0,
+    "Sky Colour": {
+     "X": 0.0028453404083848,
+     "Y": 0.012620466761291027,
+     "Z": 0.02016127109527588
+    },
+    "Sun Ambient": 0.0,
+    "Sun Brightness": 4.0,
+    "Sun Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Sun Direction": {
+     "X": -0.30000001192092896,
+     "Y": -1.0,
+     "Z": 1.0
+    }
+   },
+   "ID": 1,
+   "Name": "Globals",
+   "Parent": 4294967295
+  },
+  {
+   "ID": 2,
+   "LuaScript": {
+    "IsActive": true,
+    "OnFixedUpdate": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    },
+    "OnVariableUpdate": {
+     "EntryPoint": "Multiballs_Main",
+     "SourcePath": "multiballs\\scripts\\main.lua"
+    }
+   },
+   "Name": "Main Script",
+   "Parent": 4294967295,
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 0.0,
+       "Z": 0.0
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.10000000149011612,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 0.0,
+       "Z": 0.0
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.10000000149011612,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      }
+     }
+    ]
+   }
+  }
+ ],
+ "WorldName": "New World"
+}
