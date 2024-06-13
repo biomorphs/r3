@@ -20,8 +20,7 @@
 #include <imgui.h>
 
 // Todo 
-// global constants in descriptor set
-// instance material/transform in buffer added to same descriptor set 
+// instance material/transform in buffer added to global descriptor set 
 //	use firstInstanceOffset in draw to ref instance in shader?
 // draw indirect
 
@@ -45,8 +44,6 @@ namespace R3
 	// one per draw call
 	struct PushConstants 
 	{
-		glm::mat4 m_instanceTransform;
-		uint32_t m_materialIndex;
 		uint32_t m_globalConstantIndex;
 	};
 
@@ -91,6 +88,7 @@ namespace R3
 		vkDestroyPipeline(d.GetVkDevice(), m_simpleTriPipeline, nullptr);
 		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayout, nullptr);
 		m_globalConstantsBuffer.Destroy(d);
+		m_globalInstancesBuffer.Destroy(d);
 		m_descriptorAllocator = {};
 		vkDestroyDescriptorSetLayout(d.GetVkDevice(), m_globalsDescriptorLayout, nullptr);
 	}
@@ -201,7 +199,7 @@ namespace R3
 		auto render = GetSystem<RenderSystem>();
 		DescriptorLayoutBuilder layoutBuilder;
 		layoutBuilder.AddBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);		// uniform buffer for global constants
-		// layoutBuilder.AddBinding(1, 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);		// storage buffer for instance data
+		layoutBuilder.AddBinding(1, 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);		// storage buffer for instance data
 		m_globalsDescriptorLayout = layoutBuilder.Create(*render->GetDevice(), false);	// dont need bindless here
 		if (m_globalsDescriptorLayout == nullptr)
 		{
@@ -224,6 +222,7 @@ namespace R3
 		m_globalDescriptorSet = m_descriptorAllocator->Allocate(*render->GetDevice(), m_globalsDescriptorLayout);
 		DescriptorSetWriter writer(m_globalDescriptorSet);
 		writer.WriteUniformBuffer(0, m_globalConstantsBuffer.GetBuffer());
+		writer.WriteStorageBuffer(1, m_globalInstancesBuffer.GetBuffer());
 		writer.FlushWrites();
 
 		return true;
@@ -310,9 +309,17 @@ namespace R3
 		{
 			m_currentGlobalConstantsBuffer = 0;
 		}
+		vkCmdPushConstants(m_thisFrameCmdBuffer.m_cmdBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
+
 		StaticMeshGpuData currentMeshData;
 		ModelDataHandle currentMeshDataHandle;
 		StaticMeshPart partData;
+		uint32_t instanceOffset = m_currentInstanceBufferStart;
+		m_currentInstanceBufferStart += c_maxInstances;
+		if (m_currentInstanceBufferStart >= (c_maxInstances * c_maxInstanceBuffers))
+		{
+			m_currentInstanceBufferStart = 0;
+		}
 		auto forEach = [&](const Entities::EntityHandle& e, StaticMeshComponent& s, TransformComponent& t)
 		{
 			if (s.m_modelHandle.m_index != -1 && s.m_modelHandle.m_index != currentMeshDataHandle.m_index)
@@ -337,21 +344,25 @@ namespace R3
 					if (staticMeshes->GetMeshPart(currentMeshData.m_firstMeshPartOffset + part, partData))
 					{
 						auto relativePartMatIndex = partData.m_materialIndex - currentMeshData.m_materialGpuIndex;
-						pc.m_materialIndex = useOverrides ? ((uint32_t)matCmp->m_gpuDataIndex + relativePartMatIndex) : partData.m_materialIndex;
-						pc.m_instanceTransform = compTransform * partData.m_transform;
-						vkCmdPushConstants(m_thisFrameCmdBuffer.m_cmdBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-						vkCmdDrawIndexed(m_thisFrameCmdBuffer.m_cmdBuffer, partData.m_indexCount, 1, (uint32_t)partData.m_indexStartOffset, (uint32_t)currentMeshData.m_vertexDataOffset, 0);
+						StaticMeshInstanceGpu gpuData;
+						gpuData.m_materialIndex = useOverrides ? ((uint32_t)matCmp->m_gpuDataIndex + relativePartMatIndex) : partData.m_materialIndex;
+						gpuData.m_transform = compTransform * partData.m_transform;
+						m_globalInstancesBuffer.Write(instanceOffset, 1, &gpuData);
+						vkCmdDrawIndexed(m_thisFrameCmdBuffer.m_cmdBuffer, partData.m_indexCount, 1, (uint32_t)partData.m_indexStartOffset, (uint32_t)currentMeshData.m_vertexDataOffset, instanceOffset);
+						++instanceOffset;
 					}
 				}
 			}
 			return true;
 		};
 		Entities::Queries::ForEach<StaticMeshComponent, TransformComponent>(activeWorld, forEach);
+
 		if (!VulkanHelpers::CheckResult(vkEndCommandBuffer(m_thisFrameCmdBuffer.m_cmdBuffer)))
 		{
 			LogError("failed to end recording command buffer!");
 			return false;
 		}
+		
 		return true;
 	}
 
@@ -367,6 +378,17 @@ namespace R3
 			else
 			{
 				m_globalConstantsBuffer.Allocate(c_maxGlobalConstantBuffers);	// reserve the memory now, allows writes to any entry
+			}
+		}
+		if (!m_globalInstancesBuffer.IsCreated())
+		{
+			if (!m_globalInstancesBuffer.Create(d, c_maxInstances * c_maxInstanceBuffers, c_maxInstances, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+			{
+				LogError("Failed to create constant buffer");
+			}
+			else
+			{
+				m_globalInstancesBuffer.Allocate(c_maxInstances * c_maxInstanceBuffers);	// reserve the memory now, allows writes to any entry
 			}
 		}
 		if (m_globalDescriptorSet == VK_NULL_HANDLE)
@@ -395,6 +417,9 @@ namespace R3
 		ProcessEnvironmentSettings(globals);
 		m_globalConstantsBuffer.Write(m_currentGlobalConstantsBuffer, 1, &globals);
 		m_globalConstantsBuffer.Flush(d, cmds);
+
+		// flush the instance data before drawing 
+		m_globalInstancesBuffer.Flush(d, cmds);
 	}
 
 	void StaticMeshSimpleRenderer::MainPassDraw(Device& d, VkCommandBuffer cmds, const VkExtent2D& e)

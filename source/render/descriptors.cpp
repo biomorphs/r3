@@ -23,6 +23,25 @@ namespace R3
 		}
 	}
 
+	void DescriptorSetWriter::WriteStorageBuffer(uint32_t binding, VkBuffer buffer, uint64_t bufferOffset, uint64_t bufferSize)
+	{
+		VkDescriptorBufferInfo bufferInfo = {};
+		bufferInfo.buffer = buffer;
+		bufferInfo.offset = bufferOffset;
+		bufferInfo.range = bufferSize == 0 ? VK_WHOLE_SIZE : bufferSize;
+		m_bufferInfos.push_back(bufferInfo);
+
+		VkWriteDescriptorSet writeTextures = {};
+		writeTextures.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		writeTextures.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+		writeTextures.descriptorCount = 1;
+		writeTextures.dstArrayElement = 0;
+		writeTextures.dstBinding = binding;
+		writeTextures.dstSet = m_target;
+		writeTextures.pBufferInfo = &m_bufferInfos[m_bufferInfos.size() - 1];
+		m_writes.push_back(writeTextures);
+	}
+
 	void DescriptorSetWriter::WriteUniformBuffer(uint32_t binding, VkBuffer buffer, uint64_t bufferOffset, uint64_t bufferSize)
 	{
 		VkDescriptorBufferInfo bufferInfo = {};

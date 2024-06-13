@@ -8,7 +8,8 @@
 layout(location = 0) in vec3 inWorldSpacePos;
 layout(location = 1) in vec3 inWorldspaceNormal;
 layout(location = 2) in vec2 inUV;
-layout(location = 3) in mat3 inTBN;
+layout(location = 3) in flat uint inMaterialIndex;
+layout(location = 4) in mat3 inTBN;
 layout(location = 0) out vec4 outColour;
 
 void main() {
@@ -16,8 +17,7 @@ void main() {
 	vec3 worldPos = inWorldSpacePos;
 	vec3 normal = normalize(inWorldspaceNormal);
 	vec3 viewDir = normalize(globals.m_cameraWorldSpacePos.xyz - worldPos);
-	int materialIndex = PushConstants.m_materialIndex;
-	StaticMeshMaterial myMaterial = globals.m_materialBuffer.materials[materialIndex];
+	StaticMeshMaterial myMaterial = globals.m_materialBuffer.materials[inMaterialIndex];
 	
 	PBRMaterial mat;
 	float finalAlpha = myMaterial.m_albedoOpacity.a;
