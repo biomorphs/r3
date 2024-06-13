@@ -88,6 +88,10 @@ namespace R3
 				guiUpdate.AddFn("LuaSystem::ShowGui");
 			}
 			{
+				auto& renderUpdate = updateSequence.AddSequence("RenderUpdate");
+				renderUpdate.AddFn("StaticMeshSimpleRenderer::BuildCommandBuffer");
+			}
+			{
 				auto& endUpdate = updateSequence.AddSequence("EndFrame");
 				endUpdate.AddFn("Input::FrameEnd");
 			}

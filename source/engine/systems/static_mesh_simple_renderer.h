@@ -3,6 +3,7 @@
 #include "render/vulkan_helpers.h"
 #include "render/writeonly_gpu_buffer.h"
 #include "render/descriptors.h"
+#include "render/command_buffer_allocator.h"
 
 namespace R3
 {
@@ -19,6 +20,7 @@ namespace R3
 		struct GlobalConstants;
 		bool ShowGui();
 		void Cleanup(Device&);
+		bool BuildCommandBuffer();
 		void MainPassBegin(Device&, VkCommandBuffer);
 		void MainPassDraw(Device&, VkCommandBuffer, const VkExtent2D&);
 		bool CreatePipelineData(Device&);
@@ -29,6 +31,7 @@ namespace R3
 		int m_currentGlobalConstantsBuffer = 0;
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_simpleTriPipeline = VK_NULL_HANDLE;
+		ManagedCommandBuffer m_thisFrameCmdBuffer;
 		bool m_showGui = false;
 	};
 }

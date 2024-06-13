@@ -58,6 +58,9 @@ namespace R3
 		RegisterTick("StaticMeshSimpleRenderer::ShowGui", [this]() {
 			return ShowGui();
 		});
+		RegisterTick("StaticMeshSimpleRenderer::BuildCommandBuffer", [this]() {
+			return BuildCommandBuffer();
+		});
 	}
 
 	bool StaticMeshSimpleRenderer::Init()
@@ -201,6 +204,115 @@ namespace R3
 		}
 	}
 
+	bool StaticMeshSimpleRenderer::BuildCommandBuffer()
+	{
+		R3_PROF_EVENT();
+		auto entities = Systems::GetSystem<Entities::EntitySystem>();
+		auto activeWorld = entities->GetActiveWorld();
+		if (!activeWorld)
+		{
+			return true;
+		}
+		auto render = Systems::GetSystem<RenderSystem>();
+		auto staticMeshes = GetSystem<StaticMeshSystem>();
+		auto cmdBuffer = render->GetCommandBufferAllocator()->CreateCommandBuffer(*render->GetDevice(), false);
+		if (!cmdBuffer)
+		{
+			LogWarn("Failed to get a cmd buffer");
+			return false;
+		}
+		m_thisFrameCmdBuffer = *cmdBuffer;
+		VkCommandBufferBeginInfo beginInfo = { 0 };	
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;	// this pass is ran inside another render pass
+		VkCommandBufferInheritanceInfo whatIsThisBullshit = { 0 };			// we need to pass the attachments info since we are drawing (annoying)
+		whatIsThisBullshit.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
+		VkCommandBufferInheritanceRenderingInfoKHR evenMoreBullshit = { 0 };	// dynamic rendering
+		evenMoreBullshit.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_RENDERING_INFO_KHR;
+		auto colourBufferFormat = render->GetMainColourTargetFormat();
+		evenMoreBullshit.colorAttachmentCount = 1;
+		evenMoreBullshit.pColorAttachmentFormats = &colourBufferFormat;
+		evenMoreBullshit.depthAttachmentFormat = render->GetMainDepthStencilFormat();
+		evenMoreBullshit.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+		whatIsThisBullshit.pNext = &evenMoreBullshit;
+		beginInfo.pInheritanceInfo = &whatIsThisBullshit;
+		if (!VulkanHelpers::CheckResult(vkBeginCommandBuffer(m_thisFrameCmdBuffer.m_cmdBuffer, &beginInfo)))
+		{
+			LogError("failed to begin recording command buffer!");
+			return false;
+		}
+		VkViewport viewport = { 0 };
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = render->GetWindowExtents().x;
+		viewport.height = render->GetWindowExtents().y;
+		viewport.minDepth = 0.0f;	// normalised! must be between 0 and 1
+		viewport.maxDepth = 1.0f;	// ^^
+		VkRect2D scissor = { 0 };
+		scissor.offset = { 0, 0 };
+		scissor.extent = { (uint32_t)viewport.width, (uint32_t)viewport.height };	// draw the full image
+		vkCmdBindPipeline(m_thisFrameCmdBuffer.m_cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_simpleTriPipeline);
+		vkCmdSetViewport(m_thisFrameCmdBuffer.m_cmdBuffer, 0, 1, &viewport);
+		vkCmdSetScissor(m_thisFrameCmdBuffer.m_cmdBuffer, 0, 1, &scissor);
+		vkCmdBindIndexBuffer(m_thisFrameCmdBuffer.m_cmdBuffer, staticMeshes->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+		auto textures = GetSystem<TextureSystem>();
+		VkDescriptorSet allTextures = textures->GetAllTexturesSet();
+		if (allTextures != VK_NULL_HANDLE)
+		{
+			vkCmdBindDescriptorSets(m_thisFrameCmdBuffer.m_cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, 0);
+		}
+		PushConstants pc;
+		pc.m_globalConstantsAddress = m_globalConstantsBuffer.GetDataDeviceAddress();
+		pc.m_globalIndex = m_currentGlobalConstantsBuffer++;
+		if (m_currentGlobalConstantsBuffer >= c_maxGlobalConstantBuffers)
+		{
+			m_currentGlobalConstantsBuffer = 0;
+		}
+		StaticMeshGpuData currentMeshData;
+		ModelDataHandle currentMeshDataHandle;
+		StaticMeshPart partData;
+		auto forEach = [&](const Entities::EntityHandle& e, StaticMeshComponent& s, TransformComponent& t)
+		{
+			if (s.m_modelHandle.m_index != -1 && s.m_modelHandle.m_index != currentMeshDataHandle.m_index)
+			{
+				if (staticMeshes->GetMeshDataForModel(s.m_modelHandle, currentMeshData))
+				{
+					currentMeshDataHandle = s.m_modelHandle;
+				}
+				else
+				{
+					currentMeshData = {};
+				}
+			}
+			if (s.m_modelHandle.m_index != -1 && currentMeshDataHandle.m_index == s.m_modelHandle.m_index)
+			{
+				glm::mat4 compTransform = t.GetWorldspaceInterpolated();
+				const uint32_t partCount = currentMeshData.m_meshPartCount;
+				const auto* matCmp = activeWorld->GetComponent<StaticMeshMaterialsComponent>(s.m_materialOverride);
+				bool useOverrides = matCmp && matCmp->m_gpuDataIndex != -1 && matCmp->m_materials.size() >= currentMeshData.m_materialCount;
+				for (uint32_t part = 0; part < partCount; ++part)
+				{
+					if (staticMeshes->GetMeshPart(currentMeshData.m_firstMeshPartOffset + part, partData))
+					{
+						auto relativePartMatIndex = partData.m_materialIndex - currentMeshData.m_materialGpuIndex;
+						pc.m_materialIndex = useOverrides ? ((uint32_t)matCmp->m_gpuDataIndex + relativePartMatIndex) : partData.m_materialIndex;
+						pc.m_instanceTransform = compTransform * partData.m_transform;
+						vkCmdPushConstants(m_thisFrameCmdBuffer.m_cmdBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
+						vkCmdDrawIndexed(m_thisFrameCmdBuffer.m_cmdBuffer, partData.m_indexCount, 1, (uint32_t)partData.m_indexStartOffset, (uint32_t)currentMeshData.m_vertexDataOffset, 0);
+					}
+				}
+			}
+			return true;
+		};
+		Entities::Queries::ForEach<StaticMeshComponent, TransformComponent>(activeWorld, forEach);
+		if (!VulkanHelpers::CheckResult(vkEndCommandBuffer(m_thisFrameCmdBuffer.m_cmdBuffer)))
+		{
+			LogError("failed to end recording command buffer!");
+			return false;
+		}
+		return true;
+	}
+
 	void StaticMeshSimpleRenderer::MainPassBegin(Device& d, VkCommandBuffer cmds)
 	{
 		R3_PROF_EVENT();
@@ -246,83 +358,15 @@ namespace R3
 		{
 			return;
 		}
-		auto cameras = GetSystem<CameraSystem>();
-		auto staticMeshes = GetSystem<StaticMeshSystem>();
-		auto entities = Systems::GetSystem<Entities::EntitySystem>();
-		auto textures = GetSystem<TextureSystem>();
-		auto activeWorld = entities->GetActiveWorld();
-		const auto viewProjMat = cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix();
 
-		VkViewport viewport = { 0 };
-		viewport.x = 0.0f;
-		viewport.y = 0.0f;
-		viewport.width = (float)e.width;
-		viewport.height = (float)e.height;
-		viewport.minDepth = 0.0f;	// normalised! must be between 0 and 1
-		viewport.maxDepth = 1.0f;	// ^^
-		VkRect2D scissor = { 0 };
-		scissor.offset = { 0, 0 };
-		scissor.extent = e;	// draw the full image
-
-		vkCmdBindPipeline(cmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_simpleTriPipeline);
-		vkCmdSetViewport(cmds, 0, 1, &viewport);
-		vkCmdSetScissor(cmds, 0, 1, &scissor);
-		vkCmdBindIndexBuffer(cmds, staticMeshes->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-
-		VkDescriptorSet allTextures = textures->GetAllTexturesSet();
-		if (allTextures != VK_NULL_HANDLE)
+		// submit secondary cmd buffer
+		if (m_thisFrameCmdBuffer.m_cmdBuffer)
 		{
-			vkCmdBindDescriptorSets(cmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, 0);
+			vkCmdExecuteCommands(cmds, 1, &m_thisFrameCmdBuffer.m_cmdBuffer);
 		}
-		
-		// pass the vertex buffer and model-view-proj matrix via push constants for each instance
-		PushConstants pc;
-		pc.m_globalConstantsAddress = m_globalConstantsBuffer.GetDataDeviceAddress();
-		pc.m_globalIndex = m_currentGlobalConstantsBuffer++;
-		if (m_currentGlobalConstantsBuffer >= c_maxGlobalConstantBuffers)
-		{
-			m_currentGlobalConstantsBuffer = 0;
-		}
-		if (activeWorld)
-		{
-			StaticMeshGpuData currentMeshData;
-			ModelDataHandle currentMeshDataHandle;
-			StaticMeshPart partData;
-			auto forEach = [&](const Entities::EntityHandle& e, StaticMeshComponent& s, TransformComponent& t) 
-			{
-				if (s.m_modelHandle.m_index != -1 && s.m_modelHandle.m_index != currentMeshDataHandle.m_index)
-				{
-					if (staticMeshes->GetMeshDataForModel(s.m_modelHandle, currentMeshData))
-					{
-						currentMeshDataHandle = s.m_modelHandle;
-					}
-					else
-					{
-						currentMeshData = {};
-					}
-				}
-				if (s.m_modelHandle.m_index != -1 && currentMeshDataHandle.m_index == s.m_modelHandle.m_index)
-				{
-					glm::mat4 compTransform = t.GetWorldspaceInterpolated();
-					const uint32_t partCount = currentMeshData.m_meshPartCount;
-					const auto* matCmp = activeWorld->GetComponent<StaticMeshMaterialsComponent>(s.m_materialOverride);
-					bool useOverrides = matCmp && matCmp->m_gpuDataIndex != -1 && matCmp->m_materials.size() >= currentMeshData.m_materialCount;
-					for (uint32_t part = 0; part < partCount; ++part)
-					{
-						if (staticMeshes->GetMeshPart(currentMeshData.m_firstMeshPartOffset + part, partData))
-						{
-							auto relativePartMatIndex = partData.m_materialIndex - currentMeshData.m_materialGpuIndex;
-							pc.m_materialIndex = useOverrides ? ((uint32_t)matCmp->m_gpuDataIndex + relativePartMatIndex) : partData.m_materialIndex;
-							pc.m_instanceTransform = compTransform * partData.m_transform;
-							vkCmdPushConstants(cmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-							vkCmdDrawIndexed(cmds, partData.m_indexCount, 1, (uint32_t)partData.m_indexStartOffset, (uint32_t)currentMeshData.m_vertexDataOffset, 0);
-						}
-					}
-				}
 
-				return true;
-			};
-			Entities::Queries::ForEach<StaticMeshComponent, TransformComponent>(activeWorld, forEach);
-		}
+		auto render = Systems::GetSystem<RenderSystem>();
+		render->GetCommandBufferAllocator()->Release(m_thisFrameCmdBuffer);
+		m_thisFrameCmdBuffer = {};
 	}
 }

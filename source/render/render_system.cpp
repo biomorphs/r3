@@ -167,6 +167,7 @@ namespace R3
 		ri.layerCount = 1;
 		ri.renderArea.offset = { 0,0 };
 		ri.renderArea.extent = m_swapChain->GetExtents();
+		ri.flags = VK_RENDERING_CONTENTS_SECONDARY_COMMAND_BUFFERS_BIT;				// executes secondary command buffers
 		vkCmdBeginRendering(cmdBuffer, &ri);
 
 		VkExtent2D swapExtents = m_swapChain->GetExtents();
