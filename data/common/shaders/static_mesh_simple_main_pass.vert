@@ -10,7 +10,7 @@ layout(location = 2) out vec2 outUV;
 layout(location = 3) out mat3 outTBN;
 
 void main() {
-	GlobalConstants globals = PushConstants.m_globals.m_allGlobals[PushConstants.m_globalIndex];
+	GlobalConstants globals = AllGlobals[PushConstants.m_globalIndex];
 	MeshVertex v = globals.m_vertexBuffer.vertices[gl_VertexIndex];
 	vec4 worldSpacePosition = PushConstants.m_instanceTransform * vec4(v.m_positionU0.xyz, 1);
 	outWorldspacePos = worldSpacePosition.xyz;

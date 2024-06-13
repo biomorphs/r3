@@ -25,7 +25,7 @@ function MakeARotatingCube_FixedUpdate(e)
 	local newCube = world:AddEntity()
 	
 	local newTransform = world.AddComponent_Transform(newCube)
-	newTransform:SetPositionNoInterpolation(vec3.new(-16.0 + math.random() * 32.0,1.0 + math.random() * 4.0,-16.0 + math.random() * 32.0))
+	newTransform:SetPositionNoInterpolation(vec3.new(-16.0 + math.random() * 32.0,1.0 + math.random() * 12.0,-16.0 + math.random() * 32.0))
 	
 	local newMesh = world.AddComponent_StaticMesh(newCube)
 	newMesh:SetModelFromPath("common/models/cube.fbx")
@@ -45,7 +45,7 @@ function MakeARotatingCube_FixedUpdate(e)
 end
 
 function MakeManyRotatingCubes_FixedUpdate(e)
-	for i=1,100 do
+	for i=1,4000 do
 		MakeARotatingCube_FixedUpdate(e)
 	end
 end

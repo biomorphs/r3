@@ -8,6 +8,59 @@
 
 namespace R3
 {
+	DescriptorSetWriter::DescriptorSetWriter(VkDescriptorSet targetSet)
+		: m_target(targetSet)
+	{
+	}
+
+	void DescriptorSetWriter::FlushWrites()
+	{
+		R3_PROF_EVENT();
+		if (m_writes.size() > 0)
+		{
+			auto render = Systems::GetSystem<RenderSystem>();
+			vkUpdateDescriptorSets(render->GetDevice()->GetVkDevice(), (uint32_t)m_writes.size(), m_writes.data(), 0, nullptr);
+		}
+	}
+
+	void DescriptorSetWriter::WriteUniformBuffer(uint32_t binding, VkBuffer buffer, uint64_t bufferOffset, uint64_t bufferSize)
+	{
+		VkDescriptorBufferInfo bufferInfo = {};
+		bufferInfo.buffer = buffer;
+		bufferInfo.offset = bufferOffset;
+		bufferInfo.range = bufferSize == 0 ? VK_WHOLE_SIZE : bufferSize;
+		m_bufferInfos.push_back(bufferInfo);
+
+		VkWriteDescriptorSet writeTextures = {};
+		writeTextures.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		writeTextures.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		writeTextures.descriptorCount = 1;
+		writeTextures.dstArrayElement = 0;
+		writeTextures.dstBinding = binding;
+		writeTextures.dstSet = m_target;
+		writeTextures.pBufferInfo = &m_bufferInfos[m_bufferInfos.size()-1];
+		m_writes.push_back(writeTextures);
+	}
+
+	void DescriptorSetWriter::WriteImage(uint32_t binding, uint32_t arrayIndex, VkImageView view, VkSampler sampler, VkImageLayout layout)
+	{
+		VkDescriptorImageInfo newImgInfo = {};
+		newImgInfo.imageLayout = layout;
+		newImgInfo.imageView = view;	
+		newImgInfo.sampler = sampler;
+		m_imgInfos.push_back(newImgInfo);
+
+		VkWriteDescriptorSet writeTextures = {};
+		writeTextures.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		writeTextures.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		writeTextures.descriptorCount = 1;
+		writeTextures.dstArrayElement = arrayIndex;
+		writeTextures.dstBinding = binding;
+		writeTextures.dstSet = m_target;
+		writeTextures.pImageInfo = &m_imgInfos[m_imgInfos.size() - 1];
+		m_writes.push_back(writeTextures);
+	}
+
 	void DescriptorLayoutBuilder::AddBinding(uint32_t binding, uint32_t count, VkDescriptorType type, VkShaderStageFlags stageFlags)
 	{
 		VkDescriptorSetLayoutBinding b = {};

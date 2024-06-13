@@ -8,6 +8,7 @@
 namespace R3
 {
 	class Device;
+	class DescriptorSetSimpleAllocator;
 	class StaticMeshSimpleRenderer : public System
 	{
 	public:
@@ -24,8 +25,12 @@ namespace R3
 		void MainPassBegin(Device&, VkCommandBuffer);
 		void MainPassDraw(Device&, VkCommandBuffer, const VkExtent2D&);
 		bool CreatePipelineData(Device&);
+		bool CreateGlobalDescriptorSet();
 		void ProcessEnvironmentSettings(GlobalConstants&);
 		
+		std::unique_ptr<DescriptorSetSimpleAllocator> m_descriptorAllocator;
+		VkDescriptorSetLayout_T* m_globalsDescriptorLayout = nullptr;
+		VkDescriptorSet_T* m_globalDescriptorSet = nullptr;		// sent to binding 0
 		WriteOnlyGpuArray<GlobalConstants> m_globalConstantsBuffer;
 		const int c_maxGlobalConstantBuffers = 3;	// ring buffer writes to avoid synchronisation
 		int m_currentGlobalConstantsBuffer = 0;

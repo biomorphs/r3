@@ -14,9 +14,16 @@
 #include "render/render_system.h"
 #include "render/device.h"
 #include "render/pipeline_builder.h"
+#include "render/descriptors.h"
 #include "core/profiler.h"
 #include "core/log.h"
 #include <imgui.h>
+
+// Todo 
+// global constants in descriptor set
+// instance material/transform in buffer added to same descriptor set 
+//	use firstInstanceOffset in draw to ref instance in shader?
+// draw indirect
 
 namespace R3
 {
@@ -39,9 +46,8 @@ namespace R3
 	struct PushConstants 
 	{
 		glm::mat4 m_instanceTransform;
-		VkDeviceAddress m_globalConstantsAddress;
-		uint32_t m_globalIndex;
 		uint32_t m_materialIndex;
+		uint32_t m_globalConstantIndex;
 	};
 
 	StaticMeshSimpleRenderer::StaticMeshSimpleRenderer()
@@ -85,6 +91,8 @@ namespace R3
 		vkDestroyPipeline(d.GetVkDevice(), m_simpleTriPipeline, nullptr);
 		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayout, nullptr);
 		m_globalConstantsBuffer.Destroy(d);
+		m_descriptorAllocator = {};
+		vkDestroyDescriptorSetLayout(d.GetVkDevice(), m_globalsDescriptorLayout, nullptr);
 	}
 
 	bool StaticMeshSimpleRenderer::ShowGui()
@@ -119,9 +127,9 @@ namespace R3
 		pipelineLayoutInfo.pushConstantRangeCount = 1;
 		pipelineLayoutInfo.pPushConstantRanges = &constantRange;
 
-		VkDescriptorSetLayout setLayouts{ textures->GetDescriptorsLayout()  };
-		pipelineLayoutInfo.pSetLayouts = &setLayouts;
-		pipelineLayoutInfo.setLayoutCount = 1;
+		VkDescriptorSetLayout setLayouts[] = { m_globalsDescriptorLayout, textures->GetDescriptorsLayout() };
+		pipelineLayoutInfo.pSetLayouts = setLayouts;
+		pipelineLayoutInfo.setLayoutCount = 2;
 		if (!VulkanHelpers::CheckResult(vkCreatePipelineLayout(d.GetVkDevice(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout)))
 		{
 			LogError("Failed to create pipeline layout");
@@ -183,6 +191,40 @@ namespace R3
 
 		vkDestroyShaderModule(d.GetVkDevice(), vertexShader, nullptr);
 		vkDestroyShaderModule(d.GetVkDevice(), fragShader, nullptr);
+
+		return true;
+	}
+
+	bool StaticMeshSimpleRenderer::CreateGlobalDescriptorSet()
+	{
+		R3_PROF_EVENT();
+		auto render = GetSystem<RenderSystem>();
+		DescriptorLayoutBuilder layoutBuilder;
+		layoutBuilder.AddBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);		// uniform buffer for global constants
+		// layoutBuilder.AddBinding(1, 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);		// storage buffer for instance data
+		m_globalsDescriptorLayout = layoutBuilder.Create(*render->GetDevice(), false);	// dont need bindless here
+		if (m_globalsDescriptorLayout == nullptr)
+		{
+			LogError("Failed to create global descriptor set layout");
+			return false;
+		}
+
+		m_descriptorAllocator = std::make_unique<DescriptorSetSimpleAllocator>();
+		std::vector<VkDescriptorPoolSize> poolSizes = {
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1 }
+		};
+		if (!m_descriptorAllocator->Initialise(*render->GetDevice(), 1, poolSizes))
+		{
+			LogError("Failed to create descriptor allocator");
+			return false;
+		}
+
+		// Create the global set and write it now, it will never be updated again
+		m_globalDescriptorSet = m_descriptorAllocator->Allocate(*render->GetDevice(), m_globalsDescriptorLayout);
+		DescriptorSetWriter writer(m_globalDescriptorSet);
+		writer.WriteUniformBuffer(0, m_globalConstantsBuffer.GetBuffer());
+		writer.FlushWrites();
 
 		return true;
 	}
@@ -255,15 +297,15 @@ namespace R3
 		vkCmdSetViewport(m_thisFrameCmdBuffer.m_cmdBuffer, 0, 1, &viewport);
 		vkCmdSetScissor(m_thisFrameCmdBuffer.m_cmdBuffer, 0, 1, &scissor);
 		vkCmdBindIndexBuffer(m_thisFrameCmdBuffer.m_cmdBuffer, staticMeshes->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+		vkCmdBindDescriptorSets(m_thisFrameCmdBuffer.m_cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_globalDescriptorSet, 0, nullptr);
 		auto textures = GetSystem<TextureSystem>();
 		VkDescriptorSet allTextures = textures->GetAllTexturesSet();
 		if (allTextures != VK_NULL_HANDLE)
 		{
-			vkCmdBindDescriptorSets(m_thisFrameCmdBuffer.m_cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, 0);
+			vkCmdBindDescriptorSets(m_thisFrameCmdBuffer.m_cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 1, 1, &allTextures, 0, nullptr);
 		}
 		PushConstants pc;
-		pc.m_globalConstantsAddress = m_globalConstantsBuffer.GetDataDeviceAddress();
-		pc.m_globalIndex = m_currentGlobalConstantsBuffer++;
+		pc.m_globalConstantIndex = m_currentGlobalConstantsBuffer++;
 		if (m_currentGlobalConstantsBuffer >= c_maxGlobalConstantBuffers)
 		{
 			m_currentGlobalConstantsBuffer = 0;
@@ -316,13 +358,9 @@ namespace R3
 	void StaticMeshSimpleRenderer::MainPassBegin(Device& d, VkCommandBuffer cmds)
 	{
 		R3_PROF_EVENT();
-		if (m_pipelineLayout == VK_NULL_HANDLE || m_simpleTriPipeline == VK_NULL_HANDLE)
-		{
-			CreatePipelineData(d);
-		}
 		if (!m_globalConstantsBuffer.IsCreated())
 		{
-			if (!m_globalConstantsBuffer.Create(d, c_maxGlobalConstantBuffers, c_maxGlobalConstantBuffers * 2, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+			if (!m_globalConstantsBuffer.Create(d, c_maxGlobalConstantBuffers, c_maxGlobalConstantBuffers, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT))
 			{
 				LogError("Failed to create constant buffer");
 			}
@@ -331,24 +369,32 @@ namespace R3
 				m_globalConstantsBuffer.Allocate(c_maxGlobalConstantBuffers);	// reserve the memory now, allows writes to any entry
 			}
 		}
-		else
+		if (m_globalDescriptorSet == VK_NULL_HANDLE)
 		{
-			// write + flush the global constants each frame
-			auto cameras = GetSystem<CameraSystem>();
-			auto staticMeshes = GetSystem<StaticMeshSystem>();
-			auto lights = GetSystem<LightsSystem>();
-			GlobalConstants globals;
-			globals.m_cameraWorldSpacePos = glm::vec4(cameras->GetMainCamera().Position(), 1);
-			globals.m_projViewTransform = cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix();
-			globals.m_vertexBufferAddress = staticMeshes->GetVertexDataDeviceAddress();
-			globals.m_materialBufferAddress = staticMeshes->GetMaterialsDeviceAddress();
-			globals.m_pointLightsBufferAddress = lights->GetPointlightsDeviceAddress();
-			globals.m_firstPointLightOffset = lights->GetFirstPointlightOffset();
-			globals.m_pointlightCount = lights->GetTotalPointlightsThisFrame();
-			ProcessEnvironmentSettings(globals);
-			m_globalConstantsBuffer.Write(m_currentGlobalConstantsBuffer, 1, &globals);
-			m_globalConstantsBuffer.Flush(d, cmds);
+			if (!CreateGlobalDescriptorSet())
+			{
+				LogError("Failed to create global descriptor set");
+			}
 		}
+		if (m_pipelineLayout == VK_NULL_HANDLE || m_simpleTriPipeline == VK_NULL_HANDLE)
+		{
+			CreatePipelineData(d);
+		}
+		// write + flush the global constants each frame
+		auto cameras = GetSystem<CameraSystem>();
+		auto staticMeshes = GetSystem<StaticMeshSystem>();
+		auto lights = GetSystem<LightsSystem>();
+		GlobalConstants globals;
+		globals.m_cameraWorldSpacePos = glm::vec4(cameras->GetMainCamera().Position(), 1);
+		globals.m_projViewTransform = cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix();
+		globals.m_vertexBufferAddress = staticMeshes->GetVertexDataDeviceAddress();
+		globals.m_materialBufferAddress = staticMeshes->GetMaterialsDeviceAddress();
+		globals.m_pointLightsBufferAddress = lights->GetPointlightsDeviceAddress();
+		globals.m_firstPointLightOffset = lights->GetFirstPointlightOffset();
+		globals.m_pointlightCount = lights->GetTotalPointlightsThisFrame();
+		ProcessEnvironmentSettings(globals);
+		m_globalConstantsBuffer.Write(m_currentGlobalConstantsBuffer, 1, &globals);
+		m_globalConstantsBuffer.Flush(d, cmds);
 	}
 
 	void StaticMeshSimpleRenderer::MainPassDraw(Device& d, VkCommandBuffer cmds, const VkExtent2D& e)

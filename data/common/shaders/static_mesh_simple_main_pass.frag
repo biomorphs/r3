@@ -1,6 +1,5 @@
 #version 450
 #extension GL_EXT_buffer_reference : require
-//#extension GL_EXT_nonuniform_qualifier : enable
 
 #include "static_mesh_simple_shared.h"
 #include "pbr.h"
@@ -13,7 +12,7 @@ layout(location = 3) in mat3 inTBN;
 layout(location = 0) out vec4 outColour;
 
 void main() {
-	GlobalConstants globals = PushConstants.m_globals.m_allGlobals[PushConstants.m_globalIndex];
+	GlobalConstants globals = AllGlobals[PushConstants.m_globalIndex];
 	vec3 worldPos = inWorldSpacePos;
 	vec3 normal = normalize(inWorldspaceNormal);
 	vec3 viewDir = normalize(globals.m_cameraWorldSpacePos.xyz - worldPos);

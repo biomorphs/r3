@@ -47,7 +47,7 @@ namespace R3
 
 		bool LoadTextureInternal(std::string_view path, bool generateMips, TextureHandle targetHandle);
 		void GenerateMipsFromTopMip(Device& d, VkCommandBuffer_T* cmdBuffer, LoadedTexture& t);
-		bool WriteAllTextureDescriptors(VkCommandBuffer_T* buf);
+		void WriteAllTextureDescriptors(VkCommandBuffer_T* buf);
 		TextureHandle FindExistingMatchingName(std::string name);	// locks the mutex
 		void Shutdown(Device& d);
 		bool ProcessLoadedTextures(Device& d, VkCommandBuffer_T* cmdBuffer);

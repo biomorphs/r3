@@ -144,44 +144,25 @@ namespace R3
 		return nullptr;
 	}
 
-	bool TextureSystem::WriteAllTextureDescriptors(VkCommandBuffer_T* buf)
+	void TextureSystem::WriteAllTextureDescriptors(VkCommandBuffer_T* buf)
 	{
 		R3_PROF_EVENT();
 		if (m_textures.size() == 0 || m_allTexturesSet == nullptr)
 		{
-			return false;
+			return;
 		}
 		VkImageView defaultTexture = m_textures[0].m_imageView;
-		if (defaultTexture == 0)
+		if (defaultTexture == 0)	// we want at least 1 valid texture loaded
 		{
-			return false;	// tmp, can't risk not setting a image view
+			return;
 		}
-		std::vector<VkDescriptorImageInfo> imageInfos(m_textures.size());
-		std::vector< VkWriteDescriptorSet> writes(m_textures.size());
+		DescriptorSetWriter writer(m_allTexturesSet);
 		for (int i = 0; i < m_textures.size(); ++i)
 		{
-			VkDescriptorImageInfo newImgInfo = {};
-			newImgInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			newImgInfo.imageView = m_textures[i].m_imageView ? m_textures[i].m_imageView : defaultTexture;	// todo, proper bindless makes this go away
-			newImgInfo.sampler = m_defaultSampler;	// todo, want to separate samplers from textures...
-			imageInfos[i] = newImgInfo;
-
-			VkWriteDescriptorSet writeTextures = {};
-			writeTextures.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			writeTextures.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			writeTextures.descriptorCount = 1;
-			writeTextures.dstArrayElement = i;
-			writeTextures.dstBinding = 0;
-			writeTextures.dstSet = m_allTexturesSet;
-			writeTextures.pImageInfo = &imageInfos[i];
-			writes[i] = writeTextures;
+			auto imgView = m_textures[i].m_imageView ? m_textures[i].m_imageView : defaultTexture;
+			writer.WriteImage(0, i, imgView, m_defaultSampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		}
-		if (writes.size() > 0)
-		{
-			auto render = GetSystem<RenderSystem>();
-			vkUpdateDescriptorSets(render->GetDevice()->GetVkDevice(), (uint32_t)writes.size(), writes.data(), 0, nullptr);
-		}
-		return writes.size() > 0;
+		writer.FlushWrites();
 	}
 
 	VkDescriptorSetLayout_T* TextureSystem::GetDescriptorsLayout()

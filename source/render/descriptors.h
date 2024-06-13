@@ -1,6 +1,7 @@
 #pragma once
 #include <vulkan/vulkan.h>
 #include <vector>
+#include <deque>
 
 namespace R3
 {
@@ -41,5 +42,21 @@ namespace R3
 		};
 		std::vector<ReleasedSet> m_releasedSets;
 		const uint64_t c_framesBeforeRelease = 5;
+	};
+
+	// Use this to write to descriptor sets
+	class DescriptorSetWriter
+	{
+	public:
+		DescriptorSetWriter(VkDescriptorSet targetSet);
+		void WriteImage(uint32_t binding, uint32_t arrayIndex, VkImageView view, VkSampler sampler, VkImageLayout layout);
+		void WriteUniformBuffer(uint32_t binding, VkBuffer buffer, uint64_t bufferOffset = 0, uint64_t bufferSize = 0);
+		void FlushWrites();
+
+	private:
+		std::deque<VkDescriptorImageInfo> m_imgInfos;	// deque so ptrs are not invalidated when the container grows
+		std::deque<VkDescriptorBufferInfo> m_bufferInfos;
+		std::vector<VkWriteDescriptorSet> m_writes;		// all writes to push
+		VkDescriptorSet m_target;
 	};
 }
