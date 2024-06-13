@@ -21,7 +21,7 @@ namespace R3
 		bool Create(Device& d, uint64_t dataMaxSize, uint64_t stagingMaxSize, VkBufferUsageFlags usageFlags);	// allocates memory, needs the device
 		uint64_t Allocate(uint64_t sizeBytes);									// allocate from internal data
 		bool Write(uint64_t writeStartOffset, uint64_t sizeBytes, const void* data);	// writes to staging buffer + schedules copy
-		void Flush(Device& d, VkCommandBuffer cmds);							// schedules all copies from staging->alldata, issues pipeline barrier
+		void Flush(Device& d, VkCommandBuffer cmds, VkPipelineStageFlags barrierDst = VK_PIPELINE_STAGE_VERTEX_INPUT_BIT);	// schedules all copies from staging->alldata, issues pipeline barrier
 		bool IsCreated();
 		void Destroy(Device& d);
 		uint64_t GetSize();
@@ -66,9 +66,9 @@ namespace R3
 		{
 			return m_buffer.Write(startIndex * sizeof(Type), count * sizeof(Type), data);
 		}
-		void Flush(Device& d, VkCommandBuffer cmds)
+		void Flush(Device& d, VkCommandBuffer cmds, VkPipelineStageFlags barrierDst = VK_PIPELINE_STAGE_VERTEX_INPUT_BIT)
 		{
-			return m_buffer.Flush(d, cmds);
+			return m_buffer.Flush(d, cmds, barrierDst);
 		}
 		bool IsCreated()
 		{

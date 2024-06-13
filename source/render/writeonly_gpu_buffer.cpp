@@ -75,7 +75,7 @@ namespace R3
 		return false;
 	}
 
-	void WriteOnlyGpuBuffer::Flush(Device& d, VkCommandBuffer cmds)
+	void WriteOnlyGpuBuffer::Flush(Device& d, VkCommandBuffer cmds, VkPipelineStageFlags barrierDst)
 	{
 		R3_PROF_EVENT();
 		ScheduledWrite writeToFlush;
@@ -99,7 +99,7 @@ namespace R3
 			writeBarrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
 			vkCmdPipelineBarrier(cmds,
 				VK_PIPELINE_STAGE_TRANSFER_BIT,		// src stage = transfer
-				VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,	// dst stage = vertex shader input
+				barrierDst,							// dst stage = vertex shader input by default
 				0,									// dependency flags
 				1,
 				&writeBarrier,

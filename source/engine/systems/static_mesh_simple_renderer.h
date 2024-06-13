@@ -41,7 +41,8 @@ namespace R3
 		WriteOnlyGpuArray<StaticMeshInstanceGpu> m_globalInstancesBuffer;	// contains arrays
 		const uint32_t c_maxInstances = 1024 * 128;
 		const uint32_t c_maxInstanceBuffers = 3;
-		uint32_t m_currentInstanceBufferStart = 0;	// index into m_globalInstancesBuffer
+		WriteOnlyGpuArray<VkDrawIndexedIndirectCommand> m_drawIndirectBuffer;	// contains c_maxInstances * c_maxInstanceBuffers same as instances
+		uint32_t m_currentInstanceBufferStart = 0;	// index into m_globalInstancesBuffer and m_drawIndirectBuffer
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_simpleTriPipeline = VK_NULL_HANDLE;
 		ManagedCommandBuffer m_thisFrameCmdBuffer;

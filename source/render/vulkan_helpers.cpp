@@ -619,6 +619,7 @@ namespace R3
 
 			// Which device features do we use
 			VkPhysicalDeviceFeatures requiredFeatures{};
+			requiredFeatures.multiDrawIndirect = true;
 
 			// Create the device
 			VkDeviceCreateInfo deviceCreate = { 0 };

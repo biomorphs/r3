@@ -20,9 +20,9 @@
 #include <imgui.h>
 
 // Todo 
-// instance material/transform in buffer added to global descriptor set 
-//	use firstInstanceOffset in draw to ref instance in shader?
 // draw indirect
+
+
 
 namespace R3
 {
@@ -89,6 +89,7 @@ namespace R3
 		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayout, nullptr);
 		m_globalConstantsBuffer.Destroy(d);
 		m_globalInstancesBuffer.Destroy(d);
+		m_drawIndirectBuffer.Destroy(d);
 		m_descriptorAllocator = {};
 		vkDestroyDescriptorSetLayout(d.GetVkDevice(), m_globalsDescriptorLayout, nullptr);
 	}
@@ -314,12 +315,17 @@ namespace R3
 		StaticMeshGpuData currentMeshData;
 		ModelDataHandle currentMeshDataHandle;
 		StaticMeshPart partData;
-		uint32_t instanceOffset = m_currentInstanceBufferStart;
+		uint32_t firstInstanceOffset = m_currentInstanceBufferStart;
 		m_currentInstanceBufferStart += c_maxInstances;
 		if (m_currentInstanceBufferStart >= (c_maxInstances * c_maxInstanceBuffers))
 		{
 			m_currentInstanceBufferStart = 0;
 		}
+		std::vector<StaticMeshInstanceGpu> gpuInstanceData;	// so we can do 1 big write to gpu memory
+		std::vector<VkDrawIndexedIndirectCommand> drawCalls;	// ^^
+		gpuInstanceData.reserve(1024);
+		drawCalls.reserve(1024);
+		uint32_t thisInstanceOffset = firstInstanceOffset;
 		auto forEach = [&](const Entities::EntityHandle& e, StaticMeshComponent& s, TransformComponent& t)
 		{
 			if (s.m_modelHandle.m_index != -1 && s.m_modelHandle.m_index != currentMeshDataHandle.m_index)
@@ -347,15 +353,27 @@ namespace R3
 						StaticMeshInstanceGpu gpuData;
 						gpuData.m_materialIndex = useOverrides ? ((uint32_t)matCmp->m_gpuDataIndex + relativePartMatIndex) : partData.m_materialIndex;
 						gpuData.m_transform = compTransform * partData.m_transform;
-						m_globalInstancesBuffer.Write(instanceOffset, 1, &gpuData);
-						vkCmdDrawIndexed(m_thisFrameCmdBuffer.m_cmdBuffer, partData.m_indexCount, 1, (uint32_t)partData.m_indexStartOffset, (uint32_t)currentMeshData.m_vertexDataOffset, instanceOffset);
-						++instanceOffset;
+						gpuInstanceData.push_back(gpuData);
+						VkDrawIndexedIndirectCommand drawData;
+						drawData.indexCount = partData.m_indexCount;
+						drawData.instanceCount = 1;
+						drawData.firstIndex = (uint32_t)partData.m_indexStartOffset;
+						drawData.vertexOffset = (uint32_t)currentMeshData.m_vertexDataOffset;
+						drawData.firstInstance = thisInstanceOffset;
+						drawCalls.push_back(drawData);
+						//vkCmdDrawIndexed(m_thisFrameCmdBuffer.m_cmdBuffer, partData.m_indexCount, 1, (uint32_t)partData.m_indexStartOffset, (uint32_t)currentMeshData.m_vertexDataOffset, thisInstanceOffset);
+						thisInstanceOffset++;
 					}
 				}
 			}
 			return true;
 		};
 		Entities::Queries::ForEach<StaticMeshComponent, TransformComponent>(activeWorld, forEach);
+		m_globalInstancesBuffer.Write(firstInstanceOffset, (uint32_t)gpuInstanceData.size(), gpuInstanceData.data());
+		m_drawIndirectBuffer.Write(firstInstanceOffset, (uint32_t)drawCalls.size(), drawCalls.data());
+
+		size_t drawOffsetBytes = firstInstanceOffset * sizeof(VkDrawIndexedIndirectCommand);
+		vkCmdDrawIndexedIndirect(m_thisFrameCmdBuffer.m_cmdBuffer, m_drawIndirectBuffer.GetBuffer(), drawOffsetBytes, (uint32_t)drawCalls.size(), sizeof(VkDrawIndexedIndirectCommand));
 
 		if (!VulkanHelpers::CheckResult(vkEndCommandBuffer(m_thisFrameCmdBuffer.m_cmdBuffer)))
 		{
@@ -378,6 +396,17 @@ namespace R3
 			else
 			{
 				m_globalConstantsBuffer.Allocate(c_maxGlobalConstantBuffers);	// reserve the memory now, allows writes to any entry
+			}
+		}
+		if (!m_drawIndirectBuffer.IsCreated())
+		{
+			if (!m_drawIndirectBuffer.Create(d, c_maxInstances * c_maxInstanceBuffers, c_maxInstances, VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+			{
+				LogError("Failed to create draw indirect buffer");
+			}
+			else
+			{
+				m_drawIndirectBuffer.Allocate(c_maxInstances * c_maxInstanceBuffers);	// reserve the memory now, allows writes to any entry
 			}
 		}
 		if (!m_globalInstancesBuffer.IsCreated())
@@ -420,6 +449,7 @@ namespace R3
 
 		// flush the instance data before drawing 
 		m_globalInstancesBuffer.Flush(d, cmds);
+		m_drawIndirectBuffer.Flush(d, cmds, VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT);
 	}
 
 	void StaticMeshSimpleRenderer::MainPassDraw(Device& d, VkCommandBuffer cmds, const VkExtent2D& e)
