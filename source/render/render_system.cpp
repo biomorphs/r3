@@ -19,6 +19,7 @@
 #include "vulkan_helpers.h"
 #include "buffer_pool.h"
 #include "pipeline_builder.h"
+#include "command_buffer_allocator.h"
 #include <vulkan/vulkan.h>
 #include <vulkan/vk_enum_string_helper.h>
 #include <vk_mem_alloc.h>
@@ -37,8 +38,6 @@ namespace R3
 
 	struct FrameData
 	{
-		VkCommandPool m_graphicsCommandPool = VK_NULL_HANDLE;	// allocates graphics queue command buffers
-		VkCommandBuffer m_graphicsCmdBuffer = VK_NULL_HANDLE;	// graphics queue cmds
 		VkSemaphore m_imageAvailableSemaphore = VK_NULL_HANDLE;	// signalled when new swap chain image available
 		VkSemaphore m_renderFinishedSemaphore = VK_NULL_HANDLE;	// signalled when m_graphicsCmdBuffer has been fully submitted to a queue
 		VkFence m_inFlightFence = VK_NULL_HANDLE;				// signalled when previous cmd buffer finished executing (initialised as signalled)
@@ -84,6 +83,10 @@ namespace R3
 		m_mainDeleters.PushDeleter([this]() {
 			m_stagingBuffers = nullptr;
 		});
+		m_cmdBufferAllocator = std::make_unique<CommandBufferAllocator>();
+		m_mainDeleters.PushDeleter([this]() {
+			m_cmdBufferAllocator = nullptr;
+		});
 	}
 
 	RenderSystem::~RenderSystem()
@@ -91,18 +94,16 @@ namespace R3
 		m_vk = nullptr;
 	}
 
-	void RenderSystem::DrawImgui(int swapImageIndex)
+	void RenderSystem::DrawImgui(VkImageView_T* targetView, VkCommandBuffer_T* cmdBuffer)
 	{
 		R3_PROF_EVENT();
-
-		auto& cmdBuffer = m_vk->ThisFrameData().m_graphicsCmdBuffer;
 
 		// rendering to swap chain directly
 		VkRenderingAttachmentInfo colourAttachment = { 0 };
 		colourAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
 		colourAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 		colourAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		colourAttachment.imageView = m_swapChain->GetViews()[swapImageIndex];
+		colourAttachment.imageView = targetView;
 		colourAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		VkRenderingInfo ri = { 0 };
@@ -119,10 +120,9 @@ namespace R3
 		vkCmdEndRendering(cmdBuffer);
 	}
 
-	void RenderSystem::RecordMainPass(int swapImageIndex)
+	void RenderSystem::RecordMainPass(VkCommandBuffer_T* cmdBuffer)
 	{
 		R3_PROF_EVENT();
-		auto& cmdBuffer = m_vk->ThisFrameData().m_graphicsCmdBuffer;
 
 		m_onMainPassBegin.Run(*m_device, cmdBuffer);
 
@@ -183,11 +183,9 @@ namespace R3
 		m_imRenderer->Flush();
 	}
 
-	bool RenderSystem::RecordCommandBuffer(int swapImageIndex)
+	bool RenderSystem::RecordCommandBuffer(VkImage_T* swapImage, VkImageView_T* swapImageView, VkCommandBuffer_T* cmdBuffer)
 	{
 		R3_PROF_EVENT();
-
-		auto& cmdBuffer = m_vk->ThisFrameData().m_graphicsCmdBuffer;
 
 		// start writing
 		VkCommandBufferBeginInfo beginInfo = { 0 };
@@ -197,8 +195,6 @@ namespace R3
 			LogError("failed to begin recording command buffer!");
 			return false;
 		}
-
-		auto& swapImage = m_swapChain->GetImages()[swapImageIndex];
 
 		// Transition swap chain image, backbuffer and depth image to format optimal for drawing 
 		{
@@ -228,7 +224,7 @@ namespace R3
 			vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, dstStages, 0, 0, nullptr, 0, nullptr, 3, barriers);
 		}
 
-		RecordMainPass(swapImageIndex);
+		RecordMainPass(cmdBuffer);
 		
 		// Need to transfer backbuffer to VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
 		// Swap chain is already VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
@@ -249,13 +245,13 @@ namespace R3
 		// Copy back buffer contents to swap chain image
 		VulkanHelpers::BlitColourImageToImage(cmdBuffer,
 			m_vk->m_backBufferImage.m_image, m_swapChain->GetExtents(),
-			m_swapChain->GetImages()[swapImageIndex], m_swapChain->GetExtents());
+			swapImage, m_swapChain->GetExtents());
 
 		// Draw imgui directly to swap chain
-		DrawImgui(swapImageIndex);
+		DrawImgui(swapImageView, cmdBuffer);
 
 		// Transition swap chain image to format optimal for present
-		auto colourBarrier = VulkanHelpers::MakeImageBarrier(m_swapChain->GetImages()[swapImageIndex],
+		auto colourBarrier = VulkanHelpers::MakeImageBarrier(swapImage,
 			VK_IMAGE_ASPECT_COLOR_BIT,
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,		// src mask = wait before writing attachment
 			VK_ACCESS_NONE,								// dst mask = we dont care?
@@ -296,6 +292,11 @@ namespace R3
 	BufferPool* RenderSystem::GetStagingBufferPool()
 	{
 		return m_stagingBuffers.get();
+	}
+
+	CommandBufferAllocator* RenderSystem::GetCommandBufferAllocator()
+	{
+		return m_cmdBufferAllocator.get();
 	}
 
 	void RenderSystem::RegisterTickFns()
@@ -442,23 +443,23 @@ namespace R3
 			ImGui::Render();
 		}
 		
-		auto& fd = m_vk->ThisFrameData();
+		auto graphicsCmds = m_cmdBufferAllocator->CreateCommandBuffer(*m_device, true);
+		if (!graphicsCmds)
 		{
-			// reset + record the cmd buffer
-			// (its safe since we waited on the inflight fence earlier in AcquireSwapImage)
-			R3_PROF_EVENT("Reset/Record cmd buffer");
-			CheckResult(vkResetCommandBuffer(fd.m_graphicsCmdBuffer, 0));
-			RecordCommandBuffer(m_currentSwapImage);
+			LogError("Failed to create cmd buffer!");
+			return false;
 		}
+		RecordCommandBuffer(m_swapChain->GetImages()[m_currentSwapImage], m_swapChain->GetViews()[m_currentSwapImage], graphicsCmds->m_cmdBuffer );
 
 		// submit the cmd buffer to the graphics queue
 		VkSubmitInfo submitInfo{};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.pCommandBuffers = &fd.m_graphicsCmdBuffer;	// which buffer to submit
+		submitInfo.pCommandBuffers = &graphicsCmds->m_cmdBuffer;	// which buffer to submit
 		submitInfo.commandBufferCount = 1;
 
 		// we describe which sync objects to wait on before execution can begin
 		// and at which stage in the pipeline we should wait for them
+		auto& fd = m_vk->ThisFrameData();
 		VkSemaphore waitSemaphores[] = { fd.m_imageAvailableSemaphore };	// wait on the newly aquired image to be available 
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };	// wait before we try to write to its colour attachments
 		submitInfo.waitSemaphoreCount = 1;
@@ -479,6 +480,9 @@ namespace R3
 				return false;
 			}
 		}
+
+		// release the command buffer back to the pool
+		m_cmdBufferAllocator->Release(*graphicsCmds);
 
 		// present!
 		// this will put the image we just rendered into the visible window.
@@ -576,18 +580,6 @@ namespace R3
 		if (!CreateBackBuffer())
 		{
 			LogError("Failed to create back buffer");
-			return false;
-		}
-
-		if (!CreateCommandPools())
-		{
-			LogError("Failed to create command pools");
-			return false;
-		}
-
-		if (!CreateCommandBuffers())
-		{
-			LogError("Failed to create command buffers");
 			return false;
 		}
 
@@ -713,7 +705,7 @@ namespace R3
 
 		// upload the imgui font textures via immediate graphics cmd
 		VulkanHelpers::RunCommandsImmediate(m_device->GetVkDevice(), m_device->GetGraphicsQueue(), 
-			m_vk->ThisFrameData().m_graphicsCommandPool, m_vk->m_immediateSubmitFence, [&](VkCommandBuffer cmd) {
+			m_cmdBufferAllocator->GetPool(*m_device), m_vk->m_immediateSubmitFence, [&](VkCommandBuffer cmd) {
 			ImGui_ImplVulkan_CreateFontsTexture(cmd);
 		});
 		ImGui_ImplVulkan_DestroyFontUploadObjects();	// destroy the font data once it is uploaded
@@ -799,56 +791,6 @@ namespace R3
 			vkDestroyFence(m_device->GetVkDevice(), m_vk->m_immediateSubmitFence, nullptr);
 		});
 		
-		return true;
-	}
-
-	bool RenderSystem::CreateCommandBuffers()
-	{
-		R3_PROF_EVENT();
-
-		// per-frame cmd buffers
-		for (int f = 0; f < c_maxFramesInFlight; ++f)
-		{
-			VkCommandBufferAllocateInfo allocInfo = {};
-			allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-			allocInfo.commandPool = m_vk->m_perFrameData[f].m_graphicsCommandPool;	// allocate from this frame's pool
-			allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;		// primary = can be submitted to queue, can't be called from other buffers
-																	// secondary = can't be directly submitted, can be called from other primary buffers
-			allocInfo.commandBufferCount = 1;
-			if (!CheckResult(vkAllocateCommandBuffers(m_device->GetVkDevice(), &allocInfo, &m_vk->m_perFrameData[f].m_graphicsCmdBuffer)))
-			{
-				LogError("failed to allocate command buffer!");
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	bool RenderSystem::CreateCommandPools()
-	{
-		R3_PROF_EVENT();
-		// find a graphics queue
-		auto queueFamilyIndices = FindQueueFamilyIndices(m_device->GetPhysicalDevice(), m_device->GetMainSurface());
-		VkCommandPoolCreateInfo poolInfo = {};
-		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-		poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;	// - allow individual buffers to be re-recorded
-																			// // VK_COMMAND_POOL_CREATE_TRANSIENT_BIT - hint that buffers are re-recorded often
-		poolInfo.queueFamilyIndex = queueFamilyIndices.m_graphicsIndex;		// graphics queue pls
-
-		for (int frame = 0; frame < c_maxFramesInFlight; ++frame)
-		{
-			if (!CheckResult(vkCreateCommandPool(m_device->GetVkDevice(), &poolInfo, nullptr, &m_vk->m_perFrameData[frame].m_graphicsCommandPool)))
-			{
-				LogError("failed to create command pool!");
-				return false;
-			}
-			m_mainDeleters.PushDeleter([&, frame]() {
-				// cmd buffers do not need to be destroyed, removing the pool is enough
-				vkDestroyCommandPool(m_device->GetVkDevice(), m_vk->m_perFrameData[frame].m_graphicsCommandPool, nullptr);
-			});
-		}
-
 		return true;
 	}
 

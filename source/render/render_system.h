@@ -5,6 +5,8 @@
 #include "deletion_queue.h"
 
 struct VkCommandBuffer_T;
+struct VkImageView_T;
+struct VkImage_T;
 struct VkExtent2D;
 enum VkFormat;
 namespace R3
@@ -14,6 +16,7 @@ namespace R3
 	class Swapchain;
 	class ImmediateRenderer;
 	class BufferPool;
+	class CommandBufferAllocator;
 	class RenderSystem : public System
 	{
 	public:
@@ -29,6 +32,7 @@ namespace R3
 		VkFormat GetMainDepthStencilFormat();
 		Device* GetDevice();
 		BufferPool* GetStagingBufferPool();
+		CommandBufferAllocator* GetCommandBufferAllocator();
 
 		// Called from imgui system
 		bool InitImGui();
@@ -48,17 +52,15 @@ namespace R3
 
 	private:
 		bool AcquireSwapImage();
-		void RecordMainPass(int swapImageIndex);
-		void DrawImgui(int swapImageIndex);
+		void RecordMainPass(VkCommandBuffer_T* cmdBuffer);
+		void DrawImgui(VkImageView_T* targetView, VkCommandBuffer_T* cmdBuffer);
+		bool RecordCommandBuffer(VkImage_T* swapImage, VkImageView_T* swapImageView, VkCommandBuffer_T* cmdBuffer);
 		void ProcessEnvironmentSettings();
 		bool ShowGui();
 		bool DrawFrame();
 		bool CreateWindow();
 		bool CreateDepthBuffer();
 		bool CreateBackBuffer();
-		bool CreateCommandPools();
-		bool CreateCommandBuffers();
-		bool RecordCommandBuffer(int swapImageIndex);
 		bool CreateSyncObjects();
 		bool RecreateSwapchain();
 		bool PrepareSwapchain();
@@ -73,6 +75,7 @@ namespace R3
 		std::unique_ptr<Swapchain> m_swapChain;
 		std::unique_ptr<ImmediateRenderer> m_imRenderer;
 		std::unique_ptr<BufferPool> m_stagingBuffers;
+		std::unique_ptr<CommandBufferAllocator> m_cmdBufferAllocator;
 		struct VkStuff;
 		std::unique_ptr<VkStuff> m_vk;
 		glm::vec4 m_mainPassClearColour = { 0,0,0,1 };

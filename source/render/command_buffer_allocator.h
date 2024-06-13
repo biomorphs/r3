@@ -1,4 +1,5 @@
 #pragma once
+#include "core/mutex.h"
 #include <unordered_map>
 #include <vector>
 #include <thread>
@@ -29,19 +30,22 @@ namespace R3
 		~CommandBufferAllocator();
 		VkCommandPool_T* GetPool(Device& d);	// gets/creates the pool for this thread
 		std::optional<ManagedCommandBuffer> CreateCommandBuffer(Device& d, bool isPrimary);	// secondary = can't be directly submitted, can be called from other primary buffers
-		void Release(ManagedCommandBuffer cmdBuffer);
-		void Reset(Device& d);	// destroys all created command buffers!
-		void Destroy(Device& d);
+		void Release(ManagedCommandBuffer cmdBuffer);	// free a cmd buffer back to the allocator
 	private:
+		void Destroy(Device& d);
+		std::optional<ManagedCommandBuffer> FindAvailableCommandBuffer(std::thread::id tId, bool isPrimary);
 		struct ReleasedBuffer {
 			VkCommandBuffer_T* m_buffer;
+			std::thread::id m_ownerThread;
 			bool m_isPrimary;
 			uint64_t m_frameReleased;
 		};
 		struct PerThreadData {
 			VkCommandPool_T* m_pool = nullptr;
-			std::vector<ReleasedBuffer> m_releasedBuffers;
 		};
+		Mutex m_releasedBuffersMutex;
+		std::vector<ReleasedBuffer> m_releasedBuffers;
+		Mutex m_perThreadDataMutex;
 		std::unordered_map<std::thread::id, PerThreadData> m_perThreadData;
 		const uint64_t c_framesBeforeReuse = 4;	// how many frames before a released buffer can be re-allocated
 	};

@@ -10,6 +10,7 @@ struct VmaAllocator_T;
 namespace R3
 {
 	class Window;
+	class CommandBufferAllocator;
 
 	struct AllocatedBuffer
 	{

@@ -22,6 +22,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		const auto thisThreadID = std::this_thread::get_id();
+		ScopedLock lock(m_perThreadDataMutex);
 		auto pool = m_perThreadData.find(thisThreadID);
 		if (pool == m_perThreadData.end())
 		{
@@ -42,27 +43,46 @@ namespace R3
 		return pool->second.m_pool;
 	}
 
+	std::optional<ManagedCommandBuffer> CommandBufferAllocator::FindAvailableCommandBuffer(std::thread::id tId, bool isPrimary)
+	{
+		R3_PROF_EVENT();
+
+		auto time = Systems::GetSystem<TimeSystem>();
+		uint64_t currentFrame = time->GetFrameIndex();
+		ScopedLock lock(m_releasedBuffersMutex);
+		for (int i = 0; i < m_releasedBuffers.size(); ++i)
+		{
+			auto& r = m_releasedBuffers[i];
+			if ((r.m_ownerThread == tId) && (r.m_isPrimary == isPrimary) && (r.m_frameReleased + c_framesBeforeReuse < currentFrame) )
+			{
+				ManagedCommandBuffer newBuffer;
+				newBuffer.m_cmdBuffer = r.m_buffer;
+				newBuffer.m_isPrimary = isPrimary;
+				newBuffer.m_ownerThread = tId;
+				m_releasedBuffers.erase(m_releasedBuffers.begin() + i);
+				if (!VulkanHelpers::CheckResult(vkResetCommandBuffer(newBuffer.m_cmdBuffer, 0)))
+				{
+					LogError("Failed to reset released command buffer!");
+					return {};	// bail
+				}
+				return newBuffer;
+			}
+		}
+		return {};
+	}
+
 	std::optional<ManagedCommandBuffer> CommandBufferAllocator::CreateCommandBuffer(Device& d, bool isPrimary)
 	{
 		R3_PROF_EVENT();
 
-		// first check the free-list for the pool
+		// first check the free-list for anything
 		const auto thisThreadID = std::this_thread::get_id();
-		auto ptd = m_perThreadData.find(thisThreadID);
-		if (ptd == m_perThreadData.end())
+		auto foundBuffer = FindAvailableCommandBuffer(thisThreadID, isPrimary);
+		if (foundBuffer)
 		{
-			auto time = Systems::GetSystem<TimeSystem>();
-			uint64_t currentFrame = time->GetFrameIndex();
-			for (int i = 0; i < ptd->second.m_releasedBuffers.size(); ++i)
-			{
-				auto& r = ptd->second.m_releasedBuffers[i];
-				if ((currentFrame - c_framesBeforeReuse) > r.m_frameReleased)
-				{
-
-				}
-			}
+			return foundBuffer;
 		}
-
+		// nope, need to allocate
 		auto pool = GetPool(d);
 		if (pool != VK_NULL_HANDLE)
 		{
@@ -88,34 +108,19 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		auto time = Systems::GetSystem<TimeSystem>();
-		auto pool = m_perThreadData.find(cmdBuffer.m_ownerThread);
-		assert(pool != m_perThreadData.end());
-		if (pool != m_perThreadData.end())
-		{
-			ReleasedBuffer r;
-			r.m_buffer = cmdBuffer.m_cmdBuffer;
-			r.m_isPrimary = cmdBuffer.m_isPrimary;
-			r.m_frameReleased = time->GetFrameIndex();
-			pool->second.m_releasedBuffers.push_back(r);
-		}
-	}
-
-	void CommandBufferAllocator::Reset(Device& d)
-	{
-		R3_PROF_EVENT();
-		// danger, if any thread is currently touching this then expect fireworks
-		for (const auto& it : m_perThreadData)
-		{
-			if (!VulkanHelpers::CheckResult(vkResetCommandPool(d.GetVkDevice(), it.second.m_pool, 0)))
-			{
-				LogError("Failed to reset cmd pool!");
-			}
-		}
+		ScopedLock lock(m_releasedBuffersMutex);
+		ReleasedBuffer r;
+		r.m_buffer = cmdBuffer.m_cmdBuffer;
+		r.m_isPrimary = cmdBuffer.m_isPrimary;
+		r.m_frameReleased = time->GetFrameIndex();
+		r.m_ownerThread = cmdBuffer.m_ownerThread;
+		m_releasedBuffers.push_back(r);
 	}
 
 	void CommandBufferAllocator::Destroy(Device& d)
 	{
 		R3_PROF_EVENT();
+		ScopedLock lock(m_perThreadDataMutex);
 		// danger, if any thread is currently touching this then expect fireworks
 		for (const auto& it : m_perThreadData)
 		{
