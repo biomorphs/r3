@@ -64,9 +64,11 @@ namespace R3
 		
 		m_fixedUpdateCatchup += elapsed;
 
+		// Each frame, calculate the interpolation factor based on how far ahead we are from the fixed update
 		const double catchUpSeconds = (double)m_fixedUpdateCatchup / (double)m_tickFrequency;
 		const double fuDeltaSeconds = (double)m_fixedUpdateDeltaTime / (double)m_tickFrequency;
 		m_fixedUpdateInterpolation = catchUpSeconds / fuDeltaSeconds;
+		m_fixedUpdateInterpolation = m_fixedUpdateInterpolation > 1.0 ? 1.0 : m_fixedUpdateInterpolation;
 
 		return true;
 	}
@@ -75,7 +77,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		m_fixedUpdateCatchup -= m_fixedUpdateDeltaTime;
-		m_fixedUpdateInterpolation = ((double)m_fixedUpdateCatchup / (double)m_fixedUpdateDeltaTime) / (double)m_tickFrequency;
+
 		return true;
 	}
 
