@@ -141,7 +141,7 @@ namespace R3
 		return true;
 	}
 
-	Textures::Format GetEngineFormat(const DDSFileHeader& header, const DDSHeaderDX10Extension* dx10Ext)
+	std::optional<Textures::Format> GetEngineFormat(const DDSFileHeader& header, const DDSHeaderDX10Extension* dx10Ext)
 	{
 		Textures::Format format = Textures::Format::RGBA_BC7;
 		if (dx10Ext)
@@ -149,16 +149,14 @@ namespace R3
 			switch (dx10Ext->m_dxgiFormat)
 			{
 			case DXGI_FORMAT_BC4_UNORM:
-				format = Textures::Format::R_BC4;
-				break;
+				return Textures::Format::R_BC4;
 			case DXGI_FORMAT_BC5_UNORM:
-				format = Textures::Format::RG_BC5;
-				break;
+				return Textures::Format::RG_BC5;
 			case DXGI_FORMAT_BC7_UNORM:
-				format = Textures::Format::RGBA_BC7;
-				break;
+				return Textures::Format::RGBA_BC7;
 			default:
 				LogError("Unsupported format!");
+				return {};
 			}
 		}
 		else
@@ -167,19 +165,20 @@ namespace R3
 			memcpy(fourcc, &header.m_pixelFormatFourCC, sizeof(header.m_pixelFormatFourCC));
 			if (strcmp(fourcc, "BC4") == 0 || strcmp(fourcc, "ATI1") == 0 || strcmp(fourcc, "BC4U") == 0)
 			{
-				format = Textures::Format::R_BC4;
+				return Textures::Format::R_BC4;
 			}
 			else if (strcmp(fourcc, "BC5") == 0 || strcmp(fourcc, "ATI2") == 0 || strcmp(fourcc, "BC5U") == 0)
 			{
-				format = Textures::Format::RG_BC5;
+				return Textures::Format::RG_BC5;
 			}
 			else if (strcmp(fourcc, "BC7") == 0 || strcmp(fourcc, "BC7U") == 0)
 			{
-				format = Textures::Format::RGBA_BC7;
+				return Textures::Format::RGBA_BC7;
 			}
 			else
 			{
 				LogError("Unknown format '{}'", fourcc);
+				return {};
 			}
 		}
 		return format;
@@ -225,10 +224,16 @@ namespace R3
 			LogWarn("Texture is not supported");
 			return {};
 		}
+		auto format = GetEngineFormat(header, dx10Extension);
+		if (!format)
+		{
+			LogWarn("Texture is not supported");
+			return {};
+		}
 		Textures::TextureData newTexture;
 		newTexture.m_width = header.m_widthPx;
 		newTexture.m_height = header.m_heightPx;
-		newTexture.m_format = GetEngineFormat(header, dx10Extension);
+		newTexture.m_format = *format;
 		size_t mipSrcOffset = sizeof(header) + (dx10Extension ? sizeof(*dx10Extension) : 0);
 		// we should not trust the pitch output by exporters according to MS
 		uint64_t imgPitch = glm::max(1u, ((header.m_widthPx + 3) / 4)) * GetBlockSizeBytes(newTexture.m_format);
