@@ -312,58 +312,78 @@ namespace R3
 		}
 		vkCmdPushConstants(m_thisFrameCmdBuffer.m_cmdBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 
+		static std::vector<StaticMeshInstanceGpu> gpuInstanceData;	// so we can do 1 big write to gpu memory
+		gpuInstanceData.clear();
+		static std::vector<VkDrawIndexedIndirectCommand> drawCalls;	// ^^
+		drawCalls.clear();
+
+		// Try to cache what we can while iterating, yes this is messy, but its fast!
 		StaticMeshGpuData currentMeshData;
 		ModelDataHandle currentMeshDataHandle;
-		StaticMeshPart partData;
+		std::vector<StaticMeshPart> currentMeshParts;
+		StaticMeshMaterialsComponent* lastMatCmp = nullptr;
+		uint32_t lastMatCmpGpuIndex = -1;
+		uint32_t lastMatCmpOverrideCount = -1;
+		Entities::EntityHandle lastMatEntity;
 		uint32_t firstInstanceOffset = m_currentInstanceBufferStart;
 		m_currentInstanceBufferStart += c_maxInstances;
 		if (m_currentInstanceBufferStart >= (c_maxInstances * c_maxInstanceBuffers))
 		{
 			m_currentInstanceBufferStart = 0;
 		}
-		std::vector<StaticMeshInstanceGpu> gpuInstanceData;	// so we can do 1 big write to gpu memory
-		std::vector<VkDrawIndexedIndirectCommand> drawCalls;	// ^^
-		gpuInstanceData.reserve(1024);
-		drawCalls.reserve(1024);
 		uint32_t thisInstanceOffset = firstInstanceOffset;
 		auto forEach = [&](const Entities::EntityHandle& e, StaticMeshComponent& s, TransformComponent& t)
 		{
-			if (s.m_modelHandle.m_index != -1 && s.m_modelHandle.m_index != currentMeshDataHandle.m_index)
+			if (s.m_modelHandle.m_index == -1)
+			{
+				return true;
+			}
+			if (s.m_modelHandle.m_index != currentMeshDataHandle.m_index)
 			{
 				if (staticMeshes->GetMeshDataForModel(s.m_modelHandle, currentMeshData))
 				{
+					currentMeshParts.resize(currentMeshData.m_meshPartCount);
 					currentMeshDataHandle = s.m_modelHandle;
+					for (uint32_t p = 0; p < currentMeshData.m_meshPartCount; ++p)
+					{
+						staticMeshes->GetMeshPart(currentMeshData.m_firstMeshPartOffset + p, currentMeshParts[p]);
+					}
 				}
 				else
 				{
 					currentMeshData = {};
+					currentMeshParts.clear();
+					return true;
 				}
 			}
-			if (s.m_modelHandle.m_index != -1 && currentMeshDataHandle.m_index == s.m_modelHandle.m_index)
+			if (currentMeshDataHandle.m_index == s.m_modelHandle.m_index)
 			{
-				glm::mat4 compTransform = t.GetWorldspaceInterpolated();
-				const uint32_t partCount = currentMeshData.m_meshPartCount;
-				const auto* matCmp = activeWorld->GetComponent<StaticMeshMaterialsComponent>(s.m_materialOverride);
-				bool useOverrides = matCmp && matCmp->m_gpuDataIndex != -1 && matCmp->m_materials.size() >= currentMeshData.m_materialCount;
-				for (uint32_t part = 0; part < partCount; ++part)
+				if (s.m_materialOverride != lastMatEntity)
 				{
-					if (staticMeshes->GetMeshPart(currentMeshData.m_firstMeshPartOffset + part, partData))
-					{
-						auto relativePartMatIndex = partData.m_materialIndex - currentMeshData.m_materialGpuIndex;
-						StaticMeshInstanceGpu gpuData;
-						gpuData.m_materialIndex = useOverrides ? ((uint32_t)matCmp->m_gpuDataIndex + relativePartMatIndex) : partData.m_materialIndex;
-						gpuData.m_transform = compTransform * partData.m_transform;
-						gpuInstanceData.push_back(gpuData);
-						VkDrawIndexedIndirectCommand drawData;
-						drawData.indexCount = partData.m_indexCount;
-						drawData.instanceCount = 1;
-						drawData.firstIndex = (uint32_t)partData.m_indexStartOffset;
-						drawData.vertexOffset = (uint32_t)currentMeshData.m_vertexDataOffset;
-						drawData.firstInstance = thisInstanceOffset;
-						drawCalls.push_back(drawData);
-						//vkCmdDrawIndexed(m_thisFrameCmdBuffer.m_cmdBuffer, partData.m_indexCount, 1, (uint32_t)partData.m_indexStartOffset, (uint32_t)currentMeshData.m_vertexDataOffset, thisInstanceOffset);
-						thisInstanceOffset++;
-					}
+					lastMatCmp = activeWorld->GetComponent<StaticMeshMaterialsComponent>(s.m_materialOverride);
+					lastMatCmpGpuIndex = lastMatCmp ? (uint32_t)lastMatCmp->m_gpuDataIndex : -1;
+					lastMatCmpOverrideCount = lastMatCmp ? (uint32_t)lastMatCmp->m_materials.size() : 0;
+					lastMatEntity = s.m_materialOverride;
+				}
+				StaticMeshInstanceGpu gpuData;
+				VkDrawIndexedIndirectCommand drawData;
+				const uint32_t meshMaterialIndex = currentMeshData.m_materialGpuIndex;
+				const uint32_t meshVertexDataOffset = (uint32_t)currentMeshData.m_vertexDataOffset;
+				const glm::mat4 compTransform = t.GetWorldspaceInterpolated();
+				const bool useOverrides = lastMatCmpGpuIndex != -1 && lastMatCmpOverrideCount >= currentMeshData.m_materialCount;
+				for (uint32_t part = 0; part < currentMeshParts.size(); ++part)
+				{
+					auto relativePartMatIndex = currentMeshParts[part].m_materialIndex - meshMaterialIndex;
+					gpuData.m_materialIndex = useOverrides ? (lastMatCmpGpuIndex + relativePartMatIndex) : currentMeshParts[part].m_materialIndex;
+					gpuData.m_transform = compTransform * currentMeshParts[part].m_transform;
+					gpuInstanceData.push_back(gpuData);
+					drawData.indexCount = currentMeshParts[part].m_indexCount;
+					drawData.instanceCount = 1;
+					drawData.firstIndex = (uint32_t)currentMeshParts[part].m_indexStartOffset;
+					drawData.vertexOffset = meshVertexDataOffset;
+					drawData.firstInstance = thisInstanceOffset;
+					drawCalls.push_back(drawData);
+					thisInstanceOffset++;
 				}
 			}
 			return true;

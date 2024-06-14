@@ -39,7 +39,7 @@ namespace R3
 		const int c_maxGlobalConstantBuffers = 3;	// ring buffer writes to avoid synchronisation
 		int m_currentGlobalConstantsBuffer = 0;
 		WriteOnlyGpuArray<StaticMeshInstanceGpu> m_globalInstancesBuffer;	// contains arrays
-		const uint32_t c_maxInstances = 1024 * 128;
+		const uint32_t c_maxInstances = 1024 * 256;
 		const uint32_t c_maxInstanceBuffers = 3;
 		WriteOnlyGpuArray<VkDrawIndexedIndirectCommand> m_drawIndirectBuffer;	// contains c_maxInstances * c_maxInstanceBuffers same as instances
 		uint32_t m_currentInstanceBufferStart = 0;	// index into m_globalInstancesBuffer and m_drawIndirectBuffer
