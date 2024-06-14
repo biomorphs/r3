@@ -19,10 +19,9 @@
 #include "core/log.h"
 #include <imgui.h>
 
-// Todo 
-// draw indirect
-
-
+constexpr bool c_useHostVisibleDrawBuffers = false;
+constexpr bool c_useOwnStaging = false;
+constexpr bool c_usePlainOldBuffer = true;
 
 namespace R3
 {
@@ -91,6 +90,10 @@ namespace R3
 		m_globalInstancesBuffer.Destroy(d);
 		m_drawIndirectBuffer.Destroy(d);
 		m_descriptorAllocator = {};
+		vmaUnmapMemory(d.GetVMA(), m_globalInstancesHostVisible.m_allocation);
+		vmaDestroyBuffer(d.GetVMA(), m_globalInstancesHostVisible.m_buffer, m_globalInstancesHostVisible.m_allocation);
+		vmaUnmapMemory(d.GetVMA(), m_drawIndirectHostVisible.m_allocation);
+		vmaDestroyBuffer(d.GetVMA(), m_drawIndirectHostVisible.m_buffer, m_drawIndirectHostVisible.m_allocation);
 		vkDestroyDescriptorSetLayout(d.GetVkDevice(), m_globalsDescriptorLayout, nullptr);
 	}
 
@@ -223,7 +226,7 @@ namespace R3
 		m_globalDescriptorSet = m_descriptorAllocator->Allocate(*render->GetDevice(), m_globalsDescriptorLayout);
 		DescriptorSetWriter writer(m_globalDescriptorSet);
 		writer.WriteUniformBuffer(0, m_globalConstantsBuffer.GetBuffer());
-		writer.WriteStorageBuffer(1, m_globalInstancesBuffer.GetBuffer());
+		writer.WriteStorageBuffer(1, c_usePlainOldBuffer ? m_globalInstancesHostVisible.m_buffer : m_globalInstancesBuffer.GetBuffer());
 		writer.FlushWrites();
 
 		return true;
@@ -376,24 +379,43 @@ namespace R3
 					auto relativePartMatIndex = currentMeshParts[part].m_materialIndex - meshMaterialIndex;
 					gpuData.m_materialIndex = useOverrides ? (lastMatCmpGpuIndex + relativePartMatIndex) : currentMeshParts[part].m_materialIndex;
 					gpuData.m_transform = compTransform * currentMeshParts[part].m_transform;
-					gpuInstanceData.push_back(gpuData);
 					drawData.indexCount = currentMeshParts[part].m_indexCount;
 					drawData.instanceCount = 1;
 					drawData.firstIndex = (uint32_t)currentMeshParts[part].m_indexStartOffset;
 					drawData.vertexOffset = meshVertexDataOffset;
 					drawData.firstInstance = thisInstanceOffset;
-					drawCalls.push_back(drawData);
+					if constexpr (c_usePlainOldBuffer)
+					{
+						StaticMeshInstanceGpu* instancePtr = static_cast<StaticMeshInstanceGpu*>(m_globalInstancesMappedPtr) + thisInstanceOffset;
+						VkDrawIndexedIndirectCommand* drawPtr = static_cast<VkDrawIndexedIndirectCommand*>(m_drawIndirectMappedPtr) + thisInstanceOffset;
+						*instancePtr = gpuData;
+						*drawPtr = drawData;
+					}
+					else if constexpr (c_useOwnStaging)
+					{
+						gpuInstanceData.push_back(gpuData);
+						drawCalls.push_back(drawData);
+					}
+					else
+					{
+						m_globalInstancesBuffer.Write(thisInstanceOffset, 1, &gpuData);
+						m_drawIndirectBuffer.Write(thisInstanceOffset, 1, &drawData);
+					}
 					thisInstanceOffset++;
 				}
 			}
 			return true;
 		};
 		Entities::Queries::ForEach<StaticMeshComponent, TransformComponent>(activeWorld, forEach);
-		m_globalInstancesBuffer.Write(firstInstanceOffset, (uint32_t)gpuInstanceData.size(), gpuInstanceData.data());
-		m_drawIndirectBuffer.Write(firstInstanceOffset, (uint32_t)drawCalls.size(), drawCalls.data());
+
+		if constexpr (c_useOwnStaging)
+		{
+			m_globalInstancesBuffer.Write(firstInstanceOffset, (uint32_t)gpuInstanceData.size(), gpuInstanceData.data());
+			m_drawIndirectBuffer.Write(firstInstanceOffset, (uint32_t)drawCalls.size(), drawCalls.data());
+		}
 
 		size_t drawOffsetBytes = firstInstanceOffset * sizeof(VkDrawIndexedIndirectCommand);
-		vkCmdDrawIndexedIndirect(m_thisFrameCmdBuffer.m_cmdBuffer, m_drawIndirectBuffer.GetBuffer(), drawOffsetBytes, (uint32_t)drawCalls.size(), sizeof(VkDrawIndexedIndirectCommand));
+		vkCmdDrawIndexedIndirect(m_thisFrameCmdBuffer.m_cmdBuffer, c_usePlainOldBuffer ? m_drawIndirectHostVisible.m_buffer : m_drawIndirectBuffer.GetBuffer(), drawOffsetBytes, thisInstanceOffset - firstInstanceOffset, sizeof(VkDrawIndexedIndirectCommand));
 
 		if (!VulkanHelpers::CheckResult(vkEndCommandBuffer(m_thisFrameCmdBuffer.m_cmdBuffer)))
 		{
@@ -420,7 +442,7 @@ namespace R3
 		}
 		if (!m_drawIndirectBuffer.IsCreated())
 		{
-			if (!m_drawIndirectBuffer.Create(d, c_maxInstances * c_maxInstanceBuffers, c_maxInstances, VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+			if (!m_drawIndirectBuffer.Create(d, c_maxInstances * c_maxInstanceBuffers, c_maxInstances, VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, c_useHostVisibleDrawBuffers))
 			{
 				LogError("Failed to create draw indirect buffer");
 			}
@@ -431,13 +453,30 @@ namespace R3
 		}
 		if (!m_globalInstancesBuffer.IsCreated())
 		{
-			if (!m_globalInstancesBuffer.Create(d, c_maxInstances * c_maxInstanceBuffers, c_maxInstances, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+			if (!m_globalInstancesBuffer.Create(d, c_maxInstances * c_maxInstanceBuffers, c_maxInstances, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, c_useHostVisibleDrawBuffers))
 			{
 				LogError("Failed to create constant buffer");
 			}
 			else
 			{
 				m_globalInstancesBuffer.Allocate(c_maxInstances * c_maxInstanceBuffers);	// reserve the memory now, allows writes to any entry
+			}
+		}
+		if constexpr (c_usePlainOldBuffer)
+		{
+			if (m_globalInstancesMappedPtr == nullptr)
+			{
+				m_globalInstancesHostVisible = VulkanHelpers::CreateBuffer(d.GetVMA(),
+					c_maxInstances * c_maxInstanceBuffers * sizeof(StaticMeshInstanceGpu),
+					VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+				vmaMapMemory(d.GetVMA(), m_globalInstancesHostVisible.m_allocation, &m_globalInstancesMappedPtr);
+			}
+			if (m_drawIndirectMappedPtr == nullptr)
+			{
+				m_drawIndirectHostVisible = VulkanHelpers::CreateBuffer(d.GetVMA(),
+					c_maxInstances * c_maxInstanceBuffers * sizeof(VkDrawIndexedIndirectCommand),
+					VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+				vmaMapMemory(d.GetVMA(), m_drawIndirectHostVisible.m_allocation, &m_drawIndirectMappedPtr);
 			}
 		}
 		if (m_globalDescriptorSet == VK_NULL_HANDLE)
