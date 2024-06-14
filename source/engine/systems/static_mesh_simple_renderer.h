@@ -23,30 +23,30 @@ namespace R3
 		bool ShowGui();
 		void Cleanup(Device&);
 		bool BuildCommandBuffer();
+		uint32_t WriteInstances(VkCommandBuffer_T* buffer);		// returns instance count
 		void MainPassBegin(Device&, VkCommandBuffer);
 		void MainPassDraw(Device&, VkCommandBuffer, const VkExtent2D&);
 		bool CreatePipelineData(Device&);
 		bool CreateGlobalDescriptorSet();
 		void ProcessEnvironmentSettings(GlobalConstants&);
-		struct StaticMeshInstanceGpu {
+		bool InitialiseGpuData(Device&);
+		struct StaticMeshInstanceGpu {				// needs to match PerInstanceData in shaders
 			glm::mat4 m_transform;
 			uint32_t m_materialIndex;
 		};
 		std::unique_ptr<DescriptorSetSimpleAllocator> m_descriptorAllocator;
 		VkDescriptorSetLayout_T* m_globalsDescriptorLayout = nullptr;
-		VkDescriptorSet_T* m_globalDescriptorSet = nullptr;		// sent to binding 0
+		VkDescriptorSet_T* m_globalDescriptorSet = nullptr;	
 		WriteOnlyGpuArray<GlobalConstants> m_globalConstantsBuffer;
 		const int c_maxGlobalConstantBuffers = 3;	// ring buffer writes to avoid synchronisation
 		int m_currentGlobalConstantsBuffer = 0;
-		WriteOnlyGpuArray<StaticMeshInstanceGpu> m_globalInstancesBuffer;	// contains arrays
 		AllocatedBuffer m_globalInstancesHostVisible;
-		void* m_globalInstancesMappedPtr = nullptr;
-		const uint32_t c_maxInstances = 1024 * 256;
-		const uint32_t c_maxInstanceBuffers = 3;
-		WriteOnlyGpuArray<VkDrawIndexedIndirectCommand> m_drawIndirectBuffer;	// contains c_maxInstances * c_maxInstanceBuffers same as instances
+		StaticMeshInstanceGpu* m_globalInstancesMappedPtr = nullptr;
 		AllocatedBuffer m_drawIndirectHostVisible;
 		void* m_drawIndirectMappedPtr = nullptr;
-		uint32_t m_currentInstanceBufferStart = 0;	// index into m_globalInstancesBuffer and m_drawIndirectBuffer
+		uint32_t m_currentInstanceBufferStart = 0;	// index into m_globalInstancesMappedPtr and m_drawIndirectBuffer
+		const uint32_t c_maxInstances = 1024 * 256;
+		const uint32_t c_maxInstanceBuffers = 3;
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_simpleTriPipeline = VK_NULL_HANDLE;
 		ManagedCommandBuffer m_thisFrameCmdBuffer;

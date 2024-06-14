@@ -15,13 +15,10 @@
 #include "render/device.h"
 #include "render/pipeline_builder.h"
 #include "render/descriptors.h"
+#include "render/render_helpers.h"
 #include "core/profiler.h"
 #include "core/log.h"
 #include <imgui.h>
-
-constexpr bool c_useHostVisibleDrawBuffers = false;
-constexpr bool c_useOwnStaging = false;
-constexpr bool c_usePlainOldBuffer = true;
 
 namespace R3
 {
@@ -86,15 +83,13 @@ namespace R3
 		R3_PROF_EVENT();
 		vkDestroyPipeline(d.GetVkDevice(), m_simpleTriPipeline, nullptr);
 		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayout, nullptr);
-		m_globalConstantsBuffer.Destroy(d);
-		m_globalInstancesBuffer.Destroy(d);
-		m_drawIndirectBuffer.Destroy(d);
-		m_descriptorAllocator = {};
 		vmaUnmapMemory(d.GetVMA(), m_globalInstancesHostVisible.m_allocation);
 		vmaDestroyBuffer(d.GetVMA(), m_globalInstancesHostVisible.m_buffer, m_globalInstancesHostVisible.m_allocation);
 		vmaUnmapMemory(d.GetVMA(), m_drawIndirectHostVisible.m_allocation);
 		vmaDestroyBuffer(d.GetVMA(), m_drawIndirectHostVisible.m_buffer, m_drawIndirectHostVisible.m_allocation);
 		vkDestroyDescriptorSetLayout(d.GetVkDevice(), m_globalsDescriptorLayout, nullptr);
+		m_descriptorAllocator = {};
+		m_globalConstantsBuffer.Destroy(d);
 	}
 
 	bool StaticMeshSimpleRenderer::ShowGui()
@@ -115,20 +110,16 @@ namespace R3
 	bool StaticMeshSimpleRenderer::CreatePipelineData(Device& d)
 	{
 		R3_PROF_EVENT();
-
 		auto textures = GetSystem<TextureSystem>();
-
-		// Create pipeline layout
-		VkPushConstantRange constantRange;
+		auto render = Systems::GetSystem<RenderSystem>();
+		VkPushConstantRange constantRange;	// Create pipeline layout
 		constantRange.offset = 0;	// needs to match in the shader if >0!
 		constantRange.size = sizeof(PushConstants);
 		constantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo = { 0 };
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipelineLayoutInfo.pushConstantRangeCount = 1;
 		pipelineLayoutInfo.pPushConstantRanges = &constantRange;
-
 		VkDescriptorSetLayout setLayouts[] = { m_globalsDescriptorLayout, textures->GetDescriptorsLayout() };
 		pipelineLayoutInfo.pSetLayouts = setLayouts;
 		pipelineLayoutInfo.setLayoutCount = 2;
@@ -137,9 +128,7 @@ namespace R3
 			LogError("Failed to create pipeline layout");
 			return false;
 		}
-
-		// Load the shaders
-		std::string basePath = "shaders_spirv\\common\\";
+		std::string basePath = "shaders_spirv\\common\\";	// Load the shaders
 		auto vertexShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), basePath + "static_mesh_simple_main_pass.vert.spv");
 		auto fragShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), basePath + "static_mesh_simple_main_pass.frag.spv");
 		if (vertexShader == VK_NULL_HANDLE || fragShader == VK_NULL_HANDLE)
@@ -147,9 +136,7 @@ namespace R3
 			LogError("Failed to create shader modules");
 			return false;
 		}
-
-		// Make the pipeline
-		PipelineBuilder pb;
+		PipelineBuilder pb;	// Make the pipeline
 		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_VERTEX_BIT, vertexShader));
 		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_FRAGMENT_BIT, fragShader));
 		std::vector<VkDynamicState> dynamicStates = {
@@ -162,9 +149,7 @@ namespace R3
 		pb.m_viewportState = VulkanHelpers::CreatePipelineDynamicViewportState();
 		pb.m_rasterState = VulkanHelpers::CreatePipelineRasterState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
 		pb.m_multisamplingState = VulkanHelpers::CreatePipelineMultiSampleState_SingleSample();
-
-		// Enable depth read/write
-		VkPipelineDepthStencilStateCreateInfo depthStencilState = { 0 };
+		VkPipelineDepthStencilStateCreateInfo depthStencilState = { 0 };	// Enable depth read/write
 		depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 		depthStencilState.depthTestEnable = VK_TRUE;
 		depthStencilState.depthWriteEnable = VK_TRUE;
@@ -172,28 +157,20 @@ namespace R3
 		depthStencilState.depthBoundsTestEnable = VK_FALSE;
 		depthStencilState.stencilTestEnable = VK_FALSE;
 		pb.m_depthStencilState = depthStencilState;
-
-		// No colour attachment blending
-		std::vector<VkPipelineColorBlendAttachmentState> allAttachments = {
+		std::vector<VkPipelineColorBlendAttachmentState> allAttachments = {	// No colour attachment blending
 			VulkanHelpers::CreatePipelineColourBlendAttachment_NoBlending()
 		};
-		pb.m_colourBlendState = VulkanHelpers::CreatePipelineColourBlendState(allAttachments);	// Pipeline also has some global blending state (constants, logical ops enable)
-
-		auto render = Systems::GetSystem<RenderSystem>();
+		pb.m_colourBlendState = VulkanHelpers::CreatePipelineColourBlendState(allAttachments);
 		auto colourBufferFormat = render->GetMainColourTargetFormat();
 		auto depthBufferFormat = render->GetMainDepthStencilFormat();
-
-		// build the pipelines
 		m_simpleTriPipeline = pb.Build(d.GetVkDevice(), m_pipelineLayout, 1, &colourBufferFormat, depthBufferFormat);
 		if (m_simpleTriPipeline == VK_NULL_HANDLE)
 		{
 			LogError("Failed to create pipeline!");
 			return false;
 		}
-
 		vkDestroyShaderModule(d.GetVkDevice(), vertexShader, nullptr);
 		vkDestroyShaderModule(d.GetVkDevice(), fragShader, nullptr);
-
 		return true;
 	}
 
@@ -226,9 +203,53 @@ namespace R3
 		m_globalDescriptorSet = m_descriptorAllocator->Allocate(*render->GetDevice(), m_globalsDescriptorLayout);
 		DescriptorSetWriter writer(m_globalDescriptorSet);
 		writer.WriteUniformBuffer(0, m_globalConstantsBuffer.GetBuffer());
-		writer.WriteStorageBuffer(1, c_usePlainOldBuffer ? m_globalInstancesHostVisible.m_buffer : m_globalInstancesBuffer.GetBuffer());
+		writer.WriteStorageBuffer(1, m_globalInstancesHostVisible.m_buffer);
 		writer.FlushWrites();
 
+		return true;
+	}
+
+	bool StaticMeshSimpleRenderer::InitialiseGpuData(Device& d)
+	{
+		if (!m_globalConstantsBuffer.IsCreated())
+		{
+			if (!m_globalConstantsBuffer.Create(d, c_maxGlobalConstantBuffers, c_maxGlobalConstantBuffers, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT))
+			{
+				LogError("Failed to create constant buffer");
+				return false;
+			}
+			m_globalConstantsBuffer.Allocate(c_maxGlobalConstantBuffers);
+		}
+		if (m_globalInstancesMappedPtr == nullptr)
+		{
+			m_globalInstancesHostVisible = VulkanHelpers::CreateBuffer(d.GetVMA(),
+				c_maxInstances * c_maxInstanceBuffers * sizeof(StaticMeshInstanceGpu),
+				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+			void* mapped = nullptr;
+			vmaMapMemory(d.GetVMA(), m_globalInstancesHostVisible.m_allocation, &mapped);
+			m_globalInstancesMappedPtr = static_cast<StaticMeshInstanceGpu*>(mapped);
+		}
+		if (m_drawIndirectMappedPtr == nullptr)
+		{
+			m_drawIndirectHostVisible = VulkanHelpers::CreateBuffer(d.GetVMA(),
+				c_maxInstances * c_maxInstanceBuffers * sizeof(VkDrawIndexedIndirectCommand),
+				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+			void* mapped = nullptr;
+			vmaMapMemory(d.GetVMA(), m_drawIndirectHostVisible.m_allocation, &mapped);
+			m_drawIndirectMappedPtr = static_cast<StaticMeshInstanceGpu*>(mapped);
+		}
+		if (m_globalDescriptorSet == VK_NULL_HANDLE)
+		{
+			if (!CreateGlobalDescriptorSet())
+			{
+				LogError("Failed to create global descriptor set");
+				return false;
+			}
+		}
+		if (m_pipelineLayout == VK_NULL_HANDLE || m_simpleTriPipeline == VK_NULL_HANDLE)
+		{
+			CreatePipelineData(d);
+		}
 		return true;
 	}
 
@@ -249,92 +270,20 @@ namespace R3
 		}
 	}
 
-	bool StaticMeshSimpleRenderer::BuildCommandBuffer()
+	uint32_t StaticMeshSimpleRenderer::WriteInstances(VkCommandBuffer_T* buffer)
 	{
 		R3_PROF_EVENT();
 		auto entities = Systems::GetSystem<Entities::EntitySystem>();
-		auto activeWorld = entities->GetActiveWorld();
-		if (!activeWorld)
-		{
-			return true;
-		}
 		auto render = Systems::GetSystem<RenderSystem>();
 		auto staticMeshes = GetSystem<StaticMeshSystem>();
-		auto cmdBuffer = render->GetCommandBufferAllocator()->CreateCommandBuffer(*render->GetDevice(), false);
-		if (!cmdBuffer)
-		{
-			LogWarn("Failed to get a cmd buffer");
-			return false;
-		}
-		m_thisFrameCmdBuffer = *cmdBuffer;
-		VkCommandBufferBeginInfo beginInfo = { 0 };	
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;	// this pass is ran inside another render pass
-		VkCommandBufferInheritanceInfo whatIsThisBullshit = { 0 };			// we need to pass the attachments info since we are drawing (annoying)
-		whatIsThisBullshit.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
-		VkCommandBufferInheritanceRenderingInfoKHR evenMoreBullshit = { 0 };	// dynamic rendering
-		evenMoreBullshit.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_RENDERING_INFO_KHR;
-		auto colourBufferFormat = render->GetMainColourTargetFormat();
-		evenMoreBullshit.colorAttachmentCount = 1;
-		evenMoreBullshit.pColorAttachmentFormats = &colourBufferFormat;
-		evenMoreBullshit.depthAttachmentFormat = render->GetMainDepthStencilFormat();
-		evenMoreBullshit.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-		whatIsThisBullshit.pNext = &evenMoreBullshit;
-		beginInfo.pInheritanceInfo = &whatIsThisBullshit;
-		if (!VulkanHelpers::CheckResult(vkBeginCommandBuffer(m_thisFrameCmdBuffer.m_cmdBuffer, &beginInfo)))
-		{
-			LogError("failed to begin recording command buffer!");
-			return false;
-		}
-		VkViewport viewport = { 0 };
-		viewport.x = 0.0f;
-		viewport.y = 0.0f;
-		viewport.width = render->GetWindowExtents().x;
-		viewport.height = render->GetWindowExtents().y;
-		viewport.minDepth = 0.0f;	// normalised! must be between 0 and 1
-		viewport.maxDepth = 1.0f;	// ^^
-		VkRect2D scissor = { 0 };
-		scissor.offset = { 0, 0 };
-		scissor.extent = { (uint32_t)viewport.width, (uint32_t)viewport.height };	// draw the full image
-		vkCmdBindPipeline(m_thisFrameCmdBuffer.m_cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_simpleTriPipeline);
-		vkCmdSetViewport(m_thisFrameCmdBuffer.m_cmdBuffer, 0, 1, &viewport);
-		vkCmdSetScissor(m_thisFrameCmdBuffer.m_cmdBuffer, 0, 1, &scissor);
-		vkCmdBindIndexBuffer(m_thisFrameCmdBuffer.m_cmdBuffer, staticMeshes->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-		vkCmdBindDescriptorSets(m_thisFrameCmdBuffer.m_cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_globalDescriptorSet, 0, nullptr);
 		auto textures = GetSystem<TextureSystem>();
-		VkDescriptorSet allTextures = textures->GetAllTexturesSet();
-		if (allTextures != VK_NULL_HANDLE)
-		{
-			vkCmdBindDescriptorSets(m_thisFrameCmdBuffer.m_cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 1, 1, &allTextures, 0, nullptr);
-		}
-		PushConstants pc;
-		pc.m_globalConstantIndex = m_currentGlobalConstantsBuffer++;
-		if (m_currentGlobalConstantsBuffer >= c_maxGlobalConstantBuffers)
-		{
-			m_currentGlobalConstantsBuffer = 0;
-		}
-		vkCmdPushConstants(m_thisFrameCmdBuffer.m_cmdBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-
-		static std::vector<StaticMeshInstanceGpu> gpuInstanceData;	// so we can do 1 big write to gpu memory
-		gpuInstanceData.clear();
-		static std::vector<VkDrawIndexedIndirectCommand> drawCalls;	// ^^
-		drawCalls.clear();
-
-		// Try to cache what we can while iterating, yes this is messy, but its fast!
-		StaticMeshGpuData currentMeshData;
+		auto activeWorld = entities->GetActiveWorld();
+		StaticMeshGpuData currentMeshData;				// Try to cache what we can while iterating, yes this is messy, but its fast!
 		ModelDataHandle currentMeshDataHandle;
-		std::vector<StaticMeshPart> currentMeshParts;
-		StaticMeshMaterialsComponent* lastMatCmp = nullptr;
-		uint32_t lastMatCmpGpuIndex = -1;
-		uint32_t lastMatCmpOverrideCount = -1;
+		std::vector<StaticMeshPart> currentMeshParts;	// cache the parts to avoid touching the meshes constantly
+		uint32_t lastMatOverrideGpuIndex = -1;			// index into gpu materials from the last material component
 		Entities::EntityHandle lastMatEntity;
-		uint32_t firstInstanceOffset = m_currentInstanceBufferStart;
-		m_currentInstanceBufferStart += c_maxInstances;
-		if (m_currentInstanceBufferStart >= (c_maxInstances * c_maxInstanceBuffers))
-		{
-			m_currentInstanceBufferStart = 0;
-		}
-		uint32_t thisInstanceOffset = firstInstanceOffset;
+		uint32_t thisInstanceOffset = m_currentInstanceBufferStart;
 		auto forEach = [&](const Entities::EntityHandle& e, StaticMeshComponent& s, TransformComponent& t)
 		{
 			if (s.m_modelHandle.m_index == -1)
@@ -363,133 +312,98 @@ namespace R3
 			{
 				if (s.m_materialOverride != lastMatEntity)
 				{
-					lastMatCmp = activeWorld->GetComponent<StaticMeshMaterialsComponent>(s.m_materialOverride);
-					lastMatCmpGpuIndex = lastMatCmp ? (uint32_t)lastMatCmp->m_gpuDataIndex : -1;
-					lastMatCmpOverrideCount = lastMatCmp ? (uint32_t)lastMatCmp->m_materials.size() : 0;
+					auto lastMatCmp = activeWorld->GetComponent<StaticMeshMaterialsComponent>(s.m_materialOverride);
+					lastMatOverrideGpuIndex = lastMatCmp ? static_cast<uint32_t>(lastMatCmp->m_gpuDataIndex) : -1;
 					lastMatEntity = s.m_materialOverride;
 				}
-				StaticMeshInstanceGpu gpuData;
-				VkDrawIndexedIndirectCommand drawData;
 				const uint32_t meshMaterialIndex = currentMeshData.m_materialGpuIndex;
 				const uint32_t meshVertexDataOffset = (uint32_t)currentMeshData.m_vertexDataOffset;
 				const glm::mat4 compTransform = t.GetWorldspaceInterpolated();
-				const bool useOverrides = lastMatCmpGpuIndex != -1 && lastMatCmpOverrideCount >= currentMeshData.m_materialCount;
+				const bool useOverrides = lastMatOverrideGpuIndex != -1 && lastMatOverrideGpuIndex >= currentMeshData.m_materialCount;
 				for (uint32_t part = 0; part < currentMeshParts.size(); ++part)
 				{
 					auto relativePartMatIndex = currentMeshParts[part].m_materialIndex - meshMaterialIndex;
-					gpuData.m_materialIndex = useOverrides ? (lastMatCmpGpuIndex + relativePartMatIndex) : currentMeshParts[part].m_materialIndex;
-					gpuData.m_transform = compTransform * currentMeshParts[part].m_transform;
-					drawData.indexCount = currentMeshParts[part].m_indexCount;
-					drawData.instanceCount = 1;
-					drawData.firstIndex = (uint32_t)currentMeshParts[part].m_indexStartOffset;
-					drawData.vertexOffset = meshVertexDataOffset;
-					drawData.firstInstance = thisInstanceOffset;
-					if constexpr (c_usePlainOldBuffer)
-					{
-						StaticMeshInstanceGpu* instancePtr = static_cast<StaticMeshInstanceGpu*>(m_globalInstancesMappedPtr) + thisInstanceOffset;
-						VkDrawIndexedIndirectCommand* drawPtr = static_cast<VkDrawIndexedIndirectCommand*>(m_drawIndirectMappedPtr) + thisInstanceOffset;
-						*instancePtr = gpuData;
-						*drawPtr = drawData;
-					}
-					else if constexpr (c_useOwnStaging)
-					{
-						gpuInstanceData.push_back(gpuData);
-						drawCalls.push_back(drawData);
-					}
-					else
-					{
-						m_globalInstancesBuffer.Write(thisInstanceOffset, 1, &gpuData);
-						m_drawIndirectBuffer.Write(thisInstanceOffset, 1, &drawData);
-					}
+					StaticMeshInstanceGpu* instancePtr = static_cast<StaticMeshInstanceGpu*>(m_globalInstancesMappedPtr) + thisInstanceOffset;
+					instancePtr->m_materialIndex = useOverrides ? ((uint32_t)lastMatOverrideGpuIndex + relativePartMatIndex) : currentMeshParts[part].m_materialIndex;
+					instancePtr->m_transform = compTransform * currentMeshParts[part].m_transform;
+					VkDrawIndexedIndirectCommand* drawPtr = static_cast<VkDrawIndexedIndirectCommand*>(m_drawIndirectMappedPtr) + thisInstanceOffset;
+					drawPtr->indexCount = currentMeshParts[part].m_indexCount;
+					drawPtr->instanceCount = 1;
+					drawPtr->firstIndex = (uint32_t)currentMeshParts[part].m_indexStartOffset;
+					drawPtr->vertexOffset = meshVertexDataOffset;
+					drawPtr->firstInstance = thisInstanceOffset;
 					thisInstanceOffset++;
 				}
 			}
 			return true;
 		};
 		Entities::Queries::ForEach<StaticMeshComponent, TransformComponent>(activeWorld, forEach);
+		return thisInstanceOffset - m_currentInstanceBufferStart;
+	}
 
-		if constexpr (c_useOwnStaging)
+	bool StaticMeshSimpleRenderer::BuildCommandBuffer()
+	{
+		R3_PROF_EVENT();
+		auto entities = Systems::GetSystem<Entities::EntitySystem>();
+		auto render = Systems::GetSystem<RenderSystem>();
+		auto staticMeshes = GetSystem<StaticMeshSystem>();
+		auto textures = GetSystem<TextureSystem>();
+		if (!entities->GetActiveWorld())
 		{
-			m_globalInstancesBuffer.Write(firstInstanceOffset, (uint32_t)gpuInstanceData.size(), gpuInstanceData.data());
-			m_drawIndirectBuffer.Write(firstInstanceOffset, (uint32_t)drawCalls.size(), drawCalls.data());
+			return true;
 		}
-
-		size_t drawOffsetBytes = firstInstanceOffset * sizeof(VkDrawIndexedIndirectCommand);
-		vkCmdDrawIndexedIndirect(m_thisFrameCmdBuffer.m_cmdBuffer, c_usePlainOldBuffer ? m_drawIndirectHostVisible.m_buffer : m_drawIndirectBuffer.GetBuffer(), drawOffsetBytes, thisInstanceOffset - firstInstanceOffset, sizeof(VkDrawIndexedIndirectCommand));
-
+		auto cmdBuffer = render->GetCommandBufferAllocator()->CreateCommandBuffer(*render->GetDevice(), false);
+		if (!cmdBuffer)
+		{
+			LogWarn("Failed to get a cmd buffer");
+			return false;
+		}
+		m_thisFrameCmdBuffer = *cmdBuffer;
+		if (!RenderHelpers::BeginSecondaryCommandBuffer(m_thisFrameCmdBuffer.m_cmdBuffer))
+		{
+			LogError("Failed to begin writing cmds");
+			return false;
+		}
+		RenderHelpers::BindPipeline(m_thisFrameCmdBuffer.m_cmdBuffer, m_simpleTriPipeline);
+		vkCmdBindIndexBuffer(m_thisFrameCmdBuffer.m_cmdBuffer, staticMeshes->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+		vkCmdBindDescriptorSets(m_thisFrameCmdBuffer.m_cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_globalDescriptorSet, 0, nullptr);
+		VkDescriptorSet allTextures = textures->GetAllTexturesSet();
+		if (allTextures != VK_NULL_HANDLE)
+		{
+			vkCmdBindDescriptorSets(m_thisFrameCmdBuffer.m_cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 1, 1, &allTextures, 0, nullptr);
+		}
+		PushConstants pc;
+		pc.m_globalConstantIndex = m_currentGlobalConstantsBuffer++;
+		if (m_currentGlobalConstantsBuffer >= c_maxGlobalConstantBuffers)
+		{
+			m_currentGlobalConstantsBuffer = 0;
+		}
+		vkCmdPushConstants(m_thisFrameCmdBuffer.m_cmdBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
+		uint32_t drawCount = WriteInstances(m_thisFrameCmdBuffer.m_cmdBuffer);
+		size_t drawOffsetBytes = m_currentInstanceBufferStart * sizeof(VkDrawIndexedIndirectCommand);
+		vkCmdDrawIndexedIndirect(m_thisFrameCmdBuffer.m_cmdBuffer, m_drawIndirectHostVisible.m_buffer, drawOffsetBytes, drawCount, sizeof(VkDrawIndexedIndirectCommand));
+		m_currentInstanceBufferStart += c_maxInstances;
+		if (m_currentInstanceBufferStart >= (c_maxInstances * c_maxInstanceBuffers))
+		{
+			m_currentInstanceBufferStart = 0;
+		}
 		if (!VulkanHelpers::CheckResult(vkEndCommandBuffer(m_thisFrameCmdBuffer.m_cmdBuffer)))
 		{
 			LogError("failed to end recording command buffer!");
 			return false;
 		}
-		
 		return true;
 	}
 
 	void StaticMeshSimpleRenderer::MainPassBegin(Device& d, VkCommandBuffer cmds)
 	{
 		R3_PROF_EVENT();
-		if (!m_globalConstantsBuffer.IsCreated())
+
+		if (!InitialiseGpuData(d))
 		{
-			if (!m_globalConstantsBuffer.Create(d, c_maxGlobalConstantBuffers, c_maxGlobalConstantBuffers, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT))
-			{
-				LogError("Failed to create constant buffer");
-			}
-			else
-			{
-				m_globalConstantsBuffer.Allocate(c_maxGlobalConstantBuffers);	// reserve the memory now, allows writes to any entry
-			}
+			return;
 		}
-		if (!m_drawIndirectBuffer.IsCreated())
-		{
-			if (!m_drawIndirectBuffer.Create(d, c_maxInstances * c_maxInstanceBuffers, c_maxInstances, VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, c_useHostVisibleDrawBuffers))
-			{
-				LogError("Failed to create draw indirect buffer");
-			}
-			else
-			{
-				m_drawIndirectBuffer.Allocate(c_maxInstances * c_maxInstanceBuffers);	// reserve the memory now, allows writes to any entry
-			}
-		}
-		if (!m_globalInstancesBuffer.IsCreated())
-		{
-			if (!m_globalInstancesBuffer.Create(d, c_maxInstances * c_maxInstanceBuffers, c_maxInstances, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, c_useHostVisibleDrawBuffers))
-			{
-				LogError("Failed to create constant buffer");
-			}
-			else
-			{
-				m_globalInstancesBuffer.Allocate(c_maxInstances * c_maxInstanceBuffers);	// reserve the memory now, allows writes to any entry
-			}
-		}
-		if constexpr (c_usePlainOldBuffer)
-		{
-			if (m_globalInstancesMappedPtr == nullptr)
-			{
-				m_globalInstancesHostVisible = VulkanHelpers::CreateBuffer(d.GetVMA(),
-					c_maxInstances * c_maxInstanceBuffers * sizeof(StaticMeshInstanceGpu),
-					VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
-				vmaMapMemory(d.GetVMA(), m_globalInstancesHostVisible.m_allocation, &m_globalInstancesMappedPtr);
-			}
-			if (m_drawIndirectMappedPtr == nullptr)
-			{
-				m_drawIndirectHostVisible = VulkanHelpers::CreateBuffer(d.GetVMA(),
-					c_maxInstances * c_maxInstanceBuffers * sizeof(VkDrawIndexedIndirectCommand),
-					VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
-				vmaMapMemory(d.GetVMA(), m_drawIndirectHostVisible.m_allocation, &m_drawIndirectMappedPtr);
-			}
-		}
-		if (m_globalDescriptorSet == VK_NULL_HANDLE)
-		{
-			if (!CreateGlobalDescriptorSet())
-			{
-				LogError("Failed to create global descriptor set");
-			}
-		}
-		if (m_pipelineLayout == VK_NULL_HANDLE || m_simpleTriPipeline == VK_NULL_HANDLE)
-		{
-			CreatePipelineData(d);
-		}
+		
 		// write + flush the global constants each frame
 		auto cameras = GetSystem<CameraSystem>();
 		auto staticMeshes = GetSystem<StaticMeshSystem>();
@@ -505,10 +419,6 @@ namespace R3
 		ProcessEnvironmentSettings(globals);
 		m_globalConstantsBuffer.Write(m_currentGlobalConstantsBuffer, 1, &globals);
 		m_globalConstantsBuffer.Flush(d, cmds);
-
-		// flush the instance data before drawing 
-		m_globalInstancesBuffer.Flush(d, cmds);
-		m_drawIndirectBuffer.Flush(d, cmds, VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT);
 	}
 
 	void StaticMeshSimpleRenderer::MainPassDraw(Device& d, VkCommandBuffer cmds, const VkExtent2D& e)

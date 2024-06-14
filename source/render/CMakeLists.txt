@@ -1,4 +1,6 @@
 set(RenderLib_SourceFiles
+	render_helpers.h
+	render_helpers.cpp
 	render_system.h
 	render_system.cpp
 	window.h
