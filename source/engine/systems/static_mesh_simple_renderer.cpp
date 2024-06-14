@@ -3,6 +3,7 @@
 #include "camera_system.h"
 #include "lights_system.h"
 #include "texture_system.h"
+#include "time_system.h"
 #include "engine/imgui_menubar_helper.h"
 #include "engine/components/transform.h"
 #include "engine/components/static_mesh.h"
@@ -101,7 +102,13 @@ namespace R3
 		});
 		if (m_showGui)
 		{
-			ImGui::Begin("Static Mesh Simple Renderer");
+			ImGui::Begin("Static Mesh Renderer");
+			std::string txt = std::format("{} Model Instances Submitted", m_frameStats.m_totalModelInstances);
+			ImGui::Text(txt.c_str());
+			txt = std::format("    {} Part Instances", m_frameStats.m_totalPartInstances);
+			ImGui::Text(txt.c_str());
+			txt = std::format("Command buffer took {:.3f}ms to build", 1000.0 * (m_frameStats.m_writeCmdsEndTime - m_frameStats.m_writeCmdsStartTime));
+			ImGui::Text(txt.c_str());
 			ImGui::End();
 		}
 		return true;
@@ -334,6 +341,8 @@ namespace R3
 					drawPtr->firstInstance = thisInstanceOffset;
 					thisInstanceOffset++;
 				}
+				m_frameStats.m_totalModelInstances++;
+				m_frameStats.m_totalPartInstances += (uint32_t)currentMeshParts.size();
 			}
 			return true;
 		};
@@ -344,14 +353,17 @@ namespace R3
 	bool StaticMeshSimpleRenderer::BuildCommandBuffer()
 	{
 		R3_PROF_EVENT();
+		m_frameStats = {};
 		auto entities = Systems::GetSystem<Entities::EntitySystem>();
 		auto render = Systems::GetSystem<RenderSystem>();
 		auto staticMeshes = GetSystem<StaticMeshSystem>();
 		auto textures = GetSystem<TextureSystem>();
+		auto time = GetSystem<TimeSystem>();
 		if (!entities->GetActiveWorld())
 		{
 			return true;
 		}
+		m_frameStats.m_writeCmdsStartTime = time->GetElapsedTimeReal();
 		auto cmdBuffer = render->GetCommandBufferAllocator()->CreateCommandBuffer(*render->GetDevice(), false);
 		if (!cmdBuffer)
 		{
@@ -392,13 +404,13 @@ namespace R3
 			LogError("failed to end recording command buffer!");
 			return false;
 		}
+		m_frameStats.m_writeCmdsEndTime = time->GetElapsedTimeReal();
 		return true;
 	}
 
 	void StaticMeshSimpleRenderer::MainPassBegin(Device& d, VkCommandBuffer cmds)
 	{
 		R3_PROF_EVENT();
-
 		if (!InitialiseGpuData(d))
 		{
 			return;

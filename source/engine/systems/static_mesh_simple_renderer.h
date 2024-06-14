@@ -34,6 +34,13 @@ namespace R3
 			glm::mat4 m_transform;
 			uint32_t m_materialIndex;
 		};
+		struct FrameStats {
+			uint32_t m_totalModelInstances = 0;
+			uint32_t m_totalPartInstances = 0;
+			double m_writeCmdsStartTime = 0.0;
+			double m_writeCmdsEndTime = 0.0;
+		};
+		FrameStats m_frameStats;
 		std::unique_ptr<DescriptorSetSimpleAllocator> m_descriptorAllocator;
 		VkDescriptorSetLayout_T* m_globalsDescriptorLayout = nullptr;
 		VkDescriptorSet_T* m_globalDescriptorSet = nullptr;	
