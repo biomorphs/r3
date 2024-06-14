@@ -175,6 +175,18 @@ namespace R3
 			{
 				return Textures::Format::RGBA_BC7;
 			}
+			else if (strcmp(fourcc, "DXT1") == 0 || strcmp(fourcc, "BC1U") == 0)
+			{
+				return Textures::Format::RGBA_BC1;
+			}
+			else if (strcmp(fourcc, "DXT2") == 0 || strcmp(fourcc, "DXT3") == 0 || strcmp(fourcc, "BC2U") == 0)
+			{
+				return Textures::Format::RGBA_BC2;
+			}
+			else if (strcmp(fourcc, "DXT4") == 0 || strcmp(fourcc, "DXT5") == 0 || strcmp(fourcc, "BC3U") == 0)
+			{
+				return Textures::Format::RGBA_BC3;
+			}
 			else
 			{
 				LogError("Unknown format '{}'", fourcc);
@@ -188,13 +200,17 @@ namespace R3
 	{
 		switch (f)
 		{
+		case Textures::Format::RGBA_BC1:
 		case Textures::Format::R_BC4:
-			return 2;
+			return 8;
+		case Textures::Format::RGBA_BC2:
+		case Textures::Format::RGBA_BC3:
 		case Textures::Format::RG_BC5:
 		case Textures::Format::RGBA_BC7:
-			return 4;
+			return 16;
 		default:
-			return 4;
+			assert(!"Woah");
+			return 0;
 		}
 	}
 
@@ -237,7 +253,7 @@ namespace R3
 		size_t mipSrcOffset = sizeof(header) + (dx10Extension ? sizeof(*dx10Extension) : 0);
 		// we should not trust the pitch output by exporters according to MS
 		uint64_t imgPitch = glm::max(1u, ((header.m_widthPx + 3) / 4)) * GetBlockSizeBytes(newTexture.m_format);
-		size_t mip0Size = imgPitch * newTexture.m_height;
+		size_t mip0Size = imgPitch * newTexture.m_height / 4;
 
 		// the image data is not aligned how we would like, so we need to remake it ourselves
 		// each mip level will be stored consecutively with 16 byte alignment

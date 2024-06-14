@@ -45,7 +45,7 @@ namespace R3
 		VkDescriptorSetLayout_T* m_globalsDescriptorLayout = nullptr;
 		VkDescriptorSet_T* m_globalDescriptorSet = nullptr;	
 		WriteOnlyGpuArray<GlobalConstants> m_globalConstantsBuffer;
-		const int c_maxGlobalConstantBuffers = 3;	// ring buffer writes to avoid synchronisation
+		const int c_maxGlobalConstantBuffers = 10;	// ring buffer writes to avoid synchronisation
 		int m_currentGlobalConstantsBuffer = 0;
 		AllocatedBuffer m_globalInstancesHostVisible;
 		StaticMeshInstanceGpu* m_globalInstancesMappedPtr = nullptr;
@@ -53,7 +53,7 @@ namespace R3
 		void* m_drawIndirectMappedPtr = nullptr;
 		uint32_t m_currentInstanceBufferStart = 0;	// index into m_globalInstancesMappedPtr and m_drawIndirectBuffer
 		const uint32_t c_maxInstances = 1024 * 256;
-		const uint32_t c_maxInstanceBuffers = 3;
+		const uint32_t c_maxInstanceBuffers = 4;
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_simpleTriPipeline = VK_NULL_HANDLE;
 		ManagedCommandBuffer m_thisFrameCmdBuffer;

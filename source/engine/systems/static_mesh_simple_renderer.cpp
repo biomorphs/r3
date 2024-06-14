@@ -42,6 +42,7 @@ namespace R3
 	struct PushConstants 
 	{
 		uint32_t m_globalConstantIndex;
+		uint32_t m_padding;
 	};
 
 	StaticMeshSimpleRenderer::StaticMeshSimpleRenderer()
@@ -385,11 +386,7 @@ namespace R3
 			vkCmdBindDescriptorSets(m_thisFrameCmdBuffer.m_cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 1, 1, &allTextures, 0, nullptr);
 		}
 		PushConstants pc;
-		pc.m_globalConstantIndex = m_currentGlobalConstantsBuffer++;
-		if (m_currentGlobalConstantsBuffer >= c_maxGlobalConstantBuffers)
-		{
-			m_currentGlobalConstantsBuffer = 0;
-		}
+		pc.m_globalConstantIndex = m_currentGlobalConstantsBuffer;
 		vkCmdPushConstants(m_thisFrameCmdBuffer.m_cmdBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 		uint32_t drawCount = WriteInstances(m_thisFrameCmdBuffer.m_cmdBuffer);
 		size_t drawOffsetBytes = m_currentInstanceBufferStart * sizeof(VkDrawIndexedIndirectCommand);
@@ -431,6 +428,10 @@ namespace R3
 		ProcessEnvironmentSettings(globals);
 		m_globalConstantsBuffer.Write(m_currentGlobalConstantsBuffer, 1, &globals);
 		m_globalConstantsBuffer.Flush(d, cmds);
+		if (++m_currentGlobalConstantsBuffer >= c_maxGlobalConstantBuffers)
+		{
+			m_currentGlobalConstantsBuffer = 0;
+		}
 	}
 
 	void StaticMeshSimpleRenderer::MainPassDraw(Device& d, VkCommandBuffer cmds, const VkExtent2D& e)

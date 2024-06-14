@@ -9,7 +9,7 @@ namespace R3
 	bool FrameGraph::FixedUpdateSequenceNode::Run() {
 		auto timeSys = Systems::GetSystem<TimeSystem>();
 		double startTime = timeSys->GetElapsedTimeReal();
-		const double c_maxUpdateTime = timeSys->GetFixedUpdateDelta() / 2.0f;
+		const double c_maxUpdateTime = timeSys->GetFixedUpdateDelta();
 		while (timeSys->GetFixedUpdateCatchupTime() >= timeSys->GetFixedUpdateDelta() &&
 			(timeSys->GetElapsedTimeReal() - startTime) < c_maxUpdateTime)
 		{

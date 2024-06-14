@@ -559,6 +559,15 @@ namespace R3
 		case Textures::Format::R_BC4:
 			format = VK_FORMAT_BC4_UNORM_BLOCK;
 			break;
+		case Textures::Format::RGBA_BC3:
+			format = VK_FORMAT_BC3_UNORM_BLOCK;
+			break;
+		case Textures::Format::RGBA_BC2:
+			format = VK_FORMAT_BC2_UNORM_BLOCK;
+			break;
+		case Textures::Format::RGBA_BC1:
+			format = VK_FORMAT_BC1_RGBA_UNORM_BLOCK;
+			break;
 		default:
 			LogError("Unsupported format {}", (int)loadedData->m_data.m_format);
 			return false;

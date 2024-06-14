@@ -190,6 +190,16 @@ namespace R3
 				return w * h * 4;
 			case Format::RGBA_BC7:
 				return w * h;	// 16 bytes per block of 4x4 texels = 1 byte per pixel
+			case Format::RG_BC5:
+				return (w * h); // 16 bytes per block of 4x4 texels = 1 byte per pixel
+			case Format::R_BC4:
+				return (w * h) / 2;	// 8 bytes per block of 4x4 texels = 0.5 byte per pixel
+			case Format::RGBA_BC3:
+				return w * h;	// 16 bytes per block of 4x4 texels = 1 byte per pixel
+			case Format::RGBA_BC2:
+				return w * h;	// 16 bytes per block of 4x4 texels = 1 byte per pixel
+			case Format::RGBA_BC1:
+				return (w * h) / 2;	// 8 bytes per block of 4x4 texels = 0.5 byte per pixel
 			default:
 				return 0;
 			}

@@ -22,7 +22,7 @@ struct PerInstanceData {
 // global constants stored in an array to allow overlapping frames
 layout(set = 0, binding = 0) uniform GlobalConstantsBuffer
 {
-	GlobalConstants AllGlobals[3];
+	GlobalConstants AllGlobals[10];
 };
 
 //all instance data passed in global set via storage buffer (use gl_InstanceIndex to get the current index)
@@ -38,5 +38,6 @@ layout (set = 1, binding = 0) uniform sampler2D allTextures[1024];
 // don't know a better way of doing this yet, but its cheap
 layout(push_constant) uniform constants
 {
-	int m_globalIndex;		// index into m_allGlobals
+	uint m_globalIndex;		// index into m_allGlobals
+	uint m_padding;
 } PushConstants;

@@ -16,6 +16,9 @@ namespace R3
 			RGBA_BC7,
 			RG_BC5,
 			R_BC4,
+			RGBA_BC3,					// dxt5
+			RGBA_BC2,					// dxt3
+			RGBA_BC1					// dxt1
 		};
 		std::string_view FormatToString(Format f);
 
