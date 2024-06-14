@@ -26,7 +26,7 @@ namespace R3
 		glm::vec3 up(0.0f, 1.0f, 0.0f);
 		auto time = Systems::GetSystem<TimeSystem>();
 
-		double accumulator = time->GetFixedUpdateCatchupTime() / time->GetFixedUpdateDelta();
+		double accumulator = time->GetFixedUpdateInterpolation();
 		auto pos = glm::mix(m_prevFramePosition, m_position, accumulator);
 		auto lookAt = glm::mix(m_prevFrameLookDirection, m_lookDirection, accumulator);
 
