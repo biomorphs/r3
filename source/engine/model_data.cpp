@@ -220,7 +220,7 @@ namespace R3
 			aiProcess_ValidateDataStructure |
 			aiProcess_OptimizeMeshes |
 			aiProcess_FlipUVs |
-			// aiProcess_RemoveRedundantMaterials |
+			aiProcess_RemoveRedundantMaterials |
 			(flattenMeshes ? aiProcess_PreTransformVertices : 0)
 		);
 		if (!scene)
