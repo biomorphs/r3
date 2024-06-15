@@ -167,6 +167,8 @@ namespace R3
 				getTexture(aiTextureType_METALNESS, newMaterial.m_metalnessMaps);
 				getTexture(aiTextureType_DIFFUSE_ROUGHNESS, newMaterial.m_roughnessMaps);
 				getTexture(aiTextureType_AMBIENT_OCCLUSION, newMaterial.m_aoMaps);
+				getTexture(aiTextureType_HEIGHT, newMaterial.m_heightMaps);
+				getTexture(aiTextureType_DISPLACEMENT, newMaterial.m_heightMaps);	// just in case
 
 				aiColor3D albedo(0.f, 0.f, 0.f);
 				float opacity = 1.0f, metallic = 0.0f, roughness = 0.15f;

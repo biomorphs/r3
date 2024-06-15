@@ -23,6 +23,7 @@ namespace R3
 		doTexture("MetalTex", smm.m_metalnessTexture);
 		doTexture("NormalTex", smm.m_normalTexture);
 		doTexture("AOTex", smm.m_aoTexture);
+		doTexture("HeightmapTex", smm.m_heightmapTexture);
 	}
 
 	StaticMeshMaterialsComponent::StaticMeshMaterialsComponent()
@@ -73,6 +74,10 @@ namespace R3
 				if (srcMats[m].m_aoMaps.size() > 0)
 				{
 					newMat.m_aoTexture = textures->LoadTexture(srcMats[m].m_aoMaps[0]).m_index;
+				}
+				if (srcMats[m].m_heightMaps.size() > 0)
+				{
+					newMat.m_heightmapTexture = textures->LoadTexture(srcMats[m].m_heightMaps[0]).m_index;
 				}
 				m_materials.push_back(newMat);
 			}
@@ -154,6 +159,14 @@ namespace R3
 					cmp.m_materials[m].m_aoTexture = t.m_index;
 				}
 			});
+			auto inspectHeightTex = InspectComponentCustom<StaticMeshMaterialsComponent, TextureHandle>
+				(e, w, [m](const Entities::EntityHandle&, StaticMeshMaterialsComponent& cmp, Entities::World*, TextureHandle t)
+			{
+				if (m < cmp.m_materials.size())
+				{
+					cmp.m_materials[m].m_heightmapTexture = t.m_index;
+				}
+			});
 			i.InspectColour(std::format("Albedo/Opacity##{}", m).c_str(), m_materials[m].m_albedoOpacity, inspectAlbedoOpacity);
 			i.Inspect(std::format("Metallic##{}", m), m_materials[m].m_metallic, inspectMetallic, 0.01f, 0.0f, 1.0f);
 			i.Inspect(std::format("Roughness##{}", m), m_materials[m].m_roughness, inspectRoughness, 0.01f, 0.0f, 1.0f);
@@ -162,6 +175,7 @@ namespace R3
 			i.InspectTexture(std::format("Metal Texture##{}", m), TextureHandle(m_materials[m].m_metalnessTexture), inspectMetalTex);
 			i.InspectTexture(std::format("Normals Texture##{}", m), TextureHandle(m_materials[m].m_normalTexture), inspectNormalsTex);
 			i.InspectTexture(std::format("AO Texture##{}", m), TextureHandle(m_materials[m].m_aoTexture), inspectAOTex);
+			i.InspectTexture(std::format("Heightmap Texture##{}", m), TextureHandle(m_materials[m].m_heightmapTexture), inspectHeightTex);
 		}
 	}
 

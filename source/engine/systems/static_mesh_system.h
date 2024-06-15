@@ -35,7 +35,7 @@ namespace R3
 		uint32_t m_metalnessTexture = -1;
 		uint32_t m_normalTexture = -1;
 		uint32_t m_aoTexture = -1;
-		uint32_t m_padding = -1;
+		uint32_t m_heightmapTexture = -1;
 	};
 	struct StaticMeshGpuData
 	{

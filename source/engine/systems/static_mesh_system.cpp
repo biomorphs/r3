@@ -205,6 +205,10 @@ namespace R3
 					{
 						md.m_aoTexture = textures->LoadTexture(m->m_materials[mat].m_aoMaps[0]).m_index;
 					}
+					if (m->m_materials[mat].m_heightMaps.size() > 0)
+					{
+						md.m_heightmapTexture = textures->LoadTexture(m->m_materials[mat].m_heightMaps[0]).m_index;
+					}
 				}
 				if (gpuIndex != -1)
 				{

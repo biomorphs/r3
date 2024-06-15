@@ -19,7 +19,7 @@ struct StaticMeshMaterial
 	uint m_metalnessTexture;
 	uint m_normalTexture;
 	uint m_aoTexture;
-	uint m_padding;
+	uint m_heightmapTexture;
 };
 
 layout(buffer_reference, std430) readonly buffer MaterialBuffer { 

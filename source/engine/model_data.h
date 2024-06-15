@@ -35,6 +35,7 @@ namespace R3
 		std::vector<std::string> m_metalnessMaps;
 		std::vector<std::string> m_roughnessMaps;
 		std::vector<std::string> m_aoMaps;
+		std::vector<std::string> m_heightMaps;
 		glm::vec3 m_albedo;
 		float m_opacity;
 		float m_metallic;
