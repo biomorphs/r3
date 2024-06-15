@@ -45,6 +45,7 @@ namespace Entities
 				"IsHandleValid", &World::IsHandleValid,
 				"SetEntityName", &World::SetEntityName,
 				"GetEntityName", &World::GetEntityName,
+				"GetEntityByName", &World::GetEntityByName,
 				"ImportScene", &World::Import
 			);
 			scripts->RegisterFunction("ActiveWorld", [this]() -> Entities::World* {

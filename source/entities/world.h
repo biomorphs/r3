@@ -46,6 +46,7 @@ namespace Entities
 		// Entity names, try not to abuse this!
 		void SetEntityName(const EntityHandle& h, std::string_view name);
 		const std::string_view GetEntityName(const EntityHandle& h);
+		EntityHandle GetEntityByName(std::string name);		// slow!
 
 		// Components slow path
 		bool AddComponent(const EntityHandle& e, std::string_view componentTypeName);

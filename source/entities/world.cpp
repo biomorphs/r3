@@ -40,6 +40,20 @@ namespace Entities
 		return "";
 	}
 
+	EntityHandle World::GetEntityByName(std::string name)
+	{
+		EntityHandle foundEntity;
+		ForEachActiveEntity([&](const EntityHandle& e) {
+			if (GetEntityName(e) == name)
+			{
+				foundEntity = e;
+				return false;
+			}
+			return true;
+		});
+		return foundEntity;
+	}
+
 	void World::SerialiseEntity(const EntityHandle& e, JsonSerialiser& target)
 	{
 		assert(IsHandleValid(e));
