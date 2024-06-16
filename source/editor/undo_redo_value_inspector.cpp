@@ -84,6 +84,24 @@ namespace R3
 		return false;
 	}
 
+	bool UndoRedoInspector::Inspect(std::string_view label, glm::vec4 currentValue, std::function<void(glm::vec4)> setFn, glm::vec4 minv, glm::vec4 maxv)
+	{
+		constexpr float errorMargin = 0.000001f;
+		float availableWidth = ImGui::GetContentRegionAvail().x;
+
+		std::string inputId = std::string("##") + label.data() + "_value";
+		glm::vec4 newValue = currentValue;
+		ImGui::InputFloat4(label.data(), glm::value_ptr(newValue), "%f");
+		newValue = glm::max(minv, glm::min(newValue, maxv));
+
+		if (glm::distance(newValue, currentValue) >= c_floatEpsilon)
+		{
+			m_cmds.Push(std::make_unique<SetValueCommand<glm::vec4>>(label, currentValue, newValue, setFn));
+			return true;
+		}
+		return false;
+	}
+
 	bool UndoRedoInspector::InspectColour(std::string_view label, glm::vec4 currentValue, std::function<void(glm::vec4)> setFn)
 	{
 		glm::vec4 val = currentValue;

@@ -14,11 +14,12 @@ layout(location = 4) out mat3 outTBN;
 void main() {
 	GlobalConstants globals = AllGlobals[PushConstants.m_globalIndex];
 	PerInstanceData thisInstance = AllInstances[gl_InstanceIndex];
+	StaticMeshMaterial myMaterial = globals.m_materialBuffer.materials[thisInstance.m_materialIndex];
 	MeshVertex v = globals.m_vertexBuffer.vertices[gl_VertexIndex];
 	vec4 worldSpacePosition = thisInstance.m_transform * vec4(v.m_positionU0.xyz, 1);
 	outWorldspacePos = worldSpacePosition.xyz;
 	outWorldspaceNormal = normalize(mat3(transpose(inverse(thisInstance.m_transform))) * v.m_normalV0.xyz);
-	outUV = vec2(v.m_positionU0.w, v.m_normalV0.w);
+	outUV = myMaterial.m_uvOffsetScale.xy + vec2(v.m_positionU0.w * myMaterial.m_uvOffsetScale.z, v.m_normalV0.w * myMaterial.m_uvOffsetScale.w);
 	outMaterialIndex = thisInstance.m_materialIndex;
 	outTBN = CalculateTBN(thisInstance.m_transform, v.m_tangentPad.xyz, v.m_normalV0.xyz);
 	gl_Position = globals.m_projViewTransform * worldSpacePosition;	// clip space
