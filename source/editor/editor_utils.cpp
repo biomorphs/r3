@@ -57,7 +57,7 @@ namespace R3
 		auto parentCmp = w.GetComponent<TransformComponent>(parent);
 		if (parentCmp != nullptr && childCmp != nullptr)
 		{
-			ImmediateRenderer::PerVertexData verts[2];
+			ImmediateRenderer::PosColourVertex verts[2];
 			verts[0].m_position = childCmp->GetWorldspaceInterpolated()[3];
 			verts[0].m_colour = colour;
 			verts[1].m_position = parentCmp->GetWorldspaceInterpolated()[3];

@@ -26,27 +26,27 @@ namespace R3
 	{
 	}
 
-	void ImmediateRenderer::AddLine(const PerVertexData vertices[2])
+	void ImmediateRenderer::AddLine(const PosColourVertex vertices[2])
 	{
 		DrawData newLine;
-		newLine.m_startVertexOffset = static_cast<uint32_t>(m_thisFrameVertices.size());
+		newLine.m_startVertexOffset = static_cast<uint32_t>(m_thisFramePosColVertices.size());
 		if (newLine.m_startVertexOffset + 2 <= m_maxVertices)
 		{
 			newLine.m_vertexCount = 2;
-			m_thisFrameVertices.emplace_back(vertices[0]);
-			m_thisFrameVertices.emplace_back(vertices[1]);
+			m_thisFramePosColVertices.emplace_back(vertices[0]);
+			m_thisFramePosColVertices.emplace_back(vertices[1]);
 			m_thisFrameLines.emplace_back(newLine);
 		}
 	}
 
-	void ImmediateRenderer::AddLines(const PerVertexData* vertices, int linecount)
+	void ImmediateRenderer::AddLines(const PosColourVertex* vertices, int linecount)
 	{
 		DrawData newLines;
-		newLines.m_startVertexOffset = static_cast<uint32_t>(m_thisFrameVertices.size());
+		newLines.m_startVertexOffset = static_cast<uint32_t>(m_thisFramePosColVertices.size());
 		if (newLines.m_startVertexOffset + (linecount * 2) <= m_maxVertices)
 		{
 			newLines.m_vertexCount = linecount * 2;
-			m_thisFrameVertices.insert(m_thisFrameVertices.end(), vertices, vertices + (linecount * 2));
+			m_thisFramePosColVertices.insert(m_thisFramePosColVertices.end(), vertices, vertices + (linecount * 2));
 			m_thisFrameLines.emplace_back(newLines);
 		}
 	}
@@ -55,7 +55,7 @@ namespace R3
 	{
 		glm::vec4 p0 = glm::vec4(position, 1.0f);
 		glm::vec3 extents = glm::mat3(transform) * glm::vec3(1, 1, 1);
-		PerVertexData vertices[6] = {
+		PosColourVertex vertices[6] = {
 			{ p0, {1.0f,0.0f,0.0f,1.0f} },
 			{ p0 + glm::vec4(extents.x,0,0,0), {1.0f,0.0f,0.0f,1.0f} },
 			{ p0, {0.0f,1.0f,0.0f,1.0f} },
@@ -84,7 +84,7 @@ namespace R3
 			{p[6],1.0f},	{p[4],1.0f},	// rbf, lbf
 		};
 		constexpr int c_vertexCount = sizeof(v) / sizeof(v[0]);
-		PerVertexData vertices[c_vertexCount];
+		PosColourVertex vertices[c_vertexCount];
 		for (int i = 0; i < c_vertexCount; ++i)
 		{
 			vertices[i] = { v[i], colour };
@@ -94,7 +94,7 @@ namespace R3
 
 	void ImmediateRenderer::DrawAABB(glm::vec3 minbound, glm::vec3 maxbound, glm::mat4 transform, glm::vec4 colour)
 	{
-		ImmediateRenderer::PerVertexData lines[] = {
+		ImmediateRenderer::PosColourVertex lines[] = {
 			{ {minbound.x,minbound.y,minbound.z,1}, colour},
 			{ {maxbound.x,minbound.y,minbound.z,1}, colour},
 			{ {minbound.x,minbound.y,maxbound.z,1}, colour},
@@ -132,7 +132,7 @@ namespace R3
 
 	void ImmediateRenderer::AddCubeWireframe(glm::mat4 transform, glm::vec4 colour)
 	{
-		ImmediateRenderer::PerVertexData testLines[] = {
+		ImmediateRenderer::PosColourVertex testLines[] = {
 			{ {-1,-1,-1,1}, colour},
 			{ {1,-1,-1,1}, colour},
 
@@ -220,23 +220,23 @@ namespace R3
 		}
 	}
 
-	void ImmediateRenderer::AddTriangle(const PerVertexData vertices[3])
+	void ImmediateRenderer::AddTriangle(const PosColourVertex vertices[3])
 	{
 		DrawData newTri;
-		newTri.m_startVertexOffset = static_cast<uint32_t>(m_thisFrameVertices.size());
+		newTri.m_startVertexOffset = static_cast<uint32_t>(m_thisFramePosColVertices.size());
 		if (newTri.m_startVertexOffset + 3 <= m_maxVertices)
 		{
 			newTri.m_vertexCount = 3;
-			m_thisFrameVertices.emplace_back(vertices[0]);
-			m_thisFrameVertices.emplace_back(vertices[1]);
-			m_thisFrameVertices.emplace_back(vertices[2]);
+			m_thisFramePosColVertices.emplace_back(vertices[0]);
+			m_thisFramePosColVertices.emplace_back(vertices[1]);
+			m_thisFramePosColVertices.emplace_back(vertices[2]);
 			m_thisFrameTriangles.emplace_back(newTri);
 		}
 	}
 
 	void ImmediateRenderer::AddLine(glm::vec3 p0, glm::vec3 p1, glm::vec4 colour)
 	{
-		PerVertexData verts[2];
+		PosColourVertex verts[2];
 		verts[0].m_colour = colour;
 		verts[0].m_position = glm::vec4(p0,1);
 		verts[1].m_colour = colour;
@@ -248,7 +248,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		auto& pfd = m_perFrameData[m_currentFrameIndex];
-		size_t dataToCopy = glm::min(m_maxVertices, m_thisFrameVertices.size()) * sizeof(PerVertexData);
+		size_t dataToCopy = glm::min(m_maxVertices, m_thisFramePosColVertices.size()) * sizeof(PosColourVertex);
 		if (dataToCopy > 0)
 		{
 			auto staging = stagingBuffers.GetBuffer(dataToCopy, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO);
@@ -256,12 +256,12 @@ namespace R3
 			{
 				// host write is coherant, so no flush is required, just memcpy the current frame data
 				// the write is guaranteed to complete when the cmd buffer is submitted to the queue
-				memcpy(staging->m_mappedBuffer, m_thisFrameVertices.data(), dataToCopy);
+				memcpy(staging->m_mappedBuffer, m_thisFramePosColVertices.data(), dataToCopy);
 
 				// now we need to copy the data from staging to the actual buffer using the graphics queue
 				VkBufferCopy copyRegion{};
 				copyRegion.srcOffset = 0;
-				copyRegion.dstOffset = pfd.m_vertexOffset * sizeof(PerVertexData);
+				copyRegion.dstOffset = pfd.m_vertexOffset * sizeof(PosColourVertex);
 				copyRegion.size = dataToCopy;	// may need to adjust for alignment?
 				vkCmdCopyBuffer(cmdBuffer, staging->m_buffer.m_buffer, m_allVertexData.m_buffer, 1, &copyRegion);
 
@@ -337,7 +337,7 @@ namespace R3
 	{
 		m_thisFrameTriangles.clear();
 		m_thisFrameLines.clear();
-		m_thisFrameVertices.clear();
+		m_thisFramePosColVertices.clear();
 		m_currentFrameIndex = (m_currentFrameIndex + 1) % c_framesInFlight;
 	}
 
@@ -421,7 +421,7 @@ namespace R3
 	bool ImmediateRenderer::Initialise(Device& d, VkFormat colourBufferFormat, VkFormat depthBufferFormat, uint32_t maxVerticesPerFrame)
 	{
 		R3_PROF_EVENT();
-		size_t bufferSize = maxVerticesPerFrame * c_framesInFlight * sizeof(PerVertexData);
+		size_t bufferSize = maxVerticesPerFrame * c_framesInFlight * sizeof(PosColourVertex);
 		m_allVertexData = VulkanHelpers::CreateBuffer(d.GetVMA(), bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
 		m_allvertsBufferAddress = VulkanHelpers::GetBufferDeviceAddress(d.GetVkDevice(), m_allVertexData);
 		if (m_allVertexData.m_allocation == VK_NULL_HANDLE)
@@ -429,7 +429,7 @@ namespace R3
 			LogError("Failed to create vertex buffer of size {} bytes", bufferSize);
 			return false;
 		}
-		m_thisFrameVertices.reserve(maxVerticesPerFrame);
+		m_thisFramePosColVertices.reserve(maxVerticesPerFrame);
 		m_maxVertices = maxVerticesPerFrame;
 		for (int f = 0; f < c_framesInFlight; ++f)
 		{

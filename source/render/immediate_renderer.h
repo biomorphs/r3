@@ -17,10 +17,16 @@ namespace R3
 		ImmediateRenderer();
 		~ImmediateRenderer();
 
-		struct PerVertexData
+		struct PosColourVertex
 		{
 			glm::vec4 m_position;
 			glm::vec4 m_colour;
+		};
+		struct PosColourUVVertex
+		{
+			glm::vec4 m_position;
+			glm::vec4 m_colour;
+			glm::vec2 m_uv;
 		};
 		bool Initialise(Device& d, VkFormat colourBufferFormat, VkFormat depthBufferFormat, uint32_t maxVerticesPerFrame = 1024 * 256);
 		void Destroy(Device& d);
@@ -29,10 +35,10 @@ namespace R3
 		void Draw(glm::mat4 vertexToScreen, Device& d, VkExtent2D viewportSize, VkCommandBuffer& cmdBuffer);
 		void Flush();	// call at end of frame, clears out previous tri data
 
-		void AddTriangle(const PerVertexData vertices[3]);
+		void AddTriangle(const PosColourVertex vertices[3]);
 		void AddLine(glm::vec3 p0, glm::vec3 p1, glm::vec4 colour);
-		void AddLine(const PerVertexData vertices[2]);
-		void AddLines(const PerVertexData* vertices, int linecount);
+		void AddLine(const PosColourVertex vertices[2]);
+		void AddLines(const PosColourVertex* vertices, int linecount);
 		void AddAxisAtPoint(glm::vec3 position, float scale = 1.0f, glm::mat4 transform = glm::identity<glm::mat4>());
 		void AddFrustum(const Frustum& f, glm::vec4 colour);
 		void AddCubeWireframe(glm::mat4 transform, glm::vec4 colour);
@@ -53,7 +59,7 @@ namespace R3
 		size_t m_maxVertices = 0;
 		AllocatedBuffer m_allVertexData;		// contains c_framesInFlight x max vertices
 		VkDeviceAddress m_allvertsBufferAddress;
-		std::vector<PerVertexData> m_thisFrameVertices;
+		std::vector<PosColourVertex> m_thisFramePosColVertices;
 		std::vector<DrawData> m_thisFrameTriangles;
 		std::vector<DrawData> m_thisFrameLines;
 		PerFrameData m_perFrameData[c_framesInFlight];
