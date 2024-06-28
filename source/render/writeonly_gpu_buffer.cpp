@@ -116,9 +116,15 @@ namespace R3
 	void WriteOnlyGpuBuffer::Destroy(Device& d)
 	{
 		R3_PROF_EVENT();
-		vmaUnmapMemory(d.GetVMA(), m_stagingBuffer.m_allocation);
-		vmaDestroyBuffer(d.GetVMA(), m_allData.m_buffer, m_allData.m_allocation);
-		vmaDestroyBuffer(d.GetVMA(), m_stagingBuffer.m_buffer, m_stagingBuffer.m_allocation);
+		if (m_allData.m_allocation)
+		{
+			vmaDestroyBuffer(d.GetVMA(), m_allData.m_buffer, m_allData.m_allocation);
+		}
+		if (m_stagingBuffer.m_allocation)
+		{
+			vmaUnmapMemory(d.GetVMA(), m_stagingBuffer.m_allocation);
+			vmaDestroyBuffer(d.GetVMA(), m_stagingBuffer.m_buffer, m_stagingBuffer.m_allocation);
+		}
 	}
 
 	uint64_t WriteOnlyGpuBuffer::GetSize()
