@@ -11,6 +11,7 @@ struct VkExtent2D;
 enum VkFormat;
 namespace R3
 {
+	class RenderGraph;
 	class Device;
 	class Window;
 	class Swapchain;
@@ -27,6 +28,7 @@ namespace R3
 		virtual bool Init();
 		virtual void Shutdown();
 		glm::vec2 GetWindowExtents();
+		RenderGraph& GetRenderGraph() { return *m_renderGraph; }
 		ImmediateRenderer& GetImRenderer() { return *m_imRenderer; }
 		VkFormat GetMainColourTargetFormat();
 		VkFormat GetMainDepthStencilFormat();
@@ -70,6 +72,7 @@ namespace R3
 		bool ShouldEnableVsync();
 		bool m_isWindowMinimised = false;
 		bool m_recreateSwapchain = false;
+		std::unique_ptr<RenderGraph> m_renderGraph;
 		std::unique_ptr<Window> m_mainWindow;
 		std::unique_ptr<Device> m_device;
 		std::unique_ptr<Swapchain> m_swapChain;

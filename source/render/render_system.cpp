@@ -3,6 +3,7 @@
 #include "device.h"
 #include "swap_chain.h"
 #include "immediate_renderer.h"
+#include "render_graph.h"
 #include "camera.h"
 #include "core/file_io.h"
 #include "core/profiler.h"
@@ -87,6 +88,34 @@ namespace R3
 		m_mainDeleters.PushDeleter([this]() {
 			m_cmdBufferAllocator = nullptr;
 		});
+		m_renderGraph = std::make_unique<RenderGraph>();
+		m_mainDeleters.PushDeleter([this]() {
+			m_renderGraph = nullptr;
+		});
+
+		// back buffer is used as src for transfers (blit to back buffer) + used as colour attachment
+		// do we really need to specify usage each time? definite risk of mismatch
+		AttachmentInfo mainColour;
+		mainColour.m_format = VK_FORMAT_R16G16B16A16_SFLOAT;	// hdr-lite pls
+		mainColour.m_usageFlags = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		mainColour.m_name = "MainColour";
+
+		AttachmentInfo mainDepth;
+		mainDepth.m_format = VK_FORMAT_D32_SFLOAT;				// probably too fat
+		mainDepth.m_usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+		mainDepth.m_name = "MainDepth";
+
+		RenderPass mainColourPass;	// main colour pass writes to MainColour and reads/writes MainDepth
+		mainColourPass.m_name = "HDR Colour Pass";
+		mainColourPass.m_colourOutputAttachments.push_back(mainColour);
+		mainColourPass.m_depthStencilAttachment = mainDepth;
+
+		// we probably want a special kind of render pass just for blitting a target to the current swap chain image
+		RenderPass blitToSwapchainPass;	// blit to swap pass copies main colour to swap chain
+		blitToSwapchainPass.m_colourInputAttachments.push_back(mainColour);
+
+		m_renderGraph->m_allPasses.push_back(mainColourPass);
+		m_renderGraph->m_allPasses.push_back(blitToSwapchainPass);
 	}
 
 	RenderSystem::~RenderSystem()

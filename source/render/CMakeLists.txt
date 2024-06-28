@@ -1,4 +1,6 @@
 set(RenderLib_SourceFiles
+	render_graph.h
+	render_graph.cpp
 	render_helpers.h
 	render_helpers.cpp
 	render_system.h
