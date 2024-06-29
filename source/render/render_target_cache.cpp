@@ -19,9 +19,29 @@ namespace R3
 			a.m_aspectFlags == m_aspectFlags;
 	}
 
+	void RenderTargetCache::Clear()
+	{
+		R3_PROF_EVENT();
+		auto render = Systems::GetSystem<RenderSystem>();
+		for (int i = 0; i < m_allTargets.size(); ++i)
+		{
+			if (m_allTargets[i].m_allocation != nullptr)	// owned by the cache
+			{
+				vkDestroyImageView(render->GetDevice()->GetVkDevice(), m_allTargets[i].m_view, nullptr);
+				vmaDestroyImage(render->GetDevice()->GetVMA(), m_allTargets[i].m_image, m_allTargets[i].m_allocation);
+			}
+		}
+		m_allTargets.clear();
+	}
+
 	RenderTargetCache::RenderTargetCache()
 	{
 		m_allTargets.reserve(1024);	// some large number to ensure the pointers dont get invalidated
+	}
+
+	RenderTargetCache::~RenderTargetCache()
+	{
+		Clear();
 	}
 
 	glm::vec2 RenderTargetCache::GetTargetSize(const RenderTargetInfo& info)

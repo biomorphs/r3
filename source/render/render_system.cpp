@@ -839,6 +839,7 @@ namespace R3
 		CheckResult(vkDeviceWaitIdle(m_device->GetVkDevice()));
 
 		// Destroy old depth/backbuffer/swapchain images
+		m_renderTargets->Clear();
 		vkDestroyImageView(m_device->GetVkDevice(), m_vk->m_depthBufferView, nullptr);
 		vmaDestroyImage(m_device->GetVMA(), m_vk->m_depthBufferImage.m_image, m_vk->m_depthBufferImage.m_allocation);
 		vkDestroyImageView(m_device->GetVkDevice(), m_vk->m_backBufferView, nullptr);
