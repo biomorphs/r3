@@ -11,6 +11,7 @@ struct VkExtent2D;
 enum VkFormat;
 namespace R3
 {
+	class RenderTargetCache;
 	class RenderGraph;
 	class Device;
 	class Window;
@@ -53,6 +54,7 @@ namespace R3
 		CallbackArray<ShutdownCallback> m_onShutdownCbs;
 
 	private:
+		void RunGraph(RenderGraph& r, VkCommandBuffer_T* cmdBuffer, VkImage_T* swapImage, VkImageView_T* swapImageView);
 		bool AcquireSwapImage();
 		void RecordMainPass(VkCommandBuffer_T* cmdBuffer);
 		void DrawImgui(VkImageView_T* targetView, VkCommandBuffer_T* cmdBuffer);
@@ -64,6 +66,7 @@ namespace R3
 		bool CreateDepthBuffer();
 		bool CreateBackBuffer();
 		bool CreateSyncObjects();
+		bool CreateRenderGraph();
 		bool RecreateSwapchain();
 		bool PrepareSwapchain();
 		void OnSystemEvent(void* ev);
@@ -72,6 +75,7 @@ namespace R3
 		bool ShouldEnableVsync();
 		bool m_isWindowMinimised = false;
 		bool m_recreateSwapchain = false;
+		std::unique_ptr<RenderTargetCache> m_renderTargets;
 		std::unique_ptr<RenderGraph> m_renderGraph;
 		std::unique_ptr<Window> m_mainWindow;
 		std::unique_ptr<Device> m_device;

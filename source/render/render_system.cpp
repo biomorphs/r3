@@ -3,6 +3,7 @@
 #include "device.h"
 #include "swap_chain.h"
 #include "immediate_renderer.h"
+#include "render_target_cache.h"
 #include "render_graph.h"
 #include "camera.h"
 #include "core/file_io.h"
@@ -36,6 +37,7 @@ namespace R3
 	static constexpr int c_maxFramesInFlight = 2;	// let the cpu get ahead of the gpu by this many frames
 	using VulkanHelpers::CheckResult;				// laziness
 	using VulkanHelpers::FindQueueFamilyIndices;
+	bool g_useRenderGraph = true;
 
 	struct FrameData
 	{
@@ -88,34 +90,6 @@ namespace R3
 		m_mainDeleters.PushDeleter([this]() {
 			m_cmdBufferAllocator = nullptr;
 		});
-		m_renderGraph = std::make_unique<RenderGraph>();
-		m_mainDeleters.PushDeleter([this]() {
-			m_renderGraph = nullptr;
-		});
-
-		// back buffer is used as src for transfers (blit to back buffer) + used as colour attachment
-		// do we really need to specify usage each time? definite risk of mismatch
-		AttachmentInfo mainColour;
-		mainColour.m_format = VK_FORMAT_R16G16B16A16_SFLOAT;	// hdr-lite pls
-		mainColour.m_usageFlags = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-		mainColour.m_name = "MainColour";
-
-		AttachmentInfo mainDepth;
-		mainDepth.m_format = VK_FORMAT_D32_SFLOAT;				// probably too fat
-		mainDepth.m_usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-		mainDepth.m_name = "MainDepth";
-
-		RenderPass mainColourPass;	// main colour pass writes to MainColour and reads/writes MainDepth
-		mainColourPass.m_name = "HDR Colour Pass";
-		mainColourPass.m_colourOutputAttachments.push_back(mainColour);
-		mainColourPass.m_depthStencilAttachment = mainDepth;
-
-		// we probably want a special kind of render pass just for blitting a target to the current swap chain image
-		RenderPass blitToSwapchainPass;	// blit to swap pass copies main colour to swap chain
-		blitToSwapchainPass.m_colourInputAttachments.push_back(mainColour);
-
-		m_renderGraph->m_allPasses.push_back(mainColourPass);
-		m_renderGraph->m_allPasses.push_back(blitToSwapchainPass);
 	}
 
 	RenderSystem::~RenderSystem()
@@ -157,18 +131,6 @@ namespace R3
 
 		// push immediate renderer vertices to gpu outside of render pass 
 		m_imRenderer->WriteVertexData(*m_device, *m_stagingBuffers.get(), cmdBuffer);
-
-		// pipeline dynamic state
-		VkViewport viewport = { 0 };
-		viewport.x = 0.0f;
-		viewport.y = 0.0f;
-		viewport.width = (float)m_swapChain->GetExtents().width;
-		viewport.height = (float)m_swapChain->GetExtents().height;
-		viewport.minDepth = 0.0f;	// normalised! must be between 0 and 1
-		viewport.maxDepth = 1.0f;	// ^^
-		VkRect2D scissor = { 0 };
-		scissor.offset = { 0, 0 };
-		scissor.extent = m_swapChain->GetExtents();	// draw the full image
 
 		// rendering to backbuffer + depth
 		// also clears these buffers!
@@ -454,6 +416,110 @@ namespace R3
 		return true;
 	}
 
+	bool RenderSystem::CreateRenderGraph()
+	{
+		m_renderGraph = std::make_unique<RenderGraph>();
+		m_mainDeleters.PushDeleter([this]() {
+			m_renderGraph = nullptr;
+		});
+
+		// special case, just used as a proxy for lookups later
+		RenderTargetInfo swapchainImage ("Swapchain");
+
+		// HDR colour buffer is used as src for transfers (blit to swap chain) + used as colour attachment
+		RenderTargetInfo mainColour("MainColour");
+		mainColour.m_format = VK_FORMAT_R16G16B16A16_SFLOAT;	// hdr-lite pls
+		mainColour.m_usageFlags = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+		// Main depth buffer
+		RenderTargetInfo mainDepth("MainDepth");
+		mainDepth.m_format = VK_FORMAT_D32_SFLOAT;				// probably too fat
+		mainDepth.m_usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+		mainDepth.m_aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+		// 2nd attempt
+		auto mainPass = std::make_unique<DrawPass>();			// clear + draw to colour + depth
+		mainPass->m_colourAttachments.push_back({ mainColour, DrawPass::AttachmentLoadOp::Clear });
+		mainPass->m_depthAttachment = { mainDepth, DrawPass::AttachmentLoadOp::Clear };
+		mainPass->m_onBegin.AddCallback([this](RenderPassContext& ctx) {
+			m_onMainPassBegin.Run(*m_device, ctx.m_graphicsCmds);
+			m_imRenderer->WriteVertexData(*m_device, *m_stagingBuffers.get(), ctx.m_graphicsCmds);
+		});
+		mainPass->m_onDraw.AddCallback([this](RenderPassContext& ctx) {
+			const auto& dims = GetWindowExtents();
+			m_onMainPassDraw.Run(*m_device, ctx.m_graphicsCmds, VkExtent2D{ (uint32_t)dims.x, (uint32_t)dims.y });	// refactor?
+			auto cameras = GetSystem<CameraSystem>();	// IM renderer draws to colour buffer
+			m_imRenderer->Draw(cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix(), *m_device, m_swapChain->GetExtents(), ctx.m_graphicsCmds);
+		});
+		mainPass->m_onEnd.AddCallback([this](RenderPassContext& ctx) {
+			m_onMainPassEnd.Run(*m_device);
+			m_imRenderer->Flush();
+		});
+		mainPass->m_drawExtents = GetWindowExtents();
+		m_renderGraph->m_allPasses.push_back(std::move(mainPass));
+
+		auto blitPass = std::make_unique<TransferPass>();		// blit HDR colour to swap chain
+		blitPass->m_inputs.push_back(mainColour);
+		blitPass->m_outputs.push_back(swapchainImage);
+		blitPass->m_onRun.AddCallback([this, mainColour, swapchainImage](RenderPassContext& ctx) {
+			VulkanHelpers::BlitColourImageToImage(ctx.m_graphicsCmds,
+				ctx.GetResolvedTarget(mainColour)->m_image, m_swapChain->GetExtents(),
+				ctx.GetResolvedTarget(swapchainImage)->m_image, m_swapChain->GetExtents());
+		});
+		m_renderGraph->m_allPasses.push_back(std::move(blitPass));
+
+		auto imguiPass = std::make_unique<DrawPass>();			// imgui draw direct to swap image
+		imguiPass->m_colourAttachments.push_back({ swapchainImage, DrawPass::AttachmentLoadOp::Load });
+		imguiPass->m_drawExtents = GetWindowExtents();
+		imguiPass->m_onDraw.AddCallback([this](RenderPassContext& ctx) {
+			ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), ctx.m_graphicsCmds);
+		});
+		m_renderGraph->m_allPasses.push_back(std::move(imguiPass));
+
+		return true;
+	}
+
+	void RenderSystem::RunGraph(RenderGraph& r, VkCommandBuffer_T* cmdBuffer, VkImage_T* swapImage, VkImageView_T* swapImageView)
+	{
+		R3_PROF_EVENT();
+
+		// start writing
+		VkCommandBufferBeginInfo beginInfo = { 0 };
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		if (!CheckResult(vkBeginCommandBuffer(cmdBuffer, &beginInfo)))	// resets the cmd buffer
+		{
+			LogError("failed to begin recording command buffer!");
+			return;
+		}
+		
+		// Pass the current swap chain info to the target cache (so it can be accessed from the graph)
+		RenderTargetInfo swapInfo("Swapchain");
+		swapInfo.m_format = m_swapChain->GetFormat().format;
+		swapInfo.m_name = "Swapchain";
+		swapInfo.m_size = { m_swapChain->GetExtents().width, m_swapChain->GetExtents().height };
+		swapInfo.m_sizeType = RenderTargetInfo::SizeType::Fixed;
+		m_renderTargets->AddTarget(swapInfo, swapImage, swapImageView);
+
+		RenderGraph::GraphContext ctx;
+		ctx.m_graphicsCmds = cmdBuffer;
+		ctx.m_targets = m_renderTargets.get();
+		m_renderGraph->Run(ctx);
+
+		// Transition swap chain image to format optimal for present
+		auto colourBarrier = VulkanHelpers::MakeImageBarrier(swapImage,
+			VK_IMAGE_ASPECT_COLOR_BIT,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,				// src mask = wait before writing attachment
+			VK_ACCESS_NONE,										// dst mask = we dont care?
+			VK_IMAGE_LAYOUT_UNDEFINED,	// TODO from current swap image layout
+			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);					// to format optimal for present
+		vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &colourBarrier);
+
+		if (!CheckResult(vkEndCommandBuffer(cmdBuffer)))
+		{
+			LogError("failed to end recording command buffer!");
+		}
+	}
+
 	bool RenderSystem::DrawFrame()
 	{
 		R3_PROF_EVENT();
@@ -479,7 +545,15 @@ namespace R3
 			LogError("Failed to create cmd buffer!");
 			return false;
 		}
-		RecordCommandBuffer(m_swapChain->GetImages()[m_currentSwapImage], m_swapChain->GetViews()[m_currentSwapImage], graphicsCmds->m_cmdBuffer );
+
+		if (g_useRenderGraph)
+		{
+			RunGraph(*m_renderGraph, graphicsCmds->m_cmdBuffer, m_swapChain->GetImages()[m_currentSwapImage], m_swapChain->GetViews()[m_currentSwapImage]);
+		}
+		else
+		{
+			RecordCommandBuffer(m_swapChain->GetImages()[m_currentSwapImage], m_swapChain->GetViews()[m_currentSwapImage], graphicsCmds->m_cmdBuffer);
+		}
 
 		// submit the cmd buffer to the graphics queue
 		VkSubmitInfo submitInfo{};
@@ -618,6 +692,16 @@ namespace R3
 			LogError("Failed to create sync objects");
 			return false;
 		}
+		if (!CreateRenderGraph())
+		{
+			LogError("Failed to create render graph");
+			return false;
+		}
+
+		m_renderTargets = std::make_unique<RenderTargetCache>();
+		m_mainDeleters.PushDeleter([&]() {
+			m_renderTargets = {};
+		});
 
 		m_imRenderer = std::make_unique<ImmediateRenderer>();
 		if (!m_imRenderer->Initialise(*m_device, m_vk->m_backBufferFormat, m_vk->m_depthBufferFormat))

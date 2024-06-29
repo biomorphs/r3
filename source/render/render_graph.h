@@ -1,60 +1,84 @@
 #pragma once
 #include "engine/callback_array.h"
 #include "core/glm_headers.h"
+#include "vulkan_helpers.h"
+#include "render_target_cache.h"
 #include <vector>
-#include <vulkan/vulkan_core.h>
 #include <string>
+#include <memory>
+#include <optional>
 
 namespace R3
 {
-	class Device; 
-
-	// Render graph describes the entire frame + resources that are used
-	// The graph is responsible for resource creation + caching, image layout transitions, and any other synchronisation between passes
-	// Eventually this will need to handle buffers and other resources
-	
-	// This describes a render target, everything needed to create/find a cached one
-	struct AttachmentInfo
-	{
-		enum class SizeType {		// allows us to create fixed size (in pixels) or size relative to current swap chain
-			Fixed,
-			SwapchainMultiple
-		};
-		std::string m_name;
-		SizeType m_sizeType = SizeType::SwapchainMultiple;
-		glm::vec2 m_size = { 1,1 };			// either pixels or a multiple of swap chain
-		VkFormat m_format = VK_FORMAT_UNDEFINED;
-		VkImageUsageFlags m_usageFlags = VK_IMAGE_USAGE_FLAG_BITS_MAX_ENUM;	// must be set for creation
-		uint32_t m_samples = 1;
-		uint32_t m_levels = 1;
-		uint32_t m_layers = 1;
-	};
-
-	class RenderPass
+	// Passed to each render pass
+	class RenderPassContext
 	{
 	public:
-		using BeginCallback = std::function<void(Device&)>;		// called before vkCmdBeginRendering, useful for setup 
-		using DrawCallback = std::function<void(Device&)>;		// draw stuff here, called after all input attachments have been properly transitioned
-		using EndCallback = std::function<void(Device&)>;		// called after vkCmdEndRendering
-		CallbackArray<BeginCallback> m_onPassBegin;
-		CallbackArray<DrawCallback> m_onPassDraw;
-		CallbackArray<EndCallback> m_onPassEnd;
+		RenderTargetCache* m_targets;	// target cache
+		VkCommandBuffer m_graphicsCmds;	// main cmd buffer
+		std::vector<RenderTarget*> m_resolvedTargets;	// all targets used by a pass
 
+		RenderTarget* GetResolvedTarget(const RenderTargetInfo& info);
+	};
+
+	// base render graph pass node
+	class RenderGraphPass
+	{
+	public:
+		virtual ~RenderGraphPass() = default;
+		virtual void Run(RenderPassContext&) = 0;
 		std::string m_name;
-		std::vector<AttachmentInfo> m_colourInputAttachments;
-		AttachmentInfo m_depthStencilAttachment;				// both input and output
-		std::vector<AttachmentInfo> m_colourOutputAttachments;
+	};
 
-		bool Begin(Device&);
-		bool Draw(Device&);
-		bool End(Device&);
+	// used to move data between render targets using transfer operations
+	class TransferPass : public RenderGraphPass
+	{
+	public:
+		virtual ~TransferPass() = default;
+		virtual void Run(RenderPassContext& ctx);
+		void ResolveTargets(RenderPassContext& ctx);
+		std::vector<RenderTargetInfo> m_inputs;
+		std::vector<RenderTargetInfo> m_outputs;
+		using RunCallback = std::function<void(RenderPassContext&)>;
+		CallbackArray<RunCallback> m_onRun;	// do the work here
+	};
+
+	// used to draw to a set of targets
+	class DrawPass : public RenderGraphPass
+	{
+	public:
+		virtual ~DrawPass() = default;
+		virtual void Run(RenderPassContext& ctx);
+		void ResolveTargets(RenderPassContext& ctx);
+		enum AttachmentLoadOp {
+			DontCare,
+			Load,
+			Clear
+		};
+		struct DrawAttachment {	// need to describe the load operation when drawing to a target
+			RenderTargetInfo m_info;
+			AttachmentLoadOp m_loadOp = AttachmentLoadOp::Load;
+		};
+		std::vector<DrawAttachment> m_colourAttachments;
+		std::optional<DrawAttachment> m_depthAttachment;
+		glm::vec2 m_drawExtents = { 0,0 };
+
+		using RunCallback = std::function<void(RenderPassContext&)>;
+		CallbackArray<RunCallback> m_onBegin;	// called before vkCmdBeginRendering, useful for setup 
+		CallbackArray<RunCallback> m_onDraw;	// draw stuff here
+		CallbackArray<RunCallback> m_onEnd;		// called after vkCmdEndRendering
 	};
 
 	class RenderGraph
 	{
 	public:
-		void Run(Device& d);
+		struct GraphContext
+		{
+			RenderTargetCache* m_targets = nullptr;
+			VkCommandBuffer m_graphicsCmds;	// main cmd buffer
+		};
+		void Run(GraphContext& context);
 
-		std::vector<RenderPass> m_allPasses;					// these are ran in order, nothing fancy
-	};
+		std::vector<std::unique_ptr<RenderGraphPass>> m_allPasses;					// these are ran in order, nothing fancy
+	};	
 }
