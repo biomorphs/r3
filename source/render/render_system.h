@@ -31,11 +31,13 @@ namespace R3
 		glm::vec2 GetWindowExtents();
 		RenderGraph& GetRenderGraph() { return *m_renderGraph; }
 		ImmediateRenderer& GetImRenderer() { return *m_imRenderer; }
-		VkFormat GetMainColourTargetFormat();
-		VkFormat GetMainDepthStencilFormat();
 		Device* GetDevice();
 		BufferPool* GetStagingBufferPool();
 		CommandBufferAllocator* GetCommandBufferAllocator();
+
+		// temp, should be coming from graph  somehow?
+		VkFormat GetMainColourTargetFormat();
+		VkFormat GetMainDepthStencilFormat();
 
 		// Called from imgui system
 		bool InitImGui();
@@ -56,7 +58,6 @@ namespace R3
 	private:
 		void RunGraph(RenderGraph& r, VkCommandBuffer_T* cmdBuffer, VkImage_T* swapImage, VkImageView_T* swapImageView);
 		bool AcquireSwapImage();
-		void DrawImgui(VkImageView_T* targetView, VkCommandBuffer_T* cmdBuffer);
 		void ProcessEnvironmentSettings();
 		bool ShowGui();
 		bool DrawFrame();

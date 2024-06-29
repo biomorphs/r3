@@ -59,12 +59,6 @@ namespace R3
 
 	struct RenderSystem::VkStuff
 	{
-		AllocatedImage m_backBufferImage;
-		VkImageView m_backBufferView;
-		VkFormat m_backBufferFormat;
-		AllocatedImage m_depthBufferImage;	// note the tutorial may be wrong here, we might want one per swap chain image!
-		VkImageView m_depthBufferView;
-		VkFormat m_depthBufferFormat;
 		FrameData m_perFrameData[c_maxFramesInFlight];	// contains per frame cmd buffers, sync objects
 		int m_currentFrame = 0;
 		VkFence m_immediateSubmitFence = VK_NULL_HANDLE;
@@ -96,6 +90,16 @@ namespace R3
 		m_vk = nullptr;
 	}
 
+	VkFormat RenderSystem::GetMainColourTargetFormat()
+	{
+		return VK_FORMAT_R16G16B16A16_SFLOAT;
+	}
+
+	VkFormat RenderSystem::GetMainDepthStencilFormat()
+	{
+		return VK_FORMAT_D32_SFLOAT;
+	}
+
 	bool RenderSystem::CreateRenderGraph()
 	{
 		m_renderGraph = std::make_unique<RenderGraph>();
@@ -108,12 +112,12 @@ namespace R3
 
 		// HDR colour buffer is used as src for transfers (blit to swap chain) + used as colour attachment
 		RenderTargetInfo mainColour("MainColour");
-		mainColour.m_format = VK_FORMAT_R16G16B16A16_SFLOAT;	// hdr-lite pls
+		mainColour.m_format = GetMainColourTargetFormat();
 		mainColour.m_usageFlags = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
 		// Main depth buffer
 		RenderTargetInfo mainDepth("MainDepth");
-		mainDepth.m_format = VK_FORMAT_D32_SFLOAT;				// probably too fat
+		mainDepth.m_format = GetMainDepthStencilFormat();
 		mainDepth.m_usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 		mainDepth.m_aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
 
@@ -206,46 +210,10 @@ namespace R3
 		}
 	}
 
-	void RenderSystem::DrawImgui(VkImageView_T* targetView, VkCommandBuffer_T* cmdBuffer)
-	{
-		R3_PROF_EVENT();
-
-		// rendering to swap chain directly
-		VkRenderingAttachmentInfo colourAttachment = { 0 };
-		colourAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-		colourAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-		colourAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		colourAttachment.imageView = targetView;
-		colourAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-		VkRenderingInfo ri = { 0 };
-		ri.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
-		ri.colorAttachmentCount = 1;
-		ri.pColorAttachments = &colourAttachment;
-		ri.layerCount = 1;
-		ri.renderArea.offset = { 0,0 };
-		ri.renderArea.extent = m_swapChain->GetExtents();
-		vkCmdBeginRendering(cmdBuffer, &ri);
-
-		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuffer);
-
-		vkCmdEndRendering(cmdBuffer);
-	}
-
 	glm::vec2 RenderSystem::GetWindowExtents()
 	{
 		auto e = m_swapChain->GetExtents();
 		return { e.width, e.height };
-	}
-
-	VkFormat RenderSystem::GetMainColourTargetFormat()
-	{
-		return m_vk->m_backBufferFormat;
-	}
-
-	VkFormat RenderSystem::GetMainDepthStencilFormat()
-	{
-		return m_vk->m_depthBufferFormat;
 	}
 
 	Device* RenderSystem::GetDevice()
@@ -548,7 +516,7 @@ namespace R3
 			m_renderTargets = {};
 		});
 		m_imRenderer = std::make_unique<ImmediateRenderer>();
-		if (!m_imRenderer->Initialise(*m_device, m_vk->m_backBufferFormat, m_vk->m_depthBufferFormat))
+		if (!m_imRenderer->Initialise(*m_device, GetMainColourTargetFormat(), GetMainDepthStencilFormat()))
 		{
 			LogError("Failed to create immediate renderer");
 			return false;
@@ -691,10 +659,7 @@ namespace R3
 			LogError("Failed to create swapchain");
 			return false;
 		}
-
-		bool created = CreateDepthBuffer();
-		created &= CreateBackBuffer();
-		return created;
+		return true;
 	}
 
 	bool RenderSystem::CreateSyncObjects()
