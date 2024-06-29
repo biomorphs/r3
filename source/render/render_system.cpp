@@ -446,8 +446,7 @@ namespace R3
 			m_imRenderer->WriteVertexData(*m_device, *m_stagingBuffers.get(), ctx.m_graphicsCmds);
 		});
 		mainPass->m_onDraw.AddCallback([this](RenderPassContext& ctx) {
-			const auto& dims = GetWindowExtents();
-			m_onMainPassDraw.Run(*m_device, ctx.m_graphicsCmds, VkExtent2D{ (uint32_t)dims.x, (uint32_t)dims.y });	// refactor?
+			m_onMainPassDraw.Run(*m_device, ctx.m_graphicsCmds, VkExtent2D{ (uint32_t)ctx.m_renderExtents.x, (uint32_t)ctx.m_renderExtents.y });	// refactor?
 			auto cameras = GetSystem<CameraSystem>();	// IM renderer draws to colour buffer
 			m_imRenderer->Draw(cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix(), *m_device, m_swapChain->GetExtents(), ctx.m_graphicsCmds);
 		});
@@ -455,7 +454,12 @@ namespace R3
 			m_onMainPassEnd.Run(*m_device);
 			m_imRenderer->Flush();
 		});
-		mainPass->m_drawExtents = GetWindowExtents();
+		mainPass->m_getExtentsFn = [this]() -> glm::vec2 {
+			return GetWindowExtents();
+		};
+		mainPass->m_getClearColourFn = [this]() -> glm::vec4 {
+			return m_mainPassClearColour;
+		};
 		m_renderGraph->m_allPasses.push_back(std::move(mainPass));
 
 		auto blitPass = std::make_unique<TransferPass>();		// blit HDR colour to swap chain
@@ -470,7 +474,9 @@ namespace R3
 
 		auto imguiPass = std::make_unique<DrawPass>();			// imgui draw direct to swap image
 		imguiPass->m_colourAttachments.push_back({ swapchainImage, DrawPass::AttachmentLoadOp::Load });
-		imguiPass->m_drawExtents = GetWindowExtents();
+		imguiPass->m_getExtentsFn = [this]() -> glm::vec2 {
+			return GetWindowExtents();
+		};
 		imguiPass->m_onDraw.AddCallback([this](RenderPassContext& ctx) {
 			ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), ctx.m_graphicsCmds);
 		});

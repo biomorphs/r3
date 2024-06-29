@@ -83,17 +83,29 @@ namespace R3
 	void DrawPass::Run(RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
+		ctx.m_renderExtents = m_getExtentsFn();
 		ResolveTargets(ctx);	// populate list of actual targets
 		m_onBegin.Run(ctx);		// run the initial callbacks
 
-		// Now set up the attachments for vulkan
+		VkClearColorValue clearColour = { 0, 0, 0, 1 };
+		if (m_getClearColourFn)
+		{
+			glm::vec4 c = m_getClearColourFn();
+			clearColour = { c.x, c.y, c.z, c.w };
+		}
+		float clearDepth = 1.0f;
+		if (m_getClearDepthFn)
+		{
+			clearDepth = m_getClearDepthFn();
+		}
+		// Now set up the attachments for drawing
 		std::vector<VkRenderingAttachmentInfo> colourAttachments;
 		VkRenderingAttachmentInfo depthAttachment = {};
 		for (int i = 0; i < m_colourAttachments.size(); ++i)
 		{
 			VkRenderingAttachmentInfo rai = {};
 			rai.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-			rai.clearValue = { {{0,0,0,1 }} };	// todo
+			rai.clearValue.color = clearColour;
 			rai.loadOp = GetVkLoadOp(m_colourAttachments[i].m_loadOp);
 			rai.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 			rai.imageView = ctx.GetResolvedTarget(m_colourAttachments[i].m_info)->m_view;
@@ -106,12 +118,12 @@ namespace R3
 		ri.pColorAttachments = colourAttachments.data();
 		ri.layerCount = 1;
 		ri.renderArea.offset = { 0,0 };
-		ri.renderArea.extent = { (uint32_t)m_drawExtents.x, (uint32_t)m_drawExtents.y };
+		ri.renderArea.extent = { (uint32_t)ctx.m_renderExtents.x, (uint32_t)ctx.m_renderExtents.y };
 		ri.flags = VK_RENDERING_CONTENTS_SECONDARY_COMMAND_BUFFERS_BIT;		// can execute secondary command buffers
 		if (m_depthAttachment)
 		{
 			depthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-			depthAttachment.clearValue = { { 1.0f, 0} };	// todo
+			depthAttachment.clearValue.depthStencil = { clearDepth, 0 };
 			depthAttachment.loadOp = GetVkLoadOp(m_depthAttachment->m_loadOp);
 			depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 			depthAttachment.imageView = ctx.GetResolvedTarget(m_depthAttachment->m_info)->m_view;

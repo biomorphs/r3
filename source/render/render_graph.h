@@ -17,6 +17,7 @@ namespace R3
 		RenderTargetCache* m_targets;	// target cache
 		VkCommandBuffer m_graphicsCmds;	// main cmd buffer
 		std::vector<RenderTarget*> m_resolvedTargets;	// all targets used by a pass
+		glm::vec2 m_renderExtents;		// extents of render pass
 
 		RenderTarget* GetResolvedTarget(const RenderTargetInfo& info);
 	};
@@ -61,7 +62,9 @@ namespace R3
 		};
 		std::vector<DrawAttachment> m_colourAttachments;
 		std::optional<DrawAttachment> m_depthAttachment;
-		glm::vec2 m_drawExtents = { 0,0 };
+		std::function<glm::vec2()> m_getExtentsFn;
+		std::function<glm::vec4()> m_getClearColourFn;
+		std::function<float()> m_getClearDepthFn;
 
 		using RunCallback = std::function<void(RenderPassContext&)>;
 		CallbackArray<RunCallback> m_onBegin;	// called before vkCmdBeginRendering, useful for setup 
