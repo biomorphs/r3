@@ -56,15 +56,11 @@ namespace R3
 	private:
 		void RunGraph(RenderGraph& r, VkCommandBuffer_T* cmdBuffer, VkImage_T* swapImage, VkImageView_T* swapImageView);
 		bool AcquireSwapImage();
-		void RecordMainPass(VkCommandBuffer_T* cmdBuffer);
 		void DrawImgui(VkImageView_T* targetView, VkCommandBuffer_T* cmdBuffer);
-		bool RecordCommandBuffer(VkImage_T* swapImage, VkImageView_T* swapImageView, VkCommandBuffer_T* cmdBuffer);
 		void ProcessEnvironmentSettings();
 		bool ShowGui();
 		bool DrawFrame();
 		bool CreateWindow();
-		bool CreateDepthBuffer();
-		bool CreateBackBuffer();
 		bool CreateSyncObjects();
 		bool CreateRenderGraph();
 		bool RecreateSwapchain();
