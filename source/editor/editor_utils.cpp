@@ -2,6 +2,7 @@
 #include "engine/systems/input_system.h"
 #include "engine/systems/camera_system.h"
 #include "engine/systems/model_data_system.h"
+#include "engine/systems/immediate_render_system.h"
 #include "engine/components/transform.h"
 #include "engine/components/static_mesh.h"
 #include "entities/world.h"
@@ -28,7 +29,7 @@ namespace R3
 	void DrawEntityBounds(Entities::World& w, const Entities::EntityHandle& e, glm::vec4 colour)
 	{
 		auto modelDataSys = Systems::GetSystem<ModelDataSystem>();
-		auto& imRender = Systems::GetSystem<RenderSystem>()->GetImRenderer();
+		auto& imRender = Systems::GetSystem<ImmediateRenderSystem>()->m_imRender;
 		auto transformCmp = w.GetComponent<TransformComponent>(e);
 		auto staticMeshCmp = w.GetComponent<StaticMeshComponent>(e);
 		if (transformCmp && staticMeshCmp)
@@ -39,19 +40,19 @@ namespace R3
 			{
 				glm::vec3 bounds[2] = { modelData.m_data->m_boundsMin, modelData.m_data->m_boundsMax };
 				glm::mat4 transform = transformCmp->GetWorldspaceInterpolated();
-				imRender.DrawAABB(bounds[0], bounds[1], transform, colour);
+				imRender->DrawAABB(bounds[0], bounds[1], transform, colour);
 				return;
 			}
 		}
 		if(transformCmp)
 		{
-			imRender.AddAxisAtPoint(transformCmp->GetPosition(), 1.0f, transformCmp->GetWorldspaceInterpolated());
+			imRender->AddAxisAtPoint(transformCmp->GetPosition(), 1.0f, transformCmp->GetWorldspaceInterpolated());
 		}
 	}
 
 	void DrawParentLines(Entities::World& w, const Entities::EntityHandle& e, glm::vec4 colour)
 	{
-		auto& imRender = Systems::GetSystem<RenderSystem>()->GetImRenderer();
+		auto& imRender = Systems::GetSystem<ImmediateRenderSystem>()->m_imRender;
 		auto childCmp = w.GetComponent<TransformComponent>(e);
 		const auto parent = w.GetParent(e);
 		auto parentCmp = w.GetComponent<TransformComponent>(parent);
@@ -62,7 +63,7 @@ namespace R3
 			verts[0].m_colour = colour;
 			verts[1].m_position = parentCmp->GetWorldspaceInterpolated()[3];
 			verts[1].m_colour = colour * 0.9f;
-			imRender.AddLine(verts);
+			imRender->AddLine(verts);
 			DrawParentLines(w, parent, colour * 0.9f);
 		}
 	}

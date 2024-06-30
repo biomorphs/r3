@@ -29,6 +29,7 @@ namespace R3
 		static std::string_view GetName() { return "Textures"; }
 		virtual void RegisterTickFns();
 		virtual bool Init();
+		void ProcessLoadedTextures(class RenderPassContext& ctx);
 		
 		TextureHandle LoadTexture(std::string path, bool mipsEnabled = true);
 		std::string_view GetTextureName(const TextureHandle& t);

@@ -2,22 +2,17 @@
 #include "window.h"
 #include "device.h"
 #include "swap_chain.h"
-#include "immediate_renderer.h"
 #include "render_target_cache.h"
 #include "render_graph.h"
-#include "camera.h"
 #include "core/file_io.h"
 #include "core/profiler.h"
 #include "core/log.h"
 #include "core/platform.h"
 #include "engine/systems/event_system.h"
 #include "engine/systems/time_system.h"
-#include "engine/systems/imgui_system.h"
-#include "engine/systems/camera_system.h"
 #include "entities/systems/entity_system.h"
 #include "entities/queries.h"
 #include "engine/components/environment_settings.h"
-#include "engine/model_data.h"
 #include "vulkan_helpers.h"
 #include "buffer_pool.h"
 #include "pipeline_builder.h"
@@ -25,12 +20,16 @@
 #include <vulkan/vulkan.h>
 #include <vulkan/vk_enum_string_helper.h>
 #include <vk_mem_alloc.h>
-#include <imgui_impl_vulkan.h>
-#include <imgui_impl_sdl2.h>
 #include <SDL.h>
 #include <SDL_events.h>
-#include <SDL_vulkan.h>
-#include <array>
+#include <imgui.h>
+
+// TODO - 
+// pull render graph creation out of here + into engine
+//	unhook callbacks registering here too
+// add pipeline cache
+//	takes in the required settings + a DrawPass (so pipelines can be created with the right attachments)
+// remove last remnants of formats for pipelines/drawing
 
 namespace R3
 {
@@ -52,17 +51,11 @@ namespace R3
 		VmaAllocation m_allocation;
 	};
 
-	struct ImGuiVkStuff
-	{
-		VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
-	};
-
 	struct RenderSystem::VkStuff
 	{
 		FrameData m_perFrameData[c_maxFramesInFlight];	// contains per frame cmd buffers, sync objects
 		int m_currentFrame = 0;
 		VkFence m_immediateSubmitFence = VK_NULL_HANDLE;
-		ImGuiVkStuff m_imgui;
 
 		// helpers
 		FrameData& ThisFrameData()
@@ -83,6 +76,7 @@ namespace R3
 		m_mainDeleters.PushDeleter([this]() {
 			m_cmdBufferAllocator = nullptr;
 		});
+		m_renderGraph = std::make_unique<RenderGraph>();
 	}
 
 	RenderSystem::~RenderSystem()
@@ -98,75 +92,6 @@ namespace R3
 	VkFormat RenderSystem::GetMainDepthStencilFormat()
 	{
 		return VK_FORMAT_D32_SFLOAT;
-	}
-
-	bool RenderSystem::CreateRenderGraph()
-	{
-		m_renderGraph = std::make_unique<RenderGraph>();
-		m_mainDeleters.PushDeleter([this]() {
-			m_renderGraph = nullptr;
-			});
-
-		// special case, just used as a proxy for lookups later
-		RenderTargetInfo swapchainImage("Swapchain");
-
-		// HDR colour buffer is used as src for transfers (blit to swap chain) + used as colour attachment
-		RenderTargetInfo mainColour("MainColour");
-		mainColour.m_format = GetMainColourTargetFormat();
-		mainColour.m_usageFlags = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
-		// Main depth buffer
-		RenderTargetInfo mainDepth("MainDepth");
-		mainDepth.m_format = GetMainDepthStencilFormat();
-		mainDepth.m_usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-		mainDepth.m_aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
-
-		// 2nd attempt
-		auto mainPass = std::make_unique<DrawPass>();			// clear + draw to colour + depth
-		mainPass->m_colourAttachments.push_back({ mainColour, DrawPass::AttachmentLoadOp::Clear });
-		mainPass->m_depthAttachment = { mainDepth, DrawPass::AttachmentLoadOp::Clear };
-		mainPass->m_onBegin.AddCallback([this](RenderPassContext& ctx) {
-			m_onMainPassBegin.Run(*m_device, ctx.m_graphicsCmds);
-			m_imRenderer->WriteVertexData(*m_device, *m_stagingBuffers.get(), ctx.m_graphicsCmds);
-			});
-		mainPass->m_onDraw.AddCallback([this](RenderPassContext& ctx) {
-			m_onMainPassDraw.Run(*m_device, ctx.m_graphicsCmds, VkExtent2D{ (uint32_t)ctx.m_renderExtents.x, (uint32_t)ctx.m_renderExtents.y });	// refactor?
-			auto cameras = GetSystem<CameraSystem>();	// IM renderer draws to colour buffer
-			m_imRenderer->Draw(cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix(), *m_device, m_swapChain->GetExtents(), ctx.m_graphicsCmds);
-			});
-		mainPass->m_onEnd.AddCallback([this](RenderPassContext& ctx) {
-			m_onMainPassEnd.Run(*m_device);
-			m_imRenderer->Flush();
-			});
-		mainPass->m_getExtentsFn = [this]() -> glm::vec2 {
-			return GetWindowExtents();
-			};
-		mainPass->m_getClearColourFn = [this]() -> glm::vec4 {
-			return m_mainPassClearColour;
-			};
-		m_renderGraph->m_allPasses.push_back(std::move(mainPass));
-
-		auto blitPass = std::make_unique<TransferPass>();		// blit HDR colour to swap chain
-		blitPass->m_inputs.push_back(mainColour);
-		blitPass->m_outputs.push_back(swapchainImage);
-		blitPass->m_onRun.AddCallback([this, mainColour, swapchainImage](RenderPassContext& ctx) {
-			VulkanHelpers::BlitColourImageToImage(ctx.m_graphicsCmds,
-			ctx.GetResolvedTarget(mainColour)->m_image, m_swapChain->GetExtents(),
-			ctx.GetResolvedTarget(swapchainImage)->m_image, m_swapChain->GetExtents());
-			});
-		m_renderGraph->m_allPasses.push_back(std::move(blitPass));
-
-		auto imguiPass = std::make_unique<DrawPass>();			// imgui draw direct to swap image
-		imguiPass->m_colourAttachments.push_back({ swapchainImage, DrawPass::AttachmentLoadOp::Load });
-		imguiPass->m_getExtentsFn = [this]() -> glm::vec2 {
-			return GetWindowExtents();
-			};
-		imguiPass->m_onDraw.AddCallback([this](RenderPassContext& ctx) {
-			ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), ctx.m_graphicsCmds);
-			});
-		m_renderGraph->m_allPasses.push_back(std::move(imguiPass));
-
-		return true;
 	}
 
 	void RenderSystem::RunGraph(RenderGraph& r, VkCommandBuffer_T* cmdBuffer, VkImage_T* swapImage, VkImageView_T* swapImageView)
@@ -191,6 +116,7 @@ namespace R3
 		m_renderTargets->AddTarget(swapInfo, swapImage, swapImageView);
 
 		RenderGraph::GraphContext ctx;
+		ctx.m_device = m_device.get();
 		ctx.m_graphicsCmds = cmdBuffer;
 		ctx.m_targets = m_renderTargets.get();
 		m_renderGraph->Run(ctx);
@@ -219,6 +145,16 @@ namespace R3
 	Device* RenderSystem::GetDevice()
 	{
 		return m_device.get();
+	}
+
+	Window* RenderSystem::GetMainWindow()
+	{
+		return m_mainWindow.get();
+	}
+
+	Swapchain* RenderSystem::GetSwapchain()
+	{
+		return m_swapChain.get();
 	}
 
 	BufferPool* RenderSystem::GetStagingBufferPool()
@@ -368,12 +304,6 @@ namespace R3
 		
 		// Updates bg colour
 		ProcessEnvironmentSettings();
-
-		// Always 'render' the ImGui frame so we can begin the next one, even if we wont actually draw anything
-		{
-			R3_PROF_EVENT("ImGui::Render");
-			ImGui::Render();
-		}
 		
 		auto graphicsCmds = m_cmdBufferAllocator->CreateCommandBuffer(*m_device, true);
 		if (!graphicsCmds)
@@ -506,24 +436,10 @@ namespace R3
 			LogError("Failed to create sync objects");
 			return false;
 		}
-		if (!CreateRenderGraph())
-		{
-			LogError("Failed to create render graph");
-			return false;
-		}
+
 		m_renderTargets = std::make_unique<RenderTargetCache>();
 		m_mainDeleters.PushDeleter([&]() {
 			m_renderTargets = {};
-		});
-		m_imRenderer = std::make_unique<ImmediateRenderer>();
-		if (!m_imRenderer->Initialise(*m_device, GetMainColourTargetFormat(), GetMainDepthStencilFormat()))
-		{
-			LogError("Failed to create immediate renderer");
-			return false;
-		}
-		m_mainDeleters.PushDeleter([&]() {
-			m_imRenderer->Destroy(*m_device);
-			m_imRenderer = nullptr;
 		});
 
 		m_mainWindow->Show();
@@ -558,91 +474,13 @@ namespace R3
 		m_mainWindow = nullptr;
 	}
 
-	void RenderSystem::ImGuiNewFrame()
+	void RenderSystem::RunGraphicsCommandsImmediate(std::function<void(VkCommandBuffer)> fn)
 	{
-		R3_PROF_EVENT();
-		// does order matter? can ImgGui::NewFrame go in imgui system instead?
-		ImGui_ImplVulkan_NewFrame();
-		ImGui_ImplSDL2_NewFrame(m_mainWindow->GetHandle());
-		ImGui::NewFrame();
-	}
-
-	bool RenderSystem::InitImGui()
-	{
-		R3_PROF_EVENT();
-		// create a descriptor pool for imgui
-		VkDescriptorPoolSize pool_sizes[] =		// this is way bigger than it needs to be!
-		{
-			{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-			{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
-			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
-			{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
-			{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
-			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
-			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
-			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
-			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
-			{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
-		};
-		VkDescriptorPoolCreateInfo pool_info = {};
-		pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;	// allows us to free individual descriptor sets
-		pool_info.maxSets = 1000;												// way bigger than needed!
-		pool_info.poolSizeCount = static_cast<uint32_t>(std::size(pool_sizes));
-		pool_info.pPoolSizes = pool_sizes;
-		if (!CheckResult(vkCreateDescriptorPool(m_device->GetVkDevice(), &pool_info, nullptr, &m_vk->m_imgui.m_descriptorPool)))
-		{
-			LogError("Failed to create descriptor pool for imgui");
-			return false;
-		}
-
-		// initialise imgui for SDL
-		if (!ImGui_ImplSDL2_InitForVulkan(m_mainWindow->GetHandle()))
-		{
-			LogError("Failed to init imgui for SDL/Vulkan");
-			return false;
-		}
-
-		// Load custom fonts now
-		if (GetSystem<ImGuiSystem>())
-		{
-			GetSystem<ImGuiSystem>()->LoadFonts();
-		}
-
-		// initialise for Vulkan
-		// this initializes imgui for Vulkan
-		ImGui_ImplVulkan_InitInfo init_info = {0};
-		init_info.Instance = m_device->GetVkInstance();
-		init_info.PhysicalDevice = m_device->GetPhysicalDevice().m_device;
-		init_info.Device = m_device->GetVkDevice();
-		init_info.Queue = m_device->GetGraphicsQueue();
-		init_info.DescriptorPool = m_vk->m_imgui.m_descriptorPool;
-		init_info.MinImageCount = static_cast<uint32_t>(m_swapChain->GetImages().size());
-		init_info.ImageCount = static_cast<uint32_t>(m_swapChain->GetImages().size());
-		init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-		init_info.UseDynamicRendering = true;
-		init_info.ColorAttachmentFormat = m_swapChain->GetFormat().format;
-		if (!ImGui_ImplVulkan_Init(&init_info, nullptr))	
-		{
-			LogError("Failed to init imgui for Vulkan");
-			return false;
-		}
-
-		// upload the imgui font textures via immediate graphics cmd
-		VulkanHelpers::RunCommandsImmediate(m_device->GetVkDevice(), m_device->GetGraphicsQueue(), 
-			m_cmdBufferAllocator->GetPool(*m_device), m_vk->m_immediateSubmitFence, [&](VkCommandBuffer cmd) {
-			ImGui_ImplVulkan_CreateFontsTexture(cmd);
-		});
-		ImGui_ImplVulkan_DestroyFontUploadObjects();	// destroy the font data once it is uploaded
-
-		m_mainDeleters.PushDeleter([&]() {
-			// Shut downn imgui
-			vkDestroyDescriptorPool(m_device->GetVkDevice(), m_vk->m_imgui.m_descriptorPool, nullptr);
-			ImGui_ImplVulkan_Shutdown();
-		});
-
-		return true;
+		VulkanHelpers::RunCommandsImmediate(m_device->GetVkDevice(), 
+			m_device->GetGraphicsQueue(),
+			m_cmdBufferAllocator->GetPool(*m_device), 
+			m_vk->m_immediateSubmitFence, 
+			fn);
 	}
 
 	bool RenderSystem::RecreateSwapchain()

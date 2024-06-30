@@ -15,6 +15,8 @@
 #include "systems/job_system.h"
 #include "systems/lua_system.h"
 #include "systems/transform_system.h"
+#include "systems/immediate_render_system.h"
+#include "systems/frame_scheduler_system.h"
 #include "render/render_system.h"
 #include "entities/systems/entity_system.h"
 #include "core/platform.h"
@@ -34,7 +36,9 @@ namespace R3
 		s.RegisterSystem<EventSystem>();
 		s.RegisterSystem<InputSystem>();
 		s.RegisterSystem<RenderSystem>();
+		s.RegisterSystem<FrameScheduler>();
 		s.RegisterSystem<ImGuiSystem>();
+		s.RegisterSystem<ImmediateRenderSystem>();
 		s.RegisterSystem<CameraSystem>();
 		s.RegisterSystem<JobSystem>();
 		s.RegisterSystem<Entities::EntitySystem>();
@@ -90,6 +94,7 @@ namespace R3
 			{
 				auto& renderUpdate = updateSequence.AddSequence("RenderUpdate");
 				renderUpdate.AddFn("StaticMeshSimpleRenderer::BuildCommandBuffer");
+				renderUpdate.AddFn("FrameScheduler::BuildRenderGraph");
 			}
 			{
 				auto& endUpdate = updateSequence.AddSequence("EndFrame");

@@ -17,6 +17,7 @@
 #include "render/pipeline_builder.h"
 #include "render/descriptors.h"
 #include "render/render_helpers.h"
+#include "render/render_pass_context.h"
 #include "core/profiler.h"
 #include "core/log.h"
 #include <imgui.h>
@@ -72,7 +73,7 @@ namespace R3
 			MainPassBegin(d, cmds);
 		});
 		render->m_onMainPassDraw.AddCallback([this](Device& d, VkCommandBuffer cmds, const VkExtent2D& e) {
-			MainPassDraw(d, cmds, e);
+			MainPassDraw(d, cmds);
 		});
 		render->m_onShutdownCbs.AddCallback([this](Device& d) {
 			Cleanup(d);
@@ -85,10 +86,16 @@ namespace R3
 		R3_PROF_EVENT();
 		vkDestroyPipeline(d.GetVkDevice(), m_simpleTriPipeline, nullptr);
 		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayout, nullptr);
-		vmaUnmapMemory(d.GetVMA(), m_globalInstancesHostVisible.m_allocation);
-		vmaDestroyBuffer(d.GetVMA(), m_globalInstancesHostVisible.m_buffer, m_globalInstancesHostVisible.m_allocation);
-		vmaUnmapMemory(d.GetVMA(), m_drawIndirectHostVisible.m_allocation);
-		vmaDestroyBuffer(d.GetVMA(), m_drawIndirectHostVisible.m_buffer, m_drawIndirectHostVisible.m_allocation);
+		if (m_globalInstancesHostVisible.m_allocation)
+		{
+			vmaUnmapMemory(d.GetVMA(), m_globalInstancesHostVisible.m_allocation);
+			vmaDestroyBuffer(d.GetVMA(), m_globalInstancesHostVisible.m_buffer, m_globalInstancesHostVisible.m_allocation);
+		}
+		if (m_drawIndirectHostVisible.m_allocation)
+		{
+			vmaUnmapMemory(d.GetVMA(), m_drawIndirectHostVisible.m_allocation);
+			vmaDestroyBuffer(d.GetVMA(), m_drawIndirectHostVisible.m_buffer, m_drawIndirectHostVisible.m_allocation);
+		}
 		vkDestroyDescriptorSetLayout(d.GetVkDevice(), m_globalsDescriptorLayout, nullptr);
 		m_descriptorAllocator = {};
 		m_globalConstantsBuffer.Destroy(d);
@@ -268,10 +275,11 @@ namespace R3
 		auto w = entities->GetActiveWorld();
 		if (w)
 		{
-			auto getSettings = [&g](const Entities::EntityHandle& e, EnvironmentSettingsComponent& cmp) {
+			auto getSettings = [&g, this](const Entities::EntityHandle& e, EnvironmentSettingsComponent& cmp) {
 				g.m_sunColourAmbient = { cmp.m_sunColour, cmp.m_sunAmbientFactor };
 				g.m_skyColourAmbient = { cmp.m_skyColour, cmp.m_skyAmbientFactor };
 				g.m_sunDirectionBrightness = { glm::normalize(cmp.m_sunDirection), cmp.m_sunBrightness };
+				m_mainPassColourClearValue = glm::vec4(cmp.m_skyColour, 1);
 				return true;
 			};
 			Entities::Queries::ForEach<EnvironmentSettingsComponent>(w, getSettings);
@@ -405,6 +413,16 @@ namespace R3
 		return true;
 	}
 
+	void StaticMeshSimpleRenderer::OnMainPassBegin(class RenderPassContext& ctx)
+	{
+		MainPassBegin(*ctx.m_device, ctx.m_graphicsCmds);
+	}
+
+	void StaticMeshSimpleRenderer::OnMainPassDraw(class RenderPassContext& ctx)
+	{
+		MainPassDraw(*ctx.m_device, ctx.m_graphicsCmds);
+	}
+
 	void StaticMeshSimpleRenderer::MainPassBegin(Device& d, VkCommandBuffer cmds)
 	{
 		R3_PROF_EVENT();
@@ -434,7 +452,7 @@ namespace R3
 		}
 	}
 
-	void StaticMeshSimpleRenderer::MainPassDraw(Device& d, VkCommandBuffer cmds, const VkExtent2D& e)
+	void StaticMeshSimpleRenderer::MainPassDraw(Device& d, VkCommandBuffer cmds)
 	{
 		R3_PROF_EVENT();
 		if (m_simpleTriPipeline == VK_NULL_HANDLE)

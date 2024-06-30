@@ -1,12 +1,18 @@
 #include "imgui_system.h"
 #include "event_system.h"
 #include "render/render_system.h"
+#include "render/vulkan_helpers.h"
+#include "render/device.h"
+#include "render/window.h"
+#include "render/swap_chain.h"
+#include "render/render_graph.h"
 #include "core/log.h"
 #include "core/profiler.h"
 #include "core/file_io.h"
 #include "engine/imgui_menubar_helper.h"
 #include "external/Fork-awesome/IconsForkAwesome.h"
 #include <imgui.h>
+#include <imgui_impl_vulkan.h>
 #include <imgui_impl_sdl2.h>
 
 namespace R3
@@ -17,6 +23,91 @@ namespace R3
 		RegisterTick("ImGui::FrameStart", [this]() {
 			return OnFrameStart();
 		});
+	}
+
+	bool ImGuiSystem::Init()
+	{
+		R3_PROF_EVENT();
+		auto r = GetSystem<RenderSystem>();
+		VkDescriptorPoolSize pool_sizes[] =		// this is way bigger than it needs to be!
+		{
+			{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+			{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+		};
+		VkDescriptorPoolCreateInfo pool_info = {};
+		pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;	// allows us to free individual descriptor sets
+		pool_info.maxSets = 1000;												// way bigger than needed!
+		pool_info.poolSizeCount = static_cast<uint32_t>(std::size(pool_sizes));
+		pool_info.pPoolSizes = pool_sizes;
+		if (!VulkanHelpers::CheckResult(vkCreateDescriptorPool(r->GetDevice()->GetVkDevice(), &pool_info, nullptr, &m_descriptorPool)))
+		{
+			LogError("Failed to create descriptor pool for imgui");
+			return false;
+		}
+
+		ImGui::CreateContext();	//this initializes the core structures of imgui
+
+		// initialise imgui for SDL
+		if (!ImGui_ImplSDL2_InitForVulkan( r->GetMainWindow()->GetHandle()))
+		{
+			LogError("Failed to init imgui for SDL/Vulkan");
+			return false;
+		}
+
+		// this initializes imgui for Vulkan
+		auto swapChain = r->GetSwapchain();
+		ImGui_ImplVulkan_InitInfo init_info = { 0 };
+		init_info.Instance = r->GetDevice()->GetVkInstance();
+		init_info.PhysicalDevice = r->GetDevice()->GetPhysicalDevice().m_device;
+		init_info.Device = r->GetDevice()->GetVkDevice();
+		init_info.Queue = r->GetDevice()->GetGraphicsQueue();
+		init_info.DescriptorPool = m_descriptorPool;
+		init_info.MinImageCount = static_cast<uint32_t>(swapChain->GetImages().size());
+		init_info.ImageCount = static_cast<uint32_t>(swapChain->GetImages().size());
+		init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+		init_info.UseDynamicRendering = true;
+		init_info.ColorAttachmentFormat = swapChain->GetFormat().format;
+		if (!ImGui_ImplVulkan_Init(&init_info, nullptr))
+		{
+			LogError("Failed to init imgui for Vulkan");
+			return false;
+		}
+
+		LoadFonts();
+
+		// upload the font texture straight away
+		r->RunGraphicsCommandsImmediate([&](VkCommandBuffer cmd) {
+			ImGui_ImplVulkan_CreateFontsTexture(cmd);
+		});
+		ImGui_ImplVulkan_DestroyFontUploadObjects();	// destroy the font data once it is uploaded
+
+		r->m_onShutdownCbs.AddCallback([this](Device& d) {
+			OnShutdown(d);
+		});
+
+		// we will pass the SDL events to imgui
+		GetSystem<EventSystem>()->RegisterEventHandler([this](void* ev) {
+			OnSystemEvent(ev);
+		});
+
+		return true;
+	}
+
+	void ImGuiSystem::OnDraw(RenderPassContext& ctx)
+	{
+		R3_PROF_EVENT();
+		ImGui::Render();
+		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), ctx.m_graphicsCmds);
 	}
 
 	void ImGuiSystem::OnSystemEvent(void* e)
@@ -96,27 +187,23 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		auto r = GetSystem<RenderSystem>();
-		if (!m_initialised)
-		{
-			ImGui::CreateContext();	//this initializes the core structures of imgui
-			if (!r->InitImGui())	// renderer deals with drawing
-			{
-				LogError("Failed to initialise ImGui rendering");
-				return false;
-			}
-			// we will pass the SDL events to imgui
-			GetSystem<EventSystem>()->RegisterEventHandler([this](void* ev) {
-				OnSystemEvent(ev);
-			});
-			m_initialised = true;
-		}
 
-		r->ImGuiNewFrame();
+		ImGui_ImplVulkan_NewFrame();
+		ImGui_ImplSDL2_NewFrame(r->GetMainWindow()->GetHandle());
+		ImGui::NewFrame();
 
 		// display the main menu singleton + reset state for next frame
 		MenuBar::MainMenu().Display(true);
 		MenuBar::MainMenu() = {};
 
 		return true;
+	}
+
+	void ImGuiSystem::OnShutdown(Device& d)
+	{
+		R3_PROF_EVENT();
+
+		vkDestroyDescriptorPool(d.GetVkDevice(), m_descriptorPool, nullptr);
+		ImGui_ImplVulkan_Shutdown();
 	}
 }

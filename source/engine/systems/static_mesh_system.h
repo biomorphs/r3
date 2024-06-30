@@ -66,6 +66,7 @@ namespace R3
 		virtual void RegisterTickFns();
 		virtual bool Init();
 		virtual void Shutdown();
+		void OnMainPassBegin(class RenderPassContext& ctx);
 		VkDeviceAddress GetVertexDataDeviceAddress();
 		VkDeviceAddress GetMaterialsDeviceAddress();
 		VkBuffer GetIndexBuffer();

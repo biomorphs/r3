@@ -2,6 +2,7 @@
 #include "engine/systems.h"
 
 struct ImFont;
+struct VkDescriptorPool_T;
 namespace R3
 {
 	class ImGuiSystem : public System
@@ -9,13 +10,16 @@ namespace R3
 	public:
 		static std::string_view GetName() { return "ImGui"; }
 		virtual void RegisterTickFns();
-		void LoadFonts();	// called by render system when imgui is initialised
+		virtual bool Init();
+		void OnDraw(class RenderPassContext&);
 		void PushDefaultFont();		// call ImGui::PopFont(); when finished
 		void PushBoldFont();		// call ImGui::PopFont(); when finished
 		void PushItalicFont();		// call ImGui::PopFont(); when finished
 		void PushLargeFont();		// call ImGui::PopFont(); when finished
 		void PushLargeBoldFont();	// call ImGui::PopFont(); when finished
 	private:
+		void LoadFonts();
+		void OnShutdown(class Device&);
 		void OnSystemEvent(void*);
 		bool OnFrameStart();
 		bool m_initialised = false;
@@ -24,5 +28,6 @@ namespace R3
 		ImFont* m_italicFont = nullptr;
 		ImFont* m_largeFont = nullptr;
 		ImFont* m_largeBoldFont = nullptr;
+		VkDescriptorPool_T* m_descriptorPool = nullptr;
 	};
 }

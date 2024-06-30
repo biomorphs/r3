@@ -2,6 +2,7 @@
 #include "engine/systems/texture_system.h"
 #include "render/render_system.h"
 #include "render/device.h"
+#include "render/render_pass_context.h"
 #include "model_data_system.h"
 #include "engine/intersection_tests.h"
 #include "engine/imgui_menubar_helper.h"
@@ -243,6 +244,11 @@ namespace R3
 		};
 		RunAsync(std::move(prepMeshData));
 		return true;
+	}
+
+	void StaticMeshSystem::OnMainPassBegin(class RenderPassContext& ctx)
+	{
+		OnMainPassBegin(*ctx.m_device, ctx.m_graphicsCmds);
 	}
 
 	void StaticMeshSystem::OnMainPassBegin(Device& d, VkCommandBuffer cmds)

@@ -1,12 +1,13 @@
 #include "lights_system.h"
 #include "engine/imgui_menubar_helper.h"
+#include "engine/systems/immediate_render_system.h"
 #include "engine/components/point_light.h"
 #include "engine/components/transform.h"
 #include "entities/world.h"
 #include "entities/queries.h"
 #include "entities/systems/entity_system.h"
 #include "render/render_system.h"
-#include "render/immediate_renderer.h"
+#include "render/render_pass_context.h"
 #include "core/log.h"
 #include "core/profiler.h"
 #include <imgui.h>
@@ -80,9 +81,9 @@ namespace R3
 		if (m_drawBounds)
 		{
 			auto entities = Systems::GetSystem<Entities::EntitySystem>();
-			auto& imRender = Systems::GetSystem<RenderSystem>()->GetImRenderer();
+			auto& imRender = Systems::GetSystem<ImmediateRenderSystem>()->m_imRender;
 			auto drawLights = [&](const Entities::EntityHandle& e, PointLightComponent& pl, TransformComponent& t) {
-				imRender.AddSphere(t.GetPosition(), pl.m_distance, { pl.m_colour, 1 });
+				imRender->AddSphere(t.GetPosition(), pl.m_distance, { pl.m_colour, 1 });
 				return true;
 			};
 			if (entities->GetActiveWorld())
@@ -91,6 +92,12 @@ namespace R3
 			}
 		}
 		return true;
+	}
+
+	void LightsSystem::CollectLightsForDrawing(RenderPassContext& ctx)
+	{
+		R3_PROF_EVENT();
+		OnMainPassBegin(*ctx.m_device, ctx.m_graphicsCmds);	// shim
 	}
 
 	void LightsSystem::OnMainPassBegin(Device& d, VkCommandBuffer cmds)

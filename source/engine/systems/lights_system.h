@@ -18,6 +18,7 @@ namespace R3
 		static std::string_view GetName() { return "LightsSystem"; }
 		virtual void RegisterTickFns();
 		virtual void Shutdown();
+		void CollectLightsForDrawing(class RenderPassContext& ctx);		// call this early in the render graph
 		VkDeviceAddress GetPointlightsDeviceAddress();
 		uint32_t GetFirstPointlightOffset();
 		uint32_t GetTotalPointlightsThisFrame();

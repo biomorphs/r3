@@ -7,6 +7,7 @@
 #include "render/buffer_pool.h"
 #include "render/device.h"
 #include "render/descriptors.h"
+#include "render/render_pass_context.h"
 #include "core/profiler.h"
 #include "core/file_io.h"
 #include "core/log.h"
@@ -286,10 +287,6 @@ namespace R3
 			ScopedLock lock(m_texturesMutex);
 			for (int t = 0; t < m_textures.size(); ++t)
 			{
-				if (m_textures[t].m_imGuiDescSet != VK_NULL_HANDLE)
-				{
-					ImGui_ImplVulkan_RemoveTexture(m_textures[t].m_imGuiDescSet);
-				}
 				vkDestroyImageView(d.GetVkDevice(), m_textures[t].m_imageView, nullptr);
 				vmaDestroyImage(d.GetVMA(), m_textures[t].m_image, m_textures[t].m_allocation);
 			}
@@ -352,6 +349,11 @@ namespace R3
 			if (mipWidth > 1) mipWidth /= 2;
 			if (mipHeight > 1) mipHeight /= 2;
 		}
+	}
+
+	void TextureSystem::ProcessLoadedTextures(class RenderPassContext& ctx)
+	{
+		ProcessLoadedTextures(*ctx.m_device, ctx.m_graphicsCmds);
 	}
 
 	bool TextureSystem::ProcessLoadedTextures(Device& d, VkCommandBuffer_T* cmdBuffer)

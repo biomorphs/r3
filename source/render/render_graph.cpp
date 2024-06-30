@@ -5,17 +5,7 @@
 
 namespace R3
 {
-	RenderTarget* RenderPassContext::GetResolvedTarget(const RenderTargetInfo& info)
-	{
-		auto found = std::find_if(m_resolvedTargets.begin(), m_resolvedTargets.end(), [&](RenderTarget* t) {
-			return t->m_info.m_name == info.m_name;
-		});
-		if (found != m_resolvedTargets.end())
-		{
-			return *found;
-		}
-		return nullptr;
-	}
+	
 
 	std::optional<VkImageMemoryBarrier> DoTransition(RenderTarget* resource, VkAccessFlagBits access, VkImageLayout layout)
 	{
@@ -190,6 +180,8 @@ namespace R3
 		for (uint32_t p = 0; p < m_allPasses.size(); ++p)
 		{
 			RenderPassContext rpc;
+			rpc.m_device = context.m_device;
+			rpc.m_pass = m_allPasses[p].get();
 			rpc.m_targets = context.m_targets;
 			rpc.m_graphicsCmds = context.m_graphicsCmds;
 			m_allPasses[p]->Run(rpc);

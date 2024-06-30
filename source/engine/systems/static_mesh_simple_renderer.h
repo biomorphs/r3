@@ -18,6 +18,9 @@ namespace R3
 		static std::string_view GetName() { return "StaticMeshSimpleRenderer"; }
 		virtual void RegisterTickFns();
 		virtual bool Init();
+		void OnMainPassBegin(class RenderPassContext& ctx);
+		void OnMainPassDraw(class RenderPassContext& ctx);
+		inline glm::vec4 GetMainColourClearValue() { return m_mainPassColourClearValue; }
 	private:
 		struct GlobalConstants;
 		bool ShowGui();
@@ -25,7 +28,7 @@ namespace R3
 		bool BuildCommandBuffer();
 		uint32_t WriteInstances(VkCommandBuffer_T* buffer);		// returns instance count
 		void MainPassBegin(Device&, VkCommandBuffer);
-		void MainPassDraw(Device&, VkCommandBuffer, const VkExtent2D&);
+		void MainPassDraw(Device&, VkCommandBuffer);
 		bool CreatePipelineData(Device&);
 		bool CreateGlobalDescriptorSet();
 		void ProcessEnvironmentSettings(GlobalConstants&);
@@ -40,6 +43,7 @@ namespace R3
 			double m_writeCmdsStartTime = 0.0;
 			double m_writeCmdsEndTime = 0.0;
 		};
+		glm::vec4 m_mainPassColourClearValue = { 0,0,0,1 };
 		FrameStats m_frameStats;
 		std::unique_ptr<DescriptorSetSimpleAllocator> m_descriptorAllocator;
 		VkDescriptorSetLayout_T* m_globalsDescriptorLayout = nullptr;

@@ -3,6 +3,7 @@
 #include "core/glm_headers.h"
 #include "vulkan_helpers.h"
 #include "render_target_cache.h"
+#include "render_pass_context.h"
 #include <vector>
 #include <string>
 #include <memory>
@@ -10,17 +11,7 @@
 
 namespace R3
 {
-	// Passed to each render pass
-	class RenderPassContext
-	{
-	public:
-		RenderTargetCache* m_targets;	// target cache
-		VkCommandBuffer m_graphicsCmds;	// main cmd buffer
-		std::vector<RenderTarget*> m_resolvedTargets;	// all targets used by a pass
-		glm::vec2 m_renderExtents;		// extents of render pass
-
-		RenderTarget* GetResolvedTarget(const RenderTargetInfo& info);
-	};
+	class Device;
 
 	// base render graph pass node
 	class RenderGraphPass
@@ -77,6 +68,7 @@ namespace R3
 	public:
 		struct GraphContext
 		{
+			Device* m_device = nullptr;
 			RenderTargetCache* m_targets = nullptr;
 			VkCommandBuffer m_graphicsCmds;	// main cmd buffer
 		};

@@ -32,7 +32,6 @@
 #include "engine/components/point_light.h"
 #include "entities/systems/entity_system.h"
 #include "render/render_system.h"
-#include "render/immediate_renderer.h"
 #include "core/file_io.h"
 #include "imgui.h"
 #include <format>
@@ -382,7 +381,6 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		auto theWorld = GetWorld();
-		auto& imRender = Systems::GetSystem<RenderSystem>()->GetImRenderer();
 		auto modelDataSys = Systems::GetSystem<ModelDataSystem>();
 		for (auto& theEntity : m_selectedEntities)
 		{

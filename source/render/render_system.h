@@ -28,20 +28,21 @@ namespace R3
 		virtual void RegisterTickFns();
 		virtual bool Init();
 		virtual void Shutdown();
+
 		glm::vec2 GetWindowExtents();
-		RenderGraph& GetRenderGraph() { return *m_renderGraph; }
-		ImmediateRenderer& GetImRenderer() { return *m_imRenderer; }
 		Device* GetDevice();
+		Window* GetMainWindow();
+		Swapchain* GetSwapchain();
 		BufferPool* GetStagingBufferPool();
 		CommandBufferAllocator* GetCommandBufferAllocator();
+		RenderGraph& GetRenderGraph() { return *m_renderGraph; }
 
 		// temp, should be coming from graph  somehow?
 		VkFormat GetMainColourTargetFormat();
 		VkFormat GetMainDepthStencilFormat();
 
-		// Called from imgui system
-		bool InitImGui();
-		void ImGuiNewFrame();
+		// Run some graphics code immediately
+		void RunGraphicsCommandsImmediate(std::function<void(VkCommandBuffer_T*)> fn);
 
 		// Callbacks (other systems hook into renderer here)
 		// public out of reasons of laziness (no point writing a bunch of register/unregister)
@@ -63,7 +64,6 @@ namespace R3
 		bool DrawFrame();
 		bool CreateWindow();
 		bool CreateSyncObjects();
-		bool CreateRenderGraph();
 		bool RecreateSwapchain();
 		bool PrepareSwapchain();
 		void OnSystemEvent(void* ev);
@@ -77,7 +77,6 @@ namespace R3
 		std::unique_ptr<Window> m_mainWindow;
 		std::unique_ptr<Device> m_device;
 		std::unique_ptr<Swapchain> m_swapChain;
-		std::unique_ptr<ImmediateRenderer> m_imRenderer;
 		std::unique_ptr<BufferPool> m_stagingBuffers;
 		std::unique_ptr<CommandBufferAllocator> m_cmdBufferAllocator;
 		struct VkStuff;

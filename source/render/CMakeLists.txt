@@ -3,6 +3,8 @@ set(RenderLib_SourceFiles
 	render_target_cache.cpp
 	render_graph.h
 	render_graph.cpp
+	render_pass_context.h
+	render_pass_context.cpp
 	render_helpers.h
 	render_helpers.cpp
 	render_system.h

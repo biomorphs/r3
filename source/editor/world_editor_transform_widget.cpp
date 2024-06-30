@@ -7,8 +7,7 @@
 #include "engine/components/transform.h"
 #include "engine/systems/input_system.h"
 #include "engine/intersection_tests.h"
-#include "render/render_system.h"
-#include "render/immediate_renderer.h"
+#include "engine/systems/immediate_render_system.h"
 
 namespace R3
 {
@@ -83,7 +82,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 
-		auto& imRender = Systems::GetSystem<RenderSystem>()->GetImRenderer();
+		auto& imRender = Systems::GetSystem<ImmediateRenderSystem>()->m_imRender;
 		glm::vec3 widgetPos = glm::vec3(m_widgetTransform[3]);
 
 		// x
@@ -119,7 +118,7 @@ namespace R3
 				}
 			}
 		}
-		imRender.DrawAABB(boxMin, boxMax, m_currentCenterTransform, colour);
+		imRender->DrawAABB(boxMin, boxMax, m_currentCenterTransform, colour);
 
 		return false;
 	}
@@ -149,7 +148,7 @@ namespace R3
 		R3_PROF_EVENT();
 		auto input = Systems::GetSystem<InputSystem>();
 		auto world = m_editorWindow->GetWorld();
-		auto& imRender = Systems::GetSystem<RenderSystem>()->GetImRenderer();
+		auto& imRender = Systems::GetSystem<ImmediateRenderSystem>()->m_imRender;
 
 		if (entities != m_currentEntities)
 		{
@@ -193,7 +192,7 @@ namespace R3
 				glm::vec3 c0, c1;	// closest points from mouse ray to axis (one point per ray)
 				if (GetNearPointsBetweenLines(mouseRayStartWs, mouseRayEndWs, originalPos, originalPos + widgetAxis, c0, c1))
 				{
-					imRender.AddAxisAtPoint(c1, 8.0f);
+					imRender->AddAxisAtPoint(c1, 8.0f);
 					glm::vec3 translation = c1 - originalPos;
 					if (leftBtnDown)
 					{

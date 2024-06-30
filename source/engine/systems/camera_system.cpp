@@ -3,6 +3,7 @@
 #include "engine/systems/imgui_system.h"
 #include "engine/systems/input_system.h"
 #include "engine/systems/time_system.h"
+#include "engine/systems/immediate_render_system.h"
 #include "engine/components/camera.h"
 #include "engine/components/transform.h"
 #include "engine/imgui_menubar_helper.h"
@@ -10,7 +11,6 @@
 #include "engine/flycam.h"
 #include "entities/queries.h"
 #include "render/render_system.h"
-#include "render/immediate_renderer.h"
 
 namespace R3
 {
@@ -70,7 +70,6 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		auto entitySys = GetSystem<Entities::EntitySystem>();
-		auto renderSys = GetSystem<RenderSystem>();
 		auto activeWorld = entitySys->GetActiveWorld();
 		if (activeWorld)
 		{
@@ -78,7 +77,7 @@ namespace R3
 			auto forEachCam = [&](const Entities::EntityHandle& e, CameraComponent& c, TransformComponent& t) {
 				ApplyEntityToCamera(c, t, tmpCam);
 				Frustum frustum(tmpCam.ProjectionMatrix() * tmpCam.ViewMatrix());
-				renderSys->GetImRenderer().AddFrustum(frustum, { 1,1,0,1 });
+				GetSystem<ImmediateRenderSystem>()->m_imRender->AddFrustum(frustum, {1,1,0,1});
 				return true;
 			};
 			Entities::Queries::ForEach<CameraComponent, TransformComponent>(activeWorld, forEachCam);

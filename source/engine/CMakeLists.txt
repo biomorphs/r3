@@ -41,6 +41,10 @@ set(EngineLib_SourceFiles
 	textures.cpp
 	register_engine_components.h
 	register_engine_components.cpp
+	systems/immediate_render_system.h
+	systems/immediate_render_system.cpp
+	systems/frame_scheduler_system.h
+	systems/frame_scheduler_system.cpp
 	systems/texture_system.h
 	systems/texture_system.cpp
 	systems/time_system.h
