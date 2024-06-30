@@ -32,36 +32,29 @@ namespace R3
 	std::unique_ptr<DrawPass> FrameScheduler::MakeMainPass(const RenderTargetInfo& mainColour, const RenderTargetInfo& mainDepth)
 	{
 		R3_PROF_EVENT();
-		auto render = GetSystem<RenderSystem>();
-		auto imRender = GetSystem<ImmediateRenderSystem>();
-		auto lights = GetSystem<LightsSystem>();
-		auto staticMeshes = GetSystem<StaticMeshSystem>();
-		auto meshRender = GetSystem<StaticMeshSimpleRenderer>();
-		auto mainPass = std::make_unique<DrawPass>();
-		auto textures = GetSystem<TextureSystem>();
-		
+		auto mainPass = std::make_unique<DrawPass>();	
 		mainPass->m_name = "Main Pass";
 		mainPass->m_colourAttachments.push_back({ mainColour, DrawPass::AttachmentLoadOp::Clear });
 		mainPass->m_depthAttachment = { mainDepth, DrawPass::AttachmentLoadOp::Clear };
-		mainPass->m_getExtentsFn = [render]() -> glm::vec2 {
-			return render->GetWindowExtents();
+		mainPass->m_getExtentsFn = []() -> glm::vec2 {
+			return GetSystem<RenderSystem>()->GetWindowExtents();
 		};
-		mainPass->m_getClearColourFn = [meshRender]() -> glm::vec4 {
-			return meshRender->GetMainColourClearValue();
+		mainPass->m_getClearColourFn = []() -> glm::vec4 {
+			return GetSystem<StaticMeshSimpleRenderer>()->GetMainColourClearValue();
 		};
-		mainPass->m_onBegin.AddCallback([imRender, lights, meshRender, staticMeshes, textures](RenderPassContext& ctx) {
-			lights->CollectLightsForDrawing(ctx);
-			textures->ProcessLoadedTextures(ctx);
-			staticMeshes->OnMainPassBegin(ctx);
-			meshRender->OnMainPassBegin(ctx);
-			imRender->OnMainPassBegin(ctx);
+		mainPass->m_onBegin.AddCallback([](RenderPassContext& ctx) {
+			GetSystem<LightsSystem>()->CollectLightsForDrawing(ctx);
+			GetSystem<TextureSystem>()->ProcessLoadedTextures(ctx);
+			GetSystem<StaticMeshSystem>()->OnMainPassBegin(ctx);
+			GetSystem<StaticMeshSimpleRenderer>()->OnMainPassBegin(ctx);
+			GetSystem<ImmediateRenderSystem>()->OnMainPassBegin(ctx);
 		});
-		mainPass->m_onDraw.AddCallback([imRender, meshRender](RenderPassContext& ctx) {
-			meshRender->OnMainPassDraw(ctx);
-			imRender->OnMainPassDraw(ctx);
+		mainPass->m_onDraw.AddCallback([](RenderPassContext& ctx) {
+			GetSystem<StaticMeshSimpleRenderer>()->OnMainPassDraw(ctx);
+			GetSystem<ImmediateRenderSystem>()->OnMainPassDraw(ctx);
 		});
-		mainPass->m_onEnd.AddCallback([imRender](RenderPassContext& ctx) {
-			imRender->OnMainPassEnd(ctx);
+		mainPass->m_onEnd.AddCallback([](RenderPassContext& ctx) {
+			GetSystem<ImmediateRenderSystem>()->OnMainPassEnd(ctx);
 		});
 		return mainPass;
 	}
