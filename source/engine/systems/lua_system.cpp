@@ -197,13 +197,22 @@ namespace R3
 	void LuaSystem::RegisterBuiltinTypes()
 	{
 		m_globalState->new_usertype<glm::vec2>("vec2",
-			sol::constructors<glm::vec2(), glm::vec2(float), glm::vec2(float, float), glm::vec2(glm::vec2)>()
+			sol::constructors<glm::vec2(), glm::vec2(float), glm::vec2(float, float), glm::vec2(glm::vec2)>(),
+			"x", &glm::vec2::x,
+			"y", &glm::vec2::y
 		);
 		m_globalState->new_usertype<glm::vec3>("vec3",
-			sol::constructors<glm::vec3(), glm::vec3(float), glm::vec3(float, float, float), glm::vec3(glm::vec3)>()
+			sol::constructors<glm::vec3(), glm::vec3(float), glm::vec3(float, float, float), glm::vec3(glm::vec3)>(),
+			"x", &glm::vec3::x,
+			"y", &glm::vec3::y,
+			"z", &glm::vec3::z
 		);
 		m_globalState->new_usertype<glm::vec4>("vec4",
-			sol::constructors<glm::vec4(), glm::vec4(float), glm::vec4(float, float, float, float), glm::vec4(glm::vec4)>()
+			sol::constructors<glm::vec4(), glm::vec4(float), glm::vec4(float, float, float, float), glm::vec4(glm::vec4)>(),
+			"x", &glm::vec4::x,
+			"y", &glm::vec4::y,
+			"z", &glm::vec4::z,
+			"w", &glm::vec4::w
 		);
 		m_globalState->new_usertype<glm::mat3>("mat3",
 			sol::constructors<glm::mat3(), glm::mat3(glm::mat3)>()
