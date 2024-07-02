@@ -98,6 +98,7 @@ namespace Entities
 			ComponentBitsetType m_ownedComponentBits = 0;	// each bit represents a component type that this entity owns/contains
 			std::vector<uint32_t> m_componentIndices;		// index into component storage per type. take care!
 			EntityHandle m_parent;							// if a parent exists, it should have a EntityChildrenComponent!
+			std::vector<EntityHandle> m_children;
 		};
 		struct PendingDeleteEntity 
 		{

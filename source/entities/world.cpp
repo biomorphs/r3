@@ -450,26 +450,23 @@ namespace Entities
 
 	void World::GetChildren(const EntityHandle& parent, std::vector<EntityHandle>& results) const
 	{
-		// slow!
-		for (int e = 0;e<m_allEntities.size();++e)
+		if (IsHandleValid(parent))
 		{
-			if (m_allEntities[e].m_parent == parent)
-			{
-				results.push_back(EntityHandle(m_allEntities[e].m_publicID, e));
-			}
+			auto& theEntity = m_allEntities[parent.GetPrivateIndex()];
+			results = theEntity.m_children;
 		}
 	}
 
 	void World::GetAllChildren(const EntityHandle& parent, std::vector<EntityHandle>& results) const
 	{
-		for (int e = 0; e < m_allEntities.size(); ++e)
+		if (IsHandleValid(parent))
 		{
-			if (m_allEntities[e].m_parent == parent)
+			auto& theEntity = m_allEntities[parent.GetPrivateIndex()];
+			for (const auto& child : theEntity.m_children)
 			{
-				EntityHandle newHandle(m_allEntities[e].m_publicID, e);
-				results.push_back(newHandle);
-				GetAllChildren(newHandle, results);
+				GetAllChildren(child, results);
 			}
+			results.insert(results.end(), theEntity.m_children.begin(), theEntity.m_children.end());
 		}
 	}
 
@@ -477,12 +474,24 @@ namespace Entities
 	{
 		if (IsHandleValid(child))
 		{
-			if (IsHandleValid(parent) && HasParent(child, parent))
-			{
-				return false;	// loop detection
-			}
 			auto& theEntity = m_allEntities[child.GetPrivateIndex()];
+			if (parent == theEntity.m_parent)
+			{
+				return true;
+			}
+			if (IsHandleValid(theEntity.m_parent))		// remove child from the old parent
+			{
+				auto& theParent = m_allEntities[theEntity.m_parent.GetPrivateIndex()];
+				auto foundChild = std::find(theParent.m_children.begin(), theParent.m_children.end(), child);
+				assert(foundChild != theParent.m_children.end());
+				theParent.m_children.erase(foundChild);
+			}
 			theEntity.m_parent = parent;
+			if (IsHandleValid(parent))		// add child to new parent
+			{
+				auto& theParent = m_allEntities[parent.GetPrivateIndex()];
+				theParent.m_children.push_back(child);
+			}
 			return true;
 		}
 		return false;
@@ -635,8 +644,6 @@ namespace Entities
 		}
 		return false;
 	}
-
-	// should we be resetting child entities parents for deleted handles?
 	void World::CollectGarbage()
 	{
 		R3_PROF_EVENT();
@@ -644,8 +651,10 @@ namespace Entities
 		{
 			if (IsHandleValid(toDelete.m_handle))
 			{
-				// use the entity component indices to destroy the objects
+				EntityHandle nullParent;	// reset the parent entity (removes entity from children)
+				SetParent(toDelete.m_handle, nullParent);
 				auto& theEntity = m_allEntities[toDelete.m_handle.GetPrivateIndex()];
+				// use the entity component indices to destroy the objects
 				for (int cmpType = 0; cmpType < theEntity.m_componentIndices.size(); ++cmpType)
 				{
 					if (theEntity.m_componentIndices[cmpType] != -1)
@@ -656,6 +665,7 @@ namespace Entities
 				// reset + push the entity to the free or reserved list
 				theEntity.m_publicID = -1;
 				theEntity.m_componentIndices.clear();	// clear out the old values but keep the memory around
+				theEntity.m_children.clear();
 				if (toDelete.m_reserveHandle)
 				{
 					assert(m_reservedSlots.find(toDelete.m_handle.GetID()) == m_reservedSlots.end());	// shouldnt be possible, but eh
