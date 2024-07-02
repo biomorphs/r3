@@ -49,7 +49,7 @@ namespace R3
 		VkDescriptorSetLayout_T* m_globalsDescriptorLayout = nullptr;
 		VkDescriptorSet_T* m_globalDescriptorSet = nullptr;	
 		WriteOnlyGpuArray<GlobalConstants> m_globalConstantsBuffer;
-		const int c_maxGlobalConstantBuffers = 10;	// ring buffer writes to avoid synchronisation
+		const int c_maxGlobalConstantBuffers = 4;	// ring buffer writes to avoid synchronisation
 		int m_currentGlobalConstantsBuffer = 0;
 		AllocatedBuffer m_globalInstancesHostVisible;
 		StaticMeshInstanceGpu* m_globalInstancesMappedPtr = nullptr;

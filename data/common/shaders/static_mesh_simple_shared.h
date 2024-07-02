@@ -22,7 +22,7 @@ struct PerInstanceData {
 // global constants stored in an array to allow overlapping frames
 layout(set = 0, binding = 0) uniform GlobalConstantsBuffer
 {
-	GlobalConstants AllGlobals[10];
+	GlobalConstants AllGlobals[4];
 };
 
 //all instance data passed in global set via storage buffer (use gl_InstanceIndex to get the current index)
