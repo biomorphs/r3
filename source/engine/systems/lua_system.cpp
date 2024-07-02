@@ -246,7 +246,7 @@ namespace R3
 					R3_PROF_EVENT_DYN(lc.m_onVariableUpdate.m_entryPointName.c_str());
 					try
 					{
-						sol::protected_function_result result = lc.m_onVariableUpdate.m_fn(e);	// todo, pass entity handle
+						sol::protected_function_result result = lc.m_onVariableUpdate.m_fn(e);
 						if (!result.valid())
 						{
 							sol::error err = result;

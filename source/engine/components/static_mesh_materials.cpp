@@ -92,7 +92,6 @@ namespace R3
 	{
 		std::string txt = std::format("GPU Data Index: {}", m_gpuDataIndex);
 		ImGui::Text(txt.c_str());
-		// Todo - add undo/redo friendly UI
 		if (ImGui::Button("Populate from Static Mesh"))
 		{
 			PopulateFromMesh(e, w);

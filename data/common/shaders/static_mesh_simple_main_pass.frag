@@ -26,10 +26,10 @@ void main() {
 		vec3 viewPosTbn = inTBN * globals.m_cameraWorldSpacePos.xyz;
 		fragPosTbn = inTBN * inWorldSpacePos;	// may be used later 
 		texCoords = ParallaxOcclusionMapping(myMaterial.m_heightmapTexture, inUV, normalize(viewPosTbn - fragPosTbn), myMaterial.m_paralaxAmount);
-		// if(texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 || texCoords.y < 0.0)
-		// {
-		// 	discard;
-		// }
+		if(texCoords.x > myMaterial.m_uvOffsetScale.z || texCoords.y > myMaterial.m_uvOffsetScale.w || texCoords.x < 0.0 || texCoords.y < 0.0)
+		{
+			discard;
+		}
 	}
 	PBRMaterial mat;
 	float finalAlpha = myMaterial.m_albedoOpacity.a;

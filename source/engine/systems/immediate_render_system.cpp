@@ -49,11 +49,6 @@ namespace R3
 		auto projViewMat = cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix();
 		VkExtent2D extents((uint32_t)ctx.m_renderExtents.x, (uint32_t)ctx.m_renderExtents.y);
 		m_imRender->Draw(projViewMat, *render->GetDevice(), extents, ctx.m_graphicsCmds);
-	}
-
-	void ImmediateRenderSystem::OnMainPassEnd(RenderPassContext& ctx)
-	{
-		R3_PROF_EVENT();
 		m_imRender->Flush();
 	}
 }

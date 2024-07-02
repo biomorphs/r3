@@ -422,8 +422,6 @@ namespace R3
 			);
 			vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &readbarrier);
 
-			// todo, update global textures descriptor set ready for drawing
-
 			dst.m_imGuiDescSet = ImGui_ImplVulkan_AddTexture(m_defaultSampler, dst.m_imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 			render->GetStagingBufferPool()->Release(t->m_stagingBuffer);
 			m_descriptorsNeedUpdate = true;	// update the descriptors now

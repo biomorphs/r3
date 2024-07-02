@@ -23,7 +23,6 @@ namespace R3
 	glm::vec3 Camera::WindowPositionToWorldSpace(glm::vec2 p, glm::vec2 windowSize) const
 	{
 		// place the point on the far plane in clip space (-1 z)?
-		assert(!"Test me! May not match with gl coords");	// todo z may need to be reversed
 		glm::vec4 cursorClipspace(-1.0f + (p.x / windowSize.x) * 2.0f, -1.0f + (p.y / windowSize.y) * 2.0f, -1.0f, 1.0f);
 		auto inverseView = glm::inverse(m_viewMatrix);
 		auto inverseProj = glm::inverse(m_projectionMatrix);

@@ -20,10 +20,11 @@
 
 // TODO - 
 // pipeline creation can't happen until pass runs
-//	add a bindPipeline type interface with no explicit pipeline creation?
+//	add a bindPipeline type interface to pass context with no explicit pipeline creation?
+//		can add simplier api for graphics pipelines
 // add pipeline cache
 //	takes in the required settings + a DrawPass (so pipelines can be created with the right attachments)
-// remove last remnants of formats for pipelines/drawing
+// remove last remnants of formats for early pipeline creation
 
 namespace R3
 {
