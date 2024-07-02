@@ -17,7 +17,6 @@ namespace R3
 	public:
 		static std::string_view GetName() { return "LightsSystem"; }
 		virtual void RegisterTickFns();
-		virtual void Shutdown();
 		void CollectLightsForDrawing(class RenderPassContext& ctx);		// call this early in the render graph
 		VkDeviceAddress GetPointlightsDeviceAddress();
 		uint32_t GetFirstPointlightOffset();
@@ -28,7 +27,6 @@ namespace R3
 		void OnMainPassBegin(class Device& d, VkCommandBuffer cmds);
 		bool m_showGui = false;
 		bool m_drawBounds = false;
-		uint64_t m_onMainPassBeginToken = -1;
 		const uint32_t c_maxLights = 1024 * 32;
 		const uint32_t c_framesInFlight = 3;	// lights update every frame, need multiple buffers
 		WriteOnlyGpuArray<Pointlight> m_allPointlights;	// c_maxLights x c_framesInFlight point lights

@@ -92,7 +92,6 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		Systems::GetSystem<ModelDataSystem>()->UnregisterLoadedCallback(m_onModelDataLoadedCbToken);
-		Systems::GetSystem<RenderSystem>()->m_onMainPassBegin.RemoveCallback(m_onMainPassBeginToken);
 	}
 
 	VkDeviceAddress StaticMeshSystem::GetVertexDataDeviceAddress()
@@ -369,9 +368,6 @@ namespace R3
 		});
 		// Register render functions
 		auto render = Systems::GetSystem<RenderSystem>();
-		m_onMainPassBeginToken = render->m_onMainPassBegin.AddCallback([this](Device& d, VkCommandBuffer cmds) {
-			OnMainPassBegin(d, cmds);
-		});
 		render->m_onShutdownCbs.AddCallback([this](Device& d) {
 			m_allMaterialsGpu.Destroy(d);
 			m_allVertices.Destroy(d);

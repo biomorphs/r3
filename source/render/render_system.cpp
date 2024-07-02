@@ -4,36 +4,30 @@
 #include "swap_chain.h"
 #include "render_target_cache.h"
 #include "render_graph.h"
-#include "core/file_io.h"
 #include "core/profiler.h"
 #include "core/log.h"
 #include "core/platform.h"
 #include "engine/systems/event_system.h"
 #include "engine/systems/time_system.h"
-#include "entities/systems/entity_system.h"
-#include "entities/queries.h"
-#include "engine/components/environment_settings.h"
 #include "vulkan_helpers.h"
 #include "buffer_pool.h"
 #include "pipeline_builder.h"
 #include "command_buffer_allocator.h"
-#include <vulkan/vulkan.h>
 #include <vulkan/vk_enum_string_helper.h>
-#include <vk_mem_alloc.h>
 #include <SDL.h>
 #include <SDL_events.h>
 #include <imgui.h>
 
 // TODO - 
-// pull render graph creation out of here + into engine
-//	unhook callbacks registering here too
+// pipeline creation can't happen until pass runs
+//	add a bindPipeline type interface with no explicit pipeline creation?
 // add pipeline cache
 //	takes in the required settings + a DrawPass (so pipelines can be created with the right attachments)
 // remove last remnants of formats for pipelines/drawing
 
 namespace R3
 {
-	static constexpr int c_maxFramesInFlight = 2;	// let the cpu get ahead of the gpu by this many frames
+	static constexpr int c_maxFramesInFlight = 3;	// let the cpu get ahead of the gpu by this many frames. should always be > num swap images
 	using VulkanHelpers::CheckResult;				// laziness
 	using VulkanHelpers::FindQueueFamilyIndices;
 
@@ -56,8 +50,6 @@ namespace R3
 		FrameData m_perFrameData[c_maxFramesInFlight];	// contains per frame cmd buffers, sync objects
 		int m_currentFrame = 0;
 		VkFence m_immediateSubmitFence = VK_NULL_HANDLE;
-
-		// helpers
 		FrameData& ThisFrameData()
 		{
 			assert(m_currentFrame < c_maxFramesInFlight);
@@ -126,10 +118,9 @@ namespace R3
 			VK_IMAGE_ASPECT_COLOR_BIT,
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,				// src mask = wait before writing attachment
 			VK_ACCESS_NONE,										// dst mask = we dont care?
-			VK_IMAGE_LAYOUT_UNDEFINED,	// TODO from current swap image layout
+			VK_IMAGE_LAYOUT_UNDEFINED,							// we don't really care what the previous layout is
 			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);					// to format optimal for present
 		vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &colourBarrier);
-
 		if (!CheckResult(vkEndCommandBuffer(cmdBuffer)))
 		{
 			LogError("failed to end recording command buffer!");
@@ -179,21 +170,6 @@ namespace R3
 		RegisterTick("Render::ShowGui", [this]() {
 			return ShowGui();
 		});
-	}
-
-	void RenderSystem::ProcessEnvironmentSettings()	// move out of render system
-	{
-		R3_PROF_EVENT();
-		auto entities = GetSystem<Entities::EntitySystem>();
-		auto w = entities->GetActiveWorld();
-		if (w)
-		{
-			auto getClearColour = [this](const Entities::EntityHandle& e, EnvironmentSettingsComponent& cmp) {
-				m_mainPassClearColour = glm::vec4(cmp.m_skyColour, 1.0f);
-				return true;
-			};
-			Entities::Queries::ForEach<EnvironmentSettingsComponent>(w, getClearColour);
-		}
 	}
 
 	bool RenderSystem::ShowGui()
@@ -302,9 +278,6 @@ namespace R3
 			return true;
 		}
 		
-		// Updates bg colour
-		ProcessEnvironmentSettings();
-		
 		auto graphicsCmds = m_cmdBufferAllocator->CreateCommandBuffer(*m_device, true);
 		if (!graphicsCmds)
 		{
@@ -348,7 +321,6 @@ namespace R3
 		m_cmdBufferAllocator->Release(*graphicsCmds);
 
 		// present!
-		// this will put the image we just rendered into the visible window.
 		VkPresentInfoKHR presentInfo = {};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		presentInfo.pNext = nullptr;

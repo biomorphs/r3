@@ -7,7 +7,6 @@
 struct VkCommandBuffer_T;
 struct VkImageView_T;
 struct VkImage_T;
-struct VkExtent2D;
 enum VkFormat;
 namespace R3
 {
@@ -44,16 +43,10 @@ namespace R3
 		// Run some graphics code immediately
 		void RunGraphicsCommandsImmediate(std::function<void(VkCommandBuffer_T*)> fn);
 
-		// Callbacks (other systems hook into renderer here)
+		// Callbacks (other systems can hook into renderer here)
 		// public out of reasons of laziness (no point writing a bunch of register/unregister)
 		// careful with thread safety when adding new ones
-		using ShutdownCallback = std::function<void(Device&)>;							// called when shutting down renderer
-		using MainPassBeginCallback = std::function<void(Device&, VkCommandBuffer_T*)>;	// called before vkCmdBeginRendering
-		using MainPassDrawCallback = std::function<void(Device&, VkCommandBuffer_T*, const VkExtent2D&)>;	// draw stuff to main pass here
-		using MainPassEndCallback = std::function<void(Device&)>;						// called after vkCmdEndRendering
-		CallbackArray<MainPassBeginCallback> m_onMainPassBegin;
-		CallbackArray<MainPassDrawCallback> m_onMainPassDraw;
-		CallbackArray<MainPassEndCallback> m_onMainPassEnd;
+		using ShutdownCallback = std::function<void(Device&)>;		// called when shutting down renderer
 		CallbackArray<ShutdownCallback> m_onShutdownCbs;
 
 	private:
@@ -81,7 +74,6 @@ namespace R3
 		std::unique_ptr<CommandBufferAllocator> m_cmdBufferAllocator;
 		struct VkStuff;
 		std::unique_ptr<VkStuff> m_vk;
-		glm::vec4 m_mainPassClearColour = { 0,0,0,1 };
 		uint32_t m_currentSwapImage = -1;
 		DeletionQueue m_mainDeleters;	// only ran when the render system shuts down
 	};

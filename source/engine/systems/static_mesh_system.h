@@ -86,7 +86,6 @@ namespace R3
 		
 		bool m_showGui = false;
 		uint64_t m_onModelDataLoadedCbToken = -1;
-		uint64_t m_onMainPassBeginToken = -1;
 
 		Mutex m_allDataMutex;	// protects stuff below
 		std::vector<StaticMeshGpuData> m_allData;

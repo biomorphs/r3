@@ -27,17 +27,9 @@ namespace R3
 
 		// Register render functions
 		auto render = Systems::GetSystem<RenderSystem>();
-		m_onMainPassBeginToken = render->m_onMainPassBegin.AddCallback([this](Device& d, VkCommandBuffer cmds) {
-			OnMainPassBegin(d, cmds);
-		});
 		render->m_onShutdownCbs.AddCallback([this](Device& d) {
 			m_allPointlights.Destroy(d);
 		});
-	}
-
-	void LightsSystem::Shutdown()
-	{
-		Systems::GetSystem<RenderSystem>()->m_onMainPassBegin.RemoveCallback(m_onMainPassBeginToken);
 	}
 
 	VkDeviceAddress LightsSystem::GetPointlightsDeviceAddress()

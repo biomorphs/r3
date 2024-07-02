@@ -69,12 +69,6 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		auto render = Systems::GetSystem<RenderSystem>();
-		render->m_onMainPassBegin.AddCallback([this](Device& d, VkCommandBuffer cmds) {
-			MainPassBegin(d, cmds);
-		});
-		render->m_onMainPassDraw.AddCallback([this](Device& d, VkCommandBuffer cmds, const VkExtent2D& e) {
-			MainPassDraw(d, cmds);
-		});
 		render->m_onShutdownCbs.AddCallback([this](Device& d) {
 			Cleanup(d);
 		});

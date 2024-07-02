@@ -58,9 +58,6 @@ namespace R3
 		});
 
 		auto render = GetSystem<RenderSystem>();
-		render->m_onMainPassBegin.AddCallback([this](Device& d, VkCommandBuffer_T* cmdBuffer) {
-			ProcessLoadedTextures(d, cmdBuffer);
-		});
 		render->m_onShutdownCbs.AddCallback([this](Device& d) {
 			Shutdown(d);
 		});
