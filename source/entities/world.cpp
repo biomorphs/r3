@@ -644,6 +644,7 @@ namespace Entities
 		}
 		return false;
 	}
+
 	void World::CollectGarbage()
 	{
 		R3_PROF_EVENT();

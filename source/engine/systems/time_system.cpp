@@ -68,7 +68,8 @@ namespace R3
 		const double catchUpSeconds = (double)m_fixedUpdateCatchup / (double)m_tickFrequency;
 		const double fuDeltaSeconds = (double)m_fixedUpdateDeltaTime / (double)m_tickFrequency;
 		m_fixedUpdateInterpolation = catchUpSeconds / fuDeltaSeconds;
-		m_fixedUpdateInterpolation = m_fixedUpdateInterpolation > 1.0 ? 1.0 : m_fixedUpdateInterpolation;
+		m_fixedUpdateInterpolation = m_fixedUpdateInterpolation - floor(m_fixedUpdateInterpolation);	// just keep fractional part
+		LogInfo("cu {}, fui {}", catchUpSeconds, m_fixedUpdateInterpolation);
 
 		return true;
 	}
