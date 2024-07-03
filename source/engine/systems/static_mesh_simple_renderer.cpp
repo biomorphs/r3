@@ -109,6 +109,8 @@ namespace R3
 			ImGui::Text(txt.c_str());
 			txt = std::format("    {} Part Instances", m_frameStats.m_totalPartInstances);
 			ImGui::Text(txt.c_str());
+			txt = std::format("    {:L} Triangles", m_frameStats.m_totalTriangles);
+			ImGui::Text(txt.c_str());
 			txt = std::format("Command buffer took {:.3f}ms to build", 1000.0 * (m_frameStats.m_writeCmdsEndTime - m_frameStats.m_writeCmdsStartTime));
 			ImGui::Text(txt.c_str());
 			ImGui::End();
@@ -343,6 +345,7 @@ namespace R3
 					drawPtr->vertexOffset = meshVertexDataOffset;
 					drawPtr->firstInstance = thisInstanceOffset;
 					thisInstanceOffset++;
+					m_frameStats.m_totalTriangles += currentMeshParts[part].m_indexCount / 3;
 				}
 				m_frameStats.m_totalModelInstances++;
 				m_frameStats.m_totalPartInstances += (uint32_t)currentMeshParts.size();
@@ -457,6 +460,7 @@ namespace R3
 		// submit secondary cmd buffer
 		if (m_thisFrameCmdBuffer.m_cmdBuffer)
 		{
+			R3_PROF_GPU_EVENT("StaticMeshSimpleRenderer::MainPassDraw");
 			vkCmdExecuteCommands(cmds, 1, &m_thisFrameCmdBuffer.m_cmdBuffer);
 		}
 

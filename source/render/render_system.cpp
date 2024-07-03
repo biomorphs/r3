@@ -99,29 +99,33 @@ namespace R3
 			LogError("failed to begin recording command buffer!");
 			return;
 		}
+		{
+			R3_PROF_GPU_COMMANDS(cmdBuffer);
+			R3_PROF_GPU_EVENT("RunGraph");
 
-		// Pass the current swap chain info to the target cache (so it can be accessed from the graph)
-		RenderTargetInfo swapInfo("Swapchain");
-		swapInfo.m_format = m_swapChain->GetFormat().format;
-		swapInfo.m_name = "Swapchain";
-		swapInfo.m_size = { m_swapChain->GetExtents().width, m_swapChain->GetExtents().height };
-		swapInfo.m_sizeType = RenderTargetInfo::SizeType::Fixed;
-		m_renderTargets->AddTarget(swapInfo, swapImage, swapImageView);
+			// Pass the current swap chain info to the target cache (so it can be accessed from the graph)
+			RenderTargetInfo swapInfo("Swapchain");
+			swapInfo.m_format = m_swapChain->GetFormat().format;
+			swapInfo.m_name = "Swapchain";
+			swapInfo.m_size = { m_swapChain->GetExtents().width, m_swapChain->GetExtents().height };
+			swapInfo.m_sizeType = RenderTargetInfo::SizeType::Fixed;
+			m_renderTargets->AddTarget(swapInfo, swapImage, swapImageView);
 
-		RenderGraph::GraphContext ctx;
-		ctx.m_device = m_device.get();
-		ctx.m_graphicsCmds = cmdBuffer;
-		ctx.m_targets = m_renderTargets.get();
-		m_renderGraph->Run(ctx);
+			RenderGraph::GraphContext ctx;
+			ctx.m_device = m_device.get();
+			ctx.m_graphicsCmds = cmdBuffer;
+			ctx.m_targets = m_renderTargets.get();
+			m_renderGraph->Run(ctx);
 
-		// Transition swap chain image to format optimal for present
-		auto colourBarrier = VulkanHelpers::MakeImageBarrier(swapImage,
-			VK_IMAGE_ASPECT_COLOR_BIT,
-			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,				// src mask = wait before writing attachment
-			VK_ACCESS_NONE,										// dst mask = we dont care?
-			VK_IMAGE_LAYOUT_UNDEFINED,							// we don't really care what the previous layout is
-			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);					// to format optimal for present
-		vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &colourBarrier);
+			// Transition swap chain image to format optimal for present
+			auto colourBarrier = VulkanHelpers::MakeImageBarrier(swapImage,
+				VK_IMAGE_ASPECT_COLOR_BIT,
+				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,				// src mask = wait before writing attachment
+				VK_ACCESS_NONE,										// dst mask = we dont care?
+				VK_IMAGE_LAYOUT_UNDEFINED,							// we don't really care what the previous layout is
+				VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);					// to format optimal for present
+			vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &colourBarrier);
+		}
 		if (!CheckResult(vkEndCommandBuffer(cmdBuffer)))
 		{
 			LogError("failed to end recording command buffer!");
@@ -318,9 +322,6 @@ namespace R3
 			}
 		}
 
-		// release the command buffer back to the pool
-		m_cmdBufferAllocator->Release(*graphicsCmds);
-
 		// present!
 		VkPresentInfoKHR presentInfo = {};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -332,6 +333,7 @@ namespace R3
 		presentInfo.pImageIndices = &m_currentSwapImage;
 		{
 			R3_PROF_EVENT("Present");
+			R3_PROF_GPU_FLIP(m_swapChain->GetSwapchain());
 			auto r = vkQueuePresentKHR(m_device->GetPresentQueue(), &presentInfo);
 			if (r == VK_ERROR_OUT_OF_DATE_KHR)
 			{
@@ -344,6 +346,10 @@ namespace R3
 			}
 		}
 		m_vk->m_currentFrame = (m_vk->m_currentFrame + 1) % c_maxFramesInFlight;
+
+		// release the command buffer back to the pool
+		m_cmdBufferAllocator->Release(*graphicsCmds);
+
 		return true;
 	}
 

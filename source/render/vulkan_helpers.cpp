@@ -51,6 +51,8 @@ namespace R3
 				LogError("Failed to begin cmd buffer");
 				return false;
 			}
+			R3_PROF_GPU_COMMANDS(commandBuffer);
+			R3_PROF_GPU_EVENT("RunCommandsImmediate");
 
 			// run the passed fs
 			fn(commandBuffer);

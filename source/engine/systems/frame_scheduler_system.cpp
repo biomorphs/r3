@@ -50,6 +50,7 @@ namespace R3
 			GetSystem<ImmediateRenderSystem>()->OnMainPassBegin(ctx);
 		});
 		mainPass->m_onDraw.AddCallback([](RenderPassContext& ctx) {
+			R3_PROF_GPU_EVENT("Main Pass");
 			GetSystem<StaticMeshSimpleRenderer>()->OnMainPassDraw(ctx);
 			GetSystem<ImmediateRenderSystem>()->OnMainPassDraw(ctx);
 		});
@@ -63,6 +64,7 @@ namespace R3
 		blitPass->m_inputs.push_back(mainColour);
 		blitPass->m_outputs.push_back(swapchain);
 		blitPass->m_onRun.AddCallback([this, mainColour, swapchain](RenderPassContext& ctx) {
+			R3_PROF_GPU_EVENT("Main Pass blit to swap");
 			VkExtent2D extents((uint32_t)ctx.m_renderExtents.x, (uint32_t)ctx.m_renderExtents.y);
 			VulkanHelpers::BlitColourImageToImage(ctx.m_graphicsCmds,
 				ctx.GetResolvedTarget(mainColour)->m_image, extents,
@@ -82,6 +84,7 @@ namespace R3
 			return render->GetWindowExtents();
 		};
 		imguiPass->m_onDraw.AddCallback([imgui](RenderPassContext& ctx) {
+			R3_PROF_GPU_EVENT("IMGUI");
 			imgui->OnDraw(ctx);
 		});
 		return imguiPass;

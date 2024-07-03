@@ -22,6 +22,7 @@ namespace R3
 
 	void DrawPass::ResolveTargets(RenderPassContext& ctx)
 	{
+		R3_PROF_EVENT();
 		std::vector<VkImageMemoryBarrier> barriers;	// collect the targets needed + any barriers that need to happen
 		for (const auto& it : m_colourAttachments)
 		{
@@ -128,6 +129,7 @@ namespace R3
 
 	void TransferPass::ResolveTargets(RenderPassContext& ctx)
 	{
+		R3_PROF_EVENT();
 		std::vector<VkImageMemoryBarrier> inBarriers, outBarriers;	// collect the targets needed + any barriers that need to happen
 		for (const auto& it : m_inputs)
 		{

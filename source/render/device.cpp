@@ -54,6 +54,10 @@ namespace R3
 			return false;
 		}
 
+		// Initialise the gpu profiler
+		VulkanHelpers::QueueFamilyIndices qfi = VulkanHelpers::FindQueueFamilyIndices(m_physicalDevice, m_mainSurface);
+		R3_PROF_GPU_INIT(&m_device, &m_physicalDevice.m_device, &m_graphicsQueue, &qfi.m_graphicsIndex, 1);
+
 		return true;
 	}
 
@@ -111,6 +115,8 @@ namespace R3
 
 	void Device::Destroy()
 	{
+		R3_PROF_SHUTDOWN();
+
 		vmaDestroyAllocator(m_vma);
 		m_vma = nullptr;
 
