@@ -35,6 +35,7 @@ namespace R3
 		void Draw(glm::mat4 vertexToScreen, Device& d, VkExtent2D viewportSize, VkCommandBuffer& cmdBuffer);
 		void Flush();	// call at end of frame, clears out previous tri data
 
+		void AddTriangles(const PosColourVertex* vertices, uint32_t count);
 		void AddTriangle(const PosColourVertex vertices[3]);
 		void AddLine(glm::vec3 p0, glm::vec3 p1, glm::vec4 colour);
 		void AddLine(const PosColourVertex vertices[2]);

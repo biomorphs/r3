@@ -220,6 +220,24 @@ namespace R3
 		}
 	}
 
+	void ImmediateRenderer::AddTriangles(const PosColourVertex* vertices, uint32_t count)
+	{
+		R3_PROF_EVENT();
+		DrawData newTri;
+		newTri.m_startVertexOffset = static_cast<uint32_t>(m_thisFramePosColVertices.size());
+		if (newTri.m_startVertexOffset + (3 * count) <= m_maxVertices)
+		{
+			newTri.m_vertexCount += (3 * count);
+			for (uint32_t v = 0; v < (count * 3); v += 3)
+			{
+				m_thisFramePosColVertices.emplace_back(vertices[v]);
+				m_thisFramePosColVertices.emplace_back(vertices[v + 1]);
+				m_thisFramePosColVertices.emplace_back(vertices[v + 2]);
+			}
+			m_thisFrameTriangles.emplace_back(newTri);
+		}
+	}
+
 	void ImmediateRenderer::AddTriangle(const PosColourVertex vertices[3])
 	{
 		DrawData newTri;

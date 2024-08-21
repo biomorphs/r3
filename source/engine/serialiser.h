@@ -204,6 +204,12 @@ namespace R3
 		s("Y", t.y);
 	}
 
+	template<> inline void SerialiseJson(glm::uvec2& t, JsonSerialiser& s)
+	{
+		s("X", t.x);
+		s("Y", t.y);
+	}
+
 	template<> inline void SerialiseJson(glm::vec3& t, JsonSerialiser& s)
 	{
 		s("X", t.x);

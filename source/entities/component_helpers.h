@@ -10,6 +10,8 @@
 // These are all optional, but handy!
 namespace R3
 {
+	class LuaSystem;
+
 	// Inspector helpers
 	// these return a lambda that can be used with ValueInspector
 	// hides the boilerplate of getting the component ptr through the world each time

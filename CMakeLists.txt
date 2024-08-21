@@ -37,4 +37,7 @@ add_subdirectory(source/engine)
 add_subdirectory(source/entities)
 add_subdirectory(source/render)
 add_subdirectory(source/editor)
+
+add_subdirectory(source/dungeons_of_arrrgh)
+
 add_subdirectory(source/main)

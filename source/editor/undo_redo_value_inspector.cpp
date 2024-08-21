@@ -66,6 +66,19 @@ namespace R3
 		return false;
 	}
 
+	bool UndoRedoInspector::Inspect(std::string_view label, glm::uvec2 currentValue, std::function<void(glm::uvec2)> setFn, glm::uvec2 minv, glm::uvec2 maxv)
+	{
+		glm::ivec2 newValue(currentValue);	// warning, uint -> int
+		ImGui::InputInt2(label.data(), glm::value_ptr(newValue), ImGuiInputTextFlags_EnterReturnsTrue);
+		glm::uvec2 outValue = glm::max(minv, glm::min(glm::uvec2(newValue), maxv));	// warning, int -> uint
+		if (outValue != currentValue)
+		{
+			m_cmds.Push(std::make_unique<SetValueCommand<glm::uvec2>>(label, currentValue, outValue, setFn));
+			return true;
+		}
+		return false;
+	}
+
 	bool UndoRedoInspector::Inspect(std::string_view label, glm::vec3 currentValue, std::function<void(glm::vec3)> setFn, glm::vec3 minv, glm::vec3 maxv)
 	{
 		constexpr float errorMargin = 0.000001f;

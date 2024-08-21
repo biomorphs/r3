@@ -61,6 +61,11 @@ namespace R3
 		return false;
 	}
 
+	bool BasicValueInspector::Inspect(std::string_view label, glm::uvec2 currentValue, std::function<void(glm::uvec2)> setFn, glm::uvec2 minv, glm::uvec2 maxv)
+	{
+		return false;
+	}
+
 	bool BasicValueInspector::Inspect(std::string_view label, glm::vec3 currentValue, std::function<void(glm::vec3)> setFn, glm::vec3 minv, glm::vec3 maxv)
 	{
 		ImGui::Text(label.data());
