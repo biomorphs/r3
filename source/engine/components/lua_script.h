@@ -1,6 +1,7 @@
 #pragma once
 
 #include "entities/component_helpers.h"
+#include "engine/blackboard.h"
 #include <sol/sol.hpp>
 
 namespace R3
@@ -19,7 +20,9 @@ namespace R3
 		void SetVariableUpdateSource(std::string_view src);
 		void SetVariableUpdateEntrypoint(std::string_view src);
 
-		struct CompiledFunction;
+		void SetPopulateInputsSource(std::string_view src);
+		void SetPopulateInputsEntrypoint(std::string_view src);
+
 		struct ScriptData
 		{
 			void SerialiseJson(JsonSerialiser& s);
@@ -27,9 +30,12 @@ namespace R3
 			std::string m_entryPointName;	// function(EntityHandle owner)
 			sol::protected_function m_fn;	// compiled function
 		};
+		Blackboard m_inputParams;			// pass inputs to script via blackboard
+		ScriptData m_populateInputs;		// lets scripts declare input params by modifying blackboard
 		ScriptData m_onFixedUpdate;
 		ScriptData m_onVariableUpdate;
 		bool m_needsRecompile = false;
+		bool m_needsInputPopulate = false;
 		bool m_isActive = false;
 	};
 }

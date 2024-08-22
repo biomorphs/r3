@@ -6,6 +6,7 @@
 #include <type_traits>
 #include <memory>
 #include <vector>
+#include <unordered_map>
 
 namespace R3
 {
@@ -13,6 +14,7 @@ namespace R3
 	// ints, floats, bools, strings, vec2, vec3, vec4, quat
 	// objects (that have a Serialise function)
 	// vectors of the above
+	// unordered_maps of the above (within reason)
 
 	// To serialise a custom type, specialise the SerialiseJson template in the R3 namespace
 	// Or you can add a SerialiseJson(JsonSerialiser&) member function to your objects
@@ -192,6 +194,70 @@ namespace R3
 				LogError("Failed to serialise {} - {}", name, e.what());
 			}
 		}
+
+		// handles maps of things
+		template<class KeyType, class ValueType>
+		void operator()(std::string_view name, std::unordered_map<KeyType, ValueType>& v)
+		{
+			constexpr bool keyIsInt = std::is_integral<KeyType>::value;
+			constexpr bool keyIsFloat = std::is_floating_point<KeyType>::value;
+			constexpr bool keyIsString = (std::is_same<KeyType, std::string>::value);
+			constexpr bool valueIsInt = std::is_integral<ValueType>::value;
+			constexpr bool valueIsFloat = std::is_floating_point<ValueType>::value;
+			constexpr bool valueIsString = (std::is_same<ValueType, std::string>::value);
+			constexpr bool valueHasSerialiserMember = HasSerialiser<ValueType>::value;
+			if constexpr (!keyIsInt && !keyIsFloat && !keyIsString)
+			{
+				LogError("Maps with this key type are not supported");
+			}
+			if (m_mode == Mode::Write)
+			{
+				std::vector<json> listJson;
+				for (auto& it : v)
+				{
+					JsonSerialiser valueJs(m_mode);
+					if constexpr (valueHasSerialiserMember)
+					{
+						it.second.SerialiseJson(valueJs);
+					}
+					else
+					{
+						SerialiseJson(it.second, valueJs);
+					}
+					json itJson;
+					itJson["Key"] = it.first;
+					itJson["Value"] = valueJs.m_json;
+					listJson.push_back(itJson);
+				}
+				m_json[name] = listJson;
+			}
+			else
+			{
+				std::vector<json> listJson = m_json[name];
+				for (int i = 0; i < listJson.size(); ++i)
+				{
+					KeyType key = listJson[i]["Key"];
+					ValueType value;
+					if constexpr (valueIsInt || valueIsFloat || valueIsString)
+					{
+						value = listJson[i]["Value"];
+					}
+					else
+					{
+						JsonSerialiser js(m_mode, listJson[i]["Value"]);
+						if constexpr (valueHasSerialiserMember)
+						{
+							value.SerialiseJson(js);
+						}
+						else
+						{
+							SerialiseJson(value, js);
+						}
+					}
+					v[key] = value;
+				}
+			}
+		}
 	private:
 		using json = nlohmann::json;
 		Mode m_mode = Write;
@@ -205,6 +271,12 @@ namespace R3
 	}
 
 	template<> inline void SerialiseJson(glm::uvec2& t, JsonSerialiser& s)
+	{
+		s("X", t.x);
+		s("Y", t.y);
+	}
+
+	template<> inline void SerialiseJson(glm::ivec2& t, JsonSerialiser& s)
 	{
 		s("X", t.x);
 		s("Y", t.y);

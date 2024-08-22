@@ -196,6 +196,11 @@ namespace R3
 
 	void LuaSystem::RegisterBuiltinTypes()
 	{
+		m_globalState->new_usertype<glm::ivec2>("ivec2",
+			sol::constructors<glm::ivec2(), glm::ivec2(int32_t), glm::ivec2(int32_t, int32_t), glm::ivec2(glm::ivec2)>(),
+			"x", &glm::ivec2::x,
+			"y", &glm::ivec2::y
+		);
 		m_globalState->new_usertype<glm::uvec2>("uvec2",
 			sol::constructors<glm::uvec2(), glm::uvec2(uint32_t), glm::uvec2(uint32_t, uint32_t), glm::uvec2(glm::uvec2)>(),
 			"x", &glm::uvec2::x,
@@ -228,6 +233,7 @@ namespace R3
 		m_globalState->new_usertype<glm::quat>("quat",
 			sol::constructors<glm::quat(), glm::quat(glm::quat)>()
 		);
+		Blackboard::RegisterScripts(*this);
 		RegisterFunction("RotateQuat", [](const glm::quat& q, float angleDegrees, glm::vec3 axis) -> glm::quat {
 			return glm::rotate(q, angleDegrees, axis);
 		});
@@ -236,10 +242,33 @@ namespace R3
 	bool LuaSystem::RunVariableUpdateScripts()
 	{
 		R3_PROF_EVENT();
-		if (m_runActiveWorldScripts)
-		{
-			auto entities = Systems::GetSystem<Entities::EntitySystem>();
-			auto forEachScriptCmp = [this](const Entities::EntityHandle& e, LuaScriptComponent& lc) {
+		auto entities = Systems::GetSystem<Entities::EntitySystem>();
+		auto forEachScriptCmp = [this](const Entities::EntityHandle& e, LuaScriptComponent& lc) {
+			if (lc.m_needsInputPopulate)
+			{
+				lc.m_populateInputs.m_fn = LoadScriptAndGetEntrypoint(*m_globalState, lc.m_populateInputs.m_sourcePath, lc.m_populateInputs.m_entryPointName);
+				if (lc.m_populateInputs.m_fn)
+				{
+					R3_PROF_EVENT_DYN(lc.m_populateInputs.m_entryPointName.c_str());
+					try
+					{
+						sol::protected_function_result result = lc.m_populateInputs.m_fn(&lc);
+						if (!result.valid())
+						{
+							sol::error err = result;
+							LogError("Script error: {}", err.what());
+						}
+					}
+					catch (const sol::error& err)
+					{
+						std::string errorText = err.what();
+						LogError("Script Error: %s", errorText);
+					}
+				}
+				lc.m_needsInputPopulate = false;
+			}
+			if (m_runActiveWorldScripts)
+			{
 				if (lc.m_needsRecompile)
 				{
 					lc.m_needsRecompile = false;
@@ -264,12 +293,12 @@ namespace R3
 						LogError("Script Error: %s", errorText);
 					}
 				}
-				return true;
-				};
-			if (entities->GetActiveWorld())
-			{
-				Entities::Queries::ForEach<LuaScriptComponent>(entities->GetActiveWorld(), forEachScriptCmp);
 			}
+			return true;
+		};
+		if (entities->GetActiveWorld())
+		{
+			Entities::Queries::ForEach<LuaScriptComponent>(entities->GetActiveWorld(), forEachScriptCmp);
 		}
 		return true;
 	}

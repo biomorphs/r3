@@ -12,8 +12,11 @@ namespace R3
 			"SetFixedUpdateEntrypoint", &LuaScriptComponent::SetFixedUpdateEntrypoint,
 			"SetVariableUpdateSource", &LuaScriptComponent::SetVariableUpdateSource,
 			"SetVariableUpdateEntrypoint", &LuaScriptComponent::SetVariableUpdateEntrypoint,
+			"SetPopulateInputsSource", &LuaScriptComponent::SetPopulateInputsSource,
+			"SetPopulateInputsEntrypoint", &LuaScriptComponent::SetPopulateInputsEntrypoint,
 			"m_needsRecompile", &LuaScriptComponent::m_needsRecompile,
-			"m_isActive", &LuaScriptComponent::m_isActive
+			"m_isActive", &LuaScriptComponent::m_isActive,
+			"m_inputParams", &LuaScriptComponent::m_inputParams
 		);
 	}
 
@@ -21,7 +24,9 @@ namespace R3
 	{
 		s("OnFixedUpdate", m_onFixedUpdate);
 		s("OnVariableUpdate", m_onVariableUpdate);
+		s("PopulateInputs", m_populateInputs);
 		s("IsActive", m_isActive);
+		s("InputParams", m_inputParams);
 		if (s.GetMode() == JsonSerialiser::Read)
 		{
 			m_needsRecompile = true;
@@ -30,18 +35,35 @@ namespace R3
 
 	void LuaScriptComponent::Inspect(const Entities::EntityHandle& e, Entities::World* w, ValueInspector& i)
 	{
-		ImGui::Text("On Fixed Update");
-		i.InspectFile(std::format("Source {}##fixed", m_onFixedUpdate.m_sourcePath), m_onFixedUpdate.m_sourcePath, "lua", InspectProperty(&LuaScriptComponent::SetFixedUpdateSource, e, w));
-		i.Inspect("Entry point##fixed", m_onFixedUpdate.m_entryPointName, InspectProperty(&LuaScriptComponent::SetFixedUpdateEntrypoint, e, w));
+		ImGui::Text("Input Params");
+		m_inputParams.Inspect(i);
 		ImGui::Separator();
-		ImGui::Text("On Variable Update");
-		i.InspectFile(std::format("Source {}##variable", m_onVariableUpdate.m_sourcePath), m_onVariableUpdate.m_sourcePath, "lua", InspectProperty(&LuaScriptComponent::SetVariableUpdateSource, e, w));
-		i.Inspect("Entry point##variable", m_onVariableUpdate.m_entryPointName, InspectProperty(&LuaScriptComponent::SetVariableUpdateEntrypoint, e, w));
+		if (ImGui::CollapsingHeader("On Fixed Update"))
+		{
+			i.InspectFile(std::format("Source {}##fixed", m_onFixedUpdate.m_sourcePath), m_onFixedUpdate.m_sourcePath, "lua", InspectProperty(&LuaScriptComponent::SetFixedUpdateSource, e, w));
+			i.Inspect("Entry point##fixed", m_onFixedUpdate.m_entryPointName, InspectProperty(&LuaScriptComponent::SetFixedUpdateEntrypoint, e, w));
+		}
+		if (ImGui::CollapsingHeader("On Variable Update"))
+		{
+			i.InspectFile(std::format("Source {}##variable", m_onVariableUpdate.m_sourcePath), m_onVariableUpdate.m_sourcePath, "lua", InspectProperty(&LuaScriptComponent::SetVariableUpdateSource, e, w));
+			i.Inspect("Entry point##variable", m_onVariableUpdate.m_entryPointName, InspectProperty(&LuaScriptComponent::SetVariableUpdateEntrypoint, e, w));
+		}
+		if (ImGui::CollapsingHeader("Populate Inputs"))
+		{
+			i.InspectFile(std::format("Source {}##inputs", m_populateInputs.m_sourcePath), m_populateInputs.m_sourcePath, "lua", InspectProperty(&LuaScriptComponent::SetPopulateInputsSource, e, w));
+			i.Inspect("Entry point##inputs", m_populateInputs.m_entryPointName, InspectProperty(&LuaScriptComponent::SetPopulateInputsEntrypoint, e, w));
+		}
+		ImGui::Separator();
+		i.Inspect("Is Active", m_isActive, InspectProperty(&LuaScriptComponent::m_isActive, e, w));
+		ImGui::Separator();
 		if (ImGui::Button("Recompile"))
 		{
 			m_needsRecompile = true;
 		}
-		i.Inspect("Is Active", m_isActive, InspectProperty(&LuaScriptComponent::m_isActive, e, w));
+		if (ImGui::Button("Repopulate Inputs"))
+		{
+			m_needsInputPopulate = true;
+		}
 	}
 
 	void LuaScriptComponent::SetFixedUpdateSource(std::string_view src)
@@ -62,6 +84,16 @@ namespace R3
 	void LuaScriptComponent::SetVariableUpdateEntrypoint(std::string_view src)
 	{
 		m_onVariableUpdate.m_entryPointName = src;
+	}
+
+	void LuaScriptComponent::SetPopulateInputsSource(std::string_view src)
+	{
+		m_populateInputs.m_sourcePath = src;
+	}
+
+	void LuaScriptComponent::SetPopulateInputsEntrypoint(std::string_view src)
+	{
+		m_populateInputs.m_entryPointName = src;
 	}
 
 	void LuaScriptComponent::ScriptData::SerialiseJson(JsonSerialiser& s)

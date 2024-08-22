@@ -1,4 +1,6 @@
 set(EngineLib_SourceFiles
+	blackboard.h
+	blackboard.cpp
 	dds_loader.h
 	dds_loader.cpp
 	asset_file.h
