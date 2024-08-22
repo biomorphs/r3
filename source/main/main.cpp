@@ -3,6 +3,8 @@
 #include "engine/frame_graph.h"
 #include "editor/systems/editor_system.h"
 
+#include "dungeons_of_arrrgh/dungeons_of_arrrgh.h"
+
 std::string FullCmdLine(int argc, char** args)
 {
 	std::string fullCmdLine = "";
@@ -16,24 +18,22 @@ std::string FullCmdLine(int argc, char** args)
 int main(int argc, char** args)
 {
 	std::string fullCmdLine = FullCmdLine(argc, args);
-
 	bool runEditor = fullCmdLine.find("-editor") != std::string::npos;
-	if (runEditor)
-	{
-		auto registerEditor = []() {
+	auto registerSystems = [runEditor]() {
+		R3::Systems::GetInstance().RegisterSystem<DungeonsOfArrrgh>();
+		if (runEditor)
+		{
 			R3::Systems::GetInstance().RegisterSystem<R3::EditorSystem>();
-		};
-		auto setupFrameGraph = [](R3::FrameGraph& fg) {
+		}
+	};
+	auto setupFrameGraph = [runEditor](R3::FrameGraph& fg) {
+		auto variableUpdateRoot = fg.m_root.FindFirst("Sequence - VariableUpdate");
+		variableUpdateRoot->AddFn("DungeonsOfArrrgh::Main");		// make sure it runs after scripts
+		if (runEditor)
+		{
 			auto guiUpdateRoot = fg.m_root.FindFirst("Sequence - ImGuiUpdate");
-			if (guiUpdateRoot)
-			{
-				guiUpdateRoot->AddFn("EditorSystem::ShowGui", true);	// push to front of sequence
-			}
-		};
-		return R3::Run(fullCmdLine, registerEditor, setupFrameGraph);
-	}
-	else
-	{
-		return R3::Run(fullCmdLine);
-	}
+			guiUpdateRoot->AddFn("EditorSystem::ShowGui", true);	// push to front of sequence
+		}		
+	};
+	return R3::Run(fullCmdLine, registerSystems, setupFrameGraph);
 }

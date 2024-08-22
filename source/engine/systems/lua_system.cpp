@@ -196,6 +196,11 @@ namespace R3
 
 	void LuaSystem::RegisterBuiltinTypes()
 	{
+		m_globalState->new_usertype<glm::uvec2>("uvec2",
+			sol::constructors<glm::uvec2(), glm::uvec2(uint32_t), glm::uvec2(uint32_t, uint32_t), glm::uvec2(glm::uvec2)>(),
+			"x", &glm::uvec2::x,
+			"y", &glm::uvec2::y
+		);
 		m_globalState->new_usertype<glm::vec2>("vec2",
 			sol::constructors<glm::vec2(), glm::vec2(float), glm::vec2(float, float), glm::vec2(glm::vec2)>(),
 			"x", &glm::vec2::x,

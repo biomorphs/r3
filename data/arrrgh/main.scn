@@ -1,0 +1,53 @@
+{
+ "AllEntities": [
+  {
+   "EnvironmentSettings": {
+    "Sky Ambient": 0.004999999888241291,
+    "Sky Colour": {
+     "X": 0.16211958229541779,
+     "Y": 0.6437581777572632,
+     "Z": 0.6814516186714172
+    },
+    "Sun Ambient": 0.00800000037997961,
+    "Sun Brightness": 8.0,
+    "Sun Colour": {
+     "X": 1.0,
+     "Y": 0.9691076874732971,
+     "Z": 0.8467742204666138
+    },
+    "Sun Direction": {
+     "X": -0.10000000149011612,
+     "Y": -1.0,
+     "Z": -0.10000000149011612
+    }
+   },
+   "ID": 0,
+   "LuaScript": {
+    "IsActive": true,
+    "OnFixedUpdate": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    },
+    "OnVariableUpdate": {
+     "EntryPoint": "Dungeons_VariableUpdate",
+     "SourcePath": "arrrgh\\main.lua"
+    }
+   },
+   "Name": "Globals",
+   "Parent": 4294967295
+  },
+  {
+   "Dungeons_WorldGridComponent": {
+    "Contents": [],
+    "Dimensions": {
+     "X": 0,
+     "Y": 0
+    }
+   },
+   "ID": 1,
+   "Name": "Grid",
+   "Parent": 4294967295
+  }
+ ],
+ "WorldName": "New World"
+}

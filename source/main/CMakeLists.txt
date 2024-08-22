@@ -13,6 +13,7 @@ target_link_libraries(R3 PRIVATE
 	Entities
 	Render
 	Editor
+	DungeonsOfArrrgh
 	Optick::OptickCore
 	sol2
 	SDL2::SDL2 
