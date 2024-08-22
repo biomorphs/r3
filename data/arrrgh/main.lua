@@ -1,5 +1,10 @@
+local Arrrgh_Globals = {}
 
-local Dungeons = {}
+function Dungeons_PopulateInputs(luacmp)
+	luacmp.m_inputParams:TryAddIntVec2("Total World Size", ivec2.new(32,32))
+	luacmp.m_inputParams:TryAddIntVec2("Min Building Size", ivec2.new(5,5))
+	luacmp.m_inputParams:TryAddIntVec2("Max Building Size", ivec2.new(16,16))
+end
 
 function Dungeons_GenerateSimpleBuilding(grid, start, size)
 	grid:Fill(start, size, 1, false) -- outer walls
@@ -20,31 +25,34 @@ function Dungeons_GenerateSimpleBuilding(grid, start, size)
 	grid:Fill(doorPos, uvec2.new(1, 1), 2, true)
 end
 
-function FillWithBuildings(grid)
+function FillWithBuildings(grid,minBuildingSize,maxBuildingSize)
 	local gridDims = grid:GetDimensions()
-	local minBuildingSize = uvec2.new(5,5)
-	local maxBuildingSize = uvec2.new(16, 16)
-	local maxAttempts = 100
+	local maxAttempts = 4000
 	local maxBuildings = 100
 	local totalBuildings = 0
 	for attempt=1,maxAttempts do 
 		local buildingSize = uvec2.new(math.random(minBuildingSize.x,maxBuildingSize.x),math.random(minBuildingSize.y,maxBuildingSize.y))
-		local buildingPosition = uvec2.new(math.random(2, gridDims.x - 7), math.random(2, gridDims.y - 7))
-		if((buildingSize.x + buildingPosition.x) < (gridDims.x - 2) and (buildingSize.y + buildingPosition.y) < (gridDims.y - 2)) then 
-			if(grid:AllTilesMatchType(buildingPosition, buildingSize, 3)) then -- if area only contains outdoor floor
-				Dungeons_GenerateSimpleBuilding(grid, buildingPosition, buildingSize)
-				totalBuildings = totalBuildings + 1
-				if(totalBuildings == maxBuildings) then 
-					return 
-				end
+		local buildingPosition = uvec2.new(math.random(2, gridDims.x - buildingSize.x), math.random(2, gridDims.y - buildingSize.x))
+		if(grid:AllTilesMatchType(buildingPosition, buildingSize, 3)) then -- if area only contains outdoor floor
+			Dungeons_GenerateSimpleBuilding(grid, buildingPosition, buildingSize)
+			totalBuildings = totalBuildings + 1
+			if(totalBuildings == maxBuildings) then 
+				print(totalBuildings, ' buildings generated')
+				return 
 			end
 		end
 	end
+	print(totalBuildings, ' buildings generated')
 end
 
-function Dungeons_GenerateWorld(grid)
-	grid:ResizeGrid(uvec2.new(64,64))
-	local gridSize = grid:GetDimensions()
+function Dungeons_GenerateWorld(grid, luacmp)
+	-- get the generation params from the script component
+	local totalWorldSize = luacmp.m_inputParams:GetIntVec2("Total World Size", ivec2.new(32,32))
+	local minBuildingSize = luacmp.m_inputParams:GetIntVec2("Min Building Size", ivec2.new(5,5))
+	local maxBuildingSize = luacmp.m_inputParams:GetIntVec2("Max Building Size", ivec2.new(16,16))
+
+	local gridSize = uvec2.new(totalWorldSize.x,totalWorldSize.y)	-- need to use uvec2 from here
+	grid:ResizeGrid(gridSize)
 
 	-- fill world with empty tiles
 	grid:Fill(uvec2.new(0,0), gridSize, 0, false)
@@ -57,13 +65,24 @@ function Dungeons_GenerateWorld(grid)
 	grid:Fill(uvec2.new(1,1), uvec2.new(gridSize.x - 2, gridSize.y - 2), 3, true)
 
 	-- add buildings
-	FillWithBuildings(grid)
+	FillWithBuildings(grid, minBuildingSize, maxBuildingSize)
 end
 
 -- main entry point, called from variable update
--- only needs to run once
 function Dungeons_VariableUpdate(e)
-	Arrrgh.SetGenerateWorldCb(Dungeons_GenerateWorld)	-- register generation cb
+	print('running dungeon generator')
+
 	local world = R3.ActiveWorld()
-	world.GetComponent_LuaScript(e).m_isActive = false		-- we are done, stop running
+	local gridEntity = world:GetEntityByName('World Grid')
+	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
+	local scriptcmp = world.GetComponent_LuaScript(e)
+
+	if(scriptcmp ~= nil and gridcmp ~= nil) then
+		Dungeons_GenerateWorld(gridcmp, scriptcmp)
+		gridcmp.m_isDirty = true
+		gridcmp.m_debugDraw = true
+	else
+		print('no grid')
+	end	
+	scriptcmp.m_isActive = false		-- we are done, stop running
 end

@@ -4,12 +4,12 @@
    "EnvironmentSettings": {
     "Sky Ambient": 0.004999999888241291,
     "Sky Colour": {
-     "X": 0.16211958229541779,
-     "Y": 0.6437581777572632,
-     "Z": 0.6814516186714172
+     "X": 0.042273666709661484,
+     "Y": 0.16107632219791412,
+     "Z": 0.20967739820480347
     },
     "Sun Ambient": 0.00800000037997961,
-    "Sun Brightness": 8.0,
+    "Sun Brightness": 4.0,
     "Sun Colour": {
      "X": 1.0,
      "Y": 0.9691076874732971,
@@ -22,7 +22,37 @@
     }
    },
    "ID": 0,
+   "Name": "Globals",
+   "Parent": 4294967295
+  },
+  {
+   "ID": 1,
    "LuaScript": {
+    "InputParams": {
+     "IntVec2s": [
+      {
+       "Key": "Min Building Size",
+       "Value": {
+        "X": 5,
+        "Y": 5
+       }
+      },
+      {
+       "Key": "Total World Size",
+       "Value": {
+        "X": 64,
+        "Y": 128
+       }
+      },
+      {
+       "Key": "Max Building Size",
+       "Value": {
+        "X": 10,
+        "Y": 10
+       }
+      }
+     ]
+    },
     "IsActive": true,
     "OnFixedUpdate": {
      "EntryPoint": "",
@@ -31,9 +61,13 @@
     "OnVariableUpdate": {
      "EntryPoint": "Dungeons_VariableUpdate",
      "SourcePath": "arrrgh\\main.lua"
+    },
+    "PopulateInputs": {
+     "EntryPoint": "Dungeons_PopulateInputs",
+     "SourcePath": "arrrgh\\main.lua"
     }
    },
-   "Name": "Globals",
+   "Name": "Dungeon Generator",
    "Parent": 4294967295
   },
   {
@@ -44,8 +78,8 @@
      "Y": 0
     }
    },
-   "ID": 1,
-   "Name": "Grid",
+   "ID": 2,
+   "Name": "World Grid",
    "Parent": 4294967295
   }
  ],

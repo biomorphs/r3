@@ -19,22 +19,6 @@ enum WorldTileType : uint8_t
 	MaxTypes
 };
 
-void DungeonsOfArrrgh::GenerateWorld(class DungeonsWorldGridComponent& grid)
-{
-	R3_PROF_EVENT();
-
-	// run the generation script
-	if (m_generateWorldFn)
-	{
-		m_generateWorldFn(&grid);
-	}
-	else
-	{
-		// fill world with empty tiles
-		grid.Fill({ 0,0 }, grid.GetDimensions(), WorldTileType::Empty, false);
-	}
-}
-
 void DungeonsOfArrrgh::RegisterTickFns()
 {
 	R3_PROF_EVENT();
@@ -49,20 +33,12 @@ bool DungeonsOfArrrgh::Init()
 	auto entities = GetSystem<R3::Entities::EntitySystem>();
 	entities->RegisterComponentType<DungeonsWorldGridComponent>(16);	// probably only need 1 per world, but eh
 
-	// register script stuff
-	auto lua = GetSystem<R3::LuaSystem>();
-	lua->RegisterFunction("SetGenerateWorldCb",	[this](sol::protected_function fn) {
-			m_generateWorldFn = fn;
-		},
-	"Arrrgh");	// namespace
-
 	return true;
 }
 
 void DungeonsOfArrrgh::Shutdown()
 {
 	R3_PROF_EVENT();
-	m_generateWorldFn = nullptr;
 }
 
 void DungeonsOfArrrgh::DebugDrawWorldGrid(const DungeonsWorldGridComponent& grid)
@@ -220,11 +196,9 @@ void DungeonsOfArrrgh::GenerateWorldVisuals(const R3::Entities::EntityHandle& e,
 void DungeonsOfArrrgh::OnWorldGridDirty(const R3::Entities::EntityHandle& e, class DungeonsWorldGridComponent& grid)
 {
 	R3_PROF_EVENT();
+
 	auto entities = GetSystem<R3::Entities::EntitySystem>();
 	auto activeWorld = entities->GetActiveWorld();
-
-	// generate the world tiles
-	GenerateWorld(grid);
 
 	// delete all previous visual entities
 	std::vector<R3::Entities::EntityHandle> children;

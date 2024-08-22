@@ -3,7 +3,6 @@
 #include "engine/systems.h"
 #include "entities/entity_handle.h"
 #include "core/glm_headers.h"
-#include <sol/sol.hpp>
 
 // Game entry point
 class DungeonsOfArrrgh : public R3::System
@@ -24,5 +23,4 @@ private:
 	glm::vec3 m_drawGridOffset = { 0,0,0 };
 	glm::vec2 m_drawGridScale = { 4, 4 };
 	float m_drawBlockerHeight = 3.0f;
-	std::function<void(DungeonsWorldGridComponent*)> m_generateWorldFn = nullptr;
 };

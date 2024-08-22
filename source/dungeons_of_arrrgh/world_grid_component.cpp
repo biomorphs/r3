@@ -18,7 +18,9 @@ void DungeonsWorldGridComponent::RegisterScripts(R3::LuaSystem& l)
 		"GetTileType", &DungeonsWorldGridComponent::GetTileType,
 		"IsTilePassable", &DungeonsWorldGridComponent::IsTilePassable,
 		"Fill", &DungeonsWorldGridComponent::Fill,
-		"AllTilesMatchType", &DungeonsWorldGridComponent::AllTilesMatchType
+		"AllTilesMatchType", &DungeonsWorldGridComponent::AllTilesMatchType,
+		"m_debugDraw", &DungeonsWorldGridComponent::m_debugDraw,
+		"m_isDirty", &DungeonsWorldGridComponent::m_isDirty
 	);
 }
 
@@ -82,9 +84,9 @@ bool DungeonsWorldGridComponent::IsTilePassable(uint32_t tilex, uint32_t tiley)
 bool DungeonsWorldGridComponent::AllTilesMatchType(glm::uvec2 start, glm::uvec2 size, uint8_t type)
 {
 	R3_PROF_EVENT();
-	for (auto z = start.y; z < size.y; ++z)
+	for (auto z = start.y; z < start.y + size.y; ++z)
 	{
-		for (auto x = start.x; x < size.x; ++x)
+		for (auto x = start.x; x < start.x + size.x; ++x)
 		{
 			if (auto tile = GetContents(x, z))
 			{
