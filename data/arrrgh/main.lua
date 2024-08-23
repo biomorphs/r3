@@ -40,6 +40,7 @@ function FillWithBuildings(grid,minBuildingSize,maxBuildingSize)
 				print(totalBuildings, ' buildings generated')
 				return 
 			end
+			coroutine.yield()
 		end
 	end
 	print(totalBuildings, ' buildings generated')
@@ -57,6 +58,8 @@ function Dungeons_GenerateWorld(grid, luacmp)
 	-- fill world with empty tiles
 	grid:Fill(uvec2.new(0,0), gridSize, 0, false)
 
+	coroutine.yield()
+
 	if(gridSize.x < 2 or gridSize.y < 2) then
 		print('too small')
 	end
@@ -64,25 +67,35 @@ function Dungeons_GenerateWorld(grid, luacmp)
 	-- fill most of world with walkable floor tiles
 	grid:Fill(uvec2.new(1,1), uvec2.new(gridSize.x - 2, gridSize.y - 2), 3, true)
 
+	coroutine.yield()
+
 	-- add buildings
 	FillWithBuildings(grid, minBuildingSize, maxBuildingSize)
 end
 
 -- main entry point, called from variable update
 function Dungeons_VariableUpdate(e)
-	print('running dungeon generator')
-
 	local world = R3.ActiveWorld()
 	local gridEntity = world:GetEntityByName('World Grid')
 	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
 	local scriptcmp = world.GetComponent_LuaScript(e)
-
 	if(scriptcmp ~= nil and gridcmp ~= nil) then
-		Dungeons_GenerateWorld(gridcmp, scriptcmp)
-		gridcmp.m_isDirty = true
-		gridcmp.m_debugDraw = true
+		if(Arrrgh_Globals.genCoroutine == nil) then 
+			print('Starting dungeon generator')
+			Arrrgh_Globals.genCoroutine = coroutine.create( Dungeons_GenerateWorld )
+			gridcmp.m_debugDraw = true
+		end
+		local runningStatus = coroutine.status(Arrrgh_Globals.genCoroutine)
+		if(runningStatus ~= 'dead') then
+			coroutine.resume(Arrrgh_Globals.genCoroutine, gridcmp, scriptcmp)
+		else
+			Arrrgh_Globals.genCoroutine = nil
+			gridcmp.m_isDirty = true		-- update the graphics once at the end
+			gridcmp.m_debugDraw = false
+			scriptcmp.m_isActive = false	-- we are done, stop running
+			print('Dungeon finished')
+		end
 	else
 		print('no grid')
 	end	
-	scriptcmp.m_isActive = false		-- we are done, stop running
 end

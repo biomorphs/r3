@@ -148,7 +148,6 @@ void DungeonsOfArrrgh::GenerateTileVisuals(uint32_t x, uint32_t z, DungeonsWorld
 				tileToLoad = "arrrgh/tiles/basic_vwall_tile_4x4.scn";
 			}
 		}
-		
 		break;
 	default:
 		return;

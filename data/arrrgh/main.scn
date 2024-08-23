@@ -31,24 +31,24 @@
     "InputParams": {
      "IntVec2s": [
       {
-       "Key": "Min Building Size",
-       "Value": {
-        "X": 5,
-        "Y": 5
-       }
-      },
-      {
        "Key": "Total World Size",
        "Value": {
         "X": 64,
-        "Y": 128
+        "Y": 64
+       }
+      },
+      {
+       "Key": "Min Building Size",
+       "Value": {
+        "X": 8,
+        "Y": 8
        }
       },
       {
        "Key": "Max Building Size",
        "Value": {
-        "X": 10,
-        "Y": 10
+        "X": 12,
+        "Y": 12
        }
       }
      ]
