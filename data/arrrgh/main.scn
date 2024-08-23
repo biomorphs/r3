@@ -29,11 +29,21 @@
    "ID": 1,
    "LuaScript": {
     "InputParams": {
+     "Floats": [
+      {
+       "Key": "Tower Chance",
+       "Value": 1.0
+      },
+      {
+       "Key": "Wander forward chance increment",
+       "Value": 4.999999987376214e-07
+      }
+     ],
      "IntVec2s": [
       {
        "Key": "Total World Size",
        "Value": {
-        "X": 128,
+        "X": 256,
         "Y": 128
        }
       },
@@ -47,9 +57,31 @@
       {
        "Key": "Max Building Size",
        "Value": {
-        "X": 10,
-        "Y": 10
+        "X": 16,
+        "Y": 16
        }
+      }
+     ],
+     "Ints": [
+      {
+       "Key": "Min Tower Radius",
+       "Value": 3
+      },
+      {
+       "Key": "Tower Wall Thickness",
+       "Value": 1
+      },
+      {
+       "Key": "Max Buildings",
+       "Value": 200
+      },
+      {
+       "Key": "Max Building Iterations",
+       "Value": 100000
+      },
+      {
+       "Key": "Wander steps per iteration",
+       "Value": 10
       }
      ]
     },

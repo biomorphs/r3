@@ -215,18 +215,25 @@ namespace R3
 				std::vector<json> listJson;
 				for (auto& it : v)
 				{
-					JsonSerialiser valueJs(m_mode);
-					if constexpr (valueHasSerialiserMember)
+					json itJson;
+					itJson["Key"] = it.first;
+					if constexpr (valueIsInt || valueIsFloat || valueIsString)
 					{
-						it.second.SerialiseJson(valueJs);
+						itJson["Value"] = it.second;
 					}
 					else
 					{
-						SerialiseJson(it.second, valueJs);
+						JsonSerialiser valueJs(m_mode);
+						if constexpr (valueHasSerialiserMember)
+						{
+							it.second.SerialiseJson(valueJs);
+						}
+						else
+						{
+							SerialiseJson(it.second, valueJs);
+						}
+						itJson["Value"] = valueJs.m_json;
 					}
-					json itJson;
-					itJson["Key"] = it.first;
-					itJson["Value"] = valueJs.m_json;
 					listJson.push_back(itJson);
 				}
 				m_json[name] = listJson;

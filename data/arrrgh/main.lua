@@ -1,9 +1,16 @@
 local Arrrgh_Globals = {}
 
 function Dungeons_PopulateInputs(luacmp)
-	luacmp.m_inputParams:TryAddIntVec2("Total World Size", ivec2.new(32,32))
-	luacmp.m_inputParams:TryAddIntVec2("Min Building Size", ivec2.new(5,5))
-	luacmp.m_inputParams:TryAddIntVec2("Max Building Size", ivec2.new(16,16))
+	luacmp.m_inputParams:AddIntVec2("Total World Size", ivec2.new(32,32))
+	luacmp.m_inputParams:AddIntVec2("Min Building Size", ivec2.new(5,5))
+	luacmp.m_inputParams:AddIntVec2("Max Building Size", ivec2.new(16,16))
+	luacmp.m_inputParams:AddInt("Min Tower Radius", 3)
+	luacmp.m_inputParams:AddInt("Tower Wall Thickness", 1)
+	luacmp.m_inputParams:AddInt("Max Building Iterations", 100000)
+	luacmp.m_inputParams:AddInt("Wander steps per iteration", 20)
+	luacmp.m_inputParams:AddInt("Max Buildings", 200)
+	luacmp.m_inputParams:AddFloat("Tower Chance", 0.5)
+	luacmp.m_inputParams:AddFloat("Wander forward chance increment", 0.0000005)
 end
 
 -- yields until time passed
@@ -41,9 +48,9 @@ function Dungeons_GenerateSimpleBuilding(grid, start, size)
 	return true
 end
 
-function Dungeons_GenerateRoundTower(grid, start, size)
-	local minTowerRadius = 3
-	local tileWallThickness = 1
+function Dungeons_GenerateRoundTower(grid, luacmp, start, size)
+	local minTowerRadius = luacmp.m_inputParams:GetInt("Min Tower Radius", 3)
+	local tileWallThickness = luacmp.m_inputParams:GetInt("Tower Wall Thickness", 1)
 	local towerRadius = math.floor(math.min(size.x, size.y) * 0.5)
 	local towerCenter = vec2.new(start.x + (size.x * 0.5), start.y + (size.y * 0.5))
 	local towerCenterTile = uvec2.new(math.floor(towerCenter.x), math.floor(towerCenter.y))
@@ -65,11 +72,8 @@ function Dungeons_GenerateRoundTower(grid, start, size)
 	return true
 end
 
-function FillWithBuildings(grid,minBuildingSize,maxBuildingSize)
+function FillWithBuildings(grid,luacmp,minBuildingSize,maxBuildingSize,towerChance,maxAttempts,maxBuildings)
 	local gridDims = grid:GetDimensions()
-	local towerChance = 0.5
-	local maxAttempts = 200000
-	local maxBuildings = 500
 	local totalBuildings = 0
 	grid.m_debugDraw = true
 	for attempt=1,maxAttempts do 
@@ -81,7 +85,7 @@ function FillWithBuildings(grid,minBuildingSize,maxBuildingSize)
 		if(grid:AllTilesMatchType(testAreaPos, testAreaSize, 3)) then -- if area only contains outdoor floor
 			local buildingCreated = false
 			if(math.random() <= towerChance) then 
-				buildingCreated = Dungeons_GenerateRoundTower(grid, buildingPosition, buildingSize)
+				buildingCreated = Dungeons_GenerateRoundTower(grid, luacmp, buildingPosition, buildingSize)
 			end
 			if(buildingCreated == false) then 
 				buildingCreated = Dungeons_GenerateSimpleBuilding(grid, buildingPosition, buildingSize)
@@ -103,6 +107,10 @@ end
 function Dungeons_GenerateWorld_RandomBuildings(grid, luacmp)
 	local minBuildingSize = luacmp.m_inputParams:GetIntVec2("Min Building Size", ivec2.new(5,5))
 	local maxBuildingSize = luacmp.m_inputParams:GetIntVec2("Max Building Size", ivec2.new(16,16))
+	local towerChance = luacmp.m_inputParams:GetFloat("Tower Chance", 0.5)
+	local maxAttempts = luacmp.m_inputParams:GetInt("Max Building Iterations", 200000)
+	local maxBuildings = luacmp.m_inputParams:GetInt("Max Buildings", 500)
+
 	local gridSize = grid:GetDimensions()
 	if(gridSize.x < 2 or gridSize.y < 2) then
 		print('too small')
@@ -112,12 +120,11 @@ function Dungeons_GenerateWorld_RandomBuildings(grid, luacmp)
 	YieldGenerator()
 
 	-- add buildings
-	FillWithBuildings(grid, minBuildingSize, maxBuildingSize)
+	FillWithBuildings(grid, luacmp, minBuildingSize, maxBuildingSize, towerChance, maxAttempts, maxBuildings)
 end
 
-function Dungeons_GenerateWorld_WanderToGoal(grid, luacmp)
+function Dungeons_GenerateWorld_WanderToGoal(grid, luacmp, stepsPerYield, forwardChanceIncrement)
 	-- choose a minimum distance between start + goal based on world size 
-	local stepsPerYield = 20
 	local gridSize = grid:GetDimensions()
 	local minDistance = math.floor(math.max(gridSize.x, gridSize.y) * 0.8)
 	local spawnPos = {}	-- choose a spawn tile and goal tile, making sure they are far away
@@ -141,7 +148,6 @@ function Dungeons_GenerateWorld_WanderToGoal(grid, luacmp)
 		local nextPos = myPos
 		local direction = math.random(0,3)		-- up, right, down, left
 		if(math.random() < chanceToGoForward) then	-- chance to go in right direction
-			print('going forward', chanceToGoForward)
 			if(math.abs(nextPos.x - goalPos.x) > math.abs(nextPos.y - goalPos.y)) then 
 				if(nextPos.x > goalPos.x) then 
 					direction = 3	-- left 
@@ -156,7 +162,7 @@ function Dungeons_GenerateWorld_WanderToGoal(grid, luacmp)
 				end
 			end
 		end
-		chanceToGoForward = chanceToGoForward + 0.0000005
+		chanceToGoForward = chanceToGoForward + forwardChanceIncrement
 		if(direction == 0 and nextPos.y + 1 < gridSize.y) then 
 			nextPos.y = nextPos.y + 1
 		elseif(direction == 1 and nextPos.x + 1 < gridSize.x) then
@@ -180,8 +186,8 @@ function Dungeons_GenerateWorld_WanderToGoal(grid, luacmp)
 end
 
 function Dungeons_CoGenerateWorld(grid, luacmp)
-	-- get the generation params from the script component
 	local totalWorldSize = luacmp.m_inputParams:GetIntVec2("Total World Size", ivec2.new(32,32))
+
 	local gridSize = uvec2.new(totalWorldSize.x,totalWorldSize.y)	-- need to use uvec2 from here
 	grid:ResizeGrid(gridSize)
 
@@ -191,7 +197,10 @@ function Dungeons_CoGenerateWorld(grid, luacmp)
 	grid.m_isDirty = true	-- update graphics
 	YieldGenerator()
 
-	Dungeons_GenerateWorld_WanderToGoal(grid, luacmp)
+	local stepsPerYield = luacmp.m_inputParams:GetInt("Wander steps per iteration", 20)
+	print(stepsPerYield)
+	local forwardChanceIncrement = luacmp.m_inputParams:GetFloat("Wander forward chance increment", 0.000001)
+	Dungeons_GenerateWorld_WanderToGoal(grid, luacmp, stepsPerYield, forwardChanceIncrement)
 	Dungeons_GenerateWorld_RandomBuildings(grid, luacmp)
 end
 
