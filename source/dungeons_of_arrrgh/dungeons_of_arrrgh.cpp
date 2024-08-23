@@ -19,6 +19,14 @@ enum WorldTileType : uint8_t
 	MaxTypes
 };
 
+DungeonsOfArrrgh::DungeonsOfArrrgh()
+{
+}
+
+DungeonsOfArrrgh::~DungeonsOfArrrgh()
+{
+}
+
 void DungeonsOfArrrgh::RegisterTickFns()
 {
 	R3_PROF_EVENT();
@@ -152,7 +160,24 @@ void DungeonsOfArrrgh::GenerateTileVisuals(uint32_t x, uint32_t z, DungeonsWorld
 	default:
 		return;
 	}
-	outEntities = activeWorld->Import(tileToLoad);
+	auto foundInCache = m_generateVisualsEntityCache.find(tileToLoad);
+	if (foundInCache == m_generateVisualsEntityCache.end())
+	{
+		// load the entities via the world, serialise them, then delete the temp loaded entities + store the json
+		auto loadedEntities = activeWorld->Import(tileToLoad);
+		R3::JsonSerialiser entityData = activeWorld->SerialiseEntities(loadedEntities);
+		m_generateVisualsEntityCache[tileToLoad] = entityData.GetJson();
+		foundInCache = m_generateVisualsEntityCache.find(tileToLoad);
+		for (auto it : loadedEntities)
+		{
+			activeWorld->RemoveEntity(it);
+		}
+	}
+	if (foundInCache != m_generateVisualsEntityCache.end())
+	{
+		R3::JsonSerialiser entityData(R3::JsonSerialiser::Read, foundInCache->second);
+		outEntities = activeWorld->SerialiseEntities(entityData);	// clone via serialisation
+	}
 }
 
 void DungeonsOfArrrgh::GenerateWorldVisuals(const R3::Entities::EntityHandle& e, class DungeonsWorldGridComponent& grid)
@@ -190,6 +215,7 @@ void DungeonsOfArrrgh::GenerateWorldVisuals(const R3::Entities::EntityHandle& e,
 			}
 		}
 	}
+	m_generateVisualsEntityCache.clear();
 }
 
 void DungeonsOfArrrgh::OnWorldGridDirty(const R3::Entities::EntityHandle& e, class DungeonsWorldGridComponent& grid)

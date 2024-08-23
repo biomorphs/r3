@@ -6,6 +6,21 @@ function Dungeons_PopulateInputs(luacmp)
 	luacmp.m_inputParams:TryAddIntVec2("Max Building Size", ivec2.new(16,16))
 end
 
+-- yields until time passed
+function YieldGenerator(timeToWait)
+	timeToWait = timeToWait or 0.25
+	local currentWaitTime = 0 
+	repeat
+		currentWaitTime = currentWaitTime + R3.GetVariableDelta() -- variable delta is good enough
+		coroutine.yield()
+	until(currentWaitTime >= timeToWait)
+end
+
+function DistanceBetween(v0,v1)
+	local tov1 = vec2.new(v0.x - v1.x, v0.y - v1.y)
+	return math.sqrt((tov1.x * tov1.x) + (tov1.y * tov1.y))
+end
+
 function Dungeons_GenerateSimpleBuilding(grid, start, size)
 	grid:Fill(start, size, 1, false) -- outer walls
 	grid:Fill(uvec2.new(start.x + 1, start.y + 1), uvec2.new(size.x - 2, size.y - 2), 2, true) -- interior floor
@@ -23,58 +38,165 @@ function Dungeons_GenerateSimpleBuilding(grid, start, size)
 		doorPos = uvec2.new(start.x, math.random(start.y + 1, start.y + size.y - 2))
 	end
 	grid:Fill(doorPos, uvec2.new(1, 1), 2, true)
+	return true
+end
+
+function Dungeons_GenerateRoundTower(grid, start, size)
+	local minTowerRadius = 3
+	local tileWallThickness = 1
+	local towerRadius = math.floor(math.min(size.x, size.y) * 0.5)
+	local towerCenter = vec2.new(start.x + (size.x * 0.5), start.y + (size.y * 0.5))
+	local towerCenterTile = uvec2.new(math.floor(towerCenter.x), math.floor(towerCenter.y))
+	if(towerRadius < minTowerRadius) then 
+		return false
+	end
+	for z=start.y,(start.y + size.y) do 
+		for x=start.x,(start.x + size.x) do 
+			local distanceToCenter = DistanceBetween(vec2.new(x,z), towerCenter)
+			if(distanceToCenter <= towerRadius) then
+				if((towerRadius - distanceToCenter) <= tileWallThickness) then
+					grid:Fill(uvec2.new(x,z), uvec2.new(1,1), 1, false)	-- outer wall
+				else
+					grid:Fill(uvec2.new(x,z), uvec2.new(1,1), 2, true)	-- floor
+				end
+			end
+		end
+	end
+	return true
 end
 
 function FillWithBuildings(grid,minBuildingSize,maxBuildingSize)
 	local gridDims = grid:GetDimensions()
-	local maxAttempts = 4000
-	local maxBuildings = 100
+	local towerChance = 0.5
+	local maxAttempts = 200000
+	local maxBuildings = 500
 	local totalBuildings = 0
+	grid.m_debugDraw = true
 	for attempt=1,maxAttempts do 
+		-- detect areas to build on
 		local buildingSize = uvec2.new(math.random(minBuildingSize.x,maxBuildingSize.x),math.random(minBuildingSize.y,maxBuildingSize.y))
 		local buildingPosition = uvec2.new(math.random(2, gridDims.x - buildingSize.x), math.random(2, gridDims.y - buildingSize.x))
-		if(grid:AllTilesMatchType(buildingPosition, buildingSize, 3)) then -- if area only contains outdoor floor
-			Dungeons_GenerateSimpleBuilding(grid, buildingPosition, buildingSize)
-			totalBuildings = totalBuildings + 1
-			if(totalBuildings == maxBuildings) then 
-				print(totalBuildings, ' buildings generated')
-				return 
+		local testAreaSize = uvec2.new(buildingSize.x + 2, buildingSize.y + 2)
+		local testAreaPos = uvec2.new(buildingPosition.x -1, buildingPosition.y - 1)
+		if(grid:AllTilesMatchType(testAreaPos, testAreaSize, 3)) then -- if area only contains outdoor floor
+			local buildingCreated = false
+			if(math.random() <= towerChance) then 
+				buildingCreated = Dungeons_GenerateRoundTower(grid, buildingPosition, buildingSize)
 			end
-			coroutine.yield()
+			if(buildingCreated == false) then 
+				buildingCreated = Dungeons_GenerateSimpleBuilding(grid, buildingPosition, buildingSize)
+			end
+			if(buildingCreated) then 
+				totalBuildings = totalBuildings + 1
+				if(totalBuildings == maxBuildings) then 
+					print(totalBuildings, ' buildings generated')
+					return 
+				end
+				YieldGenerator(0.05)
+			end
 		end
 	end
-	print(totalBuildings, ' buildings generated')
+	print(totalBuildings, ' buildings generated. attempts=', maxAttempts)
+	grid.m_debugDraw = false
 end
 
-function Dungeons_GenerateWorld(grid, luacmp)
-	-- get the generation params from the script component
-	local totalWorldSize = luacmp.m_inputParams:GetIntVec2("Total World Size", ivec2.new(32,32))
+function Dungeons_GenerateWorld_RandomBuildings(grid, luacmp)
 	local minBuildingSize = luacmp.m_inputParams:GetIntVec2("Min Building Size", ivec2.new(5,5))
 	local maxBuildingSize = luacmp.m_inputParams:GetIntVec2("Max Building Size", ivec2.new(16,16))
+	local gridSize = grid:GetDimensions()
+	if(gridSize.x < 2 or gridSize.y < 2) then
+		print('too small')
+	end
 
+	grid.m_isDirty = true	-- update graphics
+	YieldGenerator()
+
+	-- add buildings
+	FillWithBuildings(grid, minBuildingSize, maxBuildingSize)
+end
+
+function Dungeons_GenerateWorld_WanderToGoal(grid, luacmp)
+	-- choose a minimum distance between start + goal based on world size 
+	local stepsPerYield = 20
+	local gridSize = grid:GetDimensions()
+	local minDistance = math.floor(math.max(gridSize.x, gridSize.y) * 0.8)
+	local spawnPos = {}	-- choose a spawn tile and goal tile, making sure they are far away
+	local goalPos = {}
+	repeat
+		spawnPos = uvec2.new(math.random(2, gridSize.x - 2), math.random(2, gridSize.y - 2))
+		goalPos = uvec2.new(math.random(2, gridSize.x - 2), math.random(2, gridSize.y - 2))
+		local distance = DistanceBetween(spawnPos,goalPos)
+	until distance >= minDistance
+
+	grid:Fill(spawnPos, uvec2.new(1,1), 3, true)
+	grid:Fill(goalPos, uvec2.new(1,1), 3, true)
+	grid.m_debugDraw = true
+	YieldGenerator()
+
+	-- random stumble by one tile until we hit the goal
+	local myPos = spawnPos
+	local chanceToGoForward = 0					-- slowly increases by some tiny amount
+	local iterationCount = 0					-- to determine how often to yield
+	repeat
+		local nextPos = myPos
+		local direction = math.random(0,3)		-- up, right, down, left
+		if(math.random() < chanceToGoForward) then	-- chance to go in right direction
+			print('going forward', chanceToGoForward)
+			if(math.abs(nextPos.x - goalPos.x) > math.abs(nextPos.y - goalPos.y)) then 
+				if(nextPos.x > goalPos.x) then 
+					direction = 3	-- left 
+				else 
+					direction = 1	-- right
+				end
+			else
+				if(nextPos.y > goalPos.y) then 
+					direction = 2	-- down 
+				else 
+					direction = 0	-- up
+				end
+			end
+		end
+		chanceToGoForward = chanceToGoForward + 0.0000005
+		if(direction == 0 and nextPos.y + 1 < gridSize.y) then 
+			nextPos.y = nextPos.y + 1
+		elseif(direction == 1 and nextPos.x + 1 < gridSize.x) then
+			nextPos.x = nextPos.x + 1
+		elseif(direction == 2 and nextPos.y > 0) then 
+			nextPos.y = nextPos.y - 1
+		elseif(direction == 3 and nextPos.x > 0) then
+			nextPos.x = nextPos.x - 1
+		end
+		myPos.x = math.floor(nextPos.x)
+		myPos.y = math.floor(nextPos.y)
+		grid:Fill(myPos, uvec2.new(1,1), 3, true)
+		iterationCount = iterationCount + 1
+		if(iterationCount > stepsPerYield) then 
+			YieldGenerator(0)
+			iterationCount = 0
+		end
+	until (myPos.x == goalPos.x) and (myPos.y == goalPos.y)
+	grid.m_isDirty = true	-- update graphics
+	YieldGenerator()
+end
+
+function Dungeons_CoGenerateWorld(grid, luacmp)
+	-- get the generation params from the script component
+	local totalWorldSize = luacmp.m_inputParams:GetIntVec2("Total World Size", ivec2.new(32,32))
 	local gridSize = uvec2.new(totalWorldSize.x,totalWorldSize.y)	-- need to use uvec2 from here
 	grid:ResizeGrid(gridSize)
 
 	-- fill world with empty tiles
 	grid:Fill(uvec2.new(0,0), gridSize, 0, false)
 
-	coroutine.yield()
+	grid.m_isDirty = true	-- update graphics
+	YieldGenerator()
 
-	if(gridSize.x < 2 or gridSize.y < 2) then
-		print('too small')
-	end
-
-	-- fill most of world with walkable floor tiles
-	grid:Fill(uvec2.new(1,1), uvec2.new(gridSize.x - 2, gridSize.y - 2), 3, true)
-
-	coroutine.yield()
-
-	-- add buildings
-	FillWithBuildings(grid, minBuildingSize, maxBuildingSize)
+	Dungeons_GenerateWorld_WanderToGoal(grid, luacmp)
+	Dungeons_GenerateWorld_RandomBuildings(grid, luacmp)
 end
 
 -- main entry point, called from variable update
-function Dungeons_VariableUpdate(e)
+function Dungeons_GenerateWorld(e)
 	local world = R3.ActiveWorld()
 	local gridEntity = world:GetEntityByName('World Grid')
 	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
@@ -82,8 +204,7 @@ function Dungeons_VariableUpdate(e)
 	if(scriptcmp ~= nil and gridcmp ~= nil) then
 		if(Arrrgh_Globals.genCoroutine == nil) then 
 			print('Starting dungeon generator')
-			Arrrgh_Globals.genCoroutine = coroutine.create( Dungeons_GenerateWorld )
-			gridcmp.m_debugDraw = true
+			Arrrgh_Globals.genCoroutine = coroutine.create( Dungeons_CoGenerateWorld )
 		end
 		local runningStatus = coroutine.status(Arrrgh_Globals.genCoroutine)
 		if(runningStatus ~= 'dead') then

@@ -33,22 +33,22 @@
       {
        "Key": "Total World Size",
        "Value": {
-        "X": 64,
-        "Y": 64
+        "X": 128,
+        "Y": 128
        }
       },
       {
        "Key": "Min Building Size",
        "Value": {
-        "X": 8,
-        "Y": 8
+        "X": 3,
+        "Y": 3
        }
       },
       {
        "Key": "Max Building Size",
        "Value": {
-        "X": 12,
-        "Y": 12
+        "X": 10,
+        "Y": 10
        }
       }
      ]
@@ -59,7 +59,7 @@
      "SourcePath": ""
     },
     "OnVariableUpdate": {
-     "EntryPoint": "Dungeons_VariableUpdate",
+     "EntryPoint": "Dungeons_GenerateWorld",
      "SourcePath": "arrrgh\\main.lua"
     },
     "PopulateInputs": {
