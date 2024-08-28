@@ -25,6 +25,7 @@ private:
 	void OnWorldGridDirty(const R3::Entities::EntityHandle& e, class DungeonsWorldGridComponent& grid);
 	bool VariableUpdate();
 	void DebugDrawWorldGrid(const class DungeonsWorldGridComponent& grid);
+	void DebugDrawTiles(const class DungeonsWorldGridComponent& grid, std::vector<glm::uvec2> tiles);
 	std::unordered_map<std::string, nlohmann::json> m_generateVisualsEntityCache;	// cache serialised entities for speed
 	glm::vec3 m_drawGridOffset = { 0,0,0 };
 	glm::vec2 m_drawGridScale = { 4, 4 };

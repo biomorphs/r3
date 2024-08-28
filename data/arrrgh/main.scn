@@ -36,15 +36,15 @@
       },
       {
        "Key": "Wander forward chance increment",
-       "Value": 4.999999987376214e-07
+       "Value": 1.0000000116860974e-07
       }
      ],
      "IntVec2s": [
       {
        "Key": "Total World Size",
        "Value": {
-        "X": 256,
-        "Y": 128
+        "X": 64,
+        "Y": 64
        }
       },
       {
@@ -77,11 +77,11 @@
       },
       {
        "Key": "Max Building Iterations",
-       "Value": 100000
+       "Value": 10000
       },
       {
        "Key": "Wander steps per iteration",
-       "Value": 10
+       "Value": 20
       }
      ]
     },
@@ -112,6 +112,49 @@
    },
    "ID": 2,
    "Name": "World Grid",
+   "Parent": 4294967295
+  },
+  {
+   "ID": 3,
+   "LuaScript": {
+    "InputParams": {
+     "Floats": [
+      {
+       "Key": "Vis test angle",
+       "Value": 0.0
+      }
+     ],
+     "IntVec2s": [
+      {
+       "Key": "Vis test coords",
+       "Value": {
+        "X": 32,
+        "Y": 32
+       }
+      }
+     ],
+     "Ints": [
+      {
+       "Key": "Vis test distance",
+       "Value": 32
+      }
+     ]
+    },
+    "IsActive": true,
+    "OnFixedUpdate": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    },
+    "OnVariableUpdate": {
+     "EntryPoint": "Dungeons_VisTesting",
+     "SourcePath": "arrrgh\\main.lua"
+    },
+    "PopulateInputs": {
+     "EntryPoint": "Dungeons_VisTestingPopulateInputs",
+     "SourcePath": "arrrgh\\main.lua"
+    }
+   },
+   "Name": "Vis testing script",
    "Parent": 4294967295
   }
  ],

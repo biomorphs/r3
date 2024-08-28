@@ -1,4 +1,5 @@
 local Arrrgh_Globals = {}
+Arrrgh_Globals.FillWithExteriorFloor = true
 
 function Dungeons_PopulateInputs(luacmp)
 	luacmp.m_inputParams:AddIntVec2("Total World Size", ivec2.new(32,32))
@@ -10,7 +11,7 @@ function Dungeons_PopulateInputs(luacmp)
 	luacmp.m_inputParams:AddInt("Wander steps per iteration", 20)
 	luacmp.m_inputParams:AddInt("Max Buildings", 200)
 	luacmp.m_inputParams:AddFloat("Tower Chance", 0.5)
-	luacmp.m_inputParams:AddFloat("Wander forward chance increment", 0.0000005)
+	luacmp.m_inputParams:AddFloat("Wander forward chance increment", 0.0000001)
 end
 
 -- yields until time passed
@@ -28,7 +29,7 @@ function DistanceBetween(v0,v1)
 	return math.sqrt((tov1.x * tov1.x) + (tov1.y * tov1.y))
 end
 
-function Dungeons_GenerateSimpleBuilding(grid, start, size)
+function Dungeons_GenerateSimpleBuilding(grid, inParams, start, size)
 	grid:Fill(start, size, 1, false) -- outer walls
 	grid:Fill(uvec2.new(start.x + 1, start.y + 1), uvec2.new(size.x - 2, size.y - 2), 2, true) -- interior floor
 
@@ -48,9 +49,9 @@ function Dungeons_GenerateSimpleBuilding(grid, start, size)
 	return true
 end
 
-function Dungeons_GenerateRoundTower(grid, luacmp, start, size)
-	local minTowerRadius = luacmp.m_inputParams:GetInt("Min Tower Radius", 3)
-	local tileWallThickness = luacmp.m_inputParams:GetInt("Tower Wall Thickness", 1)
+function Dungeons_GenerateRoundTower(grid, inParams, start, size)
+	local minTowerRadius = inParams:GetInt("Min Tower Radius", 3)
+	local tileWallThickness = inParams:GetInt("Tower Wall Thickness", 1)
 	local towerRadius = math.floor(math.min(size.x, size.y) * 0.5)
 	local towerCenter = vec2.new(start.x + (size.x * 0.5), start.y + (size.y * 0.5))
 	local towerCenterTile = uvec2.new(math.floor(towerCenter.x), math.floor(towerCenter.y))
@@ -72,8 +73,17 @@ function Dungeons_GenerateRoundTower(grid, luacmp, start, size)
 	return true
 end
 
-function FillWithBuildings(grid,luacmp,minBuildingSize,maxBuildingSize,towerChance,maxAttempts,maxBuildings)
+function FillWithBuildings(grid,inParams)
+	local minBuildingSize = inParams:GetIntVec2("Min Building Size", ivec2.new(5,5))
+	local maxBuildingSize = inParams:GetIntVec2("Max Building Size", ivec2.new(16,16))
+	local towerChance = inParams:GetFloat("Tower Chance", 0.5)
+	local maxAttempts = inParams:GetInt("Max Building Iterations", 200000)
+	local maxBuildings = inParams:GetInt("Max Buildings", 500)
 	local gridDims = grid:GetDimensions()
+	if(gridDims.x < 2 or gridDims.y < 2) then
+		print('too small')
+		return
+	end
 	local totalBuildings = 0
 	grid.m_debugDraw = true
 	for attempt=1,maxAttempts do 
@@ -82,13 +92,14 @@ function FillWithBuildings(grid,luacmp,minBuildingSize,maxBuildingSize,towerChan
 		local buildingPosition = uvec2.new(math.random(2, gridDims.x - buildingSize.x), math.random(2, gridDims.y - buildingSize.x))
 		local testAreaSize = uvec2.new(buildingSize.x + 2, buildingSize.y + 2)
 		local testAreaPos = uvec2.new(buildingPosition.x -1, buildingPosition.y - 1)
+		
 		if(grid:AllTilesMatchType(testAreaPos, testAreaSize, 3)) then -- if area only contains outdoor floor
 			local buildingCreated = false
 			if(math.random() <= towerChance) then 
-				buildingCreated = Dungeons_GenerateRoundTower(grid, luacmp, buildingPosition, buildingSize)
+				buildingCreated = Dungeons_GenerateRoundTower(grid, inParams, buildingPosition, buildingSize)
 			end
 			if(buildingCreated == false) then 
-				buildingCreated = Dungeons_GenerateSimpleBuilding(grid, buildingPosition, buildingSize)
+				buildingCreated = Dungeons_GenerateSimpleBuilding(grid, inParams, buildingPosition, buildingSize)
 			end
 			if(buildingCreated) then 
 				totalBuildings = totalBuildings + 1
@@ -96,7 +107,7 @@ function FillWithBuildings(grid,luacmp,minBuildingSize,maxBuildingSize,towerChan
 					print(totalBuildings, ' buildings generated')
 					return 
 				end
-				YieldGenerator(0.05)
+				YieldGenerator(0.0)
 			end
 		end
 	end
@@ -104,26 +115,10 @@ function FillWithBuildings(grid,luacmp,minBuildingSize,maxBuildingSize,towerChan
 	grid.m_debugDraw = false
 end
 
-function Dungeons_GenerateWorld_RandomBuildings(grid, luacmp)
-	local minBuildingSize = luacmp.m_inputParams:GetIntVec2("Min Building Size", ivec2.new(5,5))
-	local maxBuildingSize = luacmp.m_inputParams:GetIntVec2("Max Building Size", ivec2.new(16,16))
-	local towerChance = luacmp.m_inputParams:GetFloat("Tower Chance", 0.5)
-	local maxAttempts = luacmp.m_inputParams:GetInt("Max Building Iterations", 200000)
-	local maxBuildings = luacmp.m_inputParams:GetInt("Max Buildings", 500)
+function Dungeons_GenerateWorld_WanderToGoal(grid, inParams)
+	local stepsPerYield = inParams:GetInt("Wander steps per iteration", 20)
+	local forwardChanceIncrement = inParams:GetFloat("Wander forward chance increment", 0.000001)
 
-	local gridSize = grid:GetDimensions()
-	if(gridSize.x < 2 or gridSize.y < 2) then
-		print('too small')
-	end
-
-	grid.m_isDirty = true	-- update graphics
-	YieldGenerator()
-
-	-- add buildings
-	FillWithBuildings(grid, luacmp, minBuildingSize, maxBuildingSize, towerChance, maxAttempts, maxBuildings)
-end
-
-function Dungeons_GenerateWorld_WanderToGoal(grid, luacmp, stepsPerYield, forwardChanceIncrement)
 	-- choose a minimum distance between start + goal based on world size 
 	local gridSize = grid:GetDimensions()
 	local minDistance = math.floor(math.max(gridSize.x, gridSize.y) * 0.8)
@@ -185,23 +180,26 @@ function Dungeons_GenerateWorld_WanderToGoal(grid, luacmp, stepsPerYield, forwar
 	YieldGenerator()
 end
 
-function Dungeons_CoGenerateWorld(grid, luacmp)
-	local totalWorldSize = luacmp.m_inputParams:GetIntVec2("Total World Size", ivec2.new(32,32))
-
+-- 
+function Dungeons_CoGenerateWorld(grid, inParams)
+	local totalWorldSize = inParams:GetIntVec2("Total World Size", ivec2.new(32,32))
 	local gridSize = uvec2.new(totalWorldSize.x,totalWorldSize.y)	-- need to use uvec2 from here
 	grid:ResizeGrid(gridSize)
 
-	-- fill world with empty tiles
+	-- fill world with empty tiles + update graphics entities
 	grid:Fill(uvec2.new(0,0), gridSize, 0, false)
-
-	grid.m_isDirty = true	-- update graphics
+	grid.m_isDirty = true
 	YieldGenerator()
 
-	local stepsPerYield = luacmp.m_inputParams:GetInt("Wander steps per iteration", 20)
-	print(stepsPerYield)
-	local forwardChanceIncrement = luacmp.m_inputParams:GetFloat("Wander forward chance increment", 0.000001)
-	Dungeons_GenerateWorld_WanderToGoal(grid, luacmp, stepsPerYield, forwardChanceIncrement)
-	Dungeons_GenerateWorld_RandomBuildings(grid, luacmp)
+	if(Arrrgh_Globals.FillWithExteriorFloor) then 
+		grid:Fill(uvec2.new(0,0), gridSize, 3, true)
+	else
+		Dungeons_GenerateWorld_WanderToGoal(grid, inParams)
+	end
+	
+	grid.m_isDirty = true	-- update graphics
+	YieldGenerator()
+	FillWithBuildings(grid, inParams)
 end
 
 -- main entry point, called from variable update
@@ -217,15 +215,37 @@ function Dungeons_GenerateWorld(e)
 		end
 		local runningStatus = coroutine.status(Arrrgh_Globals.genCoroutine)
 		if(runningStatus ~= 'dead') then
-			coroutine.resume(Arrrgh_Globals.genCoroutine, gridcmp, scriptcmp)
+			coroutine.resume(Arrrgh_Globals.genCoroutine, gridcmp, scriptcmp.m_inputParams)
 		else
 			Arrrgh_Globals.genCoroutine = nil
 			gridcmp.m_isDirty = true		-- update the graphics once at the end
 			gridcmp.m_debugDraw = false
 			scriptcmp.m_isActive = false	-- we are done, stop running
-			print('Dungeon finished')
+			print('Generator finished')
 		end
 	else
-		print('no grid')
+		print('No Grid')
 	end	
+end
+
+function Dungeons_VisTestingPopulateInputs(luacmp)
+	luacmp.m_inputParams:AddIntVec2("Vis test coords", ivec2.new(32,32))
+	luacmp.m_inputParams:AddFloat("Vis test fov", 45.0)
+	luacmp.m_inputParams:AddInt("Vis test distance", 8)
+end
+
+function Dungeons_VisTesting(e)
+	local world = R3.ActiveWorld()
+	local gridEntity = world:GetEntityByName('World Grid')
+	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
+	local scriptcmp = world.GetComponent_LuaScript(e)
+	if(scriptcmp ~= nil and gridcmp ~= nil) then
+		local testCoord = scriptcmp.m_inputParams:GetIntVec2("Vis test coords", ivec2.new(32,32))
+		local testFOV = scriptcmp.m_inputParams:GetFloat("Vis test fov", 45.0)
+		local testDistance = scriptcmp.m_inputParams:GetInt("Vis test distance", 8)
+
+		-- find the visible tiles around 32,32
+		local visibleTiles = gridcmp:FindVisibleTiles(testCoord, vec2.new(0,1), testFOV, testDistance)
+		Arrrgh.DebugDrawTiles(gridcmp, visibleTiles)
+	end
 end

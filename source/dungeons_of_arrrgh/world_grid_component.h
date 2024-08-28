@@ -16,11 +16,17 @@ public:
 			struct TileData {
 				uint8_t m_tileType;			// 1 byte for 255 different types of tile
 				bool m_passable : 1;		// can actors enter this tile (is it walkable)
+				bool m_blockVisibility : 1;	// can actors see past this tile
 			} m_tileData;
 		};
 		std::vector<R3::Entities::EntityHandle> m_entitiesInTile;
 	};
 
+	using VisibleTiles = std::vector<glm::uvec2>;
+
+	// find tiles that are visible within a cone. lookAt = direction to look, fov = degrees, distance = tiles
+	// results include the initial tile, if visible
+	VisibleTiles FindVisibleTiles(glm::ivec2 startTile, glm::vec2 lookAt, float fov, uint32_t distance);
 	void ResizeGrid(glm::uvec2 size);
 	glm::uvec2 GetDimensions() const { return m_gridDimensions; }
 	const WorldTileContents* GetContents(uint32_t tileX, uint32_t tileZ) const;	// assume it will be sparse later

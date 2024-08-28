@@ -13,6 +13,7 @@ void DungeonsWorldGridComponent::RegisterScripts(R3::LuaSystem& l)
 {
 	R3_PROF_EVENT();
 	l.RegisterType<DungeonsWorldGridComponent>("DungeonsWorldGridComponent",
+		"FindVisibleTiles", &DungeonsWorldGridComponent::FindVisibleTiles,
 		"ResizeGrid", &DungeonsWorldGridComponent::ResizeGrid,
 		"GetDimensions", &DungeonsWorldGridComponent::GetDimensions,
 		"GetTileType", &DungeonsWorldGridComponent::GetTileType,
@@ -44,6 +45,32 @@ void DungeonsWorldGridComponent::Inspect(const R3::Entities::EntityHandle& e, R3
 	{
 		m_isDirty = true;
 	}
+}
+
+DungeonsWorldGridComponent::VisibleTiles DungeonsWorldGridComponent::FindVisibleTiles(glm::ivec2 startTile, glm::vec2 lookAt, float fov, uint32_t distance )
+{
+	R3_PROF_EVENT();
+	VisibleTiles results;
+	// first find the area surrouding this point to test
+	glm::ivec2 iTotalDims(m_gridDimensions);
+	glm::ivec2 iterStart = startTile - glm::ivec2(distance);
+	glm::ivec2 iterEnd = startTile + glm::ivec2(distance);
+	glm::vec2 vStart(startTile);
+	iterStart = glm::clamp(iterStart, { 0,0 }, iTotalDims);
+	iterEnd = glm::clamp(iterEnd, { 0,0 }, iTotalDims);
+	for (auto z = iterStart.y; z < iterEnd.y; ++z)
+	{
+		for (auto x = iterStart.x; x < iterEnd.x; ++x)
+		{
+			float distanceToPoint = glm::distance(vStart, glm::vec2(x, z));
+			bool visible = distanceToPoint < distance;
+			if (visible)
+			{
+				results.push_back({ x,z });
+			}
+		}
+	}
+	return results;
 }
 
 void DungeonsWorldGridComponent::Fill(glm::uvec2 start, glm::uvec2 size, uint8_t type, bool isPassable)
