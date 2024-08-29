@@ -1,4 +1,5 @@
 local Arrrgh_Globals = {}
+Arrrgh_Globals.EnableVisibilityTest = true
 Arrrgh_Globals.FillWithExteriorFloor = false
 Arrrgh_Globals.DoRandomWander = true
 Arrrgh_Globals.TileDimensions = vec2.new(4,4)
@@ -180,7 +181,6 @@ function Dungeons_GenerateWorld_WanderToGoal(grid, inParams, spawnPos, goalPos)
 end
 
 function Dungeons_CreatePlayerSpawn(grid, inParams, spawnPos)
-	print('making player spawn at ', spawnPos.x, spawnPos.y)
 	local world = R3.ActiveWorld()
 	local spawnPointEntities = world:ImportScene('arrrgh/pois/playerspawnpoint.scn')
 	local actualPos = vec3.new(spawnPos.x * Arrrgh_Globals.TileDimensions.x, 0, spawnPos.y * Arrrgh_Globals.TileDimensions.y)
@@ -190,7 +190,6 @@ function Dungeons_CreatePlayerSpawn(grid, inParams, spawnPos)
 end
 
 function Dungeons_CreateLevelExit(grid, inParams, pos)
-	print('making level exit at ', pos.x, pos.y)
 	local world = R3.ActiveWorld()
 	local levelExit = world:ImportScene('arrrgh/pois/levelexit.scn')
 	local actualPos = vec3.new(pos.x * Arrrgh_Globals.TileDimensions.x, 0, pos.y * Arrrgh_Globals.TileDimensions.y)
@@ -233,19 +232,12 @@ function Dungeons_CoGenerateWorld(grid, inParams)
 		local distance = DistanceBetween(spawnPos,goalPos)
 	until distance >= minDistance
 
-	print('wha')
-
 	-- make the spawn + goal entities 
 	Dungeons_CreatePlayerSpawn(grid, inParams, spawnPos)
-	print('wha2')
 	Dungeons_GeneratePlayerSpawnSafeArea(grid, inParams, spawnPos)
-	print('wha3')
 	Dungeons_CreateLevelExit(grid, inParams, goalPos)
-	print('wha4')
 	Dungeons_GenerateLevelExitSafeArea(grid, inParams, goalPos)
-	
 
-	-- useful for debugging
 	grid.m_debugDraw = true
 
 	if(Arrrgh_Globals.FillWithExteriorFloor) then 
@@ -290,6 +282,11 @@ function Dungeons_GenerateWorld(e)
 			gridcmp.m_isDirty = true		-- update the graphics once at the end
 			scriptcmp.m_isActive = false	-- we are done, stop running
 			print('Generator finished')
+			if (Arrrgh_Globals.EnableVisibilityTest == true) then 
+				local visTestEntity = world:GetEntityByName('Vis testing script')
+				local visTestScript = world.GetComponent_LuaScript(visTestEntity)
+				visTestScript.m_isActive = true
+			end
 		end
 	else
 		print('No Grid')
@@ -297,8 +294,6 @@ function Dungeons_GenerateWorld(e)
 end
 
 function Dungeons_VisTestingPopulateInputs(luacmp)
-	luacmp.m_inputParams:AddIntVec2("Vis test coords", ivec2.new(32,32))
-	luacmp.m_inputParams:AddFloat("Vis test fov", 45.0)
 	luacmp.m_inputParams:AddInt("Vis test distance", 8)
 end
 
@@ -319,17 +314,29 @@ function Dungeons_VisTesting(e)
 	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
 	local scriptcmp = world.GetComponent_LuaScript(e)
 	if(scriptcmp ~= nil and gridcmp ~= nil) then
-		local testCoord = scriptcmp.m_inputParams:GetIntVec2("Vis test coords", ivec2.new(32,32))
-		local testFOV = scriptcmp.m_inputParams:GetFloat("Vis test fov", 45.0)
-		local testDistance = scriptcmp.m_inputParams:GetInt("Vis test distance", 8)
-
-		local spawnOrNothing = Dungeons_FindSpawnPoint(gridcmp)
-		if(spawnOrNothing ~= nil) then 
-			testCoord = ivec2.new(spawnOrNothing.x, spawnOrNothing.y)
-		end
-
-		-- find the visible tiles around the spawn point
-		local visibleTiles = gridcmp:FindVisibleTiles(testCoord, vec2.new(0,1), testFOV, testDistance)
-		Arrrgh.DebugDrawTiles(gridcmp, visibleTiles)
+		local gridSize = gridcmp:GetDimensions()
+		if(Arrrgh_Globals.VisTestPos == nil) then 
+			local spawnOrNothing = Dungeons_FindSpawnPoint(gridcmp)
+			if(spawnOrNothing == nil) then 
+				spawnOrNothing = ivec2.new(math.random(0,gridSize.x - 1), math.random(0,gridSize.y - 1))
+			end
+			Arrrgh_Globals.VisTestPos = spawnOrNothing
+		else
+			if(R3.WasKeyReleased("KEY_u")) then 
+				Arrrgh_Globals.VisTestPos.y = Arrrgh_Globals.VisTestPos.y + 1
+			end
+			if(R3.WasKeyReleased("KEY_j")) then 
+				Arrrgh_Globals.VisTestPos.y = Arrrgh_Globals.VisTestPos.y - 1
+			end
+			if(R3.WasKeyReleased("KEY_h")) then 
+				Arrrgh_Globals.VisTestPos.x = Arrrgh_Globals.VisTestPos.x - 1
+			end
+			if(R3.WasKeyReleased("KEY_k")) then 
+				Arrrgh_Globals.VisTestPos.x = Arrrgh_Globals.VisTestPos.x + 1
+			end
+			local testDistance = scriptcmp.m_inputParams:GetInt("Vis test distance", 8)
+			local visibleTiles = gridcmp:FindVisibleTiles(Arrrgh_Globals.VisTestPos, testDistance)
+			Arrrgh.DebugDrawTiles(gridcmp, visibleTiles)
+		end		
 	end
 end

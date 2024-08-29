@@ -1,0 +1,130 @@
+{
+ "AllEntities": [
+  {
+   "ID": 0,
+   "Name": "floor_tile_large.gltf",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "downloaded\\KayKit_DungeonRemastered_1.1_FREE\\Assets\\gltf\\floor_tile_large.gltf"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 2.0,
+     "Y": 0.0,
+     "Z": 2.0
+    },
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 1,
+   "Name": "wall.gltf",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "downloaded\\KayKit_DungeonRemastered_1.1_FREE\\Assets\\gltf\\wall.gltf"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 2.0,
+     "Y": 0.0,
+     "Z": 2.0
+    },
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 2,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 8.0,
+    "Colour": {
+     "X": 0.9959677457809448,
+     "Y": 0.36325356364250183,
+     "Z": 0.10441599041223526
+    },
+    "Distance": 16.0
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 1.8353393077850342,
+     "Y": 2.809297561645508,
+     "Z": 0.9490816593170166
+    },
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 3,
+   "Name": "torch_mounted.gltf",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "downloaded\\KayKit_DungeonRemastered_1.1_FREE\\Assets\\gltf\\torch_mounted.gltf"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": -4.371138473402425e-08,
+     "X": 4.371139183945161e-08,
+     "Y": 1.0,
+     "Z": 4.371139183945161e-08
+    },
+    "Position": {
+     "X": 1.8308643102645874,
+     "Y": 2.0187158584594727,
+     "Z": 1.7562830448150635
+    },
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  }
+ ],
+ "WorldName": "New World"
+}

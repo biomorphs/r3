@@ -2,14 +2,14 @@
  "AllEntities": [
   {
    "EnvironmentSettings": {
-    "Sky Ambient": 0.004999999888241291,
+    "Sky Ambient": 0.00800000037997961,
     "Sky Colour": {
      "X": 0.042273666709661484,
      "Y": 0.16107632219791412,
      "Z": 0.20967739820480347
     },
-    "Sun Ambient": 0.00800000037997961,
-    "Sun Brightness": 1.0,
+    "Sun Ambient": 0.004999999888241291,
+    "Sun Brightness": 0.25,
     "Sun Colour": {
      "X": 1.0,
      "Y": 0.9691076874732971,
@@ -41,6 +41,13 @@
      ],
      "IntVec2s": [
       {
+       "Key": "Total World Size",
+       "Value": {
+        "X": 64,
+        "Y": 64
+       }
+      },
+      {
        "Key": "Min Building Size",
        "Value": {
         "X": 4,
@@ -48,17 +55,10 @@
        }
       },
       {
-       "Key": "Total World Size",
-       "Value": {
-        "X": 128,
-        "Y": 128
-       }
-      },
-      {
        "Key": "Max Building Size",
        "Value": {
-        "X": 24,
-        "Y": 24
+        "X": 12,
+        "Y": 12
        }
       },
       {
@@ -71,16 +71,16 @@
      ],
      "Ints": [
       {
-       "Key": "Max Buildings",
-       "Value": 200
+       "Key": "Min Tower Radius",
+       "Value": 3
       },
       {
        "Key": "Tower Wall Thickness",
        "Value": 1
       },
       {
-       "Key": "Min Tower Radius",
-       "Value": 3
+       "Key": "Max Buildings",
+       "Value": 200
       },
       {
        "Key": "Max Building Iterations",
@@ -147,7 +147,7 @@
       }
      ]
     },
-    "IsActive": true,
+    "IsActive": false,
     "OnFixedUpdate": {
      "EntryPoint": "",
      "SourcePath": ""

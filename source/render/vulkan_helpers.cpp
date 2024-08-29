@@ -320,6 +320,21 @@ namespace R3
 			return attachment;
 		}
 
+		VkPipelineColorBlendAttachmentState CreatePipelineColourBlendAttachment_AlphaBlending()
+		{
+			R3_PROF_EVENT();
+			VkPipelineColorBlendAttachmentState attachment = { 0 };
+			attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+			attachment.blendEnable = VK_TRUE;
+			attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+			attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+			attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+			attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+			attachment.colorBlendOp = VK_BLEND_OP_ADD;
+			attachment.alphaBlendOp = VK_BLEND_OP_ADD;
+			return attachment;
+		}
+
 		VkPipelineColorBlendStateCreateInfo CreatePipelineColourBlendState(const std::vector<VkPipelineColorBlendAttachmentState>& attachments)
 		{
 			R3_PROF_EVENT();

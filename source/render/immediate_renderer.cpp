@@ -408,7 +408,7 @@ namespace R3
 
 		// No colour attachment blending
 		std::vector<VkPipelineColorBlendAttachmentState> allAttachments = {
-			VulkanHelpers::CreatePipelineColourBlendAttachment_NoBlending()
+			VulkanHelpers::CreatePipelineColourBlendAttachment_AlphaBlending()
 		};
 		pb.m_colourBlendState = VulkanHelpers::CreatePipelineColourBlendState(allAttachments);	// Pipeline also has some global blending state (constants, logical ops enable)
 

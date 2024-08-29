@@ -52,6 +52,7 @@ namespace R3
 		VkPipelineMultisampleStateCreateInfo CreatePipelineMultiSampleState_SingleSample();
 		VkPipelineRasterizationStateCreateInfo CreatePipelineRasterState(VkPolygonMode polyMode, VkCullModeFlags cullMode, VkFrontFace frontFace);
 		VkPipelineColorBlendAttachmentState CreatePipelineColourBlendAttachment_NoBlending();
+		VkPipelineColorBlendAttachmentState CreatePipelineColourBlendAttachment_AlphaBlending();
 		VkPipelineColorBlendStateCreateInfo CreatePipelineColourBlendState(const std::vector<VkPipelineColorBlendAttachmentState>& attachments);
 
 		// Synchronisation helpers

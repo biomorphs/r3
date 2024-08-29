@@ -18,7 +18,6 @@ public:
 	virtual bool Init();
 	virtual void Shutdown();
 private:
-	void GenerateWorld(class DungeonsWorldGridComponent& grid);
 	void MoveEntities(const std::vector<R3::Entities::EntityHandle>& targets, glm::vec3 offset);
 	void GenerateTileVisuals(uint32_t x, uint32_t z, class DungeonsWorldGridComponent& grid, std::vector<R3::Entities::EntityHandle>& outEntities);
 	void GenerateWorldVisuals(const R3::Entities::EntityHandle& e, class DungeonsWorldGridComponent& grid);

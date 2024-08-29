@@ -71,18 +71,18 @@ void DebugDrawTile(R3::ImmediateRenderSystem& imRender,
 	auto contents = grid.GetContents(x, z);
 	if (contents && contents->m_tileData.m_tileType != WorldTileType::Empty)
 	{
-		glm::vec4 colour = { 1,0,0,.5 };
+		glm::vec4 colour = { 1,0,0,.25 };
 		if (contents->m_tileData.m_passable)
 		{
-			colour = { 0,1,0,.5 };
+			colour = { 0,1,0,.25 };
 		}
 		if (contents->m_tileData.m_tileType == WorldTileType::PlayerSpawnPoint)
 		{
-			colour = { 1,0,1,.5 };
+			colour = { 1,0,1,.25 };
 		}
 		if (contents->m_tileData.m_tileType == WorldTileType::LevelExit)
 		{
-			colour = { 1,1,1,0.f };
+			colour = { 1,1,1,0.25f };
 		}
 		verts.push_back({ {basePos, 1}, colour });
 		verts.push_back({ {basePos + glm::vec3(scale.x,0,0), 1}, colour });
@@ -195,7 +195,15 @@ void DungeonsOfArrrgh::GenerateTileVisuals(uint32_t x, uint32_t z, DungeonsWorld
 			}
 			else if (leftWall || rightWall)
 			{
-				tileToLoad = "arrrgh/tiles/basic_hwall_tile_4x4.scn";
+				bool useTorchWall = R3::Random::GetFloat() < 0.1f;
+				if (useTorchWall)
+				{
+					tileToLoad = "arrrgh/tiles/basic_hwall_torch_tile_4x4.scn";
+				}
+				else
+				{
+					tileToLoad = "arrrgh/tiles/basic_hwall_tile_4x4.scn";
+				}
 			}
 			else if (upWall || downWall)
 			{

@@ -48,7 +48,7 @@ void DungeonsWorldGridComponent::Inspect(const R3::Entities::EntityHandle& e, R3
 	}
 }
 
-DungeonsWorldGridComponent::VisibleTiles DungeonsWorldGridComponent::FindVisibleTiles(glm::ivec2 startTile, glm::vec2 lookAt, float fov, uint32_t distance )
+DungeonsWorldGridComponent::VisibleTiles DungeonsWorldGridComponent::FindVisibleTiles(glm::ivec2 startTile, uint32_t distance )
 {
 	R3_PROF_EVENT();
 	VisibleTiles results;
@@ -63,12 +63,9 @@ DungeonsWorldGridComponent::VisibleTiles DungeonsWorldGridComponent::FindVisible
 	iterEnd = glm::clamp(iterEnd, { 0,0 }, iTotalDims);
 
 	// if the initial tile blocks visibility, we are done
-	if (auto thisTile = GetContents(startTile.x, startTile.y))
+	if (auto thisTile = GetContents(startTile.x, startTile.y); thisTile && thisTile->m_tileData.m_blockVisibility)
 	{
-		if (thisTile->m_tileData.m_blockVisibility)
-		{
-			return results;
-		}
+		return results;
 	}
 
 	for (auto z = iterStart.y; z < iterEnd.y; ++z)

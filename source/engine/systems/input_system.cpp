@@ -1,6 +1,8 @@
 #include "input_system.h"
 #include "core/profiler.h"
+#include "core/glm_headers.h"
 #include "event_system.h"
+#include "lua_system.h"
 #include <imgui.h>
 #include <SDL_joystick.h>
 #include <SDL_gamecontroller.h>
@@ -180,6 +182,26 @@ namespace R3
 
 		EnumerateControllers();
 
+		auto scripts = GetSystem<LuaSystem>();
+		scripts->RegisterFunction("IsKeyDown", [this](const char* key) {
+			return !IsGuiCapturingInput() && m_keysEnabled && IsKeyDown(key);
+		});
+		scripts->RegisterFunction("WasKeyReleased", [this](const char* key) {
+			return !IsGuiCapturingInput() && m_keysEnabled && WasKeyReleased(key);
+		});
+		scripts->RegisterFunction("GetMousePosition", [this]() -> glm::ivec2 {
+			return glm::ivec2(m_mouseState.m_cursorX, m_mouseState.m_cursorY);
+		});
+		scripts->RegisterFunction("IsLeftMouseButtonPressed", [this]() -> bool {
+			return !IsGuiCapturingInput() && (m_mouseState.m_buttonState & LeftButton) != 0;
+		});
+		scripts->RegisterFunction("IsMiddleMouseButtonPressed", [this]() -> bool {
+			return !IsGuiCapturingInput() && (m_mouseState.m_buttonState & MiddleButton) != 0;
+		});
+		scripts->RegisterFunction("IsRightMouseButtonPressed", [this]() -> bool {
+			return !IsGuiCapturingInput() && (m_mouseState.m_buttonState & RightButton) != 0;
+		});
+
 		return true;
 	}
 
@@ -308,6 +330,7 @@ namespace R3
 		}
 		else
 		{
+			LogWarn("Unknown key {}", keyStr);
 			return false;
 		}
 	}
@@ -331,6 +354,7 @@ namespace R3
 		}
 		else
 		{
+			LogWarn("Unknown key {}", keyStr);
 			return false;
 		}
 	}
