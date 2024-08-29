@@ -9,7 +9,7 @@
      "Z": 0.20967739820480347
     },
     "Sun Ambient": 0.00800000037997961,
-    "Sun Brightness": 4.0,
+    "Sun Brightness": 1.0,
     "Sun Colour": {
      "X": 1.0,
      "Y": 0.9691076874732971,
@@ -41,47 +41,54 @@
      ],
      "IntVec2s": [
       {
-       "Key": "Total World Size",
+       "Key": "Min Building Size",
        "Value": {
-        "X": 64,
-        "Y": 64
+        "X": 4,
+        "Y": 4
        }
       },
       {
-       "Key": "Min Building Size",
+       "Key": "Total World Size",
        "Value": {
-        "X": 3,
-        "Y": 3
+        "X": 128,
+        "Y": 128
        }
       },
       {
        "Key": "Max Building Size",
        "Value": {
-        "X": 16,
-        "Y": 16
+        "X": 24,
+        "Y": 24
+       }
+      },
+      {
+       "Key": "Level Exit Safe Area (Min/Max)",
+       "Value": {
+        "X": 5,
+        "Y": 6
        }
       }
      ],
      "Ints": [
       {
-       "Key": "Min Tower Radius",
-       "Value": 3
+       "Key": "Max Buildings",
+       "Value": 200
       },
       {
        "Key": "Tower Wall Thickness",
        "Value": 1
       },
       {
-       "Key": "Max Buildings",
-       "Value": 200
+       "Key": "Min Tower Radius",
+       "Value": 3
       },
       {
        "Key": "Max Building Iterations",
-       "Value": 10000
+       "Value": 100000
       },
       {
        "Key": "Wander steps per iteration",
-       "Value": 20
+       "Value": 50
       }
      ]
     },
@@ -128,15 +135,15 @@
       {
        "Key": "Vis test coords",
        "Value": {
-        "X": 32,
-        "Y": 32
+        "X": 8,
+        "Y": 8
        }
       }
      ],
      "Ints": [
       {
        "Key": "Vis test distance",
-       "Value": 32
+       "Value": 8
       }
      ]
     },

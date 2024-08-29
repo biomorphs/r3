@@ -1,5 +1,6 @@
 #include "world_grid_component.h"
 #include "engine/systems/lua_system.h"
+#include "engine/dda.h"
 #include <imgui.h>
 
 void DungeonsWorldGridComponent::WorldTileContents::SerialiseJson(R3::JsonSerialiser& s)
@@ -51,29 +52,63 @@ DungeonsWorldGridComponent::VisibleTiles DungeonsWorldGridComponent::FindVisible
 {
 	R3_PROF_EVENT();
 	VisibleTiles results;
+
 	// first find the area surrouding this point to test
 	glm::ivec2 iTotalDims(m_gridDimensions);
-	glm::ivec2 iterStart = startTile - glm::ivec2(distance);
-	glm::ivec2 iterEnd = startTile + glm::ivec2(distance);
-	glm::vec2 vStart(startTile);
+	glm::ivec2 vStart = glm::clamp(startTile, { 0,0 }, iTotalDims);
+	glm::ivec2 iterStart = vStart - glm::ivec2(distance);
+	glm::ivec2 iterEnd = vStart + glm::ivec2(distance);
+	glm::vec2 vCenter = glm::vec2(vStart) + 0.5f;
 	iterStart = glm::clamp(iterStart, { 0,0 }, iTotalDims);
 	iterEnd = glm::clamp(iterEnd, { 0,0 }, iTotalDims);
+
+	// if the initial tile blocks visibility, we are done
+	if (auto thisTile = GetContents(startTile.x, startTile.y))
+	{
+		if (thisTile->m_tileData.m_blockVisibility)
+		{
+			return results;
+		}
+	}
+
 	for (auto z = iterStart.y; z < iterEnd.y; ++z)
 	{
 		for (auto x = iterStart.x; x < iterEnd.x; ++x)
 		{
-			float distanceToPoint = glm::distance(vStart, glm::vec2(x, z));
-			bool visible = distanceToPoint < distance;
-			if (visible)
+			// find the distance to the center of this cell
+			const glm::vec2 cellCenter(x + 0.5f, z + 0.5f);
+			const int voxelsPerCell = 2;	// more voxels = more accurate results, but slower
+			const glm::vec3 voxelSize(1.0f / (float)voxelsPerCell);
+			const float distanceToPoint = glm::ceil(glm::distance(glm::vec2(vCenter), cellCenter));
+			const bool inRadius = distanceToPoint <= distance;
+			if (inRadius)
 			{
-				results.push_back({ x,z });
+				if (auto content = GetContents(x, z); !content->m_tileData.m_blockVisibility)
+				{
+					// use DDA to 'draw' a line from the start to this tile
+					// if any vision-blocking tiles are encountered, the current tile is not visible
+					glm::vec3 walkTileStart(vCenter.x, 0, vCenter.y);
+					glm::vec3 walkTileEnd(cellCenter.x, 0, cellCenter.y);
+					auto noBlockVision = [this, voxelsPerCell](const glm::ivec3& tile) {
+						if (auto tileData = GetContents(tile.x / voxelsPerCell, tile.z / voxelsPerCell))
+						{
+							return !tileData->m_tileData.m_blockVisibility;
+						}
+						return true;
+						};
+					auto visionBlocked = R3::DDAIntersect(walkTileStart, walkTileEnd, voxelSize, noBlockVision);
+					if (!visionBlocked.has_value())
+					{
+						results.push_back({ x,z });
+					}
+				}
 			}
 		}
 	}
 	return results;
 }
 
-void DungeonsWorldGridComponent::Fill(glm::uvec2 start, glm::uvec2 size, uint8_t type, bool isPassable)
+void DungeonsWorldGridComponent::Fill(glm::uvec2 start, glm::uvec2 size, uint8_t type, bool isPassable, bool blockVisibility)
 {
 	R3_PROF_EVENT();
 	glm::uvec2 actualSize = glm::min(start + size, m_gridDimensions);
@@ -85,6 +120,7 @@ void DungeonsWorldGridComponent::Fill(glm::uvec2 start, glm::uvec2 size, uint8_t
 			{
 				tile->m_tileData.m_tileType = static_cast<uint8_t>(type);
 				tile->m_tileData.m_passable = isPassable;
+				tile->m_tileData.m_blockVisibility = blockVisibility;
 			}
 		}
 	}

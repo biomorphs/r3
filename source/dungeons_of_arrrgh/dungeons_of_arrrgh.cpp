@@ -16,6 +16,8 @@ enum WorldTileType : uint8_t
 	Wall,
 	FloorInterior,
 	FloorExterior,
+	PlayerSpawnPoint,
+	LevelExit,
 	MaxTypes
 };
 
@@ -46,6 +48,9 @@ bool DungeonsOfArrrgh::Init()
 	scripts->RegisterFunction("DebugDrawTiles", [this](DungeonsWorldGridComponent* grid, std::vector<glm::uvec2> tiles) {
 		DebugDrawTiles(*grid, tiles);
 	}, scriptNamespace);
+	scripts->RegisterFunction("MoveEntities", [this](const std::vector<R3::Entities::EntityHandle>& targets, glm::vec3 offset) {
+		MoveEntities(targets, offset);
+	}, scriptNamespace);
 
 	return true;
 }
@@ -53,6 +58,45 @@ bool DungeonsOfArrrgh::Init()
 void DungeonsOfArrrgh::Shutdown()
 {
 	R3_PROF_EVENT();
+}
+
+void DebugDrawTile(R3::ImmediateRenderSystem& imRender, 
+	const DungeonsWorldGridComponent& grid, 
+	uint32_t x, uint32_t z, 
+	glm::vec3 offset, glm::vec2 scale, 
+	std::vector<R3::ImmediateRenderer::PosColourVertex>& verts)
+{
+	glm::vec3 tileOffset = { (float)x * scale.x, 0.0f, (float)z * scale.y };
+	glm::vec3 basePos = offset + tileOffset;
+	auto contents = grid.GetContents(x, z);
+	if (contents && contents->m_tileData.m_tileType != WorldTileType::Empty)
+	{
+		glm::vec4 colour = { 1,0,0,.5 };
+		if (contents->m_tileData.m_passable)
+		{
+			colour = { 0,1,0,.5 };
+		}
+		if (contents->m_tileData.m_tileType == WorldTileType::PlayerSpawnPoint)
+		{
+			colour = { 1,0,1,.5 };
+		}
+		if (contents->m_tileData.m_tileType == WorldTileType::LevelExit)
+		{
+			colour = { 1,1,1,0.f };
+		}
+		verts.push_back({ {basePos, 1}, colour });
+		verts.push_back({ {basePos + glm::vec3(scale.x,0,0), 1}, colour });
+		verts.push_back({ {basePos + glm::vec3(scale.x,0,scale.y), 1}, colour });
+		verts.push_back({ {basePos, 1}, colour });
+		verts.push_back({ {basePos + glm::vec3(scale.x,0,scale.y), 1}, colour });
+		verts.push_back({ {basePos + glm::vec3(0,0,scale.y), 1}, colour });
+		if (!contents->m_tileData.m_passable)
+		{
+			glm::vec3 cubeScale = { scale.x * 0.5f, 2.0f, scale.y * 0.5f };
+			glm::mat4 transform = glm::scale(glm::translate(basePos + glm::vec3(cubeScale.x, 1.0f, cubeScale.z)), cubeScale);
+			imRender.m_imRender->AddCubeWireframe(transform, colour);
+		}
+	}
 }
 
 void DungeonsOfArrrgh::DebugDrawWorldGrid(const DungeonsWorldGridComponent& grid)
@@ -79,29 +123,7 @@ void DungeonsOfArrrgh::DebugDrawWorldGrid(const DungeonsWorldGridComponent& grid
 	{
 		for (uint32_t x = 0; x < dims.x; ++x)
 		{
-			glm::vec3 tileOffset = { (float)x * m_drawGridScale.x, 0.0f, (float)z * m_drawGridScale.y };
-			glm::vec3 basePos = m_drawGridOffset + tileOffset;
-			auto contents = grid.GetContents(x, z);
-			if (contents && contents->m_tileData.m_tileType != WorldTileType::Empty)
-			{
-				glm::vec4 colour = { 1,0,0,.5 };
-				if (contents->m_tileData.m_passable)
-				{
-					colour = { 0,1,0,.5 };
-				}
-				outVertices.push_back({ {basePos, 1}, colour });
-				outVertices.push_back({ {basePos + glm::vec3(m_drawGridScale.x,0,0), 1}, colour });
-				outVertices.push_back({ {basePos + glm::vec3(m_drawGridScale.x,0,m_drawGridScale.y), 1}, colour });
-				outVertices.push_back({ {basePos, 1}, colour });
-				outVertices.push_back({ {basePos + glm::vec3(m_drawGridScale.x,0,m_drawGridScale.y), 1}, colour } );
-				outVertices.push_back({ {basePos + glm::vec3(0,0,m_drawGridScale.y), 1}, colour } );
-				if (!contents->m_tileData.m_passable)
-				{
-					glm::vec3 cubeScale = { m_drawGridScale.x * 0.5f, m_drawBlockerHeight * 0.5f, m_drawGridScale.y * 0.5f };
-					glm::mat4 transform = glm::scale(glm::translate(basePos + glm::vec3(cubeScale.x, m_drawBlockerHeight / 2, cubeScale.z)), cubeScale);
-					imRender->m_imRender->AddCubeWireframe(transform, colour);
-				}
-			}
+			DebugDrawTile(*imRender, grid, x, z, m_drawGridOffset, m_drawGridScale, outVertices);
 		}
 	}
 	if (outVertices.size() > 0)
@@ -119,29 +141,7 @@ void DungeonsOfArrrgh::DebugDrawTiles(const DungeonsWorldGridComponent& grid, st
 	outVertices.reserve(tiles.size() * 6);
 	for (const auto& tile : tiles)
 	{
-		glm::vec3 tileOffset = { (float)tile.x * m_drawGridScale.x, 0.0f, (float)tile.y * m_drawGridScale.y };
-		glm::vec3 basePos = m_drawGridOffset + tileOffset;
-		auto contents = grid.GetContents(tile.x, tile.y);
-		if (contents && contents->m_tileData.m_tileType != WorldTileType::Empty)
-		{
-			glm::vec4 colour = { 1,0,0,.5 };
-			if (contents->m_tileData.m_passable)
-			{
-				colour = { 0,1,0,.5 };
-			}
-			outVertices.push_back({ {basePos, 1}, colour });
-			outVertices.push_back({ {basePos + glm::vec3(m_drawGridScale.x,0,0), 1}, colour });
-			outVertices.push_back({ {basePos + glm::vec3(m_drawGridScale.x,0,m_drawGridScale.y), 1}, colour });
-			outVertices.push_back({ {basePos, 1}, colour });
-			outVertices.push_back({ {basePos + glm::vec3(m_drawGridScale.x,0,m_drawGridScale.y), 1}, colour });
-			outVertices.push_back({ {basePos + glm::vec3(0,0,m_drawGridScale.y), 1}, colour });
-			if (!contents->m_tileData.m_passable)
-			{
-				glm::vec3 cubeScale = { m_drawGridScale.x * 0.5f, m_drawBlockerHeight * 0.5f, m_drawGridScale.y * 0.5f };
-				glm::mat4 transform = glm::scale(glm::translate(basePos + glm::vec3(cubeScale.x, m_drawBlockerHeight / 2, cubeScale.z)), cubeScale);
-				imRender->m_imRender->AddCubeWireframe(transform, colour);
-			}
-		}
+		DebugDrawTile(*imRender, grid, tile.x, tile.y, m_drawGridOffset, m_drawGridScale, outVertices);
 	}
 	if (outVertices.size() > 0)
 	{
@@ -203,8 +203,6 @@ void DungeonsOfArrrgh::GenerateTileVisuals(uint32_t x, uint32_t z, DungeonsWorld
 			}
 		}
 		break;
-	default:
-		return;
 	}
 	auto foundInCache = m_generateVisualsEntityCache.find(tileToLoad);
 	if (foundInCache == m_generateVisualsEntityCache.end())

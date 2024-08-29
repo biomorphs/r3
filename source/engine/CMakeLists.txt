@@ -1,4 +1,6 @@
 set(EngineLib_SourceFiles
+	dda.h
+	dda.inl
 	blackboard.h
 	blackboard.cpp
 	dds_loader.h

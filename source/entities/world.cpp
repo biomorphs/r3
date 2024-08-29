@@ -42,6 +42,7 @@ namespace Entities
 
 	EntityHandle World::GetEntityByName(std::string name)
 	{
+		R3_PROF_EVENT();
 		EntityHandle foundEntity;
 		ForEachActiveEntity([&](const EntityHandle& e) {
 			if (GetEntityName(e) == name)

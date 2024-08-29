@@ -29,5 +29,4 @@ private:
 	std::unordered_map<std::string, nlohmann::json> m_generateVisualsEntityCache;	// cache serialised entities for speed
 	glm::vec3 m_drawGridOffset = { 0,0,0 };
 	glm::vec2 m_drawGridScale = { 4, 4 };
-	float m_drawBlockerHeight = 3.0f;
 };

@@ -33,7 +33,7 @@ public:
 	WorldTileContents* GetContents(uint32_t tileX, uint32_t tileZ);
 	uint8_t GetTileType(uint32_t tilex, uint32_t tiley);
 	bool IsTilePassable(uint32_t tilex, uint32_t tiley);
-	void Fill(glm::uvec2 start, glm::uvec2 size, uint8_t type, bool isPassable);
+	void Fill(glm::uvec2 start, glm::uvec2 size, uint8_t type, bool isPassable, bool blockVisibility);
 	bool AllTilesMatchType(glm::uvec2 start, glm::uvec2 size, uint8_t type);	// return true if all tiles in range match the type
 
 	bool m_isDirty = false;				// if true, the world needs regeneration
