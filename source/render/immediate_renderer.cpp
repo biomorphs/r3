@@ -54,7 +54,7 @@ namespace R3
 	void ImmediateRenderer::AddAxisAtPoint(glm::vec3 position, float scale, glm::mat4 transform)
 	{
 		glm::vec4 p0 = glm::vec4(position, 1.0f);
-		glm::vec3 extents = glm::mat3(transform) * glm::vec3(1, 1, 1);
+		glm::vec3 extents = glm::mat3(transform) * glm::vec3(scale);
 		PosColourVertex vertices[6] = {
 			{ p0, {1.0f,0.0f,0.0f,1.0f} },
 			{ p0 + glm::vec4(extents.x,0,0,0), {1.0f,0.0f,0.0f,1.0f} },

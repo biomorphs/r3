@@ -23,10 +23,7 @@ public:
 	};
 
 	using VisibleTiles = std::vector<glm::uvec2>;
-
-	// find tiles that are visible within a cone. lookAt = direction to look, fov = degrees, distance = tiles
-	// results include the initial tile, if visible
-	VisibleTiles FindVisibleTiles(glm::ivec2 startTile, uint32_t distance);
+	VisibleTiles FindVisibleTiles(glm::ivec2 startTile, uint32_t distance);		// results include the initial tile, if visible
 	void ResizeGrid(glm::uvec2 size);
 	glm::uvec2 GetDimensions() const { return m_gridDimensions; }
 	const WorldTileContents* GetContents(uint32_t tileX, uint32_t tileZ) const;	// assume it will be sparse later

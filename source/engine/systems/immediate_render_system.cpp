@@ -1,6 +1,7 @@
 #include "immediate_render_system.h"
 #include "frame_scheduler_system.h"
 #include "camera_system.h"
+#include "lua_system.h"
 #include "render/render_system.h"
 #include "render/render_graph.h"
 #include "core/log.h"
@@ -30,6 +31,13 @@ namespace R3
 		render->m_onShutdownCbs.AddCallback([this](Device& d) {
 			m_imRender->Destroy(d);
 			m_imRender = {};
+		});
+		auto scripts = GetSystem<LuaSystem>();
+		scripts->RegisterFunction("IMDrawLine", [this](glm::vec3 p0, glm::vec3 p1, glm::vec4 colour) {
+			m_imRender->AddLine(p0, p1, colour);
+		});
+		scripts->RegisterFunction("IMDrawAxis", [this](glm::vec3 pos, float scale) {
+			m_imRender->AddAxisAtPoint(pos, scale);
 		});
 		return true;
 	}

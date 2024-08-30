@@ -323,10 +323,10 @@ function Dungeons_VisTesting(e)
 			Arrrgh_Globals.VisTestPos = spawnOrNothing
 		else
 			if(R3.WasKeyReleased("KEY_u")) then 
-				Arrrgh_Globals.VisTestPos.y = Arrrgh_Globals.VisTestPos.y + 1
+				Arrrgh_Globals.VisTestPos.y = Arrrgh_Globals.VisTestPos.y - 1
 			end
 			if(R3.WasKeyReleased("KEY_j")) then 
-				Arrrgh_Globals.VisTestPos.y = Arrrgh_Globals.VisTestPos.y - 1
+				Arrrgh_Globals.VisTestPos.y = Arrrgh_Globals.VisTestPos.y + 1
 			end
 			if(R3.WasKeyReleased("KEY_h")) then 
 				Arrrgh_Globals.VisTestPos.x = Arrrgh_Globals.VisTestPos.x - 1
@@ -337,6 +337,13 @@ function Dungeons_VisTesting(e)
 			local testDistance = scriptcmp.m_inputParams:GetInt("Vis test distance", 8)
 			local visibleTiles = gridcmp:FindVisibleTiles(Arrrgh_Globals.VisTestPos, testDistance)
 			Arrrgh.DebugDrawTiles(gridcmp, visibleTiles)
+
+			local halfTile = vec2.new(Arrrgh_Globals.TileDimensions.x * 0.5, Arrrgh_Globals.TileDimensions.y * 0.5)
+			local visTestVisualPos = vec3.new(Arrrgh_Globals.VisTestPos.x * Arrrgh_Globals.TileDimensions.x, 1.0, 
+											  Arrrgh_Globals.VisTestPos.y * Arrrgh_Globals.TileDimensions.y)
+			visTestVisualPos.x = visTestVisualPos.x + halfTile.x
+			visTestVisualPos.z = visTestVisualPos.z + halfTile.y
+			R3.IMDrawAxis(visTestVisualPos, 4.0)
 		end		
 	end
 end
