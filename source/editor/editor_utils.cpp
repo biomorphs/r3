@@ -46,7 +46,7 @@ namespace R3
 		}
 		if(transformCmp)
 		{
-			imRender->AddAxisAtPoint(transformCmp->GetPosition(), 1.0f, transformCmp->GetWorldspaceInterpolated());
+			imRender->AddAxisAtPoint(glm::vec3(transformCmp->GetWorldspaceInterpolated()[3]), 1.0f, transformCmp->GetWorldspaceInterpolated());
 		}
 	}
 

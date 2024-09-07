@@ -92,11 +92,15 @@ DungeonsWorldGridComponent::VisibleTiles DungeonsWorldGridComponent::FindVisible
 							return !tileData->m_tileData.m_blockVisibility;
 						}
 						return true;
-						};
+					};
 					auto visionBlocked = R3::DDAIntersect(walkTileStart, walkTileEnd, voxelSize, noBlockVision);
 					if (!visionBlocked.has_value())
 					{
-						results.push_back({ x,z });
+						results.insert({ x,z });
+					}
+					else
+					{
+						results.insert({ visionBlocked->x * voxelSize.x, visionBlocked->z * voxelSize.z });
 					}
 				}
 			}

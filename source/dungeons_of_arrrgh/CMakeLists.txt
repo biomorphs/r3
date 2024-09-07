@@ -3,6 +3,8 @@ set(DungeonsOfArrrgh_SourceFiles
 	world_grid_component.cpp
 	dungeons_of_arrrgh.h
 	dungeons_of_arrrgh.cpp
+	vision_component.h
+	vision_component.cpp
 )
 
 add_library(DungeonsOfArrrgh ${DungeonsOfArrrgh_SourceFiles})

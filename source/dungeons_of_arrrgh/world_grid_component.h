@@ -1,5 +1,6 @@
 #pragma once
 #include "entities/component_helpers.h"
+#include <unordered_set>
 
 class DungeonsWorldGridComponent
 {
@@ -22,7 +23,7 @@ public:
 		std::vector<R3::Entities::EntityHandle> m_entitiesInTile;
 	};
 
-	using VisibleTiles = std::vector<glm::uvec2>;
+	using VisibleTiles = std::unordered_set<glm::uvec2>;
 	VisibleTiles FindVisibleTiles(glm::ivec2 startTile, uint32_t distance);		// results include the initial tile, if visible
 	void ResizeGrid(glm::uvec2 size);
 	glm::uvec2 GetDimensions() const { return m_gridDimensions; }

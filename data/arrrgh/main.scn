@@ -4,9 +4,9 @@
    "EnvironmentSettings": {
     "Sky Ambient": 0.00800000037997961,
     "Sky Colour": {
-     "X": 0.042273666709661484,
-     "Y": 0.16107632219791412,
-     "Z": 0.20967739820480347
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
     },
     "Sun Ambient": 0.004999999888241291,
     "Sun Brightness": 0.25,
@@ -32,26 +32,22 @@
      "Floats": [
       {
        "Key": "Tower Chance",
-       "Value": 1.0
-      },
-      {
-       "Key": "Wander forward chance increment",
-       "Value": 1.0000000116860974e-07
+       "Value": 0.5
       }
      ],
      "IntVec2s": [
-      {
-       "Key": "Total World Size",
-       "Value": {
-        "X": 64,
-        "Y": 64
-       }
-      },
       {
        "Key": "Min Building Size",
        "Value": {
         "X": 4,
         "Y": 4
+       }
+      },
+      {
+       "Key": "Total World Size",
+       "Value": {
+        "X": 64,
+        "Y": 128
        }
       },
       {
@@ -62,25 +58,32 @@
        }
       },
       {
+       "Key": "Player Spawn Safe Area (Min/Max)",
+       "Value": {
+        "X": 2,
+        "Y": 4
+       }
+      },
+      {
        "Key": "Level Exit Safe Area (Min/Max)",
        "Value": {
-        "X": 5,
-        "Y": 6
+        "X": 3,
+        "Y": 5
        }
       }
      ],
      "Ints": [
       {
-       "Key": "Min Tower Radius",
-       "Value": 3
+       "Key": "Max Buildings",
+       "Value": 200
       },
       {
        "Key": "Tower Wall Thickness",
        "Value": 1
       },
       {
-       "Key": "Max Buildings",
-       "Value": 200
+       "Key": "Min Tower Radius",
+       "Value": 5
       },
       {
        "Key": "Max Building Iterations",
@@ -88,7 +91,7 @@
       },
       {
        "Key": "Wander steps per iteration",
-       "Value": 50
+       "Value": 20
       }
      ]
     },
@@ -122,47 +125,829 @@
    "Parent": 4294967295
   },
   {
-   "ID": 3,
-   "LuaScript": {
-    "InputParams": {
-     "Floats": [
-      {
-       "Key": "Vis test angle",
-       "Value": 0.0
-      }
-     ],
-     "IntVec2s": [
-      {
-       "Key": "Vis test coords",
-       "Value": {
-        "X": 8,
-        "Y": 8
-       }
-      }
-     ],
-     "Ints": [
-      {
-       "Key": "Vis test distance",
-       "Value": 8
-      }
-     ]
+   "Dungeons_VisionComponent": {
+    "MaxDistance": 8.0,
+    "NeedsUpdate": true
+   },
+   "ID": 4,
+   "Name": "Rogue_Hooded.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 4
     },
-    "IsActive": false,
-    "OnFixedUpdate": {
-     "EntryPoint": "",
-     "SourcePath": ""
-    },
-    "OnVariableUpdate": {
-     "EntryPoint": "Dungeons_VisTesting",
-     "SourcePath": "arrrgh\\main.lua"
-    },
-    "PopulateInputs": {
-     "EntryPoint": "Dungeons_VisTestingPopulateInputs",
-     "SourcePath": "arrrgh\\main.lua"
+    "Model": {
+     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
     }
    },
-   "Name": "Vis testing script",
-   "Parent": 4294967295
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Textures\\rogue_texture.png"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.5,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 128.0,
+     "Y": 0.0,
+     "Z": 128.0
+    },
+    "Scale": {
+     "X": 2.0,
+     "Y": 2.0,
+     "Z": 2.0
+    }
+   }
+  },
+  {
+   "Dungeons_VisionComponent": {
+    "MaxDistance": 8.0,
+    "NeedsUpdate": true
+   },
+   "ID": 7,
+   "Name": "Rogue_Hooded.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 7
+    },
+    "Model": {
+     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Textures\\rogue_texture.png"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.5,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 43.45882797241211,
+     "Y": 0.0,
+     "Z": 164.3753204345703
+    },
+    "Scale": {
+     "X": 2.0,
+     "Y": 2.0,
+     "Z": 2.0
+    }
+   }
+  },
+  {
+   "Dungeons_VisionComponent": {
+    "MaxDistance": 8.0,
+    "NeedsUpdate": true
+   },
+   "ID": 8,
+   "Name": "Rogue_Hooded.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 8
+    },
+    "Model": {
+     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Textures\\rogue_texture.png"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.5,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 189.28054809570313,
+     "Y": 0.0,
+     "Z": 202.2918701171875
+    },
+    "Scale": {
+     "X": 2.0,
+     "Y": 2.0,
+     "Z": 2.0
+    }
+   }
+  },
+  {
+   "Dungeons_VisionComponent": {
+    "MaxDistance": 8.0,
+    "NeedsUpdate": true
+   },
+   "ID": 9,
+   "Name": "Rogue_Hooded.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 9
+    },
+    "Model": {
+     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Textures\\rogue_texture.png"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.5,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 88.41417694091797,
+     "Y": 0.0,
+     "Z": 248.92405700683594
+    },
+    "Scale": {
+     "X": 2.0,
+     "Y": 2.0,
+     "Z": 2.0
+    }
+   }
+  },
+  {
+   "Dungeons_VisionComponent": {
+    "MaxDistance": 8.0,
+    "NeedsUpdate": true
+   },
+   "ID": 10,
+   "Name": "Rogue_Hooded.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 10
+    },
+    "Model": {
+     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Textures\\rogue_texture.png"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.5,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 68.45089721679688,
+     "Y": 0.0,
+     "Z": 80.4632568359375
+    },
+    "Scale": {
+     "X": 2.0,
+     "Y": 2.0,
+     "Z": 2.0
+    }
+   }
+  },
+  {
+   "Dungeons_VisionComponent": {
+    "MaxDistance": 8.0,
+    "NeedsUpdate": true
+   },
+   "ID": 11,
+   "Name": "Rogue_Hooded.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 11
+    },
+    "Model": {
+     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Textures\\rogue_texture.png"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.5,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 157.53326416015625,
+     "Y": 0.0,
+     "Z": 80.4632568359375
+    },
+    "Scale": {
+     "X": 2.0,
+     "Y": 2.0,
+     "Z": 2.0
+    }
+   }
+  },
+  {
+   "Dungeons_VisionComponent": {
+    "MaxDistance": 8.0,
+    "NeedsUpdate": true
+   },
+   "ID": 12,
+   "Name": "Rogue_Hooded.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 12
+    },
+    "Model": {
+     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Textures\\rogue_texture.png"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.5,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 189.28054809570313,
+     "Y": 0.0,
+     "Z": 380.1944580078125
+    },
+    "Scale": {
+     "X": 2.0,
+     "Y": 2.0,
+     "Z": 2.0
+    }
+   }
+  },
+  {
+   "Dungeons_VisionComponent": {
+    "MaxDistance": 8.0,
+    "NeedsUpdate": true
+   },
+   "ID": 13,
+   "Name": "Rogue_Hooded.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 13
+    },
+    "Model": {
+     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Textures\\rogue_texture.png"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.5,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 133.4503173828125,
+     "Y": 0.0,
+     "Z": 317.1672058105469
+    },
+    "Scale": {
+     "X": 2.0,
+     "Y": 2.0,
+     "Z": 2.0
+    }
+   }
+  },
+  {
+   "Dungeons_VisionComponent": {
+    "MaxDistance": 8.0,
+    "NeedsUpdate": true
+   },
+   "ID": 14,
+   "Name": "Rogue_Hooded.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 14
+    },
+    "Model": {
+     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Textures\\rogue_texture.png"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.5,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 20.7271728515625,
+     "Y": 0.0,
+     "Z": 335.3231201171875
+    },
+    "Scale": {
+     "X": 2.0,
+     "Y": 2.0,
+     "Z": 2.0
+    }
+   }
+  },
+  {
+   "Dungeons_VisionComponent": {
+    "MaxDistance": 8.0,
+    "NeedsUpdate": true
+   },
+   "ID": 15,
+   "Name": "Rogue_Hooded.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 15
+    },
+    "Model": {
+     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Textures\\rogue_texture.png"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.5,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 125.279541015625,
+     "Y": 0.0,
+     "Z": 421.089111328125
+    },
+    "Scale": {
+     "X": 2.0,
+     "Y": 2.0,
+     "Z": 2.0
+    }
+   }
+  },
+  {
+   "Dungeons_VisionComponent": {
+    "MaxDistance": 8.0,
+    "NeedsUpdate": true
+   },
+   "ID": 16,
+   "Name": "Rogue_Hooded.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 16
+    },
+    "Model": {
+     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Textures\\rogue_texture.png"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.5,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 69.5567626953125,
+     "Y": 0.0,
+     "Z": 465.0718688964844
+    },
+    "Scale": {
+     "X": 2.0,
+     "Y": 2.0,
+     "Z": 2.0
+    }
+   }
   }
  ],
  "WorldName": "New World"

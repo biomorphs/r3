@@ -26,7 +26,7 @@ namespace R3
 	{
 	}
 
-	void ImmediateRenderer::AddLine(const PosColourVertex vertices[2])
+	void ImmediateRenderer::AddLine(const PosColourVertex vertices[2], bool depthTestEnabled)
 	{
 		DrawData newLine;
 		newLine.m_startVertexOffset = static_cast<uint32_t>(m_thisFramePosColVertices.size());
@@ -35,11 +35,18 @@ namespace R3
 			newLine.m_vertexCount = 2;
 			m_thisFramePosColVertices.emplace_back(vertices[0]);
 			m_thisFramePosColVertices.emplace_back(vertices[1]);
-			m_thisFrameLines.emplace_back(newLine);
+			if (depthTestEnabled)
+			{
+				m_thisFrameLinesWithDepth.emplace_back(newLine);
+			}
+			else
+			{
+				m_thisFrameLines.emplace_back(newLine);
+			}
 		}
 	}
 
-	void ImmediateRenderer::AddLines(const PosColourVertex* vertices, int linecount)
+	void ImmediateRenderer::AddLines(const PosColourVertex* vertices, int linecount, bool depthTestEnabled)
 	{
 		DrawData newLines;
 		newLines.m_startVertexOffset = static_cast<uint32_t>(m_thisFramePosColVertices.size());
@@ -47,11 +54,18 @@ namespace R3
 		{
 			newLines.m_vertexCount = linecount * 2;
 			m_thisFramePosColVertices.insert(m_thisFramePosColVertices.end(), vertices, vertices + (linecount * 2));
-			m_thisFrameLines.emplace_back(newLines);
+			if (depthTestEnabled)
+			{
+				m_thisFrameLinesWithDepth.emplace_back(newLines);
+			}
+			else
+			{
+				m_thisFrameLines.emplace_back(newLines);
+			}
 		}
 	}
 
-	void ImmediateRenderer::AddAxisAtPoint(glm::vec3 position, float scale, glm::mat4 transform)
+	void ImmediateRenderer::AddAxisAtPoint(glm::vec3 position, float scale, glm::mat4 transform, bool depthTestEnabled)
 	{
 		glm::vec4 p0 = glm::vec4(position, 1.0f);
 		glm::vec3 extents = glm::mat3(transform) * glm::vec3(scale);
@@ -63,10 +77,10 @@ namespace R3
 			{ p0, {0.0f,0.0f,1.0f,1.0f} },
 			{ p0 + glm::vec4(0,0,extents.z,0), {0.0f,0.0f,1.0f,1.0f} },
 		};
-		AddLines(vertices, 3);
+		AddLines(vertices, 3, depthTestEnabled);
 	}
 
-	void ImmediateRenderer::AddFrustum(const Frustum& f, glm::vec4 colour)
+	void ImmediateRenderer::AddFrustum(const Frustum& f, glm::vec4 colour, bool depthTestEnabled)
 	{
 		const auto& p = f.GetPoints();
 		glm::vec4 v[] = {
@@ -89,10 +103,10 @@ namespace R3
 		{
 			vertices[i] = { v[i], colour };
 		}
-		AddLines(vertices, c_vertexCount / 2);
+		AddLines(vertices, c_vertexCount / 2, depthTestEnabled);
 	}
 
-	void ImmediateRenderer::DrawAABB(glm::vec3 minbound, glm::vec3 maxbound, glm::mat4 transform, glm::vec4 colour)
+	void ImmediateRenderer::DrawAABB(glm::vec3 minbound, glm::vec3 maxbound, glm::mat4 transform, glm::vec4 colour, bool depthTestEnabled)
 	{
 		ImmediateRenderer::PosColourVertex lines[] = {
 			{ {minbound.x,minbound.y,minbound.z,1}, colour},
@@ -127,10 +141,10 @@ namespace R3
 		{
 			lines[v].m_position = transform * lines[v].m_position;
 		}
-		AddLines(lines, vertexCount / 2);
+		AddLines(lines, vertexCount / 2, depthTestEnabled);
 	}
 
-	void ImmediateRenderer::AddCubeWireframe(glm::mat4 transform, glm::vec4 colour)
+	void ImmediateRenderer::AddCubeWireframe(glm::mat4 transform, glm::vec4 colour, bool depthTestEnabled)
 	{
 		ImmediateRenderer::PosColourVertex testLines[] = {
 			{ {-1,-1,-1,1}, colour},
@@ -174,10 +188,10 @@ namespace R3
 		{
 			testLines[v].m_position = transform * testLines[v].m_position;
 		}
-		AddLines(testLines, vertexCount / 2);
+		AddLines(testLines, vertexCount / 2, depthTestEnabled);
 	}
 
-	void ImmediateRenderer::AddSphere(glm::vec3 center, float radius, glm::vec4 colour, glm::mat4 transform)
+	void ImmediateRenderer::AddSphere(glm::vec3 center, float radius, glm::vec4 colour, glm::mat4 transform, bool depthTestEnabled)
 	{
 		const int c_numVerticesPerSlice = 16;
 		const int c_numSlices = 16;
@@ -207,7 +221,7 @@ namespace R3
 				glm::vec4 p0(thisX, y, thisZ, 1.0f), p1(nextX, y, nextZ, 1.0f);
 				p0 = transform * p0;
 				p1 = transform * p1;
-				AddLine(glm::vec3(p0), glm::vec3(p1), colour);
+				AddLine(glm::vec3(p0), glm::vec3(p1), colour, depthTestEnabled);
 
 				// vertical line to next slice up
 				p1.x = center.x + cosThisTheta * nextSliceRadius;
@@ -215,12 +229,12 @@ namespace R3
 				p1.z = center.z + sinThisTheta * nextSliceRadius;
 				p1.w = 1.0f;
 				p1 = transform * p1;
-				AddLine(glm::vec3(p0), glm::vec3(p1), colour);
+				AddLine(glm::vec3(p0), glm::vec3(p1), colour, depthTestEnabled);
 			}
 		}
 	}
 
-	void ImmediateRenderer::AddTriangles(const PosColourVertex* vertices, uint32_t count)
+	void ImmediateRenderer::AddTriangles(const PosColourVertex* vertices, uint32_t count, bool depthTestEnabled)
 	{
 		R3_PROF_EVENT();
 		DrawData newTri;
@@ -234,11 +248,18 @@ namespace R3
 				m_thisFramePosColVertices.emplace_back(vertices[v + 1]);
 				m_thisFramePosColVertices.emplace_back(vertices[v + 2]);
 			}
-			m_thisFrameTriangles.emplace_back(newTri);
+			if (depthTestEnabled)
+			{
+				m_thisFrameTrianglesWithDepth.emplace_back(newTri);
+			}
+			else
+			{
+				m_thisFrameTriangles.emplace_back(newTri);
+			}
 		}
 	}
 
-	void ImmediateRenderer::AddTriangle(const PosColourVertex vertices[3])
+	void ImmediateRenderer::AddTriangle(const PosColourVertex vertices[3], bool depthTestEnabled)
 	{
 		DrawData newTri;
 		newTri.m_startVertexOffset = static_cast<uint32_t>(m_thisFramePosColVertices.size());
@@ -248,18 +269,25 @@ namespace R3
 			m_thisFramePosColVertices.emplace_back(vertices[0]);
 			m_thisFramePosColVertices.emplace_back(vertices[1]);
 			m_thisFramePosColVertices.emplace_back(vertices[2]);
-			m_thisFrameTriangles.emplace_back(newTri);
+			if (depthTestEnabled)
+			{
+				m_thisFrameTrianglesWithDepth.emplace_back(newTri);
+			}
+			else
+			{
+				m_thisFrameTriangles.emplace_back(newTri);
+			}
 		}
 	}
 
-	void ImmediateRenderer::AddLine(glm::vec3 p0, glm::vec3 p1, glm::vec4 colour)
+	void ImmediateRenderer::AddLine(glm::vec3 p0, glm::vec3 p1, glm::vec4 colour, bool depthTestEnabled)
 	{
 		PosColourVertex verts[2];
 		verts[0].m_colour = colour;
 		verts[0].m_position = glm::vec4(p0,1);
 		verts[1].m_colour = colour;
 		verts[1].m_position = glm::vec4(p1,1);
-		AddLine(verts);
+		AddLine(verts, depthTestEnabled);
 	}
 
 	void ImmediateRenderer::WriteVertexData(Device& d, BufferPool& stagingBuffers, VkCommandBuffer& cmdBuffer)
@@ -325,15 +353,35 @@ namespace R3
 		scissor.offset = { 0, 0 };
 		scissor.extent = viewportSize;	// draw the full image
 
-		// draw the triangles
-		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_depthReadDisabledTriPipeline);
-		vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
-		vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
-
 		// pass the vertex to screen transform via push constants along with the buffer address
 		PushConstants pc;
 		pc.m_vertexToScreen = vertexToScreen;
 		pc.m_vertexBufferAddress = m_allvertsBufferAddress;
+
+		// draw the triangles with depth testing
+		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_depthEnabledTriPipeline);
+		vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
+		vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
+		vkCmdPushConstants(cmdBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(pc), &pc);
+		for (auto& tris : m_thisFrameTrianglesWithDepth)
+		{
+			vkCmdDraw(cmdBuffer, tris.m_vertexCount, 1, tris.m_startVertexOffset + pfd.m_vertexOffset, 0);
+		}
+
+		// Draw the lines with depth testing
+		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_depthEnabledLinesPipeline);
+		vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
+		vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
+		vkCmdPushConstants(cmdBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(pc), &pc);
+		for (auto& lines : m_thisFrameLinesWithDepth)
+		{
+			vkCmdDraw(cmdBuffer, lines.m_vertexCount, 1, lines.m_startVertexOffset + pfd.m_vertexOffset, 0);
+		}
+
+		// draw the triangles
+		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_depthReadDisabledTriPipeline);
+		vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
+		vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
 		vkCmdPushConstants(cmdBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(pc), &pc);
 		for (auto& tris : m_thisFrameTriangles)
 		{
@@ -354,12 +402,14 @@ namespace R3
 	void ImmediateRenderer::Flush()
 	{
 		m_thisFrameTriangles.clear();
+		m_thisFrameTrianglesWithDepth.clear();
 		m_thisFrameLines.clear();
+		m_thisFrameLinesWithDepth.clear();
 		m_thisFramePosColVertices.clear();
 		m_currentFrameIndex = (m_currentFrameIndex + 1) % c_framesInFlight;
 	}
 
-	bool ImmediateRenderer::CreateNoDepthReadPipelines(Device& d, VkFormat colourBufferFormat, VkFormat depthBufferFormat)
+	bool ImmediateRenderer::CreatePipelines(Device& d, VkFormat colourBufferFormat, VkFormat depthBufferFormat)
 	{
 		// Load the shaders
 		std::string basePath = "shaders_spirv\\common\\";
@@ -397,36 +447,60 @@ namespace R3
 		// Multisampling state
 		pb.m_multisamplingState = VulkanHelpers::CreatePipelineMultiSampleState_SingleSample();
 
-		// Disable depth read/write
-		VkPipelineDepthStencilStateCreateInfo depthStencilState = { 0 };
-		depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-		depthStencilState.depthTestEnable = VK_FALSE;
-		depthStencilState.depthWriteEnable = VK_FALSE;
-		depthStencilState.depthBoundsTestEnable = VK_FALSE;
-		depthStencilState.stencilTestEnable = VK_FALSE;
-		pb.m_depthStencilState = depthStencilState;
+		// depth read/write
+		VkPipelineDepthStencilStateCreateInfo depthStencilDisabled = { 0 };
+		depthStencilDisabled.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		depthStencilDisabled.depthTestEnable = VK_FALSE;
+		depthStencilDisabled.depthWriteEnable = VK_FALSE;
+		depthStencilDisabled.depthBoundsTestEnable = VK_FALSE;
+		depthStencilDisabled.stencilTestEnable = VK_FALSE;
 
-		// No colour attachment blending
+		VkPipelineDepthStencilStateCreateInfo depthTestEnabled = { 0 };
+		depthTestEnabled.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		depthTestEnabled.depthTestEnable = VK_TRUE;
+		depthTestEnabled.depthWriteEnable = VK_FALSE;
+		depthTestEnabled.depthCompareOp = VK_COMPARE_OP_LESS;
+		depthTestEnabled.depthBoundsTestEnable = VK_FALSE;
+		depthTestEnabled.stencilTestEnable = VK_FALSE;
+
+		// alpha blending
 		std::vector<VkPipelineColorBlendAttachmentState> allAttachments = {
 			VulkanHelpers::CreatePipelineColourBlendAttachment_AlphaBlending()
 		};
 		pb.m_colourBlendState = VulkanHelpers::CreatePipelineColourBlendState(allAttachments);	// Pipeline also has some global blending state (constants, logical ops enable)
 
 		// build the pipelines
+		pb.m_depthStencilState = depthStencilDisabled;
 		m_depthReadDisabledTriPipeline = pb.Build(d.GetVkDevice(), m_pipelineLayout, 1, &colourBufferFormat, depthBufferFormat);
 		if (m_depthReadDisabledTriPipeline == VK_NULL_HANDLE)
 		{
 			LogError("Failed to create depth-read-disabled triangle pipeline!");
 			return false;
 		}
+		pb.m_depthStencilState = depthTestEnabled;
+		m_depthEnabledTriPipeline = pb.Build(d.GetVkDevice(), m_pipelineLayout, 1, &colourBufferFormat, depthBufferFormat);
+		if (m_depthEnabledTriPipeline == VK_NULL_HANDLE)
+		{
+			LogError("Failed to create depth-tested triangle pipeline!");
+			return false;
+		}
 
-		// build another similar pipeline but with line primitives + no backface culling
+		// build more pipelines but with line primitives + no backface culling
 		pb.m_inputAssemblyState = VulkanHelpers::CreatePipelineInputAssemblyState(VK_PRIMITIVE_TOPOLOGY_LINE_LIST);
 		pb.m_rasterState = VulkanHelpers::CreatePipelineRasterState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE);
+		pb.m_depthStencilState = depthStencilDisabled;
 		m_depthReadDisabledLinesPipeline = pb.Build(d.GetVkDevice(), m_pipelineLayout, 1, &colourBufferFormat, depthBufferFormat);
 		if (m_depthReadDisabledLinesPipeline == VK_NULL_HANDLE)
 		{
 			LogError("Failed to create depth-read-disabled lines pipeline!");
+			return false;
+		}
+
+		pb.m_depthStencilState = depthTestEnabled;
+		m_depthEnabledLinesPipeline = pb.Build(d.GetVkDevice(), m_pipelineLayout, 1, &colourBufferFormat, depthBufferFormat);
+		if (m_depthEnabledLinesPipeline == VK_NULL_HANDLE)
+		{
+			LogError("Failed to create depth-tested lines pipeline!");
 			return false;
 		}
 
@@ -470,7 +544,7 @@ namespace R3
 		}
 
 		// create pipeline compatible with back buffer + depth buffer
-		if (!CreateNoDepthReadPipelines(d, colourBufferFormat, depthBufferFormat))
+		if (!CreatePipelines(d, colourBufferFormat, depthBufferFormat))
 		{
 			LogError("Failed to create pipeline");
 			return false;
@@ -484,6 +558,8 @@ namespace R3
 		R3_PROF_EVENT();
 
 		// destroy the pipeline objects
+		vkDestroyPipeline(d.GetVkDevice(), m_depthEnabledTriPipeline, nullptr);
+		vkDestroyPipeline(d.GetVkDevice(), m_depthEnabledLinesPipeline, nullptr);
 		vkDestroyPipeline(d.GetVkDevice(), m_depthReadDisabledTriPipeline, nullptr);
 		vkDestroyPipeline(d.GetVkDevice(), m_depthReadDisabledLinesPipeline, nullptr);
 		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayout, nullptr);

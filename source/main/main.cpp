@@ -28,7 +28,9 @@ int main(int argc, char** args)
 	};
 	auto setupFrameGraph = [runEditor](R3::FrameGraph& fg) {
 		auto variableUpdateRoot = fg.m_root.FindFirst("Sequence - VariableUpdate");
-		variableUpdateRoot->AddFn("DungeonsOfArrrgh::Main");		// make sure it runs after scripts
+		variableUpdateRoot->AddFn("DungeonsOfArrrgh::VariableUpdate");
+		auto fixedUpdateRoot = fg.m_root.FindFirst("FixedUpdateSequence - FixedUpdate");
+		fixedUpdateRoot->AddFn("DungeonsOfArrrgh::FixedUpdate");
 		if (runEditor)
 		{
 			auto guiUpdateRoot = fg.m_root.FindFirst("Sequence - ImGuiUpdate");

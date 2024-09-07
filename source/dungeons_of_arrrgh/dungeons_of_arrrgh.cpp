@@ -1,5 +1,6 @@
 #include "dungeons_of_arrrgh.h"
 #include "world_grid_component.h"
+#include "vision_component.h"
 #include "engine/systems/immediate_render_system.h"
 #include "engine/systems/lua_system.h"
 #include "engine/components/transform.h"
@@ -10,6 +11,11 @@
 #include "core/log.h"
 #include <sol/sol.hpp>
 
+// This needs to go
+// Generation should be all in lua
+// Tiles should just have flags (visible, passable, etc)
+// Visuals should be completely determined by lua
+// Gameplay stuff should be via entities/components
 enum WorldTileType : uint8_t
 {
 	Empty,
@@ -32,8 +38,11 @@ DungeonsOfArrrgh::~DungeonsOfArrrgh()
 void DungeonsOfArrrgh::RegisterTickFns()
 {
 	R3_PROF_EVENT();
-	RegisterTick("DungeonsOfArrrgh::Main", [this]() {
+	RegisterTick("DungeonsOfArrrgh::VariableUpdate", [this]() {
 		return VariableUpdate();
+	});
+	RegisterTick("DungeonsOfArrrgh::FixedUpdate", [this]() {
+		return FixedUpdate();
 	});
 }
 
@@ -42,10 +51,11 @@ bool DungeonsOfArrrgh::Init()
 	R3_PROF_EVENT();
 	auto entities = GetSystem<R3::Entities::EntitySystem>();
 	entities->RegisterComponentType<DungeonsWorldGridComponent>(16);	// probably only need 1 per world, but eh
+	entities->RegisterComponentType<DungeonsVisionComponent>(8092);
 
 	auto scriptNamespace = "Arrrgh";
 	auto scripts = GetSystem<R3::LuaSystem>();
-	scripts->RegisterFunction("DebugDrawTiles", [this](DungeonsWorldGridComponent* grid, std::vector<glm::uvec2> tiles) {
+	scripts->RegisterFunction("DebugDrawTiles", [this](DungeonsWorldGridComponent* grid, std::unordered_set<glm::uvec2>& tiles) {
 		DebugDrawTiles(*grid, tiles);
 	}, scriptNamespace);
 	scripts->RegisterFunction("MoveEntities", [this](const std::vector<R3::Entities::EntityHandle>& targets, glm::vec3 offset) {
@@ -66,7 +76,8 @@ void DebugDrawTile(R3::ImmediateRenderSystem& imRender,
 	glm::vec3 offset, glm::vec2 scale, 
 	std::vector<R3::ImmediateRenderer::PosColourVertex>& verts)
 {
-	glm::vec3 tileOffset = { (float)x * scale.x, 0.0f, (float)z * scale.y };
+	R3_PROF_EVENT();
+	glm::vec3 tileOffset = { (float)x * scale.x, 0.1f, (float)z * scale.y };
 	glm::vec3 basePos = offset + tileOffset;
 	auto contents = grid.GetContents(x, z);
 	if (contents && contents->m_tileData.m_tileType != WorldTileType::Empty)
@@ -94,7 +105,7 @@ void DebugDrawTile(R3::ImmediateRenderSystem& imRender,
 		{
 			glm::vec3 cubeScale = { scale.x * 0.5f, 2.0f, scale.y * 0.5f };
 			glm::mat4 transform = glm::scale(glm::translate(basePos + glm::vec3(cubeScale.x, 1.0f, cubeScale.z)), cubeScale);
-			imRender.m_imRender->AddCubeWireframe(transform, colour);
+			imRender.m_imRender->AddCubeWireframe(transform, colour, true);
 		}
 	}
 }
@@ -109,30 +120,30 @@ void DungeonsOfArrrgh::DebugDrawWorldGrid(const DungeonsWorldGridComponent& grid
 	outVertices.reserve(dims.x * dims.y);
 	const glm::vec4 edgeColour(1, 1, 0, 1);
 	R3::ImmediateRenderer::PosColourVertex outerEdge[] = {
-		{{m_drawGridOffset.x, m_drawGridOffset.y, m_drawGridOffset.z, 1}, edgeColour},
-		{{m_drawGridOffset.x + m_drawGridScale.x * dims.x, m_drawGridOffset.y, m_drawGridOffset.z, 1}, edgeColour},
-		{{m_drawGridOffset.x, m_drawGridOffset.y, m_drawGridOffset.z + m_drawGridScale.y * dims.y, 1}, edgeColour},
-		{{m_drawGridOffset.x + m_drawGridScale.x * dims.x, m_drawGridOffset.y, m_drawGridOffset.z + m_drawGridScale.y * dims.y, 1}, edgeColour},
-		{{m_drawGridOffset.x, m_drawGridOffset.y, m_drawGridOffset.z, 1}, edgeColour},
-		{{m_drawGridOffset.x, m_drawGridOffset.y, m_drawGridOffset.z + m_drawGridScale.y * dims.y, 1}, edgeColour},
-		{{m_drawGridOffset.x + m_drawGridScale.x * dims.x, m_drawGridOffset.y, m_drawGridOffset.z, 1}, edgeColour},
-		{{m_drawGridOffset.x + m_drawGridScale.x * dims.x, m_drawGridOffset.y, m_drawGridOffset.z + m_drawGridScale.y * dims.y, 1}, edgeColour},
+		{{m_wsGridOffset.x, m_wsGridOffset.y, m_wsGridOffset.z, 1}, edgeColour},
+		{{m_wsGridOffset.x + m_wsGridScale.x * dims.x, m_wsGridOffset.y, m_wsGridOffset.z, 1}, edgeColour},
+		{{m_wsGridOffset.x, m_wsGridOffset.y, m_wsGridOffset.z + m_wsGridScale.y * dims.y, 1}, edgeColour},
+		{{m_wsGridOffset.x + m_wsGridScale.x * dims.x, m_wsGridOffset.y, m_wsGridOffset.z + m_wsGridScale.y * dims.y, 1}, edgeColour},
+		{{m_wsGridOffset.x, m_wsGridOffset.y, m_wsGridOffset.z, 1}, edgeColour},
+		{{m_wsGridOffset.x, m_wsGridOffset.y, m_wsGridOffset.z + m_wsGridScale.y * dims.y, 1}, edgeColour},
+		{{m_wsGridOffset.x + m_wsGridScale.x * dims.x, m_wsGridOffset.y, m_wsGridOffset.z, 1}, edgeColour},
+		{{m_wsGridOffset.x + m_wsGridScale.x * dims.x, m_wsGridOffset.y, m_wsGridOffset.z + m_wsGridScale.y * dims.y, 1}, edgeColour},
 	};
 	imRender->m_imRender->AddLines(outerEdge, 4);
 	for (uint32_t z = 0; z < dims.y; ++z)
 	{
 		for (uint32_t x = 0; x < dims.x; ++x)
 		{
-			DebugDrawTile(*imRender, grid, x, z, m_drawGridOffset, m_drawGridScale, outVertices);
+			DebugDrawTile(*imRender, grid, x, z, m_wsGridOffset, m_wsGridScale, outVertices);
 		}
 	}
 	if (outVertices.size() > 0)
 	{
-		imRender->m_imRender->AddTriangles(outVertices.data(), (uint32_t)outVertices.size() / 3);
+		imRender->m_imRender->AddTriangles(outVertices.data(), (uint32_t)outVertices.size() / 3, true);
 	}
 }
 
-void DungeonsOfArrrgh::DebugDrawTiles(const DungeonsWorldGridComponent& grid, std::vector<glm::uvec2> tiles)
+void DungeonsOfArrrgh::DebugDrawTiles(const DungeonsWorldGridComponent& grid, std::unordered_set<glm::uvec2>& tiles)
 {
 	R3_PROF_EVENT();
 	auto imRender = GetSystem<R3::ImmediateRenderSystem>();
@@ -141,12 +152,32 @@ void DungeonsOfArrrgh::DebugDrawTiles(const DungeonsWorldGridComponent& grid, st
 	outVertices.reserve(tiles.size() * 6);
 	for (const auto& tile : tiles)
 	{
-		DebugDrawTile(*imRender, grid, tile.x, tile.y, m_drawGridOffset, m_drawGridScale, outVertices);
+		DebugDrawTile(*imRender, grid, tile.x, tile.y, m_wsGridOffset, m_wsGridScale, outVertices);
 	}
 	if (outVertices.size() > 0)
 	{
-		imRender->m_imRender->AddTriangles(outVertices.data(), (uint32_t)outVertices.size() / 3);
+		imRender->m_imRender->AddTriangles(outVertices.data(), (uint32_t)outVertices.size() / 3, true);
 	}
+}
+
+void DungeonsOfArrrgh::UpdateVision(DungeonsWorldGridComponent& grid, R3::Entities::World& w)
+{
+	R3_PROF_EVENT();
+	auto forEachVision = [&](const R3::Entities::EntityHandle& e, DungeonsVisionComponent& v, R3::TransformComponent& t) {
+		if (v.m_needsUpdate)
+		{
+			v.m_visibleTiles.clear();
+			glm::vec3 worldSpacePos(t.GetWorldspaceMatrix()[3]);	// don't need interpolation, we are in fixed update
+			auto tileMaybe = GetTileFromWorldspace(grid, worldSpacePos);	
+			if (tileMaybe.has_value() && v.m_visionMaxDistance > 0)
+			{
+				const uint32_t visionDistance = (uint32_t)ceil(v.m_visionMaxDistance);
+				v.m_visibleTiles = grid.FindVisibleTiles(glm::ivec2(tileMaybe.value()), visionDistance);
+			}
+		}
+		return true;
+	};
+	R3::Entities::Queries::ForEachAsync<DungeonsVisionComponent, R3::TransformComponent>(&w, 1, forEachVision);
 }
 
 void DungeonsOfArrrgh::MoveEntities(const std::vector<R3::Entities::EntityHandle>& targets, glm::vec3 offset)
@@ -247,8 +278,8 @@ void DungeonsOfArrrgh::GenerateWorldVisuals(const R3::Entities::EntityHandle& e,
 			{
 				if (tile->m_tileData.m_tileType != WorldTileType::Empty)
 				{
-					glm::vec3 tileOffset = { (float)x * m_drawGridScale.x, 0.0f, (float)z * m_drawGridScale.y };
-					glm::vec3 basePos = m_drawGridOffset + tileOffset;
+					glm::vec3 tileOffset = { (float)x * m_wsGridScale.x, 0.0f, (float)z * m_wsGridScale.y };
+					glm::vec3 basePos = m_wsGridOffset + tileOffset;
 					auto childName = std::format("Tile {}x{}", x, z);
 					auto newChild = activeWorld->AddEntity();
 					activeWorld->SetParent(newChild, e);
@@ -288,6 +319,16 @@ void DungeonsOfArrrgh::OnWorldGridDirty(const R3::Entities::EntityHandle& e, cla
 	GenerateWorldVisuals(e, grid);
 }
 
+void DungeonsOfArrrgh::DebugDrawVisibleTiles(const class DungeonsWorldGridComponent& grid, R3::Entities::World& w)
+{
+	R3_PROF_EVENT();
+	auto forEachVision = [&](const R3::Entities::EntityHandle& e, DungeonsVisionComponent& v, R3::TransformComponent& t) {
+		DebugDrawTiles(grid, v.m_visibleTiles);
+		return true;
+	};
+	R3::Entities::Queries::ForEach<DungeonsVisionComponent, R3::TransformComponent>(&w, forEachVision);
+}
+
 bool DungeonsOfArrrgh::VariableUpdate()
 {
 	R3_PROF_EVENT();
@@ -295,7 +336,7 @@ bool DungeonsOfArrrgh::VariableUpdate()
 	auto activeWorld = entities->GetActiveWorld();
 	if (activeWorld)
 	{
-		auto forEachGrid = [this](const R3::Entities::EntityHandle& e, DungeonsWorldGridComponent& cmp) {
+		auto forEachGrid = [&](const R3::Entities::EntityHandle& e, DungeonsWorldGridComponent& cmp) {
 			if (cmp.m_isDirty)
 			{
 				OnWorldGridDirty(e, cmp);
@@ -305,9 +346,40 @@ bool DungeonsOfArrrgh::VariableUpdate()
 			{
 				DebugDrawWorldGrid(cmp);
 			}
+			if (m_debugDrawVisibleTiles)
+			{
+				DebugDrawVisibleTiles(cmp, *activeWorld);
+			}
 			return true;
 		};
 		R3::Entities::Queries::ForEach<DungeonsWorldGridComponent>(activeWorld, forEachGrid);
 	}
 	return true;
+}
+
+bool DungeonsOfArrrgh::FixedUpdate()
+{
+	R3_PROF_EVENT();
+	auto entities = GetSystem<R3::Entities::EntitySystem>();
+	auto activeWorld = entities->GetActiveWorld();
+	if (activeWorld)
+	{
+		auto forEachGrid = [&](const R3::Entities::EntityHandle& e, DungeonsWorldGridComponent& cmp) {
+			UpdateVision(cmp, *activeWorld);	// updates vision for all entities in this grid
+			return true;
+		};
+		R3::Entities::Queries::ForEach<DungeonsWorldGridComponent>(activeWorld, forEachGrid);
+	}
+	return true;
+}
+
+std::optional<glm::uvec2> DungeonsOfArrrgh::GetTileFromWorldspace(DungeonsWorldGridComponent& grid, glm::vec3 worldspace)
+{
+	// scale/offset should be per grid really
+	glm::vec3 tileSpace = (worldspace - m_wsGridOffset) / glm::vec3(m_wsGridScale.x, 1.0f, m_wsGridScale.y);
+	if (tileSpace.x < 0.0f || tileSpace.x >= grid.GetDimensions().x || tileSpace.z < 0.0f || tileSpace.z >= grid.GetDimensions().y)
+	{
+		return {};
+	}
+	return glm::uvec2(tileSpace.x, tileSpace.z);
 }
