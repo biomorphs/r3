@@ -1,3 +1,5 @@
+require 'arrrgh/fastqueue'
+
 local Arrrgh_Globals = {}
 Arrrgh_Globals.FillWithExteriorFloor = false
 Arrrgh_Globals.DoRandomWander = true
@@ -280,6 +282,10 @@ function Dungeons_GenerateWorld(e)
 			Arrrgh_Globals.genCoroutine = nil
 			gridcmp.m_isDirty = true		-- update the graphics once at the end
 			scriptcmp.m_isActive = false	-- we are done, stop running
+			local gameUpdate = world:GetEntityByName('GameUpdate')
+			local updateScript = world.GetComponent_LuaScript(gameUpdate)
+			updateScript.m_isActive = true
+			Arrrgh_Globals.GameState = nil
 			print('Generator finished')
 		end
 	else
@@ -319,5 +325,56 @@ function Dungeons_PathfindToMouse(e)
 	if(mouseTile ~= nil and spawnTile ~= nil) then 
 		local foundPath = gridcmp:CalculatePath(mouseTile, spawnTile)
 		Arrrgh.DebugDrawTiles(gridcmp, foundPath)
+	end
+end
+
+function Dungeons_SpawnPlayer()
+	print('spawning player')
+	local world = R3.ActiveWorld()
+	local spawnEntity = world:GetEntityByName('PlayerSpawnPoint')
+	local spawnTransform = world.GetComponent_Transform(spawnEntity)
+	local playerEntity = world:ImportScene('arrrgh/actors/player_actor.scn')
+	local actualPos = spawnTransform:GetPosition()
+	actualPos.y = 0
+	Arrrgh.MoveEntities(playerEntity, actualPos)
+	world:RemoveEntity(spawnEntity,false)
+end
+
+function Dungeons_OnTurnBegin()
+	print('turn begin')
+end
+
+function Dungeons_OnChooseActions()
+	local world = R3.ActiveWorld()
+	local gridEntity = world:GetEntityByName('World Grid')
+	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
+	local playerEntity = world:GetEntityByName('PlayerActor')
+	local playerTransform = world.GetComponent_Transform(playerEntity)
+	if(gridcmp ~= nil) then 
+		local playerTile = Arrrgh.GetTileFromWorldspace(gridcmp, playerTransform:GetPosition())
+		local mouseTile = Arrrgh.GetTileUnderMouseCursor(gridcmp)
+		if(playerTile ~= nil and mouseTile ~= nil) then
+			local foundPath = gridcmp:CalculatePath(mouseTile, playerTile)
+			-- if(#foundPath < 20)  then
+				Arrrgh.DebugDrawTiles(gridcmp, foundPath)
+			-- end
+		end
+	end
+end
+
+function Dungeons_GameTick(e)
+	if(Arrrgh_Globals.GameState == nil) then 
+		Arrrgh_Globals.GameState = 'start'
+	end
+	if(Arrrgh_Globals.GameState == 'start') then 
+		Dungeons_SpawnPlayer()
+		Arrrgh_Globals.GameState = 'startturn'
+	end
+	if(Arrrgh_Globals.GameState == 'startturn') then 
+		Dungeons_OnTurnBegin()
+		Arrrgh_Globals.GameState = 'chooseactions'
+	end
+	if(Arrrgh_Globals.GameState == 'chooseactions') then 
+		Dungeons_OnChooseActions()
 	end
 end

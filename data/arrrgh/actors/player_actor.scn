@@ -1,0 +1,76 @@
+{
+ "AllEntities": [
+  {
+   "ID": 2,
+   "Name": "PlayerActor",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 2
+    },
+    "Model": {
+     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\rogue_texture.png"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.5,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Scale": {
+     "X": 2.0,
+     "Y": 2.0,
+     "Z": 2.0
+    }
+   }
+  }
+ ],
+ "WorldName": "New World"
+}

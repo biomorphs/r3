@@ -211,7 +211,7 @@ std::vector<glm::uvec2> DungeonsWorldGridComponent::CalculatePath(glm::uvec2 sta
 	};
 	auto ReconstructPath = [&](glm::uvec2 current){			// walk backwards following the cheapest connection
 		std::vector<glm::uvec2> finalPath;
-		finalPath.push_back(start);
+		finalPath.push_back(end);
 		while (1)
 		{
 			auto fromNode = cameFrom.find(current);
