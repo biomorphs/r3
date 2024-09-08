@@ -4,6 +4,8 @@
 
 namespace R3
 {
+	bool RayIntersectsPlane(glm::vec3 rayStart, glm::vec3 rayEnd, glm::vec3 planeOrigin, glm::vec3 planeNormal, float& t);
+
 	// adapted from https://tavianator.com/2015/ray_box_nan.html
 	bool RayIntersectsAABB(glm::vec3 rayStart, glm::vec3 rayEnd, glm::vec3 bmin, glm::vec3 bmax, float& t);
 

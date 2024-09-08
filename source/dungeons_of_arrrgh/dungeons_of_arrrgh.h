@@ -22,6 +22,7 @@ public:
 	virtual bool Init();
 	virtual void Shutdown();
 	std::optional<glm::uvec2> GetTileFromWorldspace(class DungeonsWorldGridComponent& grid, glm::vec3 worldspace);
+	std::optional<glm::uvec2> GetTileUnderMouseCursor(class DungeonsWorldGridComponent& grid);
 private:	
 	void UpdateVision(class DungeonsWorldGridComponent& grid, R3::Entities::World& w);
 	void DebugDrawVisibleTiles(const class DungeonsWorldGridComponent& grid, R3::Entities::World& w);

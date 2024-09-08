@@ -29,6 +29,21 @@ namespace R3
 		return true;
 	}
 
+	bool RayIntersectsPlane(glm::vec3 rayStart, glm::vec3 rayEnd, glm::vec3 planeOrigin, glm::vec3 planeNormal, float &t)
+	{
+		float rayLength = glm::length(rayEnd - rayStart);
+		if (rayLength == 0)
+		{
+			return false;
+		}
+		glm::vec3 rayDir = (rayEnd - rayStart) / rayLength;
+		if (glm::intersectRayPlane(rayStart, rayDir, planeOrigin, planeNormal, t))
+		{
+			return t <= rayLength;
+		}
+		return false;
+	}
+
 	bool RayIntersectsAABB(glm::vec3 rayStart, glm::vec3 rayEnd, glm::vec3 bmin, glm::vec3 bmax, float& t)
 	{
 		const auto dir = glm::normalize(rayEnd - rayStart);

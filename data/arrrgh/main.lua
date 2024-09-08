@@ -299,6 +299,25 @@ function Dungeons_PathfindTest(e)
 	end
 	local myTile = Arrrgh.GetTileFromWorldspace(gridcmp, myTransform:GetPosition())
 	local spawnTile = Arrrgh.GetTileFromWorldspace(gridcmp, spawnTransform:GetPosition())
-	local foundPath = gridcmp:CalculatePath(myTile, spawnTile)
-	Arrrgh.DebugDrawTiles(gridcmp, foundPath)
+	if(myTile ~= nil and spawnTile ~= nil) then 
+		local foundPath = gridcmp:CalculatePath(myTile, spawnTile)
+		Arrrgh.DebugDrawTiles(gridcmp, foundPath)
+	end
+end
+
+function Dungeons_PathfindToMouse(e)
+	local world = R3.ActiveWorld()
+	local gridEntity = world:GetEntityByName('World Grid')
+	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
+	local spawnEntity = world:GetEntityByName('PlayerSpawnPoint')
+	local spawnTransform = world.GetComponent_Transform(spawnEntity)
+	local mouseTile = Arrrgh.GetTileUnderMouseCursor(gridcmp)
+	if(spawnTransform == nil or gridcmp == nil or mouseTile == nil) then 
+		return
+	end
+	local spawnTile = Arrrgh.GetTileFromWorldspace(gridcmp, spawnTransform:GetPosition())
+	if(mouseTile ~= nil and spawnTile ~= nil) then 
+		local foundPath = gridcmp:CalculatePath(mouseTile, spawnTile)
+		Arrrgh.DebugDrawTiles(gridcmp, foundPath)
+	end
 end

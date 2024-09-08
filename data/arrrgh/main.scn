@@ -207,7 +207,7 @@
      "IntVec2s": [],
      "Ints": []
     },
-    "IsActive": true,
+    "IsActive": false,
     "OnFixedUpdate": {
      "EntryPoint": "",
      "SourcePath": ""
@@ -330,7 +330,7 @@
      "IntVec2s": [],
      "Ints": []
     },
-    "IsActive": true,
+    "IsActive": false,
     "OnFixedUpdate": {
      "EntryPoint": "",
      "SourcePath": ""
@@ -453,7 +453,7 @@
      "IntVec2s": [],
      "Ints": []
     },
-    "IsActive": true,
+    "IsActive": false,
     "OnFixedUpdate": {
      "EntryPoint": "",
      "SourcePath": ""
@@ -576,7 +576,7 @@
      "IntVec2s": [],
      "Ints": []
     },
-    "IsActive": true,
+    "IsActive": false,
     "OnFixedUpdate": {
      "EntryPoint": "",
      "SourcePath": ""
@@ -692,6 +692,129 @@
    }
   },
   {
+   "ID": 12,
+   "LuaScript": {
+    "InputParams": {
+     "Floats": [],
+     "IntVec2s": [],
+     "Ints": []
+    },
+    "IsActive": false,
+    "OnFixedUpdate": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    },
+    "OnVariableUpdate": {
+     "EntryPoint": "Dungeons_PathfindTest",
+     "SourcePath": "arrrgh\\main.lua"
+    },
+    "PopulateInputs": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    }
+   },
+   "Name": "PathfindTest",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 12
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 0.9677419066429138,
+       "Z": 0.0
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.20000000298023224,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.30000001192092896,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 107.923095703125,
+     "Y": 4.0,
+     "Z": 324.1396484375
+    },
+    "Scale": {
+     "X": 4.0,
+     "Y": 4.0,
+     "Z": 4.0
+    }
+   }
+  },
+  {
+   "ID": 13,
+   "Name": "Point Light",
+   "Parent": 12,
+   "PointLight": {
+    "Brightness": 32.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 64.0
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 107.92449951171875,
+     "Y": 7.6086931228637695,
+     "Z": 324.11358642578125
+    },
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
    "ID": 14,
    "LuaScript": {
     "InputParams": {
@@ -699,7 +822,7 @@
      "IntVec2s": [],
      "Ints": []
     },
-    "IsActive": true,
+    "IsActive": false,
     "OnFixedUpdate": {
      "EntryPoint": "",
      "SourcePath": ""
@@ -771,9 +894,9 @@
      "Z": 0.0
     },
     "Position": {
-     "X": 107.923095703125,
+     "X": 167.8271942138672,
      "Y": 4.0,
-     "Z": 324.1396484375
+     "Z": 360.2051696777344
     },
     "Scale": {
      "X": 4.0,
@@ -803,9 +926,9 @@
      "Z": 0.0
     },
     "Position": {
-     "X": 107.92449951171875,
+     "X": 167.82859802246094,
      "Y": 7.6086931228637695,
-     "Z": 324.11358642578125
+     "Z": 360.1791076660156
     },
     "Scale": {
      "X": 1.0,
@@ -822,7 +945,7 @@
      "IntVec2s": [],
      "Ints": []
     },
-    "IsActive": true,
+    "IsActive": false,
     "OnFixedUpdate": {
      "EntryPoint": "",
      "SourcePath": ""
@@ -894,9 +1017,9 @@
      "Z": 0.0
     },
     "Position": {
-     "X": 167.8271942138672,
+     "X": 83.3855209350586,
      "Y": 4.0,
-     "Z": 360.2051696777344
+     "Z": 405.9207458496094
     },
     "Scale": {
      "X": 4.0,
@@ -926,9 +1049,9 @@
      "Z": 0.0
     },
     "Position": {
-     "X": 167.82859802246094,
+     "X": 83.38692474365234,
      "Y": 7.6086931228637695,
-     "Z": 360.1791076660156
+     "Z": 405.8946838378906
     },
     "Scale": {
      "X": 1.0,
@@ -945,7 +1068,7 @@
      "IntVec2s": [],
      "Ints": []
     },
-    "IsActive": true,
+    "IsActive": false,
     "OnFixedUpdate": {
      "EntryPoint": "",
      "SourcePath": ""
@@ -1017,9 +1140,9 @@
      "Z": 0.0
     },
     "Position": {
-     "X": 83.3855209350586,
+     "X": 194.38890075683594,
      "Y": 4.0,
-     "Z": 405.9207458496094
+     "Z": 446.2561340332031
     },
     "Scale": {
      "X": 4.0,
@@ -1049,9 +1172,9 @@
      "Z": 0.0
     },
     "Position": {
-     "X": 83.38692474365234,
+     "X": 194.3903045654297,
      "Y": 7.6086931228637695,
-     "Z": 405.8946838378906
+     "Z": 446.2300720214844
     },
     "Scale": {
      "X": 1.0,
@@ -1074,7 +1197,7 @@
      "SourcePath": ""
     },
     "OnVariableUpdate": {
-     "EntryPoint": "Dungeons_PathfindTest",
+     "EntryPoint": "Dungeons_PathfindToMouse",
      "SourcePath": "arrrgh\\main.lua"
     },
     "PopulateInputs": {
@@ -1082,106 +1205,8 @@
      "SourcePath": ""
     }
    },
-   "Name": "PathfindTest",
-   "Parent": 4294967295,
-   "StaticMesh": {
-    "MaterialsOverride": {
-     "ID": 20
-    },
-    "Model": {
-     "Path": "common\\models\\cube.fbx"
-    }
-   },
-   "StaticMeshMaterials": {
-    "Materials": [
-     {
-      "AOTex": {
-       "PathName": "invalid"
-      },
-      "AlbedoOpacity": {
-       "W": 1.0,
-       "X": 1.0,
-       "Y": 0.9677419066429138,
-       "Z": 0.0
-      },
-      "AlbedoTex": {
-       "PathName": "invalid"
-      },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
-      "MetalTex": {
-       "PathName": "invalid"
-      },
-      "Metallic": 0.20000000298023224,
-      "NormalTex": {
-       "PathName": "invalid"
-      },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
-      "Roughness": 0.30000001192092896,
-      "RoughnessTex": {
-       "PathName": "invalid"
-      },
-      "UVOffsetScale": {
-       "W": 1.0,
-       "X": 0.0,
-       "Y": 0.0,
-       "Z": 1.0
-      }
-     }
-    ]
-   },
-   "Transform": {
-    "Orientation": {
-     "W": 1.0,
-     "X": 0.0,
-     "Y": 0.0,
-     "Z": 0.0
-    },
-    "Position": {
-     "X": 194.38890075683594,
-     "Y": 4.0,
-     "Z": 446.2561340332031
-    },
-    "Scale": {
-     "X": 4.0,
-     "Y": 4.0,
-     "Z": 4.0
-    }
-   }
-  },
-  {
-   "ID": 21,
-   "Name": "Point Light",
-   "Parent": 20,
-   "PointLight": {
-    "Brightness": 32.0,
-    "Colour": {
-     "X": 1.0,
-     "Y": 1.0,
-     "Z": 1.0
-    },
-    "Distance": 64.0
-   },
-   "Transform": {
-    "Orientation": {
-     "W": 1.0,
-     "X": 0.0,
-     "Y": 0.0,
-     "Z": 0.0
-    },
-    "Position": {
-     "X": 194.3903045654297,
-     "Y": 7.6086931228637695,
-     "Z": 446.2300720214844
-    },
-    "Scale": {
-     "X": 1.0,
-     "Y": 1.0,
-     "Z": 1.0
-    }
-   }
+   "Name": "PathfindToMouse",
+   "Parent": 4294967295
   }
  ],
  "WorldName": "New World"

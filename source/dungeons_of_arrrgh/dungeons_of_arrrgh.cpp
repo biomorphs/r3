@@ -3,7 +3,11 @@
 #include "vision_component.h"
 #include "engine/systems/immediate_render_system.h"
 #include "engine/systems/lua_system.h"
+#include "engine/systems/input_system.h"
+#include "engine/systems/camera_system.h"
 #include "engine/components/transform.h"
+#include "engine/intersection_tests.h"
+#include "render/render_system.h"
 #include "entities/systems/entity_system.h"
 #include "entities/queries.h"
 #include "core/profiler.h"
@@ -63,6 +67,9 @@ bool DungeonsOfArrrgh::Init()
 	}, scriptNamespace);
 	scripts->RegisterFunction("GetTileFromWorldspace", [this](DungeonsWorldGridComponent* grid, glm::vec3 worldspace) {
 		return GetTileFromWorldspace(*grid, worldspace);
+	}, scriptNamespace);
+	scripts->RegisterFunction("GetTileUnderMouseCursor", [this](DungeonsWorldGridComponent* grid) {
+		return GetTileUnderMouseCursor(*grid);
 	}, scriptNamespace);
 	return true;
 }
@@ -385,4 +392,27 @@ std::optional<glm::uvec2> DungeonsOfArrrgh::GetTileFromWorldspace(DungeonsWorldG
 		return {};
 	}
 	return glm::uvec2(tileSpace.x, tileSpace.z);
+}
+
+std::optional<glm::uvec2> DungeonsOfArrrgh::GetTileUnderMouseCursor(DungeonsWorldGridComponent& grid)
+{
+	float rayDistance = 100000.0f;
+	auto input = GetSystem<R3::InputSystem>();
+	const auto& mainCam = GetSystem<R3::CameraSystem>()->GetMainCamera();
+	const glm::vec2 windowExtents = GetSystem<R3::RenderSystem>()->GetWindowExtents();
+	const glm::vec2 cursorPos(input->GetMouseState().m_cursorX, input->GetMouseState().m_cursorY);
+	glm::vec3 mouseWorldSpace = mainCam.WindowPositionToWorldSpace(cursorPos, windowExtents);
+	const glm::vec3 lookDirWorldspace = glm::normalize(mouseWorldSpace - mainCam.Position());
+	glm::vec3 rayStart = mainCam.Position();
+	glm::vec3 rayEnd = mainCam.Position() + lookDirWorldspace * rayDistance;
+
+	// now calculate if/where the ray passes through y=0
+	float hitPoint = 0;
+	if (R3::RayIntersectsPlane(rayStart, rayEnd, { 0,0,0 }, { 0,1,0 }, hitPoint))
+	{
+		glm::vec3 worldPos = rayStart + glm::normalize(rayEnd - rayStart) * hitPoint;
+		return GetTileFromWorldspace(grid, worldPos);
+	}
+
+	return std::optional<glm::uvec2>();
 }

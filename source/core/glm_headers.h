@@ -27,6 +27,7 @@
 #include <glm/gtx/closest_point.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtx/hash.hpp>
+#include <glm/gtx/intersect.hpp>
 
 
 #ifdef I_DISABLED_DEBUG
