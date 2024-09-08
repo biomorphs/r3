@@ -129,762 +129,12 @@
     "MaxDistance": 8.0,
     "NeedsUpdate": true
    },
-   "ID": 4,
+   "ID": 3,
    "Name": "Rogue_Hooded.glb",
    "Parent": 4294967295,
    "StaticMesh": {
     "MaterialsOverride": {
-     "ID": 4
-    },
-    "Model": {
-     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
-    }
-   },
-   "StaticMeshMaterials": {
-    "Materials": [
-     {
-      "AOTex": {
-       "PathName": "invalid"
-      },
-      "AlbedoOpacity": {
-       "W": 1.0,
-       "X": 1.0,
-       "Y": 1.0,
-       "Z": 1.0
-      },
-      "AlbedoTex": {
-       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Textures\\rogue_texture.png"
-      },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
-      "MetalTex": {
-       "PathName": "invalid"
-      },
-      "Metallic": 0.0,
-      "NormalTex": {
-       "PathName": "invalid"
-      },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
-      "Roughness": 0.5,
-      "RoughnessTex": {
-       "PathName": "invalid"
-      },
-      "UVOffsetScale": {
-       "W": 1.0,
-       "X": 0.0,
-       "Y": 0.0,
-       "Z": 1.0
-      }
-     }
-    ]
-   },
-   "Transform": {
-    "Orientation": {
-     "W": 1.0,
-     "X": 0.0,
-     "Y": 0.0,
-     "Z": 0.0
-    },
-    "Position": {
-     "X": 128.0,
-     "Y": 0.0,
-     "Z": 128.0
-    },
-    "Scale": {
-     "X": 2.0,
-     "Y": 2.0,
-     "Z": 2.0
-    }
-   }
-  },
-  {
-   "Dungeons_VisionComponent": {
-    "MaxDistance": 8.0,
-    "NeedsUpdate": true
-   },
-   "ID": 7,
-   "Name": "Rogue_Hooded.glb",
-   "Parent": 4294967295,
-   "StaticMesh": {
-    "MaterialsOverride": {
-     "ID": 7
-    },
-    "Model": {
-     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
-    }
-   },
-   "StaticMeshMaterials": {
-    "Materials": [
-     {
-      "AOTex": {
-       "PathName": "invalid"
-      },
-      "AlbedoOpacity": {
-       "W": 1.0,
-       "X": 1.0,
-       "Y": 1.0,
-       "Z": 1.0
-      },
-      "AlbedoTex": {
-       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Textures\\rogue_texture.png"
-      },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
-      "MetalTex": {
-       "PathName": "invalid"
-      },
-      "Metallic": 0.0,
-      "NormalTex": {
-       "PathName": "invalid"
-      },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
-      "Roughness": 0.5,
-      "RoughnessTex": {
-       "PathName": "invalid"
-      },
-      "UVOffsetScale": {
-       "W": 1.0,
-       "X": 0.0,
-       "Y": 0.0,
-       "Z": 1.0
-      }
-     }
-    ]
-   },
-   "Transform": {
-    "Orientation": {
-     "W": 1.0,
-     "X": 0.0,
-     "Y": 0.0,
-     "Z": 0.0
-    },
-    "Position": {
-     "X": 43.45882797241211,
-     "Y": 0.0,
-     "Z": 164.3753204345703
-    },
-    "Scale": {
-     "X": 2.0,
-     "Y": 2.0,
-     "Z": 2.0
-    }
-   }
-  },
-  {
-   "Dungeons_VisionComponent": {
-    "MaxDistance": 8.0,
-    "NeedsUpdate": true
-   },
-   "ID": 8,
-   "Name": "Rogue_Hooded.glb",
-   "Parent": 4294967295,
-   "StaticMesh": {
-    "MaterialsOverride": {
-     "ID": 8
-    },
-    "Model": {
-     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
-    }
-   },
-   "StaticMeshMaterials": {
-    "Materials": [
-     {
-      "AOTex": {
-       "PathName": "invalid"
-      },
-      "AlbedoOpacity": {
-       "W": 1.0,
-       "X": 1.0,
-       "Y": 1.0,
-       "Z": 1.0
-      },
-      "AlbedoTex": {
-       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Textures\\rogue_texture.png"
-      },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
-      "MetalTex": {
-       "PathName": "invalid"
-      },
-      "Metallic": 0.0,
-      "NormalTex": {
-       "PathName": "invalid"
-      },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
-      "Roughness": 0.5,
-      "RoughnessTex": {
-       "PathName": "invalid"
-      },
-      "UVOffsetScale": {
-       "W": 1.0,
-       "X": 0.0,
-       "Y": 0.0,
-       "Z": 1.0
-      }
-     }
-    ]
-   },
-   "Transform": {
-    "Orientation": {
-     "W": 1.0,
-     "X": 0.0,
-     "Y": 0.0,
-     "Z": 0.0
-    },
-    "Position": {
-     "X": 189.28054809570313,
-     "Y": 0.0,
-     "Z": 202.2918701171875
-    },
-    "Scale": {
-     "X": 2.0,
-     "Y": 2.0,
-     "Z": 2.0
-    }
-   }
-  },
-  {
-   "Dungeons_VisionComponent": {
-    "MaxDistance": 8.0,
-    "NeedsUpdate": true
-   },
-   "ID": 9,
-   "Name": "Rogue_Hooded.glb",
-   "Parent": 4294967295,
-   "StaticMesh": {
-    "MaterialsOverride": {
-     "ID": 9
-    },
-    "Model": {
-     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
-    }
-   },
-   "StaticMeshMaterials": {
-    "Materials": [
-     {
-      "AOTex": {
-       "PathName": "invalid"
-      },
-      "AlbedoOpacity": {
-       "W": 1.0,
-       "X": 1.0,
-       "Y": 1.0,
-       "Z": 1.0
-      },
-      "AlbedoTex": {
-       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Textures\\rogue_texture.png"
-      },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
-      "MetalTex": {
-       "PathName": "invalid"
-      },
-      "Metallic": 0.0,
-      "NormalTex": {
-       "PathName": "invalid"
-      },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
-      "Roughness": 0.5,
-      "RoughnessTex": {
-       "PathName": "invalid"
-      },
-      "UVOffsetScale": {
-       "W": 1.0,
-       "X": 0.0,
-       "Y": 0.0,
-       "Z": 1.0
-      }
-     }
-    ]
-   },
-   "Transform": {
-    "Orientation": {
-     "W": 1.0,
-     "X": 0.0,
-     "Y": 0.0,
-     "Z": 0.0
-    },
-    "Position": {
-     "X": 88.41417694091797,
-     "Y": 0.0,
-     "Z": 248.92405700683594
-    },
-    "Scale": {
-     "X": 2.0,
-     "Y": 2.0,
-     "Z": 2.0
-    }
-   }
-  },
-  {
-   "Dungeons_VisionComponent": {
-    "MaxDistance": 8.0,
-    "NeedsUpdate": true
-   },
-   "ID": 10,
-   "Name": "Rogue_Hooded.glb",
-   "Parent": 4294967295,
-   "StaticMesh": {
-    "MaterialsOverride": {
-     "ID": 10
-    },
-    "Model": {
-     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
-    }
-   },
-   "StaticMeshMaterials": {
-    "Materials": [
-     {
-      "AOTex": {
-       "PathName": "invalid"
-      },
-      "AlbedoOpacity": {
-       "W": 1.0,
-       "X": 1.0,
-       "Y": 1.0,
-       "Z": 1.0
-      },
-      "AlbedoTex": {
-       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Textures\\rogue_texture.png"
-      },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
-      "MetalTex": {
-       "PathName": "invalid"
-      },
-      "Metallic": 0.0,
-      "NormalTex": {
-       "PathName": "invalid"
-      },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
-      "Roughness": 0.5,
-      "RoughnessTex": {
-       "PathName": "invalid"
-      },
-      "UVOffsetScale": {
-       "W": 1.0,
-       "X": 0.0,
-       "Y": 0.0,
-       "Z": 1.0
-      }
-     }
-    ]
-   },
-   "Transform": {
-    "Orientation": {
-     "W": 1.0,
-     "X": 0.0,
-     "Y": 0.0,
-     "Z": 0.0
-    },
-    "Position": {
-     "X": 68.45089721679688,
-     "Y": 0.0,
-     "Z": 80.4632568359375
-    },
-    "Scale": {
-     "X": 2.0,
-     "Y": 2.0,
-     "Z": 2.0
-    }
-   }
-  },
-  {
-   "Dungeons_VisionComponent": {
-    "MaxDistance": 8.0,
-    "NeedsUpdate": true
-   },
-   "ID": 11,
-   "Name": "Rogue_Hooded.glb",
-   "Parent": 4294967295,
-   "StaticMesh": {
-    "MaterialsOverride": {
-     "ID": 11
-    },
-    "Model": {
-     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
-    }
-   },
-   "StaticMeshMaterials": {
-    "Materials": [
-     {
-      "AOTex": {
-       "PathName": "invalid"
-      },
-      "AlbedoOpacity": {
-       "W": 1.0,
-       "X": 1.0,
-       "Y": 1.0,
-       "Z": 1.0
-      },
-      "AlbedoTex": {
-       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Textures\\rogue_texture.png"
-      },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
-      "MetalTex": {
-       "PathName": "invalid"
-      },
-      "Metallic": 0.0,
-      "NormalTex": {
-       "PathName": "invalid"
-      },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
-      "Roughness": 0.5,
-      "RoughnessTex": {
-       "PathName": "invalid"
-      },
-      "UVOffsetScale": {
-       "W": 1.0,
-       "X": 0.0,
-       "Y": 0.0,
-       "Z": 1.0
-      }
-     }
-    ]
-   },
-   "Transform": {
-    "Orientation": {
-     "W": 1.0,
-     "X": 0.0,
-     "Y": 0.0,
-     "Z": 0.0
-    },
-    "Position": {
-     "X": 157.53326416015625,
-     "Y": 0.0,
-     "Z": 80.4632568359375
-    },
-    "Scale": {
-     "X": 2.0,
-     "Y": 2.0,
-     "Z": 2.0
-    }
-   }
-  },
-  {
-   "Dungeons_VisionComponent": {
-    "MaxDistance": 8.0,
-    "NeedsUpdate": true
-   },
-   "ID": 12,
-   "Name": "Rogue_Hooded.glb",
-   "Parent": 4294967295,
-   "StaticMesh": {
-    "MaterialsOverride": {
-     "ID": 12
-    },
-    "Model": {
-     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
-    }
-   },
-   "StaticMeshMaterials": {
-    "Materials": [
-     {
-      "AOTex": {
-       "PathName": "invalid"
-      },
-      "AlbedoOpacity": {
-       "W": 1.0,
-       "X": 1.0,
-       "Y": 1.0,
-       "Z": 1.0
-      },
-      "AlbedoTex": {
-       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Textures\\rogue_texture.png"
-      },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
-      "MetalTex": {
-       "PathName": "invalid"
-      },
-      "Metallic": 0.0,
-      "NormalTex": {
-       "PathName": "invalid"
-      },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
-      "Roughness": 0.5,
-      "RoughnessTex": {
-       "PathName": "invalid"
-      },
-      "UVOffsetScale": {
-       "W": 1.0,
-       "X": 0.0,
-       "Y": 0.0,
-       "Z": 1.0
-      }
-     }
-    ]
-   },
-   "Transform": {
-    "Orientation": {
-     "W": 1.0,
-     "X": 0.0,
-     "Y": 0.0,
-     "Z": 0.0
-    },
-    "Position": {
-     "X": 189.28054809570313,
-     "Y": 0.0,
-     "Z": 380.1944580078125
-    },
-    "Scale": {
-     "X": 2.0,
-     "Y": 2.0,
-     "Z": 2.0
-    }
-   }
-  },
-  {
-   "Dungeons_VisionComponent": {
-    "MaxDistance": 8.0,
-    "NeedsUpdate": true
-   },
-   "ID": 13,
-   "Name": "Rogue_Hooded.glb",
-   "Parent": 4294967295,
-   "StaticMesh": {
-    "MaterialsOverride": {
-     "ID": 13
-    },
-    "Model": {
-     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
-    }
-   },
-   "StaticMeshMaterials": {
-    "Materials": [
-     {
-      "AOTex": {
-       "PathName": "invalid"
-      },
-      "AlbedoOpacity": {
-       "W": 1.0,
-       "X": 1.0,
-       "Y": 1.0,
-       "Z": 1.0
-      },
-      "AlbedoTex": {
-       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Textures\\rogue_texture.png"
-      },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
-      "MetalTex": {
-       "PathName": "invalid"
-      },
-      "Metallic": 0.0,
-      "NormalTex": {
-       "PathName": "invalid"
-      },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
-      "Roughness": 0.5,
-      "RoughnessTex": {
-       "PathName": "invalid"
-      },
-      "UVOffsetScale": {
-       "W": 1.0,
-       "X": 0.0,
-       "Y": 0.0,
-       "Z": 1.0
-      }
-     }
-    ]
-   },
-   "Transform": {
-    "Orientation": {
-     "W": 1.0,
-     "X": 0.0,
-     "Y": 0.0,
-     "Z": 0.0
-    },
-    "Position": {
-     "X": 133.4503173828125,
-     "Y": 0.0,
-     "Z": 317.1672058105469
-    },
-    "Scale": {
-     "X": 2.0,
-     "Y": 2.0,
-     "Z": 2.0
-    }
-   }
-  },
-  {
-   "Dungeons_VisionComponent": {
-    "MaxDistance": 8.0,
-    "NeedsUpdate": true
-   },
-   "ID": 14,
-   "Name": "Rogue_Hooded.glb",
-   "Parent": 4294967295,
-   "StaticMesh": {
-    "MaterialsOverride": {
-     "ID": 14
-    },
-    "Model": {
-     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
-    }
-   },
-   "StaticMeshMaterials": {
-    "Materials": [
-     {
-      "AOTex": {
-       "PathName": "invalid"
-      },
-      "AlbedoOpacity": {
-       "W": 1.0,
-       "X": 1.0,
-       "Y": 1.0,
-       "Z": 1.0
-      },
-      "AlbedoTex": {
-       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Textures\\rogue_texture.png"
-      },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
-      "MetalTex": {
-       "PathName": "invalid"
-      },
-      "Metallic": 0.0,
-      "NormalTex": {
-       "PathName": "invalid"
-      },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
-      "Roughness": 0.5,
-      "RoughnessTex": {
-       "PathName": "invalid"
-      },
-      "UVOffsetScale": {
-       "W": 1.0,
-       "X": 0.0,
-       "Y": 0.0,
-       "Z": 1.0
-      }
-     }
-    ]
-   },
-   "Transform": {
-    "Orientation": {
-     "W": 1.0,
-     "X": 0.0,
-     "Y": 0.0,
-     "Z": 0.0
-    },
-    "Position": {
-     "X": 20.7271728515625,
-     "Y": 0.0,
-     "Z": 335.3231201171875
-    },
-    "Scale": {
-     "X": 2.0,
-     "Y": 2.0,
-     "Z": 2.0
-    }
-   }
-  },
-  {
-   "Dungeons_VisionComponent": {
-    "MaxDistance": 8.0,
-    "NeedsUpdate": true
-   },
-   "ID": 15,
-   "Name": "Rogue_Hooded.glb",
-   "Parent": 4294967295,
-   "StaticMesh": {
-    "MaterialsOverride": {
-     "ID": 15
-    },
-    "Model": {
-     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
-    }
-   },
-   "StaticMeshMaterials": {
-    "Materials": [
-     {
-      "AOTex": {
-       "PathName": "invalid"
-      },
-      "AlbedoOpacity": {
-       "W": 1.0,
-       "X": 1.0,
-       "Y": 1.0,
-       "Z": 1.0
-      },
-      "AlbedoTex": {
-       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Textures\\rogue_texture.png"
-      },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
-      "MetalTex": {
-       "PathName": "invalid"
-      },
-      "Metallic": 0.0,
-      "NormalTex": {
-       "PathName": "invalid"
-      },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
-      "Roughness": 0.5,
-      "RoughnessTex": {
-       "PathName": "invalid"
-      },
-      "UVOffsetScale": {
-       "W": 1.0,
-       "X": 0.0,
-       "Y": 0.0,
-       "Z": 1.0
-      }
-     }
-    ]
-   },
-   "Transform": {
-    "Orientation": {
-     "W": 1.0,
-     "X": 0.0,
-     "Y": 0.0,
-     "Z": 0.0
-    },
-    "Position": {
-     "X": 125.279541015625,
-     "Y": 0.0,
-     "Z": 421.089111328125
-    },
-    "Scale": {
-     "X": 2.0,
-     "Y": 2.0,
-     "Z": 2.0
-    }
-   }
-  },
-  {
-   "Dungeons_VisionComponent": {
-    "MaxDistance": 8.0,
-    "NeedsUpdate": true
-   },
-   "ID": 16,
-   "Name": "Rogue_Hooded.glb",
-   "Parent": 4294967295,
-   "StaticMesh": {
-    "MaterialsOverride": {
-     "ID": 16
+     "ID": 3
     },
     "Model": {
      "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
@@ -946,6 +196,990 @@
      "X": 2.0,
      "Y": 2.0,
      "Z": 2.0
+    }
+   }
+  },
+  {
+   "ID": 4,
+   "LuaScript": {
+    "InputParams": {
+     "Floats": [],
+     "IntVec2s": [],
+     "Ints": []
+    },
+    "IsActive": true,
+    "OnFixedUpdate": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    },
+    "OnVariableUpdate": {
+     "EntryPoint": "Dungeons_PathfindTest",
+     "SourcePath": "arrrgh\\main.lua"
+    },
+    "PopulateInputs": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    }
+   },
+   "Name": "PathfindTest",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 4
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 0.9677419066429138,
+       "Z": 0.0
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.20000000298023224,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.30000001192092896,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 88.75675964355469,
+     "Y": 4.0,
+     "Z": 152.94415283203125
+    },
+    "Scale": {
+     "X": 4.0,
+     "Y": 4.0,
+     "Z": 4.0
+    }
+   }
+  },
+  {
+   "ID": 5,
+   "Name": "Point Light",
+   "Parent": 4,
+   "PointLight": {
+    "Brightness": 32.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 64.0
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 88.75816345214844,
+     "Y": 7.6086931228637695,
+     "Z": 152.91807556152344
+    },
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 6,
+   "LuaScript": {
+    "InputParams": {
+     "Floats": [],
+     "IntVec2s": [],
+     "Ints": []
+    },
+    "IsActive": true,
+    "OnFixedUpdate": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    },
+    "OnVariableUpdate": {
+     "EntryPoint": "Dungeons_PathfindTest",
+     "SourcePath": "arrrgh\\main.lua"
+    },
+    "PopulateInputs": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    }
+   },
+   "Name": "PathfindTest",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 6
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 0.9677419066429138,
+       "Z": 0.0
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.20000000298023224,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.30000001192092896,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 167.6667938232422,
+     "Y": 4.0,
+     "Z": 286.72552490234375
+    },
+    "Scale": {
+     "X": 4.0,
+     "Y": 4.0,
+     "Z": 4.0
+    }
+   }
+  },
+  {
+   "ID": 7,
+   "Name": "Point Light",
+   "Parent": 6,
+   "PointLight": {
+    "Brightness": 32.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 64.0
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 167.66819763183594,
+     "Y": 7.6086931228637695,
+     "Z": 286.699462890625
+    },
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 8,
+   "LuaScript": {
+    "InputParams": {
+     "Floats": [],
+     "IntVec2s": [],
+     "Ints": []
+    },
+    "IsActive": true,
+    "OnFixedUpdate": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    },
+    "OnVariableUpdate": {
+     "EntryPoint": "Dungeons_PathfindTest",
+     "SourcePath": "arrrgh\\main.lua"
+    },
+    "PopulateInputs": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    }
+   },
+   "Name": "PathfindTest",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 8
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 0.9677419066429138,
+       "Z": 0.0
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.20000000298023224,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.30000001192092896,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 204.3107147216797,
+     "Y": 4.0,
+     "Z": 195.17303466796875
+    },
+    "Scale": {
+     "X": 4.0,
+     "Y": 4.0,
+     "Z": 4.0
+    }
+   }
+  },
+  {
+   "ID": 9,
+   "Name": "Point Light",
+   "Parent": 8,
+   "PointLight": {
+    "Brightness": 32.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 64.0
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 204.31211853027344,
+     "Y": 7.6086931228637695,
+     "Z": 195.14697265625
+    },
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 10,
+   "LuaScript": {
+    "InputParams": {
+     "Floats": [],
+     "IntVec2s": [],
+     "Ints": []
+    },
+    "IsActive": true,
+    "OnFixedUpdate": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    },
+    "OnVariableUpdate": {
+     "EntryPoint": "Dungeons_PathfindTest",
+     "SourcePath": "arrrgh\\main.lua"
+    },
+    "PopulateInputs": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    }
+   },
+   "Name": "PathfindTest",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 10
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 0.9677419066429138,
+       "Z": 0.0
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.20000000298023224,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.30000001192092896,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 160.7425537109375,
+     "Y": 4.0,
+     "Z": 71.11133575439453
+    },
+    "Scale": {
+     "X": 4.0,
+     "Y": 4.0,
+     "Z": 4.0
+    }
+   }
+  },
+  {
+   "ID": 11,
+   "Name": "Point Light",
+   "Parent": 10,
+   "PointLight": {
+    "Brightness": 32.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 64.0
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 160.74395751953125,
+     "Y": 7.6086931228637695,
+     "Z": 71.08527374267578
+    },
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 14,
+   "LuaScript": {
+    "InputParams": {
+     "Floats": [],
+     "IntVec2s": [],
+     "Ints": []
+    },
+    "IsActive": true,
+    "OnFixedUpdate": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    },
+    "OnVariableUpdate": {
+     "EntryPoint": "Dungeons_PathfindTest",
+     "SourcePath": "arrrgh\\main.lua"
+    },
+    "PopulateInputs": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    }
+   },
+   "Name": "PathfindTest",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 14
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 0.9677419066429138,
+       "Z": 0.0
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.20000000298023224,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.30000001192092896,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 107.923095703125,
+     "Y": 4.0,
+     "Z": 324.1396484375
+    },
+    "Scale": {
+     "X": 4.0,
+     "Y": 4.0,
+     "Z": 4.0
+    }
+   }
+  },
+  {
+   "ID": 15,
+   "Name": "Point Light",
+   "Parent": 14,
+   "PointLight": {
+    "Brightness": 32.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 64.0
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 107.92449951171875,
+     "Y": 7.6086931228637695,
+     "Z": 324.11358642578125
+    },
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 16,
+   "LuaScript": {
+    "InputParams": {
+     "Floats": [],
+     "IntVec2s": [],
+     "Ints": []
+    },
+    "IsActive": true,
+    "OnFixedUpdate": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    },
+    "OnVariableUpdate": {
+     "EntryPoint": "Dungeons_PathfindTest",
+     "SourcePath": "arrrgh\\main.lua"
+    },
+    "PopulateInputs": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    }
+   },
+   "Name": "PathfindTest",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 16
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 0.9677419066429138,
+       "Z": 0.0
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.20000000298023224,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.30000001192092896,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 167.8271942138672,
+     "Y": 4.0,
+     "Z": 360.2051696777344
+    },
+    "Scale": {
+     "X": 4.0,
+     "Y": 4.0,
+     "Z": 4.0
+    }
+   }
+  },
+  {
+   "ID": 17,
+   "Name": "Point Light",
+   "Parent": 16,
+   "PointLight": {
+    "Brightness": 32.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 64.0
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 167.82859802246094,
+     "Y": 7.6086931228637695,
+     "Z": 360.1791076660156
+    },
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 18,
+   "LuaScript": {
+    "InputParams": {
+     "Floats": [],
+     "IntVec2s": [],
+     "Ints": []
+    },
+    "IsActive": true,
+    "OnFixedUpdate": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    },
+    "OnVariableUpdate": {
+     "EntryPoint": "Dungeons_PathfindTest",
+     "SourcePath": "arrrgh\\main.lua"
+    },
+    "PopulateInputs": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    }
+   },
+   "Name": "PathfindTest",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 18
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 0.9677419066429138,
+       "Z": 0.0
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.20000000298023224,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.30000001192092896,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 83.3855209350586,
+     "Y": 4.0,
+     "Z": 405.9207458496094
+    },
+    "Scale": {
+     "X": 4.0,
+     "Y": 4.0,
+     "Z": 4.0
+    }
+   }
+  },
+  {
+   "ID": 19,
+   "Name": "Point Light",
+   "Parent": 18,
+   "PointLight": {
+    "Brightness": 32.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 64.0
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 83.38692474365234,
+     "Y": 7.6086931228637695,
+     "Z": 405.8946838378906
+    },
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 20,
+   "LuaScript": {
+    "InputParams": {
+     "Floats": [],
+     "IntVec2s": [],
+     "Ints": []
+    },
+    "IsActive": true,
+    "OnFixedUpdate": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    },
+    "OnVariableUpdate": {
+     "EntryPoint": "Dungeons_PathfindTest",
+     "SourcePath": "arrrgh\\main.lua"
+    },
+    "PopulateInputs": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    }
+   },
+   "Name": "PathfindTest",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "MaterialsOverride": {
+     "ID": 20
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 0.9677419066429138,
+       "Z": 0.0
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.20000000298023224,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.30000001192092896,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 194.38890075683594,
+     "Y": 4.0,
+     "Z": 446.2561340332031
+    },
+    "Scale": {
+     "X": 4.0,
+     "Y": 4.0,
+     "Z": 4.0
+    }
+   }
+  },
+  {
+   "ID": 21,
+   "Name": "Point Light",
+   "Parent": 20,
+   "PointLight": {
+    "Brightness": 32.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 64.0
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 194.3903045654297,
+     "Y": 7.6086931228637695,
+     "Z": 446.2300720214844
+    },
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
     }
    }
   }

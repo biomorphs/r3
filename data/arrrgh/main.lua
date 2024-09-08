@@ -1,5 +1,4 @@
 local Arrrgh_Globals = {}
-Arrrgh_Globals.EnableVisibilityTest = true
 Arrrgh_Globals.FillWithExteriorFloor = false
 Arrrgh_Globals.DoRandomWander = true
 Arrrgh_Globals.TileDimensions = vec2.new(4,4)
@@ -282,13 +281,24 @@ function Dungeons_GenerateWorld(e)
 			gridcmp.m_isDirty = true		-- update the graphics once at the end
 			scriptcmp.m_isActive = false	-- we are done, stop running
 			print('Generator finished')
-			if (Arrrgh_Globals.EnableVisibilityTest == true) then 
-				local visTestEntity = world:GetEntityByName('Vis testing script')
-				local visTestScript = world.GetComponent_LuaScript(visTestEntity)
-				visTestScript.m_isActive = true
-			end
 		end
 	else
 		print('No Grid')
 	end	
+end
+
+function Dungeons_PathfindTest(e)
+	local world = R3.ActiveWorld()
+	local gridEntity = world:GetEntityByName('World Grid')
+	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
+	local spawnEntity = world:GetEntityByName('PlayerSpawnPoint')
+	local spawnTransform = world.GetComponent_Transform(spawnEntity)
+	local myTransform = world.GetComponent_Transform(e)
+	if(spawnTransform == nil or gridcmp == nil or myTransform == nil) then 
+		return
+	end
+	local myTile = Arrrgh.GetTileFromWorldspace(gridcmp, myTransform:GetPosition())
+	local spawnTile = Arrrgh.GetTileFromWorldspace(gridcmp, spawnTransform:GetPosition())
+	local foundPath = gridcmp:CalculatePath(myTile, spawnTile)
+	Arrrgh.DebugDrawTiles(gridcmp, foundPath)
 end

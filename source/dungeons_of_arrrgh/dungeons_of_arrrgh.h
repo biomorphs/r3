@@ -32,7 +32,8 @@ private:
 	bool VariableUpdate();
 	bool FixedUpdate();
 	void DebugDrawWorldGrid(const class DungeonsWorldGridComponent& grid);
-	void DebugDrawTiles(const class DungeonsWorldGridComponent& grid, std::unordered_set<glm::uvec2>& tiles);
+	template<class Container>
+	void DebugDrawTiles(const class DungeonsWorldGridComponent& grid, Container& tiles);	// expects vector<uvec2> or similar
 	std::unordered_map<std::string, nlohmann::json> m_generateVisualsEntityCache;	// cache serialised entities for speed
 	glm::vec3 m_wsGridOffset = { 0,0,0 };
 	glm::vec2 m_wsGridScale = { 4, 4 };

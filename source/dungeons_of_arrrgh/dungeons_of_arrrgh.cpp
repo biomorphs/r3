@@ -55,13 +55,15 @@ bool DungeonsOfArrrgh::Init()
 
 	auto scriptNamespace = "Arrrgh";
 	auto scripts = GetSystem<R3::LuaSystem>();
-	scripts->RegisterFunction("DebugDrawTiles", [this](DungeonsWorldGridComponent* grid, std::unordered_set<glm::uvec2>& tiles) {
+	scripts->RegisterFunction("DebugDrawTiles", [this](DungeonsWorldGridComponent* grid, std::vector<glm::uvec2>& tiles) {
 		DebugDrawTiles(*grid, tiles);
 	}, scriptNamespace);
 	scripts->RegisterFunction("MoveEntities", [this](const std::vector<R3::Entities::EntityHandle>& targets, glm::vec3 offset) {
 		MoveEntities(targets, offset);
 	}, scriptNamespace);
-
+	scripts->RegisterFunction("GetTileFromWorldspace", [this](DungeonsWorldGridComponent* grid, glm::vec3 worldspace) {
+		return GetTileFromWorldspace(*grid, worldspace);
+	}, scriptNamespace);
 	return true;
 }
 
@@ -77,7 +79,7 @@ void DebugDrawTile(R3::ImmediateRenderSystem& imRender,
 	std::vector<R3::ImmediateRenderer::PosColourVertex>& verts)
 {
 	R3_PROF_EVENT();
-	glm::vec3 tileOffset = { (float)x * scale.x, 0.1f, (float)z * scale.y };
+	glm::vec3 tileOffset = { (float)x * scale.x, 0.2f, (float)z * scale.y };
 	glm::vec3 basePos = offset + tileOffset;
 	auto contents = grid.GetContents(x, z);
 	if (contents && contents->m_tileData.m_tileType != WorldTileType::Empty)
@@ -143,7 +145,8 @@ void DungeonsOfArrrgh::DebugDrawWorldGrid(const DungeonsWorldGridComponent& grid
 	}
 }
 
-void DungeonsOfArrrgh::DebugDrawTiles(const DungeonsWorldGridComponent& grid, std::unordered_set<glm::uvec2>& tiles)
+template<class Container>
+void DungeonsOfArrrgh::DebugDrawTiles(const DungeonsWorldGridComponent& grid, Container& tiles)
 {
 	R3_PROF_EVENT();
 	auto imRender = GetSystem<R3::ImmediateRenderSystem>();

@@ -33,7 +33,7 @@ public:
 	bool IsTilePassable(uint32_t tilex, uint32_t tiley);
 	void Fill(glm::uvec2 start, glm::uvec2 size, uint8_t type, bool isPassable, bool blockVisibility);
 	bool AllTilesMatchType(glm::uvec2 start, glm::uvec2 size, uint8_t type);	// return true if all tiles in range match the type
-
+	std::vector<glm::uvec2> CalculatePath(glm::uvec2 start, glm::uvec2 end);	// find shortest path between tiles, taking in to account passable flag
 	bool m_isDirty = false;				// if true, the world needs regeneration
 	bool m_debugDraw = false;			// not serialised
 private:

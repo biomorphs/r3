@@ -21,6 +21,7 @@ void DungeonsWorldGridComponent::RegisterScripts(R3::LuaSystem& l)
 		"IsTilePassable", &DungeonsWorldGridComponent::IsTilePassable,
 		"Fill", &DungeonsWorldGridComponent::Fill,
 		"AllTilesMatchType", &DungeonsWorldGridComponent::AllTilesMatchType,
+		"CalculatePath", &DungeonsWorldGridComponent::CalculatePath,
 		"m_debugDraw", &DungeonsWorldGridComponent::m_debugDraw,
 		"m_isDirty", &DungeonsWorldGridComponent::m_isDirty
 	);
@@ -193,4 +194,98 @@ DungeonsWorldGridComponent::WorldTileContents* DungeonsWorldGridComponent::GetCo
 		return &m_worldGridContents[tileX + (tileZ * m_gridDimensions[0])];
 	}
 	return nullptr;
+}
+
+std::vector<glm::uvec2> DungeonsWorldGridComponent::CalculatePath(glm::uvec2 start, glm::uvec2 end)
+{
+	R3_PROF_EVENT();
+
+	auto H = [start,end](const glm::uvec2& n) -> float
+	{
+		// taxicab distance
+		return glm::abs((float)end.x - (float)n.x) + glm::abs((float)end.y - (float)n.y);
+	};
+
+	// basic A*
+	// F(n) = G(n) + H(n)
+	// G = cost of the cheapest path from start to another tile
+	// H = heuristic, estimated cost of getting from n to the goal
+	std::unordered_set<glm::uvec2> openSet;	// discovered nodes that need to be expanded
+	std::unordered_map<glm::uvec2, glm::uvec2> cameFrom;	// track what the previous node was for any visited node (used to create final path)
+	std::unordered_map <glm::uvec2, float> gScore;			// G = cost of the cheapest path from start to another tile
+	std::unordered_map <glm::uvec2, float> fScore;			// F = gScore[n] + H(n)
+
+	auto FindNodeWithSmallestF = [&](){						// use a min-priority queue for way more speed
+		glm::uvec2 smallest(-1,-1);
+		float smallestF = FLT_MAX;
+		for (const auto& it : openSet)
+		{
+			float f = fScore[it];
+			if (f < smallestF)
+			{
+				smallest = it;
+				smallestF = f;
+			}
+		}
+		return smallest;
+	};
+
+	auto ReconstructPath = [&](glm::uvec2 current){
+		std::vector<glm::uvec2> finalPath;
+		finalPath.push_back(start);
+		while (1)
+		{
+			auto fromNode = cameFrom.find(current);
+			if (fromNode != cameFrom.end())
+			{
+				current = fromNode->second;
+				finalPath.push_back(current);
+			}
+			else
+			{
+				break;
+			}
+		}
+		return finalPath;
+	};
+
+	openSet.insert(start);		// begin with the first tile
+	gScore[start] = 0.0f;		// distance from start
+	fScore[start] = /* gScore[start] + */ H(start);
+
+	while (!openSet.empty())
+	{
+		// find the node with lowest fScore
+		glm::uvec2 nextNode = FindNodeWithSmallestF();
+		if (nextNode == end)	// we hit the goal!
+		{
+			return ReconstructPath(nextNode);
+		}
+		openSet.erase(nextNode);
+
+		// now explore neighbours
+		auto doNeighbour = [&](int32_t x, int32_t y) {
+			if (x > 0 && y > 0 && x < (int32_t)m_gridDimensions.x && y < (int32_t)m_gridDimensions.y)
+			{
+				glm::uvec2 neighbourTile(x, y);
+				float moveCost = IsTilePassable(x, y) ? 1.0f : FLT_MAX;
+				float newNeighbourG = gScore[nextNode] + moveCost;			// current g + move cost
+				auto foundNeighbourG = gScore.find(neighbourTile);
+				float currentNeighbourG = foundNeighbourG != gScore.end() ? foundNeighbourG->second : FLT_MAX;	// infinite score if none found
+				if (newNeighbourG < currentNeighbourG)	// only continue down this path if it is cheaper than the current one
+				{
+					cameFrom[neighbourTile] = nextNode;
+					gScore[neighbourTile] = newNeighbourG;
+					fScore[neighbourTile] = newNeighbourG + H(neighbourTile);
+					openSet.insert(neighbourTile);
+				}
+			}
+		};
+		doNeighbour((int32_t)nextNode.x - 1, (int32_t)nextNode.y);	// left
+		doNeighbour((int32_t)nextNode.x + 1, (int32_t)nextNode.y);	// right
+		doNeighbour((int32_t)nextNode.x, (int32_t)nextNode.y + 1);	// up
+		doNeighbour((int32_t)nextNode.x, (int32_t)nextNode.y - 1);	// down
+	}
+
+	return {};	// never reached the goal!
 }
