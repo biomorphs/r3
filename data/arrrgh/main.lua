@@ -3,6 +3,7 @@ require 'arrrgh/arrrgh_shared'
 
 Arrrgh_Globals.GameState = nil
 Arrrgh_Globals.ActionQueue = Fastqueue.new()
+Arrrgh_Globals.CameraHeight = 50
 
 function Dungeons_PathfindTest(e)
 	local world = R3.ActiveWorld()
@@ -64,7 +65,7 @@ function Dungeons_OnTurnEnd()
 end
 
 function Dungeons_GetTotalActionPoints(playerIndex)
-	return 3	-- todo, get based on player/monster attributes, etc
+	return 10	-- todo, get based on player/monster attributes, etc
 end
 
 function Dungeons_GetActionPointsRemaining(playerIndex)
@@ -150,7 +151,36 @@ function Dungeons_OnChooseActions(playerIndex)
 	end
 end
 
+function Dungeons_CameraLookAt(worldPos)
+	local world = R3.ActiveWorld()
+	local cameraEntity = world:GetEntityByName('GameCamera')
+	local cameraTransform = world.GetComponent_Transform(cameraEntity)
+	cameraTransform:SetPosition(vec3.new(worldPos.x, worldPos.y + Arrrgh_Globals.CameraHeight, worldPos.z - 4.0))
+	R3.SetActiveCamera(cameraEntity)
+end
+
+function Dungeons_UpdateCamera()
+	local camHeight = Arrrgh_Globals.CameraHeight
+	local mouseScroll = R3.GetMouseWheelScroll()
+	camHeight = camHeight + (mouseScroll * -4)
+	if(camHeight < 20) then 
+		camHeight = 20
+	end
+	if(camHeight > 1000) then 
+		camHeight = 1000
+	end
+	Arrrgh_Globals.CameraHeight = camHeight
+
+	local world = R3.ActiveWorld()
+	local playerEntity = world:GetEntityByName('PlayerActor')
+	local playerTransform = world.GetComponent_Transform(playerEntity)
+	if(playerTransform ~= nil) then 
+		Dungeons_CameraLookAt(playerTransform:GetPosition())
+	end
+end
+
 function Dungeons_GameTick(e)
+	Dungeons_UpdateCamera()
 	if(Arrrgh_Globals.GameState == nil) then 
 		Arrrgh_Globals.GameState = 'start'
 	end

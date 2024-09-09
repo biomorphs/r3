@@ -192,6 +192,9 @@ namespace R3
 		scripts->RegisterFunction("GetMousePosition", [this]() -> glm::ivec2 {
 			return glm::ivec2(m_mouseState.m_cursorX, m_mouseState.m_cursorY);
 		});
+		scripts->RegisterFunction("GetMouseWheelScroll", [this]() -> int32_t {
+			return m_mouseState.m_wheelScroll;
+		});
 		scripts->RegisterFunction("IsLeftMouseButtonPressed", [this]() -> bool {
 			return !IsGuiCapturingInput() && (m_mouseState.m_buttonState & LeftButton) != 0;
 		});

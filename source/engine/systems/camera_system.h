@@ -15,14 +15,15 @@ namespace R3
 		CameraSystem();
 		virtual ~CameraSystem();
 		virtual void RegisterTickFns();
-
 		const Camera& GetMainCamera() { return m_mainCamera; }
+		void SetActiveCamera(const R3::Entities::EntityHandle& e);
 	private:
 		void ApplyFlycamToCamera();
 		bool IsFlycamActive();
 		bool FixedUpdate();
 		void ApplyEntityToCamera(const class CameraComponent& camCmp, const class TransformComponent& transCmp, Camera& target);
 		void DrawCameraFrustums();
+		bool Init();
 		bool ShowGui();
 		bool Update();
 		bool m_drawFrustums = false;

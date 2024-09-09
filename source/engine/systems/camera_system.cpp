@@ -3,6 +3,7 @@
 #include "engine/systems/imgui_system.h"
 #include "engine/systems/input_system.h"
 #include "engine/systems/time_system.h"
+#include "engine/systems/lua_system.h"
 #include "engine/systems/immediate_render_system.h"
 #include "engine/components/camera.h"
 #include "engine/components/transform.h"
@@ -82,6 +83,22 @@ namespace R3
 			};
 			Entities::Queries::ForEach<CameraComponent, TransformComponent>(activeWorld, forEachCam);
 		}
+	}
+
+	bool CameraSystem::Init()
+	{
+		auto scripts = GetSystem<LuaSystem>();
+		scripts->RegisterFunction("SetActiveCamera", [this](const R3::Entities::EntityHandle& e) {
+			SetActiveCamera(e);
+		});
+		return true;
+	}
+
+	void CameraSystem::SetActiveCamera(const R3::Entities::EntityHandle& e)
+	{
+		auto entitySys = GetSystem<Entities::EntitySystem>();
+		std::string activeWorldId = entitySys->GetActiveWorldID();
+		m_activeCameras[activeWorldId] = e;
 	}
 
 	bool CameraSystem::FixedUpdate()

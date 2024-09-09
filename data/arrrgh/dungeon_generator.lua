@@ -3,6 +3,7 @@ require 'arrrgh/arrrgh_shared'
 
 Arrrgh_Globals.FillWithExteriorFloor = false
 Arrrgh_Globals.DoRandomWander = true
+Arrrgh_Globals.genCoroutine = nil
 
 function Dungeons_PopulateGeneratorInputs(luacmp)
 	luacmp.m_inputParams:AddIntVec2("Total World Size", ivec2.new(32,32))
