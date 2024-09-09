@@ -28,6 +28,11 @@ namespace R3
 		m_runActiveWorldScripts = v;
 	}
 
+	bool LuaSystem::GetWorldScriptsActive()
+	{
+		return m_runActiveWorldScripts;
+	}
+
 	void LuaSystem::RegisterTickFns()
 	{
 		RegisterTick("LuaSystem::RunFixedUpdateScripts", [this]() {

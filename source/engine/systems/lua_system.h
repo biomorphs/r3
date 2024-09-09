@@ -20,6 +20,7 @@ namespace R3
 		virtual void Shutdown();
 
 		void SetWorldScriptsActive(bool v);
+		bool GetWorldScriptsActive();
 
 		// Register a type with internals states using sol::new_usertype<>
 		// args can contain constructors (via sol::constructors), member functions, member variables, etc

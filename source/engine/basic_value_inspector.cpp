@@ -8,6 +8,8 @@
 
 namespace R3
 {
+	float c_floatEpsilon = 0.00001f;		// smallest change to a float value we register as a modification
+
 	bool BasicValueInspector::Inspect(std::string label, bool currentValue, std::function<void(bool)> setFn)
 	{
 		bool newVal = currentValue;
@@ -37,7 +39,7 @@ namespace R3
 		if (ImGui::InputInt(label.data(), &val, step))
 		{
 			val = glm::clamp(val, minv, maxv);
-			if (val != currentValue)
+			if (glm::abs(val - currentValue) > c_floatEpsilon)
 			{
 				setFn(val);
 				return true;
@@ -52,7 +54,7 @@ namespace R3
 		if (ImGui::InputFloat(label.data(), &val, step))
 		{
 			val = glm::clamp(val, minv, maxv);
-			if (val != currentValue)
+			if (glm::abs(val - currentValue) > c_floatEpsilon)
 			{
 				setFn(val);
 				return true;
@@ -63,25 +65,28 @@ namespace R3
 
 	bool BasicValueInspector::Inspect(std::string_view label, glm::uvec2 currentValue, std::function<void(glm::uvec2)> setFn, glm::uvec2 minv, glm::uvec2 maxv)
 	{
+		glm::ivec2 newValue(currentValue);	// warning, uint -> int
+		ImGui::InputInt2(label.data(), glm::value_ptr(newValue), ImGuiInputTextFlags_EnterReturnsTrue);
+		glm::uvec2 outValue = glm::max(minv, glm::min(glm::uvec2(newValue), maxv));	// warning, int -> uint
+		if (outValue != currentValue)
+		{
+			setFn(outValue);
+			return true;
+		}
 		return false;
 	}
 
 	bool BasicValueInspector::Inspect(std::string_view label, glm::vec3 currentValue, std::function<void(glm::vec3)> setFn, glm::vec3 minv, glm::vec3 maxv)
 	{
-		ImGui::Text(label.data());
-		ImGui::SameLine(100.0f);	// label width?
-		
+		constexpr float errorMargin = 0.000001f;
+		float availableWidth = ImGui::GetContentRegionAvail().x;
+
 		std::string inputId = std::string("##") + label.data() + "_value";
 		glm::vec3 newValue = currentValue;
-		ImGui::PushItemWidth(100.0f);
-		ImGui::InputFloat((inputId + "_x").c_str(), &newValue.x);
-		ImGui::SameLine();
-		ImGui::InputFloat((inputId + "_y").c_str(), &newValue.y);
-		ImGui::SameLine();
-		ImGui::InputFloat((inputId + "_z").c_str(), &newValue.z);
-		ImGui::PopItemWidth();
+		ImGui::InputFloat3(label.data(), glm::value_ptr(newValue), "%f");
+		newValue = glm::max(minv, glm::min(newValue, maxv));
 
-		if (newValue != currentValue)
+		if (glm::distance(newValue, currentValue) >= c_floatEpsilon)
 		{
 			setFn(newValue);
 			return true;
@@ -91,21 +96,13 @@ namespace R3
 
 	bool BasicValueInspector::Inspect(std::string_view label, glm::vec4 currentValue, std::function<void(glm::vec4)> setFn, glm::vec4 minv, glm::vec4 maxv)
 	{
-		ImGui::Text(label.data());
-		ImGui::SameLine(100.0f);	// label width?
-
+		float availableWidth = ImGui::GetContentRegionAvail().x;
 		std::string inputId = std::string("##") + label.data() + "_value";
 		glm::vec4 newValue = currentValue;
-		ImGui::PushItemWidth(100.0f);
-		ImGui::InputFloat((inputId + "_x").c_str(), &newValue.x);
-		ImGui::SameLine();
-		ImGui::InputFloat((inputId + "_y").c_str(), &newValue.y);
-		ImGui::SameLine();
-		ImGui::InputFloat((inputId + "_z").c_str(), &newValue.z);
-		ImGui::PopItemWidth();
-		ImGui::InputFloat((inputId + "_w").c_str(), &newValue.w);
-		ImGui::PopItemWidth();
-		if (newValue != currentValue)
+		ImGui::InputFloat4(label.data(), glm::value_ptr(newValue), "%f");
+		newValue = glm::max(minv, glm::min(newValue, maxv));
+
+		if (glm::distance(newValue, currentValue) >= c_floatEpsilon)
 		{
 			setFn(newValue);
 			return true;
@@ -159,21 +156,85 @@ namespace R3
 		return false;
 	}
 
-	bool BasicValueInspector::InspectEntity(std::string_view label, Entities::EntityHandle current, std::function<void(Entities::EntityHandle)> setFn)
+	bool BasicValueInspector::InspectEntity(std::string_view label, Entities::EntityHandle current, Entities::World* w, std::function<void(Entities::EntityHandle)> setFn)
 	{
-		auto entities = Systems::GetSystem<Entities::EntitySystem>();
-		std::string entityName(entities->GetName());
+		std::string entityName(w->GetEntityDisplayName(current));
 		std::string txt = std::format("{} - {}", label, entityName);
+		bool newValSet = false;
 		if (ImGui::Button(txt.c_str()))
 		{
-
+			m_entitySelectorOpen = true;
 		}
-		return false;
+		if (m_entitySelectorOpen)
+		{
+			std::string windowName = std::format("Select {} Entity", label);
+			ImGui::OpenPopup(windowName.c_str());
+			uint32_t popupFlags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings;
+			if (ImGui::BeginPopupModal(windowName.data(), nullptr, popupFlags))
+			{
+				if (ImGui::Button("None"))
+				{
+					Entities::EntityHandle noEntity;
+					setFn(noEntity);
+					m_entitySelectorOpen = false;
+					newValSet = true;
+				}
+				std::vector<Entities::EntityHandle> allEntities = w->GetActiveEntities();
+				for (const auto& e : allEntities)
+				{
+					std::string txt = std::format("{}##{}", w->GetEntityDisplayName(e), e.GetID());
+					if (ImGui::Button(txt.c_str()))
+					{
+						setFn(e);
+						m_entitySelectorOpen = false;
+						newValSet = true;
+					}
+				}
+				ImGui::EndPopup();
+			}
+		}
+		return newValSet;
 	}
 
 	bool BasicValueInspector::InspectTexture(std::string_view label, TextureHandle current, std::function<void(TextureHandle)> setFn, glm::ivec2 dims)
 	{
-		assert("Todo");
+		auto textures = Systems::GetSystem<TextureSystem>();
+		auto texName = textures->GetTextureName(current);
+		auto texImguiSet = textures->GetTextureImguiSet(current);
+		bool changeTex = false;
+		ImGui::SeparatorText(label.data());
+		if (texImguiSet != nullptr)
+		{
+			ImVec2 size((float)dims.x, (float)dims.y);
+			changeTex = ImGui::ImageButton(texImguiSet, size);
+			ImGui::Text(texName.data());
+		}
+		else
+		{
+			if (current.m_index != -1)
+			{
+				changeTex = ImGui::Button(std::format("{}##{}", texName.data(), label).c_str());
+			}
+			else
+			{
+				changeTex = ImGui::Button(std::format("Select a texture##{}", label).c_str());
+			}
+		}
+
+		if (changeTex)
+		{
+			const char* textureFilter = "";
+			std::string newPath = FileLoadDialog(texName, textureFilter);
+			if (newPath.length() > 0)
+			{
+				// sanitise path, only files relative to data root are allowed
+				auto currentPath = std::filesystem::current_path();
+				auto relativePath = std::filesystem::relative(newPath, currentPath);
+				auto newHandle = textures->LoadTexture(relativePath.string());
+				setFn(newHandle);
+				return true;
+			}
+		}
 		return false;
 	}
 }

@@ -369,8 +369,8 @@ function Dungeons_ActionWalkTo(action)
 				return 'complete'
 			end
 		else
-			local actualSpeed = math.min(action.moveSpeedWorldspace,targetLength * 2.0)	 -- slow down as we reach the target tile
-			local tDelta = R3.GetFixedUpdateDelta()
+			local actualSpeed = action.moveSpeedWorldspace
+			local tDelta = R3.GetVariableDelta()
 			targetDir.x = actualSpeed * (targetDir.x / targetLength)	
 			targetDir.y = actualSpeed * (targetDir.y / targetLength) 
 			targetDir.z = actualSpeed * (targetDir.z / targetLength) 
@@ -388,7 +388,7 @@ function Dungeons_NewWalkAction(walkActor, pathToWalk)
 	local newAction = {}
 	newAction.name = "Walk"
 	newAction.index = actionIndex
-	newAction.moveSpeedWorldspace = 4.0
+	newAction.moveSpeedWorldspace = 8.0
 	newAction.target = walkActor	-- should be an entity
 	newAction.walkPath = pathToWalk
 	newAction.currentTargetNode = 1

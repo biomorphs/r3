@@ -99,7 +99,6 @@ namespace R3
 
 	bool UndoRedoInspector::Inspect(std::string_view label, glm::vec4 currentValue, std::function<void(glm::vec4)> setFn, glm::vec4 minv, glm::vec4 maxv)
 	{
-		constexpr float errorMargin = 0.000001f;
 		float availableWidth = ImGui::GetContentRegionAvail().x;
 
 		std::string inputId = std::string("##") + label.data() + "_value";
