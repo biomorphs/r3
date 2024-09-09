@@ -1,4 +1,6 @@
 set(EngineLib_SourceFiles
+	console_log_widget.h
+	console_log_widget.cpp
 	dda.h
 	dda.inl
 	blackboard.h
@@ -11,7 +13,6 @@ set(EngineLib_SourceFiles
 	intersection_tests.cpp
 	async.h
 	async.cpp
-	callback_array.h
 	model_data.h
 	model_data.cpp
 	texture_handle.h

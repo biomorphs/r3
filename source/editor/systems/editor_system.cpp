@@ -4,6 +4,7 @@
 #include "engine/imgui_menubar_helper.h"
 #include "engine/systems/event_system.h"
 #include "engine/file_dialogs.h"
+#include "engine/console_log_widget.h"
 #include "entities/systems/entity_system.h"
 #include "render/render_system.h"
 #include "core/profiler.h"
@@ -13,6 +14,15 @@
 
 namespace R3
 {
+	EditorSystem::EditorSystem()
+	{
+		m_consoleLogWidget = std::make_unique<ConsoleLogWidget>();
+	}
+
+	EditorSystem::~EditorSystem()
+	{
+	}
+
 	void EditorSystem::RegisterTickFns()
 	{
 		R3_PROF_EVENT();
@@ -241,6 +251,7 @@ namespace R3
 		ApplyStyle();
 		ShowMainMenu();
 		ShowWindowTabs();
+		m_consoleLogWidget->Update();
 		
 		if (m_selectedWindowTab != -1 && m_selectedWindowTab != m_activeWindowIndex)	// window selection changed?
 		{

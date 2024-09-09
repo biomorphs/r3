@@ -3,7 +3,7 @@
 #include "engine/systems.h"
 #include "engine/model_data.h"
 #include "engine/model_data_handle.h"
-#include "engine/callback_array.h"
+#include "core/callback_array.h"
 #include "core/mutex.h"
 
 namespace R3

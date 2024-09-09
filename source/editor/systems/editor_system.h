@@ -6,9 +6,12 @@
 
 namespace R3
 {
+	class ConsoleLogWidget;
 	class EditorSystem : public System
 	{
 	public:
+		EditorSystem();
+		virtual ~EditorSystem();
 		static std::string_view GetName() { return "EditorSystem"; }
 		virtual void RegisterTickFns();
 		virtual bool Init();
@@ -27,6 +30,7 @@ namespace R3
 		void ApplyStyle();
 		std::vector<std::unique_ptr<EditorWindow>> m_allWindows;
 		std::set<EditorWindow*> m_windowsToClose;
+		std::unique_ptr<ConsoleLogWidget> m_consoleLogWidget;
 		int m_selectedWindowTab = -1;
 		int m_activeWindowIndex = -1;
 		bool m_quitRequested = false;

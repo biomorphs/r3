@@ -17,7 +17,6 @@ namespace R3
 		virtual ~LuaSystem();
 		static std::string_view GetName() { return "LuaSystem"; }
 		virtual void RegisterTickFns();
-		virtual void Shutdown();
 
 		void SetWorldScriptsActive(bool v);
 		bool GetWorldScriptsActive();

@@ -16,6 +16,7 @@ set(CoreLib_SourceFiles
 	time.h
 	time.cpp
 	log.h
+	callback_array.h
 	run_external_process.h
 	run_external_process.cpp
 )

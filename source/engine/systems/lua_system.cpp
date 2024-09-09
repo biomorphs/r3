@@ -8,11 +8,32 @@
 #include "core/file_io.h"
 #include <cassert>
 #include <imgui.h>
-
 #include <sol/sol.hpp>
 
 namespace R3
 {
+	// Override the default lua print function with our own to capture any prints
+	static int myLuaPrintOverride(lua_State* ls)
+	{
+		int argCount = lua_gettop(ls);	// num parameters
+		std::string finalString;		// append all params to one line
+		for (int i = 1; i <= argCount; i++) // need to use lua style indexing
+		{
+			size_t strLength = 0;
+			const char* paramStr = luaL_tolstring(ls, i, &strLength);
+			finalString += paramStr;
+			lua_pop(ls, 1); // remove the string
+		}
+		LogInfo("Lua: {}", finalString);
+		return 0;
+	}
+
+	// Global table used for function overrides
+	static const struct luaL_Reg c_myLuaOverrideFns[] = {
+		 {"print", myLuaPrintOverride},
+		{NULL, NULL} /* end of array */
+	};
+
 	LuaSystem::LuaSystem()
 	{
 		m_globalState = std::make_unique<sol::state>();
@@ -93,6 +114,114 @@ namespace R3
 		return result;
 	}
 
+	bool IsSystemTable(std::string_view key)
+	{
+		std::array<const char*, 11> systemTables = {
+			"_G",
+			"math",
+			"package",
+			"os",
+			"coroutine",
+			"bit32",
+			"io",
+			"debug",
+			"table",
+			"string",
+			"base"
+		};
+		for (int i = 0; i < systemTables.size(); ++i)
+		{
+			if (key == systemTables[i])
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	void ShowTableContents(const sol::table& table, std::string_view name)
+	{
+		std::vector<std::string> functions;
+		std::vector<std::string> userDatas;
+		std::vector<std::string> systemTables;
+		std::vector<std::string> userTables;
+		for (const auto& g : table)
+		{
+			const sol::object& key = g.first;
+			const sol::object& val = g.second;
+			auto keyStr = LuaToStr(key);
+			auto valStr = LuaToStr(val);
+			if (valStr == "function")
+			{
+				functions.push_back(keyStr);
+			}
+			else if (valStr == "userdata")
+			{
+				userDatas.push_back(keyStr);
+			}
+			else if (valStr == "table")
+			{
+				if (IsSystemTable(keyStr))
+				{
+					systemTables.push_back(keyStr);
+				}
+				else
+				{
+					userTables.push_back(keyStr);
+				}
+			}
+			else
+			{
+				std::string txt = std::format("{} - {}", keyStr, valStr);
+				ImGui::Text(txt.c_str());
+			}
+		}
+		if (userTables.size() > 0 && ImGui::TreeNode("User Tables"))
+		{
+			std::sort(userTables.begin(), userTables.end());
+			for (const auto& it : userTables)
+			{
+				if (ImGui::TreeNode(it.c_str()))
+				{
+					ShowTableContents(table.get<sol::table>(it), it);
+					ImGui::TreePop();
+				}
+			}
+			ImGui::TreePop();
+		}
+		if (systemTables.size() > 0 && ImGui::TreeNode("System Tables"))
+		{
+			std::sort(systemTables.begin(), systemTables.end());
+			for (const auto& it : systemTables)
+			{
+				if (ImGui::TreeNode(it.c_str()))
+				{
+					ShowTableContents(table.get<sol::table>(it), it);
+					ImGui::TreePop();
+				}
+			}
+			ImGui::TreePop();
+		}
+		if (functions.size() > 0 && ImGui::TreeNode("Functions"))
+		{
+			std::sort(functions.begin(), functions.end());
+			for (const auto& it : functions)
+			{
+				ImGui::Text(it.data());
+			}
+			ImGui::TreePop();
+		}
+		if (userDatas.size() > 0 && ImGui::TreeNode("User Datas"))
+		{
+			std::sort(userDatas.begin(), userDatas.end());
+			for (const auto& it : userDatas)
+			{
+				ImGui::Text(it.data());
+			}
+			ImGui::TreePop();
+		}
+	}
+
 	bool LuaSystem::ShowGui()
 	{
 		R3_PROF_EVENT();
@@ -107,21 +236,11 @@ namespace R3
 			ScopedTryLock lock(m_globalStateMutex);
 			if (lock.IsLocked())
 			{
-				for (const auto& g : *m_globalState)
-				{
-					const sol::object& key = g.first;
-					const sol::object& val = g.second;
-					std::string txt = std::format("{} - {}", LuaToStr(key), LuaToStr(val));
-					ImGui::Text(txt.c_str());
-				}
+				ShowTableContents(m_globalState->globals(), "Globals");
 			}
 			ImGui::End();
 		}
 		return true;
-	}
-
-	void LuaSystem::Shutdown()
-	{
 	}
 
 	sol::protected_function LoadScriptAndGetEntrypoint(sol::state& g, std::string_view scriptPath, std::string_view entryPoint)
@@ -160,6 +279,7 @@ namespace R3
 	bool LuaSystem::RunGC()
 	{
 		R3_PROF_EVENT();
+		ScopedLock lockState(m_globalStateMutex);
 		m_globalState->collect_garbage();
 		return true;
 	}
@@ -193,6 +313,7 @@ namespace R3
 			auto entities = Systems::GetSystem<Entities::EntitySystem>();
 			if (entities->GetActiveWorld())
 			{
+				ScopedLock lockState(m_globalStateMutex);
 				Entities::Queries::ForEach<LuaScriptComponent>(entities->GetActiveWorld(), forEachScriptCmp);
 			}
 		}
@@ -307,6 +428,7 @@ namespace R3
 		};
 		if (entities->GetActiveWorld())
 		{
+			ScopedLock lockState(m_globalStateMutex);
 			Entities::Queries::ForEach<LuaScriptComponent>(entities->GetActiveWorld(), forEachScriptCmp);
 		}
 		return true;
@@ -328,6 +450,11 @@ namespace R3
 			sol::lib::string);
 
 		RegisterBuiltinTypes();
+		
+		// Override any globals in _G
+		lua_getglobal(m_globalState->lua_state(), "_G");
+		luaL_setfuncs(m_globalState->lua_state(), c_myLuaOverrideFns, 0);  // for Lua versions 5.2 or greater
+		lua_pop(m_globalState->lua_state(), 1);
 
 		return true;
 	}
