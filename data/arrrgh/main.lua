@@ -4,6 +4,7 @@ local Arrrgh_Globals = {}
 Arrrgh_Globals.FillWithExteriorFloor = false
 Arrrgh_Globals.DoRandomWander = true
 Arrrgh_Globals.TileDimensions = vec2.new(4,4)
+Arrrgh_Globals.ActionQueue = Fastqueue.new()
 
 function Dungeons_PopulateInputs(luacmp)
 	luacmp.m_inputParams:AddIntVec2("Total World Size", ivec2.new(32,32))
@@ -338,10 +339,61 @@ function Dungeons_SpawnPlayer()
 	actualPos.y = 0
 	Arrrgh.MoveEntities(playerEntity, actualPos)
 	world:RemoveEntity(spawnEntity,false)
+	-- add the actor to the grid somehow 
+	-- grid.addactor(playerEntity, playerTile)
 end
 
 function Dungeons_OnTurnBegin()
 	print('turn begin')
+end
+
+function Dungeons_ActionWalkTo(action)
+	local world = R3.ActiveWorld()
+	local actorTransform = world.GetComponent_Transform(action.target)
+	local gridEntity = world:GetEntityByName('World Grid')
+	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
+	if(actorTransform ~= nil and gridcmp ~= nil and #action.walkPath > 0 and action.currentTargetNode <= #action.walkPath) then 
+		local actorPos = actorTransform:GetPosition()
+		local targetTile = action.walkPath[action.currentTargetNode]
+		local targetPos = vec3.new(targetTile.x * Arrrgh_Globals.TileDimensions.x, 0, targetTile.y * Arrrgh_Globals.TileDimensions.y)
+		targetPos.x = targetPos.x + (Arrrgh_Globals.TileDimensions.x * 0.5)
+		targetPos.z = targetPos.z + (Arrrgh_Globals.TileDimensions.y * 0.5)
+		local targetDir = vec3.new(targetPos.x - actorPos.x, targetPos.y - actorPos.y, targetPos.z - actorPos.z)
+		local targetLength = R3.Vec3Length(targetDir)
+		if(targetLength < 0.1) then -- target reached
+			-- alert the grid that this entity moved tiles
+			-- grid.MoveActor(action.target, targetTile)
+			actorTransform:SetPosition(targetPos)
+			action.currentTargetNode = action.currentTargetNode + 1
+			if(action.currentTargetNode > #action.walkPath) then -- final goal reached
+				return 'complete'
+			end
+		else
+			local actualSpeed = math.min(action.moveSpeedWorldspace,targetLength * 2.0)	 -- slow down as we reach the target tile
+			local tDelta = R3.GetFixedUpdateDelta()
+			targetDir.x = actualSpeed * (targetDir.x / targetLength)	
+			targetDir.y = actualSpeed * (targetDir.y / targetLength) 
+			targetDir.z = actualSpeed * (targetDir.z / targetLength) 
+			actorPos.x = actorPos.x + targetDir.x * tDelta
+			actorPos.y = actorPos.y + targetDir.y * tDelta
+			actorPos.z = actorPos.z + targetDir.z * tDelta
+			actorTransform:SetPosition(actorPos)
+			return 'continue'
+		end
+	end
+	return 'error'
+end
+
+function Dungeons_NewWalkAction(walkActor, pathToWalk)
+	local newAction = {}
+	newAction.name = "Walk"
+	newAction.index = actionIndex
+	newAction.moveSpeedWorldspace = 4.0
+	newAction.target = walkActor	-- should be an entity
+	newAction.walkPath = pathToWalk
+	newAction.currentTargetNode = 1
+	newAction.onRun = Dungeons_ActionWalkTo
+	Fastqueue.pushright(Arrrgh_Globals.ActionQueue, newAction)
 end
 
 function Dungeons_OnChooseActions()
@@ -353,11 +405,16 @@ function Dungeons_OnChooseActions()
 	if(gridcmp ~= nil) then 
 		local playerTile = Arrrgh.GetTileFromWorldspace(gridcmp, playerTransform:GetPosition())
 		local mouseTile = Arrrgh.GetTileUnderMouseCursor(gridcmp)
-		if(playerTile ~= nil and mouseTile ~= nil) then
-			local foundPath = gridcmp:CalculatePath(mouseTile, playerTile)
-			-- if(#foundPath < 20)  then
-				Arrrgh.DebugDrawTiles(gridcmp, foundPath)
-			-- end
+		if(playerTile ~= nil and mouseTile ~= nil and (playerTile.x ~= mouseTile.x or playerTile.y ~= mouseTile.y)) then
+			if(gridcmp:IsTilePassable(mouseTile.x, mouseTile.y)) then
+				local foundPath = gridcmp:CalculatePath(mouseTile, playerTile)
+				if(#foundPath < 20)  then
+					Arrrgh.DebugDrawTiles(gridcmp, foundPath)
+					if(R3.IsRightMouseButtonPressed()) then
+						Dungeons_NewWalkAction(playerEntity, foundPath)
+					end
+				end
+			end
 		end
 	end
 end
@@ -374,7 +431,13 @@ function Dungeons_GameTick(e)
 		Dungeons_OnTurnBegin()
 		Arrrgh_Globals.GameState = 'chooseactions'
 	end
-	if(Arrrgh_Globals.GameState == 'chooseactions') then 
+	if(Fastqueue.hasItems(Arrrgh_Globals.ActionQueue)) then 
+		local theAction = Arrrgh_Globals.ActionQueue[Arrrgh_Globals.ActionQueue.first]
+		local result = theAction.onRun(theAction)
+		if(result == 'complete') then
+			Fastqueue.popleft(Arrrgh_Globals.ActionQueue)
+		end
+	else
 		Dungeons_OnChooseActions()
 	end
 end

@@ -6,6 +6,10 @@ function Fastqueue.new ()
     return {first = 0, last = -1}
 end
 
+function Fastqueue.hasItems(list)
+    return list.first <= list.last
+end
+
 function Fastqueue.pushleft (list, value)
       local first = list.first - 1
       list.first = first

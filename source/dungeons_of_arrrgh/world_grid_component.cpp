@@ -198,12 +198,24 @@ DungeonsWorldGridComponent::WorldTileContents* DungeonsWorldGridComponent::GetCo
 }
 
 // basic A*
+struct OpenSetEntry
+{
+	glm::uvec2 m_tile;
+	float m_fScore;	// F = gScore[n] + H(n)
+	struct Compare {
+		bool operator()(const OpenSetEntry& t0, const OpenSetEntry& t1)
+		{
+			return t0.m_fScore > t1.m_fScore;
+		}
+	};
+};
+
 std::vector<glm::uvec2> DungeonsWorldGridComponent::CalculatePath(glm::uvec2 start, glm::uvec2 end)
 {
 	R3_PROF_EVENT();
-
 	std::unordered_map<glm::uvec2, glm::uvec2> cameFrom;	// track what the previous node was for any visited node (used to create final path)
 	std::unordered_map<glm::uvec2, float> gScore;			// G = cost of the cheapest path from start to another tile
+	std::priority_queue<OpenSetEntry, std::vector<OpenSetEntry>, OpenSetEntry::Compare> openSet;	// min-set of fvalues
 	auto H = [start,end](const glm::uvec2& n) -> float		// H = heuristic, estimated cost of getting from n to the goal
 	{
 		// taxicab distance
@@ -227,23 +239,8 @@ std::vector<glm::uvec2> DungeonsWorldGridComponent::CalculatePath(glm::uvec2 sta
 		}
 		return finalPath;
 	};
-	struct OpenSetEntry
-	{
-		glm::uvec2 m_tile;
-		float m_fScore;	// F = gScore[n] + H(n)
-		struct Compare {
-			bool operator()(const OpenSetEntry& t0, const OpenSetEntry& t1)
-			{
-				return t0.m_fScore > t1.m_fScore;
-			}
-		};
-	};
-	using PriorityQueue = std::priority_queue<OpenSetEntry, std::vector<OpenSetEntry>, OpenSetEntry::Compare>;
-	PriorityQueue openSet;
-
-	gScore[start] = 0.0f;					// distance from start
 	openSet.push({ start, H(start) });		// begin with the first tile
-
+	gScore[start] = 0.0f;					// distance from start
 	while (!openSet.empty())
 	{
 		// find the node with lowest fScore
@@ -253,7 +250,6 @@ std::vector<glm::uvec2> DungeonsWorldGridComponent::CalculatePath(glm::uvec2 sta
 			return ReconstructPath(nextNode);
 		}
 		openSet.pop();
-
 		// now explore neighbours
 		auto doNeighbour = [&](int32_t x, int32_t y) {
 			if (x > 0 && y > 0 && x < (int32_t)m_gridDimensions.x && y < (int32_t)m_gridDimensions.y)

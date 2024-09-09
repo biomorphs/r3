@@ -237,6 +237,9 @@ namespace R3
 		RegisterFunction("RotateQuat", [](const glm::quat& q, float angleDegrees, glm::vec3 axis) -> glm::quat {
 			return glm::rotate(q, angleDegrees, axis);
 		});
+		RegisterFunction("Vec3Length", [](const glm::vec3& v) -> float {
+			return glm::length(v);
+		});
 	}
 
 	bool LuaSystem::RunVariableUpdateScripts()
