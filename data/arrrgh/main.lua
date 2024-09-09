@@ -4,6 +4,8 @@ require 'arrrgh/arrrgh_shared'
 Arrrgh_Globals.GameState = nil
 Arrrgh_Globals.ActionQueue = Fastqueue.new()
 Arrrgh_Globals.CameraHeight = 50
+Arrrgh_Globals.CameraLookAt = vec3.new(0,0,0)
+Arrrgh_Globals.CameraSpeed = vec3.new(128,128,128)
 
 function Dungeons_PathfindTest(e)
 	local world = R3.ActiveWorld()
@@ -152,11 +154,7 @@ function Dungeons_OnChooseActions(playerIndex)
 end
 
 function Dungeons_CameraLookAt(worldPos)
-	local world = R3.ActiveWorld()
-	local cameraEntity = world:GetEntityByName('GameCamera')
-	local cameraTransform = world.GetComponent_Transform(cameraEntity)
-	cameraTransform:SetPosition(vec3.new(worldPos.x, worldPos.y + Arrrgh_Globals.CameraHeight, worldPos.z - 4.0))
-	R3.SetActiveCamera(cameraEntity)
+	Arrrgh_Globals.CameraLookAt = worldPos
 end
 
 function Dungeons_UpdateCamera()
@@ -166,20 +164,40 @@ function Dungeons_UpdateCamera()
 	if(camHeight < 20) then 
 		camHeight = 20
 	end
-	if(camHeight > 1000) then 
-		camHeight = 1000
+	if(camHeight > 200) then 
+		camHeight = 200
 	end
 	Arrrgh_Globals.CameraHeight = camHeight
 
+	-- move the camera towards the lookAt point  
+	local world = R3.ActiveWorld()
+	local cameraEntity = world:GetEntityByName('GameCamera')
+	local cameraTransform = world.GetComponent_Transform(cameraEntity)
+	local cameraPos = cameraTransform:GetPosition()
+	local targetPosition = vec3.new(Arrrgh_Globals.CameraLookAt.x, Arrrgh_Globals.CameraLookAt.y + Arrrgh_Globals.CameraHeight, Arrrgh_Globals.CameraLookAt.z - 4.0)
+	local camToTarget = vec3.new(targetPosition.x - cameraPos.x,targetPosition.y - cameraPos.y,targetPosition.z - cameraPos.z)
+	local targetLength = R3.Vec3Length(camToTarget)
+	local speedLimit = targetLength * 2	-- scale max speed by distance to goal
+	local actualSpeed = vec3.new(math.min(Arrrgh_Globals.CameraSpeed.x, speedLimit),math.min(Arrrgh_Globals.CameraSpeed.y, speedLimit),math.min(Arrrgh_Globals.CameraSpeed.z, speedLimit))
+	camToTarget.x = camToTarget.x / targetLength
+	camToTarget.y = camToTarget.y / targetLength
+	camToTarget.z = camToTarget.z / targetLength
+	if(targetLength > 0.01) then
+		cameraPos.x = cameraPos.x + (camToTarget.x * actualSpeed.x * R3.GetVariableDelta())
+		cameraPos.y = cameraPos.y + (camToTarget.y * actualSpeed.y * R3.GetVariableDelta())
+		cameraPos.z = cameraPos.z + (camToTarget.z * actualSpeed.z * R3.GetVariableDelta())
+		cameraTransform:SetPosition(cameraPos)
+	end
+end
+
+function Dungeons_GameTick(e)
+	 -- keep looking at the player for now
 	local world = R3.ActiveWorld()
 	local playerEntity = world:GetEntityByName('PlayerActor')
 	local playerTransform = world.GetComponent_Transform(playerEntity)
 	if(playerTransform ~= nil) then 
 		Dungeons_CameraLookAt(playerTransform:GetPosition())
 	end
-end
-
-function Dungeons_GameTick(e)
 	Dungeons_UpdateCamera()
 	if(Arrrgh_Globals.GameState == nil) then 
 		Arrrgh_Globals.GameState = 'start'

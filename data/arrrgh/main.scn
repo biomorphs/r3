@@ -37,17 +37,17 @@
      ],
      "IntVec2s": [
       {
+       "Key": "Total World Size",
+       "Value": {
+        "X": 64,
+        "Y": 64
+       }
+      },
+      {
        "Key": "Min Building Size",
        "Value": {
         "X": 4,
         "Y": 4
-       }
-      },
-      {
-       "Key": "Total World Size",
-       "Value": {
-        "X": 64,
-        "Y": 128
        }
       },
       {
@@ -58,32 +58,32 @@
        }
       },
       {
-       "Key": "Player Spawn Safe Area (Min/Max)",
-       "Value": {
-        "X": 2,
-        "Y": 4
-       }
-      },
-      {
        "Key": "Level Exit Safe Area (Min/Max)",
        "Value": {
         "X": 3,
         "Y": 5
        }
+      },
+      {
+       "Key": "Player Spawn Safe Area (Min/Max)",
+       "Value": {
+        "X": 2,
+        "Y": 4
+       }
       }
      ],
      "Ints": [
       {
-       "Key": "Max Buildings",
-       "Value": 200
+       "Key": "Min Tower Radius",
+       "Value": 5
       },
       {
        "Key": "Tower Wall Thickness",
        "Value": 1
       },
       {
-       "Key": "Min Tower Radius",
-       "Value": 5
+       "Key": "Max Buildings",
+       "Value": 200
       },
       {
        "Key": "Max Building Iterations",
@@ -160,8 +160,8 @@
    "Parent": 4294967295,
    "Transform": {
     "Orientation": {
-     "W": 0.766044557094574,
-     "X": 0.6427876353263855,
+     "W": 0.7933533191680908,
+     "X": 0.6087614297866821,
      "Y": 0.0,
      "Z": 0.0
     },
