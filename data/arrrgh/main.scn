@@ -102,11 +102,11 @@
     },
     "OnVariableUpdate": {
      "EntryPoint": "Dungeons_GenerateWorld",
-     "SourcePath": "arrrgh\\main.lua"
+     "SourcePath": "arrrgh\\dungeon_generator.lua"
     },
     "PopulateInputs": {
-     "EntryPoint": "Dungeons_PopulateInputs",
-     "SourcePath": "arrrgh\\main.lua"
+     "EntryPoint": "Dungeons_PopulateGeneratorInputs",
+     "SourcePath": "arrrgh\\dungeon_generator.lua"
     }
    },
    "Name": "Dungeon Generator",
