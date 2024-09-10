@@ -76,7 +76,7 @@ DungeonsWorldGridComponent::VisibleTiles DungeonsWorldGridComponent::FindVisible
 		{
 			// find the distance to the center of this cell
 			const glm::vec2 cellCenter(x + 0.5f, z + 0.5f);
-			const int voxelsPerCell = 2;	// more voxels = more accurate results, but slower
+			const int voxelsPerCell = 1;	// more voxels = more accurate results, but slower
 			const glm::vec3 voxelSize(1.0f / (float)voxelsPerCell);
 			const float distanceToPoint = glm::ceil(glm::distance(glm::vec2(vCenter), cellCenter));
 			const bool inRadius = distanceToPoint <= distance;
@@ -252,7 +252,7 @@ std::vector<glm::uvec2> DungeonsWorldGridComponent::CalculatePath(glm::uvec2 sta
 		openSet.pop();
 		// now explore neighbours
 		auto doNeighbour = [&](int32_t x, int32_t y) {
-			if (x > 0 && y > 0 && x < (int32_t)m_gridDimensions.x && y < (int32_t)m_gridDimensions.y)
+			if (x >= 0 && y >= 0 && x < (int32_t)m_gridDimensions.x && y < (int32_t)m_gridDimensions.y)
 			{
 				glm::uvec2 neighbourTile(x, y);
 				if (IsTilePassable(x, y))	// we only care about walkable tiles

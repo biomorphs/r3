@@ -6,6 +6,7 @@
 #include "engine/systems/input_system.h"
 #include "engine/systems/camera_system.h"
 #include "engine/components/transform.h"
+#include "engine/components/static_mesh.h"
 #include "engine/intersection_tests.h"
 #include "render/render_system.h"
 #include "entities/systems/entity_system.h"
@@ -170,6 +171,28 @@ void DungeonsOfArrrgh::DebugDrawTiles(const DungeonsWorldGridComponent& grid, Co
 	}
 }
 
+void DungeonsOfArrrgh::SetVisualEntitiesVisible(const DungeonsWorldGridComponent& grid, R3::Entities::World& w, const std::unordered_set<glm::uvec2>& tiles, bool visible)
+{
+	R3_PROF_EVENT();
+	for (const auto& tile : tiles)
+	{
+		auto contents = grid.GetContents(tile.x, tile.y);
+		if (contents)
+		{
+			std::vector<R3::Entities::EntityHandle> children;
+			w.GetAllChildren(contents->m_visualEntity, children);
+			for (const auto& child : children)
+			{
+				auto meshComponent = w.GetComponent<R3::StaticMeshComponent>(child);
+				if (meshComponent)
+				{
+					meshComponent->m_shouldDraw = visible;
+				}
+			}
+		}
+	}
+}
+
 void DungeonsOfArrrgh::UpdateVision(DungeonsWorldGridComponent& grid, R3::Entities::World& w)
 {
 	R3_PROF_EVENT();
@@ -183,6 +206,7 @@ void DungeonsOfArrrgh::UpdateVision(DungeonsWorldGridComponent& grid, R3::Entiti
 			{
 				const uint32_t visionDistance = (uint32_t)ceil(v.m_visionMaxDistance);
 				v.m_visibleTiles = grid.FindVisibleTiles(glm::ivec2(tileMaybe.value()), visionDistance);
+				SetVisualEntitiesVisible(grid, w, v.m_visibleTiles, true);	// make tiles visible for rendering 
 			}
 			v.m_needsUpdate = false;
 		}
@@ -298,13 +322,19 @@ void DungeonsOfArrrgh::GenerateWorldVisuals(const R3::Entities::EntityHandle& e,
 					newTileEntities.clear();
 					GenerateTileVisuals(x, z, grid, newTileEntities);
 					MoveEntitiesWorldspace(newTileEntities, basePos);	// move all new entities to the tile pos
-					for (auto impChild : newTileEntities)	// make sure any imported entities have the correct parent
+					for (auto impChild : newTileEntities)	// make sure any imported entities have the correct parent and are not visible by default
 					{
+						auto renderComponent = activeWorld->GetComponent<R3::StaticMeshComponent>(impChild);
+						if (renderComponent)
+						{
+							renderComponent->m_shouldDraw = false;
+						}
 						if (activeWorld->GetParent(impChild).GetID() == -1)
 						{
 							activeWorld->SetParent(impChild, newChild);
 						}
 					}
+					tile->m_visualEntity = newChild;
 				}
 			}
 		}

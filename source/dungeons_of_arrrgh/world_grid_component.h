@@ -21,6 +21,7 @@ public:
 			} m_tileData;
 		};
 		std::vector<R3::Entities::EntityHandle> m_entitiesInTile;
+		R3::Entities::EntityHandle m_visualEntity;	// root of any visual entities
 	};
 
 	using VisibleTiles = std::unordered_set<glm::uvec2>;

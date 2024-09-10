@@ -24,6 +24,7 @@ public:
 	std::optional<glm::uvec2> GetTileFromWorldspace(class DungeonsWorldGridComponent& grid, glm::vec3 worldspace);
 	std::optional<glm::uvec2> GetTileUnderMouseCursor(class DungeonsWorldGridComponent& grid);
 private:	
+	void SetVisualEntitiesVisible(const DungeonsWorldGridComponent& grid, R3::Entities::World& w, const std::unordered_set<glm::uvec2>& tiles, bool visible);
 	void UpdateVision(class DungeonsWorldGridComponent& grid, R3::Entities::World& w);
 	void DebugDrawVisibleTiles(const class DungeonsWorldGridComponent& grid, R3::Entities::World& w);
 	void MoveEntitiesWorldspace(const std::vector<R3::Entities::EntityHandle>& targets, glm::vec3 offset);
@@ -38,5 +39,5 @@ private:
 	std::unordered_map<std::string, nlohmann::json> m_generateVisualsEntityCache;	// cache serialised entities for speed
 	glm::vec3 m_wsGridOffset = { 0,0,0 };
 	glm::vec2 m_wsGridScale = { 4, 4 };
-	bool m_debugDrawVisibleTiles = true;
+	bool m_debugDrawVisibleTiles = false;
 };
