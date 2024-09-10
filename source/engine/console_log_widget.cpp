@@ -40,14 +40,24 @@ namespace R3
 		bool isOpen = embedAsChild ? ImGui::BeginChild(txt.c_str(), { 0,0 }, true) : ImGui::Begin(txt.c_str(), &m_isDisplayed);
 		if (isOpen)
 		{
+			ScopedLock lock(m_historyMutex);
+			if (ImGui::Button("Clear"))
+			{
+				m_logHistory.clear();
+			}
 			ImVec2 contentRegion = ImGui::GetContentRegionAvail();
 			ImGuiWindowFlags window_flags = ImGuiWindowFlags_HorizontalScrollbar;
 			ImGui::BeginChild("LogText", ImVec2(contentRegion.x, contentRegion.y), false, window_flags);
-			ScopedLock lock(m_historyMutex);
-			for (int i = 0; i < m_logHistory.size(); i++)
+			ImGuiListClipper clipper;
+			clipper.Begin(static_cast<int>(m_logHistory.size()), ImGui::GetTextLineHeightWithSpacing());
+			while (clipper.Step())
 			{
-				ImGui::TextColored(c_logTextColours[(int32_t)m_logHistory[i].m_type], m_logHistory[i].m_txt.c_str());
+				for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
+				{
+					ImGui::TextColored(c_logTextColours[(int32_t)m_logHistory[i].m_type], m_logHistory[i].m_txt.c_str());
+				}
 			}
+			clipper.End();
 			// autoscrolling
 			if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
 			{

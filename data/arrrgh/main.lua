@@ -8,19 +8,15 @@ Arrrgh_Globals.CameraLookAt = vec3.new(0,0,0)
 Arrrgh_Globals.CameraSpeed = vec3.new(128,128,128)
 
 -- todo 
+-- fog of war object 
+	-- should update every time player/owner moves
+	-- should update based on contents of vis component
+--	any tiles that were ever visible are always visible
 -- add some kind of component to identify world actors/objects/things 
 --	it should contain the tile, and from there on, we should not be using world transform -> tile! 
 --	tile component should be updated via grid 
 --	and entity stored in the grid tile 
--- add flag to renderable to allow disabling of rendering?
---	profile!
---	dont abuse it!
--- if visible flag works
---		modify tile visual entity visibility based on player visibility 
--- fog of war 
---	keep track of all tiles that have been visible at any point (bitfields?)
 	-- minimap?!
---	always draw those world tiles
 --	only draw enemies within player visibility(?)
 --		how did hunters do it? pretty sure they were visible or 'ghosts'
 function Dungeons_PathfindTest(e)
@@ -65,13 +61,14 @@ function Dungeons_SpawnPlayer()
 	local spawnTransform = world.GetComponent_Transform(spawnEntity)
 	local playerEntity = world:ImportScene('arrrgh/actors/player_actor.scn')
 	local actualPos = spawnTransform:GetPosition()
+	local vision = world.GetComponent_DungeonsVisionComponent(playerEntity[1])
+	vision.m_needsUpdate = true
 	actualPos.y = 0
-	Arrrgh.MoveEntities(playerEntity, actualPos)
+	Arrrgh.MoveEntitiesWorldspace(playerEntity, actualPos)
 	world:RemoveEntity(spawnEntity,false)
 	-- add the actor to the grid somehow 
 	-- grid.addactor(playerEntity, playerTile)
 end
-
 
 function Dungeons_OnTurnBegin()
 	print('turn begin')
@@ -111,6 +108,10 @@ function Dungeons_ActionWalkTo(action)
 		local targetLength = R3.Vec3Length(targetDir)
 		if(targetLength < 0.1) then -- target reached
 			-- grid.MoveActor(action.target, targetTile)	-- alert the grid that this entity changed tiles
+			local vision = world.GetComponent_DungeonsVisionComponent(action.target)
+			if(vision ~= nil) then
+				vision.m_needsUpdate = true
+			end
 			actorTransform:SetPosition(targetPos)
 			if(action.currentTargetNode ~= 1) then
 				Dungeons_SpendActionPoint()	-- each node after the first costs an action point

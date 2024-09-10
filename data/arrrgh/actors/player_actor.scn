@@ -1,14 +1,15 @@
 {
  "AllEntities": [
   {
-   "Dungeons_VisionComponent": {
+   "DungeonsVisionComponent": {
     "MaxDistance": 16.0,
-    "NeedsUpdate": true
+    "NeedsUpdate": false
    },
    "ID": 0,
    "Name": "PlayerActor",
    "Parent": 4294967295,
    "StaticMesh": {
+    "Draw": true,
     "MaterialsOverride": {
      "ID": 0
     },

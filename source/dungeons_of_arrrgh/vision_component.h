@@ -8,7 +8,7 @@
 class DungeonsVisionComponent
 {
 public:
-	static std::string_view GetTypeName() { return "Dungeons_VisionComponent"; }
+	static std::string_view GetTypeName() { return "DungeonsVisionComponent"; }
 	static void RegisterScripts(R3::LuaSystem&);
 	void SerialiseJson(R3::JsonSerialiser& s);
 	void Inspect(const R3::Entities::EntityHandle& e, R3::Entities::World* w, R3::ValueInspector& i);

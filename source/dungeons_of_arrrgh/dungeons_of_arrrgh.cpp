@@ -62,8 +62,8 @@ bool DungeonsOfArrrgh::Init()
 	scripts->RegisterFunction("DebugDrawTiles", [this](DungeonsWorldGridComponent* grid, std::vector<glm::uvec2>& tiles) {
 		DebugDrawTiles(*grid, tiles);
 	}, scriptNamespace);
-	scripts->RegisterFunction("MoveEntities", [this](const std::vector<R3::Entities::EntityHandle>& targets, glm::vec3 offset) {
-		MoveEntities(targets, offset);
+	scripts->RegisterFunction("MoveEntitiesWorldspace", [this](const std::vector<R3::Entities::EntityHandle>& targets, glm::vec3 offset) {
+		MoveEntitiesWorldspace(targets, offset);
 	}, scriptNamespace);
 	scripts->RegisterFunction("GetTileFromWorldspace", [this](DungeonsWorldGridComponent* grid, glm::vec3 worldspace) {
 		return GetTileFromWorldspace(*grid, worldspace);
@@ -184,13 +184,14 @@ void DungeonsOfArrrgh::UpdateVision(DungeonsWorldGridComponent& grid, R3::Entiti
 				const uint32_t visionDistance = (uint32_t)ceil(v.m_visionMaxDistance);
 				v.m_visibleTiles = grid.FindVisibleTiles(glm::ivec2(tileMaybe.value()), visionDistance);
 			}
+			v.m_needsUpdate = false;
 		}
 		return true;
 	};
 	R3::Entities::Queries::ForEachAsync<DungeonsVisionComponent, R3::TransformComponent>(&w, 1, forEachVision);
 }
 
-void DungeonsOfArrrgh::MoveEntities(const std::vector<R3::Entities::EntityHandle>& targets, glm::vec3 offset)
+void DungeonsOfArrrgh::MoveEntitiesWorldspace(const std::vector<R3::Entities::EntityHandle>& targets, glm::vec3 offset)
 {
 	R3_PROF_EVENT();
 	auto entities = GetSystem<R3::Entities::EntitySystem>();
@@ -296,7 +297,7 @@ void DungeonsOfArrrgh::GenerateWorldVisuals(const R3::Entities::EntityHandle& e,
 					activeWorld->SetEntityName(newChild, childName);
 					newTileEntities.clear();
 					GenerateTileVisuals(x, z, grid, newTileEntities);
-					MoveEntities(newTileEntities, basePos);	// move all new entities to the tile pos
+					MoveEntitiesWorldspace(newTileEntities, basePos);	// move all new entities to the tile pos
 					for (auto impChild : newTileEntities)	// make sure any imported entities have the correct parent
 					{
 						if (activeWorld->GetParent(impChild).GetID() == -1)

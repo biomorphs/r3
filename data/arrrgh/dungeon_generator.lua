@@ -186,7 +186,7 @@ function Dungeons_CreatePlayerSpawn(grid, inParams, spawnPos)
 	local actualPos = vec3.new(spawnPos.x * Arrrgh_Globals.TileDimensions.x, 0, spawnPos.y * Arrrgh_Globals.TileDimensions.y)
 	actualPos.x = actualPos.x + (Arrrgh_Globals.TileDimensions.x * 0.5)
 	actualPos.z = actualPos.z + (Arrrgh_Globals.TileDimensions.y * 0.5)
-	Arrrgh.MoveEntities(spawnPointEntities, actualPos)
+	Arrrgh.MoveEntitiesWorldspace(spawnPointEntities, actualPos)
 end
 
 function Dungeons_CreateLevelExit(grid, inParams, pos)
@@ -195,7 +195,7 @@ function Dungeons_CreateLevelExit(grid, inParams, pos)
 	local actualPos = vec3.new(pos.x * Arrrgh_Globals.TileDimensions.x, 0, pos.y * Arrrgh_Globals.TileDimensions.y)
 	actualPos.x = actualPos.x + (Arrrgh_Globals.TileDimensions.x * 0.5)
 	actualPos.z = actualPos.z + (Arrrgh_Globals.TileDimensions.y * 0.5)
-	Arrrgh.MoveEntities(levelExit, actualPos)
+	Arrrgh.MoveEntitiesWorldspace(levelExit, actualPos)
 end
 
 function Dungeons_GenerateLevelExitSafeArea(grid, inParams, goalPos)
