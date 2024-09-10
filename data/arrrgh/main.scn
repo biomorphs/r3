@@ -4,12 +4,12 @@
    "EnvironmentSettings": {
     "Sky Ambient": 0.00800000037997961,
     "Sky Colour": {
-     "X": 0.0,
-     "Y": 0.0,
-     "Z": 0.0
+     "X": 0.2800956070423126,
+     "Y": 0.649193525314331,
+     "Z": 0.36344030499458313
     },
     "Sun Ambient": 0.004999999888241291,
-    "Sun Brightness": 0.25,
+    "Sun Brightness": 1.0,
     "Sun Colour": {
      "X": 1.0,
      "Y": 0.9691076874732971,
@@ -37,17 +37,17 @@
      ],
      "IntVec2s": [
       {
-       "Key": "Total World Size",
-       "Value": {
-        "X": 64,
-        "Y": 64
-       }
-      },
-      {
        "Key": "Min Building Size",
        "Value": {
         "X": 4,
         "Y": 4
+       }
+      },
+      {
+       "Key": "Total World Size",
+       "Value": {
+        "X": 64,
+        "Y": 64
        }
       },
       {
@@ -58,32 +58,32 @@
        }
       },
       {
-       "Key": "Level Exit Safe Area (Min/Max)",
-       "Value": {
-        "X": 3,
-        "Y": 5
-       }
-      },
-      {
        "Key": "Player Spawn Safe Area (Min/Max)",
        "Value": {
         "X": 2,
         "Y": 4
        }
+      },
+      {
+       "Key": "Level Exit Safe Area (Min/Max)",
+       "Value": {
+        "X": 3,
+        "Y": 5
+       }
       }
      ],
      "Ints": [
       {
-       "Key": "Min Tower Radius",
-       "Value": 5
+       "Key": "Max Buildings",
+       "Value": 200
       },
       {
        "Key": "Tower Wall Thickness",
        "Value": 1
       },
       {
-       "Key": "Max Buildings",
-       "Value": 200
+       "Key": "Min Tower Radius",
+       "Value": 5
       },
       {
        "Key": "Max Building Iterations",

@@ -298,7 +298,7 @@ namespace R3
 		uint32_t thisInstanceOffset = m_currentInstanceBufferStart;
 		auto forEach = [&](const Entities::EntityHandle& e, StaticMeshComponent& s, TransformComponent& t)
 		{
-			if (s.m_modelHandle.m_index == -1)
+			if (s.m_modelHandle.m_index == -1 || !s.m_shouldDraw)
 			{
 				return true;
 			}

@@ -17,5 +17,6 @@ namespace R3
 
 		ModelDataHandle m_modelHandle;
 		Entities::EntityHandle m_materialOverride;
+		bool m_shouldDraw = true;
 	};
 }

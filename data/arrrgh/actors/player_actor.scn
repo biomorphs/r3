@@ -1,12 +1,16 @@
 {
  "AllEntities": [
   {
-   "ID": 2,
+   "Dungeons_VisionComponent": {
+    "MaxDistance": 16.0,
+    "NeedsUpdate": true
+   },
+   "ID": 0,
    "Name": "PlayerActor",
    "Parent": 4294967295,
    "StaticMesh": {
     "MaterialsOverride": {
-     "ID": 2
+     "ID": 0
     },
     "Model": {
      "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"

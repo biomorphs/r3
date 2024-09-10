@@ -49,17 +49,20 @@ namespace R3
 		std::vector<HitEntityRecord> hitEntities;
 		auto forEachEntity = [&](const Entities::EntityHandle& e, StaticMeshComponent& smc, TransformComponent& t)
 		{
-			const auto modelData = GetSystem<ModelDataSystem>()->GetModelData(smc.m_modelHandle);
-			if (modelData.m_data)
+			if (smc.m_shouldDraw)
 			{
-				// transform the ray into model space so we can do a simple AABB test
-				const glm::mat4 inverseTransform = glm::inverse(t.GetWorldspaceMatrix());
-				const auto rs = glm::vec3(inverseTransform * glm::vec4(rayStart, 1));
-				const auto re = glm::vec3(inverseTransform * glm::vec4(rayEnd, 1));
-				float hitT = 0.0f;
-				if (RayIntersectsAABB(rs, re, modelData.m_data->m_boundsMin, modelData.m_data->m_boundsMax, hitT))
+				const auto modelData = GetSystem<ModelDataSystem>()->GetModelData(smc.m_modelHandle);
+				if (modelData.m_data)
 				{
-					hitEntities.push_back({ e, hitT });
+					// transform the ray into model space so we can do a simple AABB test
+					const glm::mat4 inverseTransform = glm::inverse(t.GetWorldspaceMatrix());
+					const auto rs = glm::vec3(inverseTransform * glm::vec4(rayStart, 1));
+					const auto re = glm::vec3(inverseTransform * glm::vec4(rayEnd, 1));
+					float hitT = 0.0f;
+					if (RayIntersectsAABB(rs, re, modelData.m_data->m_boundsMin, modelData.m_data->m_boundsMax, hitT))
+					{
+						hitEntities.push_back({ e, hitT });
+					}
 				}
 			}
 			return true;

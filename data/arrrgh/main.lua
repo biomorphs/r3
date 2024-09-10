@@ -7,6 +7,22 @@ Arrrgh_Globals.CameraHeight = 50
 Arrrgh_Globals.CameraLookAt = vec3.new(0,0,0)
 Arrrgh_Globals.CameraSpeed = vec3.new(128,128,128)
 
+-- todo 
+-- add some kind of component to identify world actors/objects/things 
+--	it should contain the tile, and from there on, we should not be using world transform -> tile! 
+--	tile component should be updated via grid 
+--	and entity stored in the grid tile 
+-- add flag to renderable to allow disabling of rendering?
+--	profile!
+--	dont abuse it!
+-- if visible flag works
+--		modify tile visual entity visibility based on player visibility 
+-- fog of war 
+--	keep track of all tiles that have been visible at any point (bitfields?)
+	-- minimap?!
+--	always draw those world tiles
+--	only draw enemies within player visibility(?)
+--		how did hunters do it? pretty sure they were visible or 'ghosts'
 function Dungeons_PathfindTest(e)
 	local world = R3.ActiveWorld()
 	local gridEntity = world:GetEntityByName('World Grid')
