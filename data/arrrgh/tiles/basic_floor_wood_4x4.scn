@@ -1,10 +1,11 @@
 {
  "AllEntities": [
   {
-   "ID": 3,
+   "ID": 0,
    "Name": "floor_wood_large.gltf",
    "Parent": 4294967295,
    "StaticMesh": {
+    "Draw": true,
     "MaterialsOverride": {
      "ID": 4294967295
     },
@@ -24,6 +25,7 @@
      "Y": 0.0,
      "Z": 2.0
     },
+    "Relative": false,
     "Scale": {
      "X": 1.0,
      "Y": 1.0,

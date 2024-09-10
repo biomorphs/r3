@@ -30,6 +30,7 @@ namespace R3
 		bool IsRelativeToParent() const { return m_isRelative; }
 		void SetIsRelative(bool r) { m_isRelative = r; }
 		void SetPositionWorldSpace(const Entities::EntityHandle& e, Entities::World& w, glm::vec3 p);				// position will be recalculated relative to parent
+		void SetPositionWorldSpaceNoInterpolation(const Entities::EntityHandle& e, Entities::World& w, glm::vec3 p);
 		glm::mat4 GetWorldspaceMatrix(const Entities::EntityHandle& e, Entities::World& w) const;				// no interpolation, always returns the latest value
 		glm::mat4 GetWorldspaceInterpolated(const Entities::EntityHandle& e, Entities::World& w) const;			// interpolate between the previous + current version, based on fixed delta time remaining
 

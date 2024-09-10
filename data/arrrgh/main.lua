@@ -11,7 +11,9 @@ Arrrgh_Globals.CameraSpeed = vec3.new(128,128,128)
 -- fog of war?
 	-- should update every time player/owner moves
 	-- should update based on contents of vis component
---	any tiles that were ever visible are always visible +any object in those tiles
+	-- I kinda hate it
+	--	maybe just a radius instead of visible tiles?
+	--	just for AI?
 -- add some kind of component to identify world actors/objects/things 
 --	it should contain the tile, and from there on, we should not be using world transform -> tile! 
 --	tile component should be updated via grid 

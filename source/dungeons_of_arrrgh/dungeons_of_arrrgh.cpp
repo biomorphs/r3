@@ -222,9 +222,14 @@ void DungeonsOfArrrgh::MoveEntitiesWorldspace(const std::vector<R3::Entities::En
 	auto activeWorld = entities->GetActiveWorld();
 	for (auto target : targets)
 	{
+		// only move entities that have no parent transform
 		if (auto transCmp = activeWorld->GetComponent<R3::TransformComponent>(target))
 		{
-			transCmp->SetPositionNoInterpolation(transCmp->GetPosition() + offset);
+			if (!transCmp->IsRelativeToParent())
+			{
+				auto oldPos = glm::vec3(transCmp->GetWorldspaceMatrix(target, *activeWorld)[3]);
+				transCmp->SetPositionWorldSpaceNoInterpolation(target, *activeWorld, oldPos + offset);
+			}
 		}		
 	}
 }

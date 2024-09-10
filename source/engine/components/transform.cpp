@@ -45,6 +45,27 @@ namespace R3
 		i.Inspect("Is Relative to Parent", m_isRelative, InspectProperty(&TransformComponent::m_isRelative, e, w));
 	}
 
+	void TransformComponent::SetPositionWorldSpaceNoInterpolation(const Entities::EntityHandle& e, Entities::World& w, glm::vec3 p)
+	{
+		// worldspace -> local space via parent inverse transform
+		if (m_isRelative)
+		{
+			glm::mat4 parentMatrix = glm::identity<glm::mat4>();
+			auto parentEntity = w.GetParent(e);
+			auto parentTransform = w.GetComponent<TransformComponent>(parentEntity);
+			if (parentTransform)
+			{
+				parentMatrix = parentTransform->GetWorldspaceMatrix(parentEntity, w);	// recursive
+			}
+			glm::vec4 newPos = glm::inverse(parentMatrix) * glm::vec4(p, 1);
+			SetPositionNoInterpolation(glm::vec3(newPos));
+		}
+		else
+		{
+			SetPositionNoInterpolation(p);
+		}
+	}
+
 	void TransformComponent::SetPositionWorldSpace(const Entities::EntityHandle& e, Entities::World& w, glm::vec3 p)
 	{
 		// worldspace -> local space via parent inverse transform
