@@ -200,7 +200,7 @@ void DungeonsOfArrrgh::UpdateVision(DungeonsWorldGridComponent& grid, R3::Entiti
 		if (v.m_needsUpdate)
 		{
 			v.m_visibleTiles.clear();
-			glm::vec3 worldSpacePos(t.GetWorldspaceMatrix()[3]);	// don't need interpolation, we are in fixed update
+			glm::vec3 worldSpacePos(t.GetWorldspaceMatrix(e, w)[3]);	// don't need interpolation, we are in fixed update
 			auto tileMaybe = GetTileFromWorldspace(grid, worldSpacePos);	
 			if (tileMaybe.has_value() && v.m_visionMaxDistance > 0)
 			{

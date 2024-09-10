@@ -47,6 +47,7 @@ namespace R3
 			float m_hitDistance;
 		};
 		std::vector<HitEntityRecord> hitEntities;
+		auto activeWorld = entities->GetActiveWorld();
 		auto forEachEntity = [&](const Entities::EntityHandle& e, StaticMeshComponent& smc, TransformComponent& t)
 		{
 			if (smc.m_shouldDraw)
@@ -55,7 +56,7 @@ namespace R3
 				if (modelData.m_data)
 				{
 					// transform the ray into model space so we can do a simple AABB test
-					const glm::mat4 inverseTransform = glm::inverse(t.GetWorldspaceMatrix());
+					const glm::mat4 inverseTransform = glm::inverse(t.GetWorldspaceMatrix(e, *activeWorld));
 					const auto rs = glm::vec3(inverseTransform * glm::vec4(rayStart, 1));
 					const auto re = glm::vec3(inverseTransform * glm::vec4(rayEnd, 1));
 					float hitT = 0.0f;
@@ -67,7 +68,7 @@ namespace R3
 			}
 			return true;
 		};
-		Entities::Queries::ForEach<StaticMeshComponent, TransformComponent>(entities->GetActiveWorld(), forEachEntity);
+		Entities::Queries::ForEach<StaticMeshComponent, TransformComponent>(activeWorld, forEachEntity);
 
 		// now find the closest hit entity that is in front of the ray
 		Entities::EntityHandle closestHit = {};

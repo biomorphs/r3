@@ -76,7 +76,7 @@ namespace R3
 		{
 			Camera tmpCam;	// used to build frustum
 			auto forEachCam = [&](const Entities::EntityHandle& e, CameraComponent& c, TransformComponent& t) {
-				ApplyEntityToCamera(c, t, tmpCam);
+				ApplyEntityToCamera(*activeWorld, e, c, t, tmpCam);
 				Frustum frustum(tmpCam.ProjectionMatrix() * tmpCam.ViewMatrix());
 				GetSystem<ImmediateRenderSystem>()->m_imRender->AddFrustum(frustum, {1,1,0,1});
 				return true;
@@ -120,13 +120,13 @@ namespace R3
 		return true;
 	}
 
-	void CameraSystem::ApplyEntityToCamera(const CameraComponent& camCmp, const TransformComponent& transCmp, Camera& target)
+	void CameraSystem::ApplyEntityToCamera(Entities::World& w, Entities::EntityHandle camEntity, const CameraComponent& camCmp, const TransformComponent& transCmp, Camera& target)
 	{
 		R3_PROF_EVENT();
 		auto renderSys = GetSystem<RenderSystem>();
 		const auto windowSize = renderSys->GetWindowExtents();
 		const float aspectRatio = windowSize.x / windowSize.y;
-		const glm::mat4 interpolatedTransform = transCmp.GetWorldspaceInterpolated();
+		const glm::mat4 interpolatedTransform = transCmp.GetWorldspaceInterpolated(camEntity, w);
 		glm::mat3 rotationPart(interpolatedTransform);
 		const glm::vec3 lookUp = rotationPart * glm::vec3(0.0f, 1.0f, 0.0f);
 		const glm::vec3 lookDirection = rotationPart * glm::vec3(0.0f, 0.0f, 1.0f);
@@ -185,7 +185,7 @@ namespace R3
 				auto transCmp = activeWorld->GetComponent<TransformComponent>(foundActiveCam->second);
 				if (camCmp && transCmp)
 				{
-					ApplyEntityToCamera(*camCmp,*transCmp, m_mainCamera);
+					ApplyEntityToCamera(*activeWorld, foundActiveCam->second, *camCmp,*transCmp, m_mainCamera);
 					return true;
 				}
 			}

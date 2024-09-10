@@ -17,7 +17,9 @@ namespace R3
 			"SetScaleNoInterpolation", &TransformComponent::SetScaleNoInterpolation,
 			"GetScale", &TransformComponent::GetScale,
 			"GetWorldspaceMatrix", &TransformComponent::GetWorldspaceMatrix,
-			"GetWorldspaceInterpolated", &TransformComponent::GetWorldspaceInterpolated
+			"GetWorldspaceInterpolated", &TransformComponent::GetWorldspaceInterpolated,
+			"IsRelativeToParent", &TransformComponent::IsRelativeToParent,
+			"SetIsRelative", &TransformComponent::SetIsRelative
 		);
 	}
 
@@ -26,6 +28,7 @@ namespace R3
 		s("Position", m_position);
 		s("Orientation", m_orientation);
 		s("Scale", m_scale);
+		s("Relative", m_isRelative);
 		if (s.GetMode() == JsonSerialiser::Read)
 		{
 			RebuildMatrix();
@@ -36,20 +39,57 @@ namespace R3
 	void TransformComponent::Inspect(const Entities::EntityHandle& e, Entities::World* w, ValueInspector& i)
 	{
 		glm::vec3 maxBounds(FLT_MAX);
-		bool modified = false;
-		modified |= i.Inspect("Position", m_position, InspectProperty(&TransformComponent::SetPosition, e, w), -maxBounds, maxBounds);
-		modified |= i.Inspect("Rotation", GetOrientationDegrees(), InspectProperty(&TransformComponent::SetOrientationDegrees, e, w), -maxBounds, maxBounds);
-		modified |= i.Inspect("Scale", m_scale, InspectProperty(&TransformComponent::SetScale, e, w), { 0,0,0 }, maxBounds);
+		i.Inspect("Position", m_position, InspectProperty(&TransformComponent::SetPosition, e, w), -maxBounds, maxBounds);
+		i.Inspect("Rotation", GetOrientationDegrees(), InspectProperty(&TransformComponent::SetOrientationDegrees, e, w), -maxBounds, maxBounds);
+		i.Inspect("Scale", m_scale, InspectProperty(&TransformComponent::SetScale, e, w), { 0,0,0 }, maxBounds);
+		i.Inspect("Is Relative to Parent", m_isRelative, InspectProperty(&TransformComponent::m_isRelative, e, w));
 	}
 
-	glm::mat4 TransformComponent::GetWorldspaceMatrix() const
+	void TransformComponent::SetPositionWorldSpace(const Entities::EntityHandle& e, Entities::World& w, glm::vec3 p)
 	{
-		return m_matrix;	// later on we will want some kind of heirarchy
+		// worldspace -> local space via parent inverse transform
+		if (m_isRelative)
+		{
+			glm::mat4 parentMatrix = glm::identity<glm::mat4>();
+			auto parentEntity = w.GetParent(e);
+			auto parentTransform = w.GetComponent<TransformComponent>(parentEntity);
+			if (parentTransform)
+			{
+				parentMatrix = parentTransform->GetWorldspaceMatrix(parentEntity, w);	// recursive
+			}
+			glm::vec4 newPos = glm::inverse(parentMatrix) * glm::vec4(p,1);
+			SetPosition(glm::vec3(newPos));
+		}
+		else
+		{
+			SetPosition(p);
+		}
 	}
 
-	glm::mat4 TransformComponent::GetWorldspaceInterpolated() const
+	glm::mat4 TransformComponent::GetWorldspaceMatrix(const Entities::EntityHandle& e, Entities::World& w) const
+	{
+		if (m_isRelative)
+		{
+			glm::mat4 parentMatrix = glm::identity<glm::mat4>();
+			auto parentEntity = w.GetParent(e);
+			auto parentTransform = w.GetComponent<TransformComponent>(parentEntity);
+			if (parentTransform)
+			{
+				parentMatrix = parentTransform->GetWorldspaceMatrix(parentEntity, w);	// recursive
+			}
+			return parentMatrix * m_matrix;
+		}
+		else
+		{
+			return m_matrix;
+		}
+	}
+
+	glm::mat4 TransformComponent::GetWorldspaceInterpolated(const Entities::EntityHandle& e, Entities::World& w) const
 	{
 		glm::mat4 result;
+
+		// first calculate interpolated matrix for this transform
 		if (m_prevPosition == m_position && m_prevScale == m_scale && m_prevOrientation == m_orientation)
 		{
 			result = m_matrix;
@@ -63,6 +103,18 @@ namespace R3
 			const glm::quat rot = glm::slerp(m_prevOrientation, m_orientation, static_cast<float>(accumulator));
 			result = glm::scale(glm::translate(glm::identity<glm::mat4>(), pos) * glm::mat4_cast(rot), scale);
 		}
+
+		// apply parent if required
+		if (m_isRelative)
+		{
+			auto parentEntity = w.GetParent(e);
+			auto parentTransform = w.GetComponent<TransformComponent>(parentEntity);
+			if (parentTransform)
+			{
+				result = parentTransform->GetWorldspaceInterpolated(parentEntity, w) * result;
+			}
+		}
+		
 		return result;
 	}
 

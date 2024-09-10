@@ -16,7 +16,7 @@ namespace R3
 			auto transform = m_window->GetWorld()->GetComponent<TransformComponent>(ent.m_entity);
 			if (transform)
 			{
-				transform->SetPosition(ent.m_oldPos);
+				transform->SetPositionWorldSpace(ent.m_entity, *m_window->GetWorld(), ent.m_oldPos);
 			}
 		}
 		return EditorCommand::Result::Succeeded;
@@ -34,7 +34,7 @@ namespace R3
 			auto transform = m_window->GetWorld()->GetComponent<TransformComponent>(ent.m_entity);
 			if (transform)
 			{
-				transform->SetPosition(ent.m_newPos);
+				transform->SetPositionWorldSpace(ent.m_entity, *m_window->GetWorld(), ent.m_newPos);
 			}
 		}
 		return EditorCommand::Result::Succeeded;

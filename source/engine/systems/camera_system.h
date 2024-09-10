@@ -7,6 +7,10 @@
 
 namespace R3
 {
+	namespace Entities
+	{
+		class World;
+	}
 	class Flycam;
 	class CameraSystem : public System
 	{
@@ -21,7 +25,7 @@ namespace R3
 		void ApplyFlycamToCamera();
 		bool IsFlycamActive();
 		bool FixedUpdate();
-		void ApplyEntityToCamera(const class CameraComponent& camCmp, const class TransformComponent& transCmp, Camera& target);
+		void ApplyEntityToCamera(Entities::World& w, Entities::EntityHandle camEntity, const class CameraComponent& camCmp, const class TransformComponent& transCmp, Camera& target);
 		void DrawCameraFrustums();
 		bool Init();
 		bool ShowGui();

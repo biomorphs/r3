@@ -22,7 +22,7 @@ namespace R3
 			auto transformCmp = world->GetComponent<TransformComponent>(handle);
 			if (transformCmp)
 			{
-				newPosition = newPosition + glm::vec3(transformCmp->GetWorldspaceMatrix()[3]);
+				newPosition = newPosition + glm::vec3(transformCmp->GetWorldspaceMatrix(handle, *world)[3]);
 			}
 		}
 		if (entities.size() > 0)
@@ -47,7 +47,7 @@ namespace R3
 			auto transformCmp = world->GetComponent<TransformComponent>(handle);
 			if (transformCmp)
 			{
-				m_trackedEntities.push_back({ handle, glm::vec3(transformCmp->GetWorldspaceMatrix()[3]) });
+				m_trackedEntities.push_back({ handle, glm::vec3(transformCmp->GetWorldspaceMatrix(handle, *world)[3]) });
 			}
 		}
 		m_currentEntities = entities;
@@ -61,7 +61,7 @@ namespace R3
 			auto transformCmp = world->GetComponent<TransformComponent>(it.m_entity);
 			if (transformCmp)
 			{
-				transformCmp->SetPosition(it.m_originalPosition);
+				transformCmp->SetPositionWorldSpace(it.m_entity, *world, it.m_originalPosition);
 			}
 		}
 	}
@@ -203,7 +203,7 @@ namespace R3
 							if (transformCmp)
 							{
 								glm::vec3 newPos = it.m_originalPosition + translation;
-								transformCmp->SetPosition(newPos);	// todo - needs to be set worldspace position
+								transformCmp->SetPositionWorldSpace(it.m_entity, *world, newPos);	// todo - needs to be set worldspace position
 							}
 						}
 					}

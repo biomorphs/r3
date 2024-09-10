@@ -290,6 +290,7 @@ namespace R3
 		auto staticMeshes = GetSystem<StaticMeshSystem>();
 		auto textures = GetSystem<TextureSystem>();
 		auto activeWorld = entities->GetActiveWorld();
+		const auto transformComponentTypeId = Entities::ComponentTypeRegistry::GetTypeIndex<TransformComponent>();
 		StaticMeshGpuData currentMeshData;				// Try to cache what we can while iterating, yes this is messy, but its fast!
 		ModelDataHandle currentMeshDataHandle;
 		std::vector<StaticMeshPart> currentMeshParts;	// cache the parts to avoid touching the meshes constantly
@@ -330,7 +331,7 @@ namespace R3
 				}
 				const uint32_t meshMaterialIndex = currentMeshData.m_materialGpuIndex;
 				const uint32_t meshVertexDataOffset = (uint32_t)currentMeshData.m_vertexDataOffset;
-				const glm::mat4 compTransform = t.GetWorldspaceInterpolated();
+				const glm::mat4 compTransform = t.GetWorldspaceInterpolated(e, *activeWorld);
 				const bool useOverrides = lastMatOverrideGpuIndex != -1 && lastMatOverrideGpuIndex >= currentMeshData.m_materialCount;
 				for (uint32_t part = 0; part < currentMeshParts.size(); ++part)
 				{

@@ -32,21 +32,24 @@ namespace R3
 		auto& imRender = Systems::GetSystem<ImmediateRenderSystem>()->m_imRender;
 		auto transformCmp = w.GetComponent<TransformComponent>(e);
 		auto staticMeshCmp = w.GetComponent<StaticMeshComponent>(e);
-		if (transformCmp && staticMeshCmp)
+		if (transformCmp)
 		{
-			auto modelHandle = staticMeshCmp->m_modelHandle;
-			auto modelData = modelDataSys->GetModelData(modelHandle);
-			if (modelData.m_data)
+			if (staticMeshCmp)
 			{
-				glm::vec3 bounds[2] = { modelData.m_data->m_boundsMin, modelData.m_data->m_boundsMax };
-				glm::mat4 transform = transformCmp->GetWorldspaceInterpolated();
-				imRender->DrawAABB(bounds[0], bounds[1], transform, colour);
-				return;
+				auto modelHandle = staticMeshCmp->m_modelHandle;
+				auto modelData = modelDataSys->GetModelData(modelHandle);
+				if (modelData.m_data)
+				{
+					glm::vec3 bounds[2] = { modelData.m_data->m_boundsMin, modelData.m_data->m_boundsMax };
+					glm::mat4 transform = transformCmp->GetWorldspaceInterpolated(e, w);
+					imRender->DrawAABB(bounds[0], bounds[1], transform, colour);
+				}
 			}
-		}
-		if(transformCmp)
-		{
-			imRender->AddAxisAtPoint(glm::vec3(transformCmp->GetWorldspaceInterpolated()[3]), 1.0f, transformCmp->GetWorldspaceInterpolated());
+			else
+			{
+				auto wsMatrix = transformCmp->GetWorldspaceInterpolated(e, w);
+				imRender->AddAxisAtPoint(glm::vec3(wsMatrix[3]), 1.0f, wsMatrix);
+			}
 		}
 	}
 
@@ -59,9 +62,9 @@ namespace R3
 		if (parentCmp != nullptr && childCmp != nullptr)
 		{
 			ImmediateRenderer::PosColourVertex verts[2];
-			verts[0].m_position = childCmp->GetWorldspaceInterpolated()[3];
+			verts[0].m_position = childCmp->GetWorldspaceInterpolated(e, w)[3];
 			verts[0].m_colour = colour;
-			verts[1].m_position = parentCmp->GetWorldspaceInterpolated()[3];
+			verts[1].m_position = parentCmp->GetWorldspaceInterpolated(parent, w)[3];
 			verts[1].m_colour = colour * 0.9f;
 			imRender->AddLine(verts);
 			DrawParentLines(w, parent, colour * 0.9f);

@@ -73,14 +73,15 @@ namespace R3
 		if (m_drawBounds)
 		{
 			auto entities = Systems::GetSystem<Entities::EntitySystem>();
+			auto activeWorld = entities->GetActiveWorld();
 			auto& imRender = Systems::GetSystem<ImmediateRenderSystem>()->m_imRender;
 			auto drawLights = [&](const Entities::EntityHandle& e, PointLightComponent& pl, TransformComponent& t) {
-				imRender->AddSphere(glm::vec3(t.GetWorldspaceInterpolated()[3]), pl.m_distance, { pl.m_colour, 1 });
+				imRender->AddSphere(glm::vec3(t.GetWorldspaceInterpolated(e, *activeWorld)[3]), pl.m_distance, { pl.m_colour, 1 });
 				return true;
 			};
-			if (entities->GetActiveWorld())
+			if (activeWorld)
 			{
-				Entities::Queries::ForEach<PointLightComponent, TransformComponent>(entities->GetActiveWorld(), drawLights);
+				Entities::Queries::ForEach<PointLightComponent, TransformComponent>(activeWorld, drawLights);
 			}
 		}
 		return true;
@@ -95,6 +96,11 @@ namespace R3
 	void LightsSystem::OnMainPassBegin(Device& d, VkCommandBuffer cmds)
 	{
 		R3_PROF_EVENT();
+		auto entities = Systems::GetSystem<Entities::EntitySystem>();
+		auto activeWorld = entities->GetActiveWorld();
+		static std::vector<Pointlight> allPointlights;
+		allPointlights.reserve(1024);
+
 		if (!m_allPointlights.IsCreated())
 		{
 			if (!m_allPointlights.Create(d, c_maxLights * c_framesInFlight, c_maxLights, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
@@ -103,20 +109,19 @@ namespace R3
 			}
 			m_allPointlights.Allocate(c_maxLights * c_framesInFlight);
 		}
-		static std::vector<Pointlight> allPointlights;
-		allPointlights.reserve(1024);
+
 		auto collectLights = [&](const Entities::EntityHandle& e, PointLightComponent& pl, TransformComponent& t) {
 			Pointlight newlight;
 			newlight.m_colourBrightness = {pl.m_colour, pl.m_brightness};
-			newlight.m_positionDistance = { glm::vec3(t.GetWorldspaceInterpolated()[3]), pl.m_distance};
+			newlight.m_positionDistance = { glm::vec3(t.GetWorldspaceInterpolated(e, *activeWorld)[3]), pl.m_distance};
 			allPointlights.push_back(newlight);
 			return true;
 		};
-		auto entities = Systems::GetSystem<Entities::EntitySystem>();
-		if (entities->GetActiveWorld())
+		if (activeWorld)
 		{
-			Entities::Queries::ForEach<PointLightComponent, TransformComponent>(entities->GetActiveWorld(), collectLights);
+			Entities::Queries::ForEach<PointLightComponent, TransformComponent>(activeWorld, collectLights);
 		}
+
 		m_currentInFrameOffset += c_maxLights;
 		if (m_currentInFrameOffset >= (c_maxLights * c_framesInFlight))
 		{
