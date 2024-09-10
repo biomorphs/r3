@@ -8,10 +8,10 @@ Arrrgh_Globals.CameraLookAt = vec3.new(0,0,0)
 Arrrgh_Globals.CameraSpeed = vec3.new(128,128,128)
 
 -- todo 
--- fog of war object 
+-- fog of war?
 	-- should update every time player/owner moves
 	-- should update based on contents of vis component
---	any tiles that were ever visible are always visible
+--	any tiles that were ever visible are always visible +any object in those tiles
 -- add some kind of component to identify world actors/objects/things 
 --	it should contain the tile, and from there on, we should not be using world transform -> tile! 
 --	tile component should be updated via grid 
@@ -109,7 +109,7 @@ function Dungeons_ActionWalkTo(action)
 		if(targetLength < 0.1) then -- target reached
 			-- grid.MoveActor(action.target, targetTile)	-- alert the grid that this entity changed tiles
 			local vision = world.GetComponent_DungeonsVisionComponent(action.target)
-			if(vision ~= nil) then
+			if(action.currentTargetNode ~= 1 and vision ~= nil) then	-- update vision when tile changed (hacks)
 				vision.m_needsUpdate = true
 			end
 			actorTransform:SetPosition(targetPos)
@@ -122,7 +122,7 @@ function Dungeons_ActionWalkTo(action)
 			end
 		else
 			local actualSpeed = action.moveSpeedWorldspace
-			local tDelta = R3.GetVariableDelta()
+			local tDelta = R3.GetFixedUpdateDelta()
 			targetDir.x = actualSpeed * (targetDir.x / targetLength)	
 			targetDir.y = actualSpeed * (targetDir.y / targetLength) 
 			targetDir.z = actualSpeed * (targetDir.z / targetLength) 
@@ -200,15 +200,15 @@ function Dungeons_UpdateCamera()
 	camToTarget.y = camToTarget.y / targetLength
 	camToTarget.z = camToTarget.z / targetLength
 	if(targetLength > 0.01) then
-		cameraPos.x = cameraPos.x + (camToTarget.x * actualSpeed.x * R3.GetVariableDelta())
-		cameraPos.y = cameraPos.y + (camToTarget.y * actualSpeed.y * R3.GetVariableDelta())
-		cameraPos.z = cameraPos.z + (camToTarget.z * actualSpeed.z * R3.GetVariableDelta())
+		cameraPos.x = cameraPos.x + (camToTarget.x * actualSpeed.x * R3.GetFixedUpdateDelta())
+		cameraPos.y = cameraPos.y + (camToTarget.y * actualSpeed.y * R3.GetFixedUpdateDelta())
+		cameraPos.z = cameraPos.z + (camToTarget.z * actualSpeed.z * R3.GetFixedUpdateDelta())
 		cameraTransform:SetPosition(cameraPos)
 	end
 end
 
-function Dungeons_GameTick(e)
-	 -- keep looking at the player for now
+function Dungeons_GameTickFixed(e)
+	 -- keep camera looking at the player for now
 	local world = R3.ActiveWorld()
 	local playerEntity = world:GetEntityByName('PlayerActor')
 	local playerTransform = world.GetComponent_Transform(playerEntity)
@@ -216,6 +216,8 @@ function Dungeons_GameTick(e)
 		Dungeons_CameraLookAt(playerTransform:GetPosition())
 	end
 	Dungeons_UpdateCamera()
+
+	-- state changes always happen in fixed update
 	if(Arrrgh_Globals.GameState == nil) then 
 		Arrrgh_Globals.GameState = 'start'
 	end
@@ -228,17 +230,25 @@ function Dungeons_GameTick(e)
 		Arrrgh_Globals.GameState = 'doturn'
 	end
 	if(Arrrgh_Globals.GameState == 'doturn') then 
-		if(Fastqueue.hasItems(Arrrgh_Globals.ActionQueue)) then 
+		if(Fastqueue.hasItems(Arrrgh_Globals.ActionQueue)) then		-- actions always run in fixed update
 			local theAction = Arrrgh_Globals.ActionQueue[Arrrgh_Globals.ActionQueue.first]
 			local result = theAction.onRun(theAction)
 			if(result == 'complete') then
 				Fastqueue.popleft(Arrrgh_Globals.ActionQueue)
 			end
-		elseif(Dungeons_GetActionPointsRemaining(0) > 0) then
-			Dungeons_OnChooseActions(0)
-		else
+		elseif(Dungeons_GetActionPointsRemaining(0) <= 0) then
 			Dungeons_OnTurnEnd()
 			Arrrgh_Globals.GameState = 'startturn'
+		end
+	end
+end
+
+function Dungeons_GameTickVariable(e)
+	if(Arrrgh_Globals.GameState == 'doturn') then 
+		if(Fastqueue.hasItems(Arrrgh_Globals.ActionQueue) == false) then	-- no actions to perform
+			if(Dungeons_GetActionPointsRemaining(0) > 0) then
+				Dungeons_OnChooseActions(0)
+			end
 		end
 	end
 end
