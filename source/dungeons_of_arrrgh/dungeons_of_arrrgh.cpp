@@ -17,22 +17,6 @@
 #include "core/log.h"
 #include <sol/sol.hpp>
 
-// This needs to go
-// Generation should be all in lua
-// Tiles should just have flags (visible, passable, etc)
-// Visuals should be completely determined by lua
-// Gameplay stuff should be via entities/components
-enum WorldTileType : uint8_t
-{
-	Empty,
-	Wall,
-	FloorInterior,
-	FloorExterior,
-	PlayerSpawnPoint,
-	LevelExit,
-	MaxTypes
-};
-
 DungeonsOfArrrgh::DungeonsOfArrrgh()
 {
 }
@@ -102,21 +86,13 @@ void DebugDrawTile(R3::ImmediateRenderSystem& imRender,
 		{
 			colour = { 0,1,0,.25 };
 		}
-		// if (contents->m_tileData.m_tileType == WorldTileType::PlayerSpawnPoint)
-		// {
-		// 	colour = { 1,0,1,.25 };
-		// }
-		// if (contents->m_tileData.m_tileType == WorldTileType::LevelExit)
-		// {
-		// 	colour = { 1,1,1,0.25f };
-		// }
 		verts.push_back({ {basePos, 1}, colour });
 		verts.push_back({ {basePos + glm::vec3(scale.x,0,0), 1}, colour });
 		verts.push_back({ {basePos + glm::vec3(scale.x,0,scale.y), 1}, colour });
 		verts.push_back({ {basePos, 1}, colour });
 		verts.push_back({ {basePos + glm::vec3(scale.x,0,scale.y), 1}, colour });
 		verts.push_back({ {basePos + glm::vec3(0,0,scale.y), 1}, colour });
-		if (!contents->m_flags.m_passable && contents->m_flags.m_blockVisibility)
+		if (contents->m_flags.m_blockVisibility)
 		{
 			glm::vec3 cubeScale = { scale.x * 0.5f, 2.0f, scale.y * 0.5f };
 			glm::mat4 transform = glm::scale(glm::translate(basePos + glm::vec3(cubeScale.x, 1.0f, cubeScale.z)), cubeScale);
@@ -286,48 +262,6 @@ void DungeonsOfArrrgh::GenerateTileVisuals(uint32_t x, uint32_t z, DungeonsWorld
 	{
 		tileToLoad = "arrrgh/tiles/basic_crosswall_tile_4x4.scn";
 	}
-	// switch (thisTile->m_tileData.m_tileType)
-	// {
-	// case WorldTileType::FloorExterior:
-	// 	tileToLoad = "arrrgh/tiles/basic_floor_dirt_4x4.scn";
-	// 	break;
-	// case WorldTileType::FloorInterior:
-	// 	tileToLoad = "arrrgh/tiles/basic_floor_wood_4x4.scn";
-	// 	break;
-	// case WorldTileType::Wall:
-	// 	{
-	// 		auto left = x > 1 ? grid.GetContents(x - 1, z) : nullptr;
-	// 		auto right = x + 1 < grid.GetDimensions().x ? grid.GetContents(x + 1, z) : nullptr;
-	// 		auto up = z > 1 ? grid.GetContents(x, z - 1) : nullptr;
-	// 		auto down = z + 1 < grid.GetDimensions().y ? grid.GetContents(x, z + 1) : nullptr;
-	// 		bool leftWall = left ? left->m_tileData.m_tileType == WorldTileType::Wall : false;
-	// 		bool rightWall = right ? right->m_tileData.m_tileType == WorldTileType::Wall : false;
-	// 		bool upWall = up ? up->m_tileData.m_tileType == WorldTileType::Wall : false;
-	// 		bool downWall = down ? down->m_tileData.m_tileType == WorldTileType::Wall : false;
-	// 		tileToLoad = "arrrgh/tiles/basic_crosswall_tile_4x4.scn";	// cross piece by default
-	// 		if ((leftWall || rightWall) && (upWall || downWall))	// corner detection
-	// 		{
-	// 			tileToLoad = "arrrgh/tiles/basic_crosswall_tile_4x4.scn";
-	// 		}
-	// 		else if (leftWall || rightWall)
-	// 		{
-	// 			bool useTorchWall = R3::Random::GetFloat() < 0.1f;
-	// 			if (useTorchWall)
-	// 			{
-	// 				tileToLoad = "arrrgh/tiles/basic_hwall_torch_tile_4x4.scn";
-	// 			}
-	// 			else
-	// 			{
-	// 				tileToLoad = "arrrgh/tiles/basic_hwall_tile_4x4.scn";
-	// 			}
-	// 		}
-	// 		else if (upWall || downWall)
-	// 		{
-	// 			tileToLoad = "arrrgh/tiles/basic_vwall_tile_4x4.scn";
-	// 		}
-	// 	}
-	// 	break;
-	// }
 	auto foundInCache = m_generateVisualsEntityCache.find(tileToLoad);
 	if (foundInCache == m_generateVisualsEntityCache.end())
 	{
