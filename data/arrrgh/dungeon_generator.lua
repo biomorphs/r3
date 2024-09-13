@@ -34,7 +34,7 @@ function DistanceBetween(v0,v1)
 	return math.sqrt((tov1.x * tov1.x) + (tov1.y * tov1.y))
 end
 
-function Dungeons_FillCircle(grid, center, radius, tiletype, isPassable, blocksVisibility)
+function Dungeons_FillCircle(grid, center, radius, tags, isPassable, blocksVisibility)
 	local areaCenter = vec2.new(center.x, center.y)
 	local start = vec2.new(center.x - radius, center.y - radius)
 	local size = vec2.new(radius * 2, radius * 2)
@@ -42,15 +42,17 @@ function Dungeons_FillCircle(grid, center, radius, tiletype, isPassable, blocksV
 		for x=start.x,(start.x + size.x) do 
 			local distanceToCenter = DistanceBetween(vec2.new(x,z), areaCenter)
 			if(distanceToCenter <= radius) then
-				grid:Fill(uvec2.new(math.tointeger(x),math.tointeger(z)), uvec2.new(1,1), tiletype, isPassable, blocksVisibility)
+				grid:Fill(uvec2.new(math.tointeger(x),math.tointeger(z)), uvec2.new(1,1), tags, isPassable, blocksVisibility)
 			end
 		end
 	end
 end
 
 function Dungeons_GenerateSimpleBuilding(grid, inParams, start, size)
-	grid:Fill(start, size, 1, false, true) -- outer walls
-	grid:Fill(uvec2.new(start.x + 1, start.y + 1), uvec2.new(size.x - 2, size.y - 2), 2, true, false) -- interior floor
+	local wallTag = TileTagset.new("wall")
+	local floorTag = TileTagset.new("floor,interior")
+	grid:Fill(start, size, wallTag, false, true) -- outer walls
+	grid:Fill(uvec2.new(start.x + 1, start.y + 1), uvec2.new(size.x - 2, size.y - 2), floorTag, true, false) -- interior floor
 
 	-- make a door
 	local doorPos = {}
@@ -64,11 +66,13 @@ function Dungeons_GenerateSimpleBuilding(grid, inParams, start, size)
 	elseif(wallForDoor == 3) then -- left
 		doorPos = uvec2.new(start.x, math.random(start.y + 1, start.y + size.y - 2))
 	end
-	grid:Fill(doorPos, uvec2.new(1, 1), 2, true, false)
+	grid:Fill(doorPos, uvec2.new(1, 1), floorTag, true, false)
 	return true
 end
 
 function Dungeons_GenerateRoundTower(grid, inParams, start, size)
+	local wallTag = TileTagset.new("wall")
+	local floorTag = TileTagset.new("floor,interior")
 	local minTowerRadius = inParams:GetInt("Min Tower Radius", 3)
 	local tileWallThickness = inParams:GetInt("Tower Wall Thickness", 1)
 	local towerRadius = math.floor(math.min(size.x, size.y) * 0.5)
@@ -81,9 +85,9 @@ function Dungeons_GenerateRoundTower(grid, inParams, start, size)
 			local distanceToCenter = DistanceBetween(vec2.new(x,z), towerCenter)
 			if(distanceToCenter <= towerRadius) then
 				if((towerRadius - distanceToCenter) <= tileWallThickness) then
-					grid:Fill(uvec2.new(x,z), uvec2.new(1,1), 1, false, true)	-- outer wall
+					grid:Fill(uvec2.new(x,z), uvec2.new(1,1), wallTag, false, true)	-- outer wall
 				else
-					grid:Fill(uvec2.new(x,z), uvec2.new(1,1), 2, true, false)	-- floor
+					grid:Fill(uvec2.new(x,z), uvec2.new(1,1), floorTag, true, false)	-- floor
 				end
 			end
 		end
@@ -132,6 +136,7 @@ function FillWithBuildings(grid,inParams)
 end
 
 function Dungeons_GenerateWorld_WanderToGoal(grid, inParams, spawnPos, goalPos)
+	local floorTag = TileTagset.new("floor,exterior")
 	local stepsPerYield = inParams:GetInt("Wander steps per iteration", 20)
 	local forwardChanceIncrement = 0.0000001
 	local gridSize = grid:GetDimensions()
@@ -169,7 +174,7 @@ function Dungeons_GenerateWorld_WanderToGoal(grid, inParams, spawnPos, goalPos)
 		end
 		myPos.x = math.floor(nextPos.x)
 		myPos.y = math.floor(nextPos.y)
-		grid:Fill(myPos, uvec2.new(1,1), 3, true, false)
+		grid:Fill(myPos, uvec2.new(1,1), floorTag, true, false)
 		iterationCount = iterationCount + 1
 		if(iterationCount > stepsPerYield) then 
 			YieldGenerator(0)
@@ -202,14 +207,21 @@ function Dungeons_GenerateLevelExitSafeArea(grid, inParams, goalPos)
 	local safeAreaSizeRange = inParams:GetIntVec2("Level Exit Safe Area (Min/Max)", ivec2.new(2,4))
 	local areaRadius = math.random(safeAreaSizeRange.x, safeAreaSizeRange.y)
 	local areaCenter = vec2.new(goalPos.x, goalPos.y)
-	Dungeons_FillCircle(grid, areaCenter, areaRadius, 3, true, false)
+	print('4')
+	local floorTag = TileTagset.new("floor,exterior")
+	print('5')
+	Dungeons_FillCircle(grid, areaCenter, areaRadius, floorTag, true, false)
 end
 
 function Dungeons_GeneratePlayerSpawnSafeArea(grid, inParams, pos)
 	local safeAreaSizeRange = inParams:GetIntVec2("Player Spawn Safe Area (Min/Max)", ivec2.new(2,4))
 	local areaRadius = math.random(safeAreaSizeRange.x, safeAreaSizeRange.y)
 	local areaCenter = vec2.new(pos.x, pos.y)
-	Dungeons_FillCircle(grid, areaCenter, areaRadius, 3, true, false)
+	print('3')
+	local floorTag = TileTagset.new("floor,exterior")
+	print('4')
+	print(floorTag)
+	Dungeons_FillCircle(grid, areaCenter, areaRadius, floorTag, true, false)
 end
 
 function Dungeons_CoGenerateWorld(grid, inParams)
@@ -218,7 +230,7 @@ function Dungeons_CoGenerateWorld(grid, inParams)
 	grid:ResizeGrid(gridSize)
 
 	-- fill world with empty tiles + update graphics entities
-	grid:Fill(uvec2.new(0,0), gridSize, 0, false, false)
+	grid:Fill(uvec2.new(0,0), gridSize, TileTagset.new(), false, false)
 	grid.m_isDirty = true
 	YieldGenerator()
 
@@ -235,13 +247,15 @@ function Dungeons_CoGenerateWorld(grid, inParams)
 	-- make the spawn + goal entities 
 	Dungeons_CreatePlayerSpawn(grid, inParams, spawnPos)
 	Dungeons_GeneratePlayerSpawnSafeArea(grid, inParams, spawnPos)
+	print('3')
 	Dungeons_CreateLevelExit(grid, inParams, goalPos)
 	Dungeons_GenerateLevelExitSafeArea(grid, inParams, goalPos)
 
 	grid.m_debugDraw = true
 
+	local floorTag = TileTagset.new("floor,exterior")
 	if(Arrrgh_Globals.FillWithExteriorFloor) then 
-		grid:Fill(uvec2.new(0,0), gridSize, 3, true, false)
+		grid:Fill(uvec2.new(0,0), gridSize, floorTag, true, false)
 		grid.m_isDirty = true
 		YieldGenerator()
 	end
@@ -252,9 +266,9 @@ function Dungeons_CoGenerateWorld(grid, inParams)
 	end
 
 	-- fill the start + goal tiles
-	grid:Fill(spawnPos, uvec2.new(1,1), 4, true, false)	-- 4 = player spawn 
+	grid:Fill(spawnPos, uvec2.new(1,1), floorTag, true, false)
 	YieldGenerator(1.0)
-	grid:Fill(goalPos, uvec2.new(1,1), 5, true, false)	-- 5 = level exit 
+	grid:Fill(goalPos, uvec2.new(1,1), floorTag, true, false)
 	YieldGenerator(1.0)
 	
 	grid.m_isDirty = true	-- update graphics

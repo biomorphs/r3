@@ -24,12 +24,13 @@ namespace R3
 		{
 			auto& ts = TagInternals::GetTagStrings();
 			ScopedLock lock(ts.m_mutex);
-			auto found = ts.m_stringToTag.find(v.data());
+			std::string vKey(v);
+			auto found = ts.m_stringToTag.find(vKey);
 			if (found == ts.m_stringToTag.end())
 			{
 				assert(ts.m_nextTag < (UINT16_MAX - 1));
 				auto newIndex = ts.m_nextTag++;
-				ts.m_stringToTag[v.data()] = newIndex;
+				ts.m_stringToTag[vKey] = newIndex;
 				ts.m_tagToString[newIndex] = v.data();
 				m_tag = newIndex;
 			}

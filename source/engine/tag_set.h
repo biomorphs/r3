@@ -2,6 +2,7 @@
 #include "tag.h"
 #include <array>
 #include <cassert>
+#include <string>
 
 namespace R3
 {
@@ -10,13 +11,32 @@ namespace R3
 	class TagSet
 	{
 	public:
+		TagSet() {}
+		TagSet(std::string_view str);	// comma-separated list of tags e.g. "tag 0, tag 1, tag3"
 		void Add(Tag t);	// use this instead of touching members directly
 		bool Contains(Tag t);
 		template<int OtherSize>
-		bool Contains(const TagSet<OtherSize>& ts);
+		bool ContainsSet(const TagSet<OtherSize>& ts);
 		std::array<Tag, MaxSize> m_tags;
 		uint8_t m_count = 0;
 	};
+
+	template<int MaxSize>
+	TagSet<MaxSize>::TagSet(std::string_view str)
+	{
+		size_t firstChar = 0;
+		while (firstChar < str.length())
+		{
+			size_t nextSeparator = std::string_view(str.data() + firstChar).find_first_of(',');
+			if (nextSeparator == std::string_view::npos)
+			{
+				nextSeparator = str.length() - firstChar;
+			}
+			auto tagStr = str.substr(firstChar, nextSeparator);
+			Add(Tag(tagStr));
+			firstChar += nextSeparator + 1;
+		}
+	}
 
 	template<int MaxSize>
 	inline void TagSet<MaxSize>::Add(Tag t)
@@ -51,7 +71,7 @@ namespace R3
 	
 	template<int MaxSize>
 	template<int OtherSize>
-	bool TagSet<MaxSize>::Contains(const TagSet<OtherSize>& ts)
+	bool TagSet<MaxSize>::ContainsSet(const TagSet<OtherSize>& ts)
 	{
 		assert(OtherSize <= MaxSize);
 		for (int io = 0; io < ts.m_count; ++io)

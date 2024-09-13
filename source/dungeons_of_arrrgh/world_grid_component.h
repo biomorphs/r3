@@ -34,7 +34,7 @@ public:
 	WorldTileContents* GetContents(uint32_t tileX, uint32_t tileZ);
 	std::vector<R3::Entities::EntityHandle> GetEntitiesInTile(uint32_t tileX, uint32_t tileZ);
 	bool IsTilePassable(uint32_t tilex, uint32_t tiley);
-	void Fill(glm::uvec2 start, glm::uvec2 size, uint8_t type, bool isPassable, bool blockVisibility);
+	void Fill(glm::uvec2 start, glm::uvec2 size, const WorldTileContents::TileTags& tags, bool isPassable, bool blockVisibility);
 	bool AllTilesPassable(glm::uvec2 start, glm::uvec2 size);	// return true if all tiles in range are walkable
 	std::vector<glm::uvec2> CalculatePath(glm::uvec2 start, glm::uvec2 end);	// find shortest path between tiles, taking in to account passable flag
 	bool m_isDirty = false;				// if true, the world needs regeneration

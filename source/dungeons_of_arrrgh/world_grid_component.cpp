@@ -26,6 +26,12 @@ void DungeonsWorldGridComponent::RegisterScripts(R3::LuaSystem& l)
 		"m_debugDraw", &DungeonsWorldGridComponent::m_debugDraw,
 		"m_isDirty", &DungeonsWorldGridComponent::m_isDirty
 	);
+
+	l.RegisterType<WorldTileContents::TileTags>("TileTagset",
+		sol::constructors<WorldTileContents::TileTags(), WorldTileContents::TileTags(std::string_view), WorldTileContents::TileTags(const WorldTileContents::TileTags&)>(),
+		"Add", &WorldTileContents::TileTags::Add,
+		"Contains", &WorldTileContents::TileTags::Contains
+	);
 }
 
 void DungeonsWorldGridComponent::SerialiseJson(R3::JsonSerialiser& s)
@@ -111,7 +117,7 @@ DungeonsWorldGridComponent::VisibleTiles DungeonsWorldGridComponent::FindVisible
 	return results;
 }
 
-void DungeonsWorldGridComponent::Fill(glm::uvec2 start, glm::uvec2 size, uint8_t type, bool isPassable, bool blockVisibility)
+void DungeonsWorldGridComponent::Fill(glm::uvec2 start, glm::uvec2 size, const WorldTileContents::TileTags& tags, bool isPassable, bool blockVisibility)
 {
 	R3_PROF_EVENT();
 	glm::uvec2 actualSize = glm::min(start + size, m_gridDimensions);
@@ -122,7 +128,7 @@ void DungeonsWorldGridComponent::Fill(glm::uvec2 start, glm::uvec2 size, uint8_t
 			if (auto tile = GetContents(x, z))
 			{
 				// should take a tagset instead
-				// tile->m_flags.m_tileType = static_cast<uint8_t>(type);
+				tile->m_tags = tags;
 				tile->m_flags.m_passable = isPassable;
 				tile->m_flags.m_blockVisibility = blockVisibility;
 			}

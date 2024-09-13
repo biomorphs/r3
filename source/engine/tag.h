@@ -15,7 +15,7 @@ namespace R3
 		std::string GetString();
 		uint16_t GetTag() { return m_tag; }
 		static std::vector<Tag> GetAllTags();
-		bool operator==(const Tag& other) {
+		bool operator==(const Tag& other) const {
 			return m_tag == other.m_tag;
 		}
 	private:

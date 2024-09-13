@@ -1,6 +1,7 @@
 #include "lua_system.h"
 #include "engine/imgui_menubar_helper.h"
 #include "engine/components/lua_script.h"
+#include "engine/tag.h"
 #include "entities/systems/entity_system.h"
 #include "entities/world.h"
 #include "entities/queries.h"
@@ -366,6 +367,11 @@ namespace R3
 		RegisterFunction("Vec3Length", [](const glm::vec3& v) -> float {
 			return glm::length(v);
 		});
+		m_globalState->new_usertype<Tag>("Tag",
+			sol::constructors<Tag(), Tag(std::string_view), Tag(const Tag&)>(),
+			"GetString", &Tag::GetString,
+			"GetTag", &Tag::GetTag
+		);
 	}
 
 	bool LuaSystem::RunVariableUpdateScripts()

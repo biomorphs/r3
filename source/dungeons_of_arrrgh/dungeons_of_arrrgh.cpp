@@ -251,34 +251,124 @@ void DungeonsOfArrrgh::MoveEntitiesWorldspace(const std::vector<R3::Entities::En
 	}
 }
 
+struct GeneratorRule
+{
+	using NeighbourTags = std::array<DungeonsWorldGridComponent::WorldTileContents::TileTags, 9>;
+	NeighbourTags m_neighbourTags;	// 3x3 grid of tags to match against
+	std::vector<std::string> m_scenesToLoad;	// scenes to instantiate if tags match
+	bool m_continue = false;	// if true, will continue evaluating even if this rule is matched (the scene will be loaded)
+	GeneratorRule() {}
+	GeneratorRule(std::string_view tag, std::string_view scene)		// single tag = match one tile only
+	{
+		m_neighbourTags[4] = tag;
+		m_scenesToLoad.push_back(std::string(scene));
+	}
+	GeneratorRule(const std::array<std::string_view, 9>& tags, std::string_view scene)
+	{
+		for (int i = 0; i < 9; ++i)
+		{
+			m_neighbourTags[i] = tags[i];
+		}
+		m_scenesToLoad.push_back(std::string(scene));
+	}
+};
+
+const std::vector<GeneratorRule> c_wallRules = {
+	GeneratorRule(
+		{
+			"",			"",			"",
+			"wall",		"wall",			"wall",
+			"",			"",			""
+		}, "basic_hwall_tile_4x4.scn"
+	),
+	GeneratorRule(
+		{
+			"",			"wall",			"",
+			"",			"wall",			"",
+			"",			"wall",			""
+		}, "basic_vwall_tile_4x4.scn"
+	),
+	GeneratorRule("wall", "basic_crosswall_tile_4x4.scn")
+};
+
+const std::vector<GeneratorRule> c_floorRules = {
+	GeneratorRule("floor,interior", "basic_floor_wood_4x4.scn"),
+	GeneratorRule("floor,exterior", "basic_floor_tile_4x4.scn"),
+	GeneratorRule("floor", "basic_floor_dirt_4x4.scn")
+};
+
+// returns list of tiles to load
+void EvaluateRules(DungeonsWorldGridComponent& grid, int32_t tileX, int32_t tileZ, const std::vector<GeneratorRule>& rules,std::vector<std::string>& results)
+{
+	for (int r = 0; r < rules.size(); ++r)
+	{
+		bool allMatch = true;
+		for (int32_t z = 0; z < 3 && allMatch; ++z)
+		{
+			for (int32_t x = 0; x < 3 && allMatch; ++x)
+			{
+				const auto& toLookFor = rules[r].m_neighbourTags[x + (z * 3)];
+				if (toLookFor.m_count > 0)
+				{
+					auto contents = grid.GetContents(tileX + x - 1, tileZ + z - 1);
+					if (contents)
+					{
+						if (!contents->m_tags.ContainsSet(toLookFor))
+						{
+							allMatch = false;
+						}
+					}
+					else
+					{
+						allMatch = false;
+					}
+				}
+			}
+		}
+		if (allMatch)
+		{
+			for (int i = 0; i < rules[r].m_scenesToLoad.size(); ++i)
+			{
+				results.push_back(rules[r].m_scenesToLoad[i]);
+			}
+			if (!rules[r].m_continue)
+			{
+				break;
+			}
+		}
+	}
+}
+
 void DungeonsOfArrrgh::GenerateTileVisuals(uint32_t x, uint32_t z, DungeonsWorldGridComponent& grid, std::vector<R3::Entities::EntityHandle>& outEntities)
 {
 	R3_PROF_EVENT();
 	auto entities = GetSystem<R3::Entities::EntitySystem>();
 	auto activeWorld = entities->GetActiveWorld();
-	auto thisTile = grid.GetContents(x, z);
-	std::string tileToLoad = "arrrgh/tiles/basic_floor_tile_4x4.scn";
-	if (!thisTile->m_flags.m_passable && thisTile->m_flags.m_blockVisibility)
+
+	std::vector<std::string> tilesToLoad;
+	EvaluateRules(grid, x, z, c_wallRules, tilesToLoad);
+	EvaluateRules(grid, x, z, c_floorRules, tilesToLoad);
+	for (const auto& tileScene : tilesToLoad)
 	{
-		tileToLoad = "arrrgh/tiles/basic_crosswall_tile_4x4.scn";
-	}
-	auto foundInCache = m_generateVisualsEntityCache.find(tileToLoad);
-	if (foundInCache == m_generateVisualsEntityCache.end())
-	{
-		// load the entities via the world, serialise them, then delete the temp loaded entities + store the json
-		auto loadedEntities = activeWorld->Import(tileToLoad);
-		R3::JsonSerialiser entityData = activeWorld->SerialiseEntities(loadedEntities);
-		m_generateVisualsEntityCache[tileToLoad] = entityData.GetJson();
-		foundInCache = m_generateVisualsEntityCache.find(tileToLoad);
-		for (auto it : loadedEntities)
+		auto foundInCache = m_generateVisualsEntityCache.find(tileScene);
+		if (foundInCache == m_generateVisualsEntityCache.end())
 		{
-			activeWorld->RemoveEntity(it);
+			// load the entities via the world, serialise them, then delete the temp loaded entities + store the json
+			std::string fullPath = "arrrgh/tiles/" + tileScene;
+			auto loadedEntities = activeWorld->Import(fullPath);
+			R3::JsonSerialiser entityData = activeWorld->SerialiseEntities(loadedEntities);
+			m_generateVisualsEntityCache[tileScene] = entityData.GetJson();
+			foundInCache = m_generateVisualsEntityCache.find(tileScene);
+			for (auto it : loadedEntities)
+			{
+				activeWorld->RemoveEntity(it);
+			}
 		}
-	}
-	if (foundInCache != m_generateVisualsEntityCache.end())
-	{
-		R3::JsonSerialiser entityData(R3::JsonSerialiser::Read, foundInCache->second);
-		outEntities = activeWorld->SerialiseEntities(entityData);	// clone via serialisation
+		if (foundInCache != m_generateVisualsEntityCache.end())
+		{
+			R3::JsonSerialiser entityData(R3::JsonSerialiser::Read, foundInCache->second);
+			outEntities = activeWorld->SerialiseEntities(entityData);	// clone via serialisation
+		}
 	}
 }
 
@@ -295,7 +385,7 @@ void DungeonsOfArrrgh::GenerateWorldVisuals(const R3::Entities::EntityHandle& e,
 		{
 			if (auto tile = grid.GetContents(x, z))
 			{
-				// if (tile->m_tileData.m_tileType != WorldTileType::Empty)
+				if (tile->m_tags.m_count > 0)
 				{
 					glm::vec3 tileOffset = { (float)x * m_wsGridScale.x, 0.0f, (float)z * m_wsGridScale.y };
 					glm::vec3 basePos = m_wsGridOffset + tileOffset;
