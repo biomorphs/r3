@@ -1,4 +1,7 @@
 set(EngineLib_SourceFiles
+	tag.h
+	tag.cpp
+	tag_set.h
 	console_log_widget.h
 	console_log_widget.cpp
 	dda.h
