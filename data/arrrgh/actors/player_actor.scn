@@ -82,11 +82,11 @@
    "Name": "ActorLight",
    "Parent": 0,
    "PointLight": {
-    "Brightness": 80.0,
+    "Brightness": 128.0,
     "Colour": {
      "X": 1.0,
-     "Y": 0.6710132956504822,
-     "Z": 0.3911290168762207
+     "Y": 1.0,
+     "Z": 1.0
     },
     "Distance": 64.0
    },
@@ -99,7 +99,7 @@
     },
     "Position": {
      "X": 0.0,
-     "Y": 3.481360912322998,
+     "Y": 3.5,
      "Z": 0.0
     },
     "Relative": true,

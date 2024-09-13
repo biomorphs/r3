@@ -59,6 +59,8 @@ end
 function Dungeons_SpawnPlayer()
 	print('spawning player')
 	local world = R3.ActiveWorld()
+	local gridEntity = world:GetEntityByName('World Grid')
+	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
 	local spawnEntity = world:GetEntityByName('PlayerSpawnPoint')
 	local spawnTransform = world.GetComponent_Transform(spawnEntity)
 	local playerEntity = world:ImportScene('arrrgh/actors/player_actor.scn')
@@ -68,8 +70,8 @@ function Dungeons_SpawnPlayer()
 	actualPos.y = 0
 	Arrrgh.MoveEntitiesWorldspace(playerEntity, actualPos)
 	world:RemoveEntity(spawnEntity,false)
-	-- add the actor to the grid somehow 
-	-- grid.addactor(playerEntity, playerTile)
+	local tilePos = Arrrgh.GetTileFromWorldspace(gridcmp, actualPos)
+	Arrrgh.SetEntityTilePosition(gridcmp, playerEntity[1], tilePos.x, tilePos.y)
 end
 
 function Dungeons_OnTurnBegin()
@@ -109,6 +111,7 @@ function Dungeons_ActionWalkTo(action)
 		local targetDir = vec3.new(targetPos.x - actorPos.x, targetPos.y - actorPos.y, targetPos.z - actorPos.z)
 		local targetLength = R3.Vec3Length(targetDir)
 		if(targetLength < 0.1) then -- target reached
+			Arrrgh.SetEntityTilePosition(gridcmp, action.target, targetTile.x, targetTile.y)
 			-- grid.MoveActor(action.target, targetTile)	-- alert the grid that this entity changed tiles
 			local vision = world.GetComponent_DungeonsVisionComponent(action.target)
 			if(action.currentTargetNode ~= 1 and vision ~= nil) then	-- update vision when tile changed (hacks)

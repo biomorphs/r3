@@ -30,6 +30,7 @@ public:
 	glm::uvec2 GetDimensions() const { return m_gridDimensions; }
 	const WorldTileContents* GetContents(uint32_t tileX, uint32_t tileZ) const;	// assume it will be sparse later
 	WorldTileContents* GetContents(uint32_t tileX, uint32_t tileZ);
+	std::vector<R3::Entities::EntityHandle> GetEntitiesInTile(uint32_t tileX, uint32_t tileZ);
 	uint8_t GetTileType(uint32_t tilex, uint32_t tiley);
 	bool IsTilePassable(uint32_t tilex, uint32_t tiley);
 	void Fill(glm::uvec2 start, glm::uvec2 size, uint8_t type, bool isPassable, bool blockVisibility);

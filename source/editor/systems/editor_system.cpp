@@ -152,6 +152,23 @@ namespace R3
 			CloseAllWindows();
 			m_quitRequested = true;
 		});
+		auto& debugMenu = MenuBar::MainMenu().GetSubmenu("Debug");
+		auto& logMenu = debugMenu.GetSubmenu("Log");
+		if (!m_consoleLogWidget->m_isDisplayed)
+		{
+			logMenu.AddItem("Show Log", [this]() {
+				m_consoleLogWidget->m_isDisplayed = true;
+			});
+		}
+		logMenu.AddItem(std::format("Show On Error - {}", m_consoleLogWidget->m_displayOnError ? "On" : "Off").c_str(), [this]() {
+			m_consoleLogWidget->m_displayOnError = !m_consoleLogWidget->m_displayOnError;
+		});
+		logMenu.AddItem(std::format("Show On Warning - {}", m_consoleLogWidget->m_displayOnWarning ? "On" : "Off").c_str(), [this]() {
+			m_consoleLogWidget->m_displayOnWarning = !m_consoleLogWidget->m_displayOnWarning;
+		});
+		logMenu.AddItem(std::format("Show On Info - {}", m_consoleLogWidget->m_displayOnInfo ? "On" : "Off").c_str(), [this]() {
+			m_consoleLogWidget->m_displayOnInfo = !m_consoleLogWidget->m_displayOnInfo;
+		});
 	}
 
 	void EditorSystem::CloseAllWindows()

@@ -24,6 +24,7 @@ public:
 	std::optional<glm::uvec2> GetTileFromWorldspace(class DungeonsWorldGridComponent& grid, glm::vec3 worldspace);
 	std::optional<glm::uvec2> GetTileUnderMouseCursor(class DungeonsWorldGridComponent& grid);
 private:	
+	void SetEntityTilePosition(DungeonsWorldGridComponent& grid, R3::Entities::World& w, R3::Entities::EntityHandle e, uint32_t tileX, uint32_t tileZ);
 	void SetVisualEntitiesVisible(const DungeonsWorldGridComponent& grid, R3::Entities::World& w, const std::unordered_set<glm::uvec2>& tiles, bool visible);
 	void UpdateVision(class DungeonsWorldGridComponent& grid, R3::Entities::World& w);
 	void DebugDrawVisibleTiles(const class DungeonsWorldGridComponent& grid, R3::Entities::World& w);

@@ -1,6 +1,8 @@
 set(DungeonsOfArrrgh_SourceFiles
 	world_grid_component.h
 	world_grid_component.cpp
+	world_grid_position.h
+	world_grid_position.cpp
 	dungeons_of_arrrgh.h
 	dungeons_of_arrrgh.cpp
 	vision_component.h

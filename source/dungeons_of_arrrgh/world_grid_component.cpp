@@ -170,6 +170,15 @@ bool DungeonsWorldGridComponent::AllTilesMatchType(glm::uvec2 start, glm::uvec2 
 	return true;
 }
 
+std::vector<R3::Entities::EntityHandle> DungeonsWorldGridComponent::GetEntitiesInTile(uint32_t tileX, uint32_t tileZ)
+{
+	if (auto contents = GetContents(tileX, tileZ))
+	{
+		return contents->m_entitiesInTile;
+	}
+	return {};
+}
+
 void DungeonsWorldGridComponent::ResizeGrid(glm::uvec2 size)
 {
 	R3_PROF_EVENT();

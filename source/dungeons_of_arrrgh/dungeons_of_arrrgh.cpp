@@ -1,5 +1,6 @@
 #include "dungeons_of_arrrgh.h"
 #include "world_grid_component.h"
+#include "world_grid_position.h"
 #include "vision_component.h"
 #include "engine/systems/immediate_render_system.h"
 #include "engine/systems/lua_system.h"
@@ -57,6 +58,7 @@ bool DungeonsOfArrrgh::Init()
 	auto entities = GetSystem<R3::Entities::EntitySystem>();
 	entities->RegisterComponentType<DungeonsWorldGridComponent>(16);	// probably only need 1 per world, but eh
 	entities->RegisterComponentType<DungeonsVisionComponent>(8092);
+	entities->RegisterComponentType<DungeonsWorldGridPosition>(64 * 1024);
 
 	auto scriptNamespace = "Arrrgh";
 	auto scripts = GetSystem<R3::LuaSystem>();
@@ -71,6 +73,9 @@ bool DungeonsOfArrrgh::Init()
 	}, scriptNamespace);
 	scripts->RegisterFunction("GetTileUnderMouseCursor", [this](DungeonsWorldGridComponent* grid) {
 		return GetTileUnderMouseCursor(*grid);
+	}, scriptNamespace);
+	scripts->RegisterFunction("SetEntityTilePosition", [this, entities](DungeonsWorldGridComponent* grid, R3::Entities::EntityHandle e, uint32_t tileX, uint32_t tileZ) {
+		SetEntityTilePosition(*grid, *entities->GetActiveWorld(), e, tileX, tileZ);
 	}, scriptNamespace);
 	return true;
 }
@@ -168,6 +173,42 @@ void DungeonsOfArrrgh::DebugDrawTiles(const DungeonsWorldGridComponent& grid, Co
 	if (outVertices.size() > 0)
 	{
 		imRender->m_imRender->AddTriangles(outVertices.data(), (uint32_t)outVertices.size() / 3, true);
+	}
+}
+
+void DungeonsOfArrrgh::SetEntityTilePosition(DungeonsWorldGridComponent& grid, R3::Entities::World& w, R3::Entities::EntityHandle e, uint32_t tileX, uint32_t tileZ)
+{
+	R3_PROF_EVENT();
+	auto tilePosComponent = w.GetComponent<DungeonsWorldGridPosition>(e);
+	if (!tilePosComponent)
+	{
+		w.AddComponent<DungeonsWorldGridPosition>(e);
+		tilePosComponent = w.GetComponent<DungeonsWorldGridPosition>(e);
+	}
+	if (tilePosComponent->GetPosition() != glm::uvec2(tileX,tileZ))
+	{
+		auto oldContents = grid.GetContents(tilePosComponent->GetPosition().x, tilePosComponent->GetPosition().y);
+		auto newContents = grid.GetContents(tileX, tileZ);
+		if (oldContents)	// remove from old tile
+		{
+			auto found = std::find(oldContents->m_entitiesInTile.begin(), oldContents->m_entitiesInTile.end(), e);
+			assert(found != oldContents->m_entitiesInTile.end());
+			if (found != oldContents->m_entitiesInTile.end())
+			{
+				oldContents->m_entitiesInTile.erase(found);
+			}
+		}
+		if (newContents)
+		{
+			// add to new tile with validation for double-adds
+			auto found = std::find(newContents->m_entitiesInTile.begin(), newContents->m_entitiesInTile.end(), e);
+			assert(found == newContents->m_entitiesInTile.end());
+			if (found == newContents->m_entitiesInTile.end())
+			{
+				newContents->m_entitiesInTile.push_back(e);
+				tilePosComponent->m_position = { tileX, tileZ };
+			}
+		}
 	}
 }
 

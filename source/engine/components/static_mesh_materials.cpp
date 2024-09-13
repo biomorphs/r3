@@ -90,8 +90,6 @@ namespace R3
 
 	void StaticMeshMaterialsComponent::Inspect(const Entities::EntityHandle& e, Entities::World* w, ValueInspector& i)
 	{
-		std::string txt = std::format("GPU Data Index: {}", m_gpuDataIndex);
-		ImGui::Text(txt.c_str());
 		if (ImGui::Button("Populate from Static Mesh"))
 		{
 			PopulateFromMesh(e, w);
