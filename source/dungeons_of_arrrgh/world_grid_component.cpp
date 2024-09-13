@@ -8,6 +8,7 @@ void DungeonsWorldGridComponent::WorldTileContents::SerialiseJson(R3::JsonSerial
 {
 	R3_PROF_EVENT();
 	s("RawData", m_rawData);
+	s("Tags", m_tags);
 	s("Entities", m_entitiesInTile);
 }
 
@@ -18,10 +19,9 @@ void DungeonsWorldGridComponent::RegisterScripts(R3::LuaSystem& l)
 		"FindVisibleTiles", &DungeonsWorldGridComponent::FindVisibleTiles,
 		"ResizeGrid", &DungeonsWorldGridComponent::ResizeGrid,
 		"GetDimensions", &DungeonsWorldGridComponent::GetDimensions,
-		"GetTileType", &DungeonsWorldGridComponent::GetTileType,
 		"IsTilePassable", &DungeonsWorldGridComponent::IsTilePassable,
 		"Fill", &DungeonsWorldGridComponent::Fill,
-		"AllTilesMatchType", &DungeonsWorldGridComponent::AllTilesMatchType,
+		"AllTilesPassable", &DungeonsWorldGridComponent::AllTilesPassable,
 		"CalculatePath", &DungeonsWorldGridComponent::CalculatePath,
 		"m_debugDraw", &DungeonsWorldGridComponent::m_debugDraw,
 		"m_isDirty", &DungeonsWorldGridComponent::m_isDirty
@@ -65,7 +65,7 @@ DungeonsWorldGridComponent::VisibleTiles DungeonsWorldGridComponent::FindVisible
 	iterEnd = glm::clamp(iterEnd, { 0,0 }, iTotalDims);
 
 	// if the initial tile blocks visibility, we are done
-	if (auto thisTile = GetContents(startTile.x, startTile.y); thisTile && thisTile->m_tileData.m_blockVisibility)
+	if (auto thisTile = GetContents(startTile.x, startTile.y); thisTile && thisTile->m_flags.m_blockVisibility)
 	{
 		return results;
 	}
@@ -82,7 +82,7 @@ DungeonsWorldGridComponent::VisibleTiles DungeonsWorldGridComponent::FindVisible
 			const bool inRadius = distanceToPoint <= distance;
 			if (inRadius)
 			{
-				if (auto content = GetContents(x, z); !content->m_tileData.m_blockVisibility)
+				if (auto content = GetContents(x, z); !content->m_flags.m_blockVisibility)
 				{
 					// use DDA to 'draw' a line from the start to this tile
 					// if any vision-blocking tiles are encountered, the current tile is not visible
@@ -91,7 +91,7 @@ DungeonsWorldGridComponent::VisibleTiles DungeonsWorldGridComponent::FindVisible
 					auto noBlockVision = [this, voxelsPerCell](const glm::ivec3& tile) {
 						if (auto tileData = GetContents(tile.x / voxelsPerCell, tile.z / voxelsPerCell))
 						{
-							return !tileData->m_tileData.m_blockVisibility;
+							return !tileData->m_flags.m_blockVisibility;
 						}
 						return true;
 					};
@@ -121,33 +121,25 @@ void DungeonsWorldGridComponent::Fill(glm::uvec2 start, glm::uvec2 size, uint8_t
 		{
 			if (auto tile = GetContents(x, z))
 			{
-				tile->m_tileData.m_tileType = static_cast<uint8_t>(type);
-				tile->m_tileData.m_passable = isPassable;
-				tile->m_tileData.m_blockVisibility = blockVisibility;
+				// should take a tagset instead
+				// tile->m_flags.m_tileType = static_cast<uint8_t>(type);
+				tile->m_flags.m_passable = isPassable;
+				tile->m_flags.m_blockVisibility = blockVisibility;
 			}
 		}
 	}
-}
-
-uint8_t DungeonsWorldGridComponent::GetTileType(uint32_t tilex, uint32_t tiley)
-{
-	if (auto c = GetContents(tilex, tiley))
-	{
-		return c->m_tileData.m_tileType;
-	}
-	return 0;
 }
 
 bool DungeonsWorldGridComponent::IsTilePassable(uint32_t tilex, uint32_t tiley)
 {
 	if (auto c = GetContents(tilex, tiley))
 	{
-		return c->m_tileData.m_passable;
+		return c->m_flags.m_passable;
 	}
 	return false;
 }
 
-bool DungeonsWorldGridComponent::AllTilesMatchType(glm::uvec2 start, glm::uvec2 size, uint8_t type)
+bool DungeonsWorldGridComponent::AllTilesPassable(glm::uvec2 start, glm::uvec2 size)
 {
 	R3_PROF_EVENT();
 	for (auto z = start.y; z < start.y + size.y; ++z)
@@ -156,14 +148,14 @@ bool DungeonsWorldGridComponent::AllTilesMatchType(glm::uvec2 start, glm::uvec2 
 		{
 			if (auto tile = GetContents(x, z))
 			{
-				if (tile->m_tileData.m_tileType != static_cast<uint8_t>(type))
+				if (!tile->m_flags.m_passable)
 				{
 					return false;
 				}
 			}
 			else
 			{
-				return false;	// no tile data = no match?
+				return false;
 			}
 		}
 	}

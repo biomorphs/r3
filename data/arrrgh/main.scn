@@ -32,10 +32,17 @@
      "Floats": [
       {
        "Key": "Tower Chance",
-       "Value": 0.800000011920929
+       "Value": 0.25
       }
      ],
      "IntVec2s": [
+      {
+       "Key": "Min Building Size",
+       "Value": {
+        "X": 3,
+        "Y": 3
+       }
+      },
       {
        "Key": "Total World Size",
        "Value": {
@@ -44,24 +51,10 @@
        }
       },
       {
-       "Key": "Min Building Size",
-       "Value": {
-        "X": 5,
-        "Y": 5
-       }
-      },
-      {
        "Key": "Max Building Size",
        "Value": {
-        "X": 16,
-        "Y": 16
-       }
-      },
-      {
-       "Key": "Level Exit Safe Area (Min/Max)",
-       "Value": {
-        "X": 5,
-        "Y": 6
+        "X": 8,
+        "Y": 8
        }
       },
       {
@@ -70,24 +63,31 @@
         "X": 5,
         "Y": 6
        }
+      },
+      {
+       "Key": "Level Exit Safe Area (Min/Max)",
+       "Value": {
+        "X": 5,
+        "Y": 6
+       }
       }
      ],
      "Ints": [
       {
-       "Key": "Min Tower Radius",
-       "Value": 5
+       "Key": "Max Buildings",
+       "Value": 500
       },
       {
        "Key": "Tower Wall Thickness",
        "Value": 1
       },
       {
-       "Key": "Max Buildings",
-       "Value": 500
+       "Key": "Min Tower Radius",
+       "Value": 5
       },
       {
        "Key": "Max Building Iterations",
-       "Value": 200000
+       "Value": 10000
       },
       {
        "Key": "Wander steps per iteration",

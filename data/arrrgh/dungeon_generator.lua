@@ -110,7 +110,7 @@ function FillWithBuildings(grid,inParams)
 		local testAreaSize = uvec2.new(buildingSize.x + 2, buildingSize.y + 2)
 		local testAreaPos = uvec2.new(buildingPosition.x -1, buildingPosition.y - 1)
 		
-		if(grid:AllTilesMatchType(testAreaPos, testAreaSize, 3)) then -- if area only contains outdoor floor
+		if(grid:AllTilesPassable(testAreaPos, testAreaSize)) then -- if area only contains outdoor floor
 			local buildingCreated = false
 			if(math.random() <= towerChance) then 
 				buildingCreated = Dungeons_GenerateRoundTower(grid, inParams, buildingPosition, buildingSize)
