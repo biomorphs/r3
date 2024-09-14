@@ -1,16 +1,24 @@
 require 'arrrgh/arrrgh_shared'
 
-Arrrgh_Globals.CameraHeight = 50
-Arrrgh_Globals.CameraLookAt = vec3.new(0,0,0)
-Arrrgh_Globals.CameraSpeed = vec3.new(128,128,128)
+Arrrgh_Globals.CameraHeight = Arrrgh_Globals.CameraHeight or 50
+Arrrgh_Globals.CameraLookAt = Arrrgh_Globals.CameraLookAt or vec3.new(0,0,0)
+Arrrgh_Globals.CameraSpeed = Arrrgh_Globals.CameraSpeed or vec3.new(128,128,128)
 
 -- camera will animate to look at target position
-function Dungeons_CameraLookAt(worldPos)
+function Dungeons_CameraLookAt(worldPos, camHeight)
+	local newCamHeight = camHeight or Arrrgh_Globals.CameraHeight
 	Arrrgh_Globals.CameraLookAt = worldPos
+	Arrrgh_Globals.CameraHeight = newCamHeight
+end
+
+function Dungeons_CameraActivate()
+	local world = R3.ActiveWorld()
+	local cameraEntity = world:GetEntityByName('GameCamera')
+	R3.SetActiveCamera(cameraEntity)
 end
 
 -- camera fixed update
-function Dungeons_UpdateCamera()
+function Dungeons_UpdateCamera(e)
 	local camHeight = Arrrgh_Globals.CameraHeight
 	local mouseScroll = R3.GetMouseWheelScroll()
 	camHeight = camHeight + (mouseScroll * -4)

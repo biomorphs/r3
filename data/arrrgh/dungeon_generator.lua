@@ -1,9 +1,12 @@
 require 'arrrgh/fastqueue'
 require 'arrrgh/arrrgh_shared'
+require 'arrrgh/world_generator'
+require 'arrrgh/generator_steps'
 
 Arrrgh_Globals.FillWithExteriorFloor = false
 Arrrgh_Globals.DoRandomWander = true
 Arrrgh_Globals.genCoroutine = nil
+Arrrgh_Globals.WorldGenerator = nil
 
 function Dungeons_PopulateGeneratorInputs(luacmp)
 	luacmp.m_inputParams:AddIntVec2("Total World Size", ivec2.new(32,32))
@@ -185,7 +188,7 @@ function Dungeons_GenerateWorld_WanderToGoal(grid, inParams, spawnPos, goalPos)
 	YieldGenerator()
 end
 
-function Dungeons_CreatePlayerSpawn(grid, inParams, spawnPos)
+function Dungeons_CreatePlayerSpawn(grid, spawnPos)
 	local world = R3.ActiveWorld()
 	local spawnPointEntities = world:ImportScene('arrrgh/pois/playerspawnpoint.scn')
 	local actualPos = vec3.new(spawnPos.x * Arrrgh_Globals.TileDimensions.x, 0, spawnPos.y * Arrrgh_Globals.TileDimensions.y)
@@ -207,9 +210,7 @@ function Dungeons_GenerateLevelExitSafeArea(grid, inParams, goalPos)
 	local safeAreaSizeRange = inParams:GetIntVec2("Level Exit Safe Area (Min/Max)", ivec2.new(2,4))
 	local areaRadius = math.random(safeAreaSizeRange.x, safeAreaSizeRange.y)
 	local areaCenter = vec2.new(goalPos.x, goalPos.y)
-	print('4')
 	local floorTag = TileTagset.new("floor,exterior")
-	print('5')
 	Dungeons_FillCircle(grid, areaCenter, areaRadius, floorTag, true, false)
 end
 
@@ -217,10 +218,7 @@ function Dungeons_GeneratePlayerSpawnSafeArea(grid, inParams, pos)
 	local safeAreaSizeRange = inParams:GetIntVec2("Player Spawn Safe Area (Min/Max)", ivec2.new(2,4))
 	local areaRadius = math.random(safeAreaSizeRange.x, safeAreaSizeRange.y)
 	local areaCenter = vec2.new(pos.x, pos.y)
-	print('3')
 	local floorTag = TileTagset.new("floor,exterior")
-	print('4')
-	print(floorTag)
 	Dungeons_FillCircle(grid, areaCenter, areaRadius, floorTag, true, false)
 end
 
@@ -247,7 +245,6 @@ function Dungeons_CoGenerateWorld(grid, inParams)
 	-- make the spawn + goal entities 
 	Dungeons_CreatePlayerSpawn(grid, inParams, spawnPos)
 	Dungeons_GeneratePlayerSpawnSafeArea(grid, inParams, spawnPos)
-	print('3')
 	Dungeons_CreateLevelExit(grid, inParams, goalPos)
 	Dungeons_GenerateLevelExitSafeArea(grid, inParams, goalPos)
 
@@ -277,6 +274,13 @@ function Dungeons_CoGenerateWorld(grid, inParams)
 	grid.m_debugDraw = false
 end
 
+function Dungeons_BasicGenerator()
+	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Center Camera", Generator_CenterCamera())
+	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Ext Floor", Generator_FillWorld("floor,exterior",true,false))
+	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Middle Room", Generator_SimpleRoom(uvec2.new(16,16), uvec2.new(12,12), "wall,floor,exterior", "floor,interior"))
+	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Make spawn point", Generator_SetPlayerSpawn(uvec2.new(20,20)))
+end
+
 -- main entry point, called from variable update
 -- generator runs as a coroutine
 function Dungeons_GenerateWorld(e)
@@ -285,21 +289,19 @@ function Dungeons_GenerateWorld(e)
 	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
 	local scriptcmp = world.GetComponent_LuaScript(e)
 	if(scriptcmp ~= nil and gridcmp ~= nil) then
-		if(Arrrgh_Globals.genCoroutine == nil) then 
-			print('Starting dungeon generator')
-			Arrrgh_Globals.genCoroutine = coroutine.create( Dungeons_CoGenerateWorld )
+		if(Arrrgh_Globals.WorldGenerator == nil) then 
+			local totalWorldSize = scriptcmp.m_inputParams:GetIntVec2("Total World Size", ivec2.new(32,32))
+			gridcmp:ResizeGrid(uvec2.new(totalWorldSize.x,totalWorldSize.y))
+			Arrrgh_Globals.WorldGenerator = Dungeons_Generator.new(gridEntity)
+			Dungeons_BasicGenerator()
 		end
-		local runningStatus = coroutine.status(Arrrgh_Globals.genCoroutine)
-		if(runningStatus ~= 'dead') then
-			coroutine.resume(Arrrgh_Globals.genCoroutine, gridcmp, scriptcmp.m_inputParams)
-		else
-			Arrrgh_Globals.genCoroutine = nil
-			gridcmp.m_isDirty = true		-- update the graphics once at the end
-			scriptcmp.m_isActive = false	-- we are done, stop running
+		if(Dungeons_Generator.Continue(Arrrgh_Globals.WorldGenerator) == 'complete') then
+			gridcmp.m_isDirty = true	-- update world graphics
+			scriptcmp.m_isActive = false -- disable scripts
+			Dungeons_CreatePlayerSpawn(gridcmp, Arrrgh_Globals.WorldGenerator.Context.SpawnPoint)	-- player spawn point
 			local gameUpdate = world:GetEntityByName('GameUpdate')
 			local updateScript = world.GetComponent_LuaScript(gameUpdate)
-			updateScript.m_isActive = true
-			print('Generator finished')
+			updateScript.m_isActive = true	-- start game
 		end
 	else
 		print('No Grid')

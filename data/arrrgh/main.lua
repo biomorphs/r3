@@ -2,6 +2,7 @@ require 'arrrgh/fastqueue'
 require 'arrrgh/arrrgh_shared'
 require 'arrrgh/camera'
 require 'arrrgh/action_walkto'
+require 'arrrgh/world_generator'
 
 Arrrgh_Globals.GameState = nil
 Arrrgh_Globals.ActionQueue = Fastqueue.new()
@@ -26,6 +27,8 @@ function Dungeons_SpawnPlayer()
 	world:RemoveEntity(spawnEntity,false)
 	local tilePos = Arrrgh.GetTileFromWorldspace(gridcmp, actualPos)
 	Arrrgh.SetEntityTilePosition(gridcmp, playerEntity[1], tilePos.x, tilePos.y)
+
+	Dungeons_CameraLookAt(actualPos, 40)
 end
 
 function Dungeons_OnTurnBegin()
@@ -38,7 +41,7 @@ function Dungeons_OnTurnEnd()
 end
 
 function Dungeons_GetTotalActionPoints(playerIndex)
-	return 10	-- todo, get based on player/monster attributes, etc
+	return 1	-- todo, get based on player/monster attributes, etc
 end
 
 function Dungeons_GetActionPointsRemaining(playerIndex)
@@ -75,15 +78,6 @@ function Dungeons_OnChooseActions(playerIndex)
 end
 
 function Dungeons_GameTickFixed(e)
-	 -- keep camera looking at the player for now
-	local world = R3.ActiveWorld()
-	local playerEntity = world:GetEntityByName('PlayerActor')
-	local playerTransform = world.GetComponent_Transform(playerEntity)
-	if(playerTransform ~= nil) then 
-		Dungeons_CameraLookAt(playerTransform:GetPosition())
-	end
-	Dungeons_UpdateCamera()
-
 	-- state changes always happen in fixed update
 	if(Arrrgh_Globals.GameState == nil) then 
 		Arrrgh_Globals.GameState = 'start'

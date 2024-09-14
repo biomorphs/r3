@@ -46,6 +46,7 @@ function Dungeons_ActionWalkTo(action)
 			actorPos.y = actorPos.y + targetDir.y * tDelta
 			actorPos.z = actorPos.z + targetDir.z * tDelta
 			actorTransform:SetPosition(actorPos)
+			Dungeons_CameraLookAt(actorPos)
 			return 'continue'
 		end
 	end
