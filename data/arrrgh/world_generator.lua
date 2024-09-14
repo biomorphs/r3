@@ -88,7 +88,7 @@ end
 
 -- yields until time passed
 function Dungeons_Generator.Yield(timeToWait)
-	timeToWait = timeToWait or 0.25
+	timeToWait = timeToWait or 0.1
 	local currentWaitTime = 0 
 	repeat
 		currentWaitTime = currentWaitTime + R3.GetVariableDelta() -- variable delta is good enough

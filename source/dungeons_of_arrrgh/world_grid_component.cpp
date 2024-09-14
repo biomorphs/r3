@@ -20,6 +20,7 @@ void DungeonsWorldGridComponent::RegisterScripts(R3::LuaSystem& l)
 		"ResizeGrid", &DungeonsWorldGridComponent::ResizeGrid,
 		"GetDimensions", &DungeonsWorldGridComponent::GetDimensions,
 		"IsTilePassable", &DungeonsWorldGridComponent::IsTilePassable,
+		"TileHasTags", &DungeonsWorldGridComponent::TileHasTags,
 		"Fill", &DungeonsWorldGridComponent::Fill,
 		"AllTilesPassable", &DungeonsWorldGridComponent::AllTilesPassable,
 		"CalculatePath", &DungeonsWorldGridComponent::CalculatePath,
@@ -175,6 +176,15 @@ std::vector<R3::Entities::EntityHandle> DungeonsWorldGridComponent::GetEntitiesI
 		return contents->m_entitiesInTile;
 	}
 	return {};
+}
+
+bool DungeonsWorldGridComponent::TileHasTags(uint32_t tilex, uint32_t tiley)
+{
+	if (auto contents = GetContents(tilex, tiley))
+	{
+		return contents->m_tags.m_count > 0;
+	}
+	return false;
 }
 
 void DungeonsWorldGridComponent::ResizeGrid(glm::uvec2 size)

@@ -86,6 +86,10 @@ void DebugDrawTile(R3::ImmediateRenderSystem& imRender,
 		{
 			colour = { 0,1,0,.25 };
 		}
+		if (contents->m_tags.m_count > 0)
+		{
+			colour.a = 0.5;
+		}
 		verts.push_back({ {basePos, 1}, colour });
 		verts.push_back({ {basePos + glm::vec3(scale.x,0,0), 1}, colour });
 		verts.push_back({ {basePos + glm::vec3(scale.x,0,scale.y), 1}, colour });
@@ -279,6 +283,27 @@ struct GeneratorRule
 const std::vector<GeneratorRule> c_wallRules = {
 	GeneratorRule(
 		{
+			"wall",		"wall",			"wall",
+			"wall",		"wall",			"wall",
+			"wall",		"wall",			"wall"
+		}, ""
+	),
+	GeneratorRule(
+		{
+			"",			"",				"",
+			"wall",		"wall",			"wall",
+			"",			"",				""
+		}, "basic_hwall_tile_4x4.scn"
+	),
+	GeneratorRule(
+		{
+			"",			"wall",			"",
+			"",			"wall",			"",
+			"",			"wall",			""
+		}, "basic_vwall_tile_4x4.scn"
+	),
+	GeneratorRule(
+		{
 			"",			"",				"",
 			"",			"wall",			"wall",
 			"",			"wall",			""
@@ -305,38 +330,17 @@ const std::vector<GeneratorRule> c_wallRules = {
 			"",			"",			""
 		}, "basic_wall_corner_4x4.scn", -270.0f
 	),
-	GeneratorRule(
-		{
-			"",			"",				"",
-			"wall",		"wall",			"",
-			"",			"",				""
-		}, "basic_hwall_tile_4x4.scn"
-	),
-	GeneratorRule(
-		{
-			"",			"",				"",
-			"",			"wall",			"wall",
-			"",			"",				""
-		}, "basic_hwall_tile_4x4.scn"
-	),
-	GeneratorRule(
-		{
-			"",			"",				"",
-			"",			"wall",			"",
-			"",			"wall",			""
-		}, "basic_vwall_tile_4x4.scn"
-	),
-	GeneratorRule(
-		{
-			"",			"wall",			"",
-			"",			"wall",			"",
-			"",			"",				""
-		}, "basic_vwall_tile_4x4.scn"
-	),
 	GeneratorRule("wall", "basic_crosswall_tile_4x4.scn")
 };
 
 const std::vector<GeneratorRule> c_floorRules = {
+	GeneratorRule(
+		{
+			"wall",		"wall",			"wall",
+			"wall",		"wall",			"wall",
+			"wall",		"wall",			"wall"
+		}, ""
+	),
 	GeneratorRule("floor,interior", "basic_floor_wood_4x4.scn"),
 	GeneratorRule("floor,exterior", "basic_floor_tile_4x4.scn"),
 	GeneratorRule("floor", "basic_floor_dirt_4x4.scn")

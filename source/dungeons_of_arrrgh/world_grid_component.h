@@ -33,6 +33,7 @@ public:
 	const WorldTileContents* GetContents(uint32_t tileX, uint32_t tileZ) const;	// assume it will be sparse later
 	WorldTileContents* GetContents(uint32_t tileX, uint32_t tileZ);
 	std::vector<R3::Entities::EntityHandle> GetEntitiesInTile(uint32_t tileX, uint32_t tileZ);
+	bool TileHasTags(uint32_t tilex, uint32_t tiley);
 	bool IsTilePassable(uint32_t tilex, uint32_t tiley);
 	void Fill(glm::uvec2 start, glm::uvec2 size, const WorldTileContents::TileTags& tags, bool isPassable, bool blockVisibility);
 	bool AllTilesPassable(glm::uvec2 start, glm::uvec2 size);	// return true if all tiles in range are walkable

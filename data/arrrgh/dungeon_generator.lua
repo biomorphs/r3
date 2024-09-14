@@ -3,140 +3,7 @@ require 'arrrgh/arrrgh_shared'
 require 'arrrgh/world_generator'
 require 'arrrgh/generator_steps'
 
-Arrrgh_Globals.FillWithExteriorFloor = false
-Arrrgh_Globals.DoRandomWander = true
-Arrrgh_Globals.genCoroutine = nil
 Arrrgh_Globals.WorldGenerator = nil
-
-function Dungeons_PopulateGeneratorInputs(luacmp)
-	luacmp.m_inputParams:AddIntVec2("Total World Size", ivec2.new(32,32))
-	luacmp.m_inputParams:AddIntVec2("Min Building Size", ivec2.new(5,5))
-	luacmp.m_inputParams:AddIntVec2("Max Building Size", ivec2.new(16,16))
-	luacmp.m_inputParams:AddIntVec2("Level Exit Safe Area (Min/Max)", ivec2.new(3,5))
-	luacmp.m_inputParams:AddIntVec2("Player Spawn Safe Area (Min/Max)", ivec2.new(2,4))
-	luacmp.m_inputParams:AddInt("Min Tower Radius", 3)
-	luacmp.m_inputParams:AddInt("Tower Wall Thickness", 1)
-	luacmp.m_inputParams:AddInt("Max Building Iterations", 100000)
-	luacmp.m_inputParams:AddInt("Wander steps per iteration", 20)
-	luacmp.m_inputParams:AddInt("Max Buildings", 200)
-	luacmp.m_inputParams:AddFloat("Tower Chance", 0.5)
-end
-
--- yields until time passed
-function YieldGenerator(timeToWait)
-	timeToWait = timeToWait or 0.25
-	local currentWaitTime = 0 
-	repeat
-		currentWaitTime = currentWaitTime + R3.GetVariableDelta() -- variable delta is good enough
-		coroutine.yield()
-	until(currentWaitTime >= timeToWait)
-end
-
-function DistanceBetween(v0,v1)
-	local tov1 = vec2.new(v0.x - v1.x, v0.y - v1.y)
-	return math.sqrt((tov1.x * tov1.x) + (tov1.y * tov1.y))
-end
-
-function Dungeons_FillCircle(grid, center, radius, tags, isPassable, blocksVisibility)
-	local areaCenter = vec2.new(center.x, center.y)
-	local start = vec2.new(center.x - radius, center.y - radius)
-	local size = vec2.new(radius * 2, radius * 2)
-	for z=start.y,(start.y + size.y) do 
-		for x=start.x,(start.x + size.x) do 
-			local distanceToCenter = DistanceBetween(vec2.new(x,z), areaCenter)
-			if(distanceToCenter <= radius) then
-				grid:Fill(uvec2.new(math.tointeger(x),math.tointeger(z)), uvec2.new(1,1), tags, isPassable, blocksVisibility)
-			end
-		end
-	end
-end
-
-function Dungeons_GenerateSimpleBuilding(grid, inParams, start, size)
-	local wallTag = TileTagset.new("floor,exterior,wall")
-	local floorTag = TileTagset.new("floor,interior")
-	grid:Fill(start, size, wallTag, false, true) -- outer walls
-	grid:Fill(uvec2.new(start.x + 1, start.y + 1), uvec2.new(size.x - 2, size.y - 2), floorTag, true, false) -- interior floor
-
-	-- make a door
-	local doorPos = {}
-	local wallForDoor = math.random(0, 3)
-	if(wallForDoor == 0) then -- top
-		doorPos = uvec2.new(math.random(start.x + 1, start.x + size.x - 2), start.y)
-	elseif(wallForDoor == 1) then -- right
-		doorPos = uvec2.new(start.x + size.x - 1, math.random(start.y + 1, start.y + size.y - 2))
-	elseif(wallForDoor == 2) then -- bottom
-		doorPos = uvec2.new(math.random(start.x + 1, start.x + size.x - 2), start.y + size.y - 1)
-	elseif(wallForDoor == 3) then -- left
-		doorPos = uvec2.new(start.x, math.random(start.y + 1, start.y + size.y - 2))
-	end
-	grid:Fill(doorPos, uvec2.new(1, 1), floorTag, true, false)
-	return true
-end
-
-function Dungeons_GenerateRoundTower(grid, inParams, start, size)
-	local wallTag = TileTagset.new("floor,exterior,wall")
-	local floorTag = TileTagset.new("floor,interior")
-	local minTowerRadius = inParams:GetInt("Min Tower Radius", 3)
-	local tileWallThickness = inParams:GetInt("Tower Wall Thickness", 1)
-	local towerRadius = math.floor(math.min(size.x, size.y) * 0.5)
-	local towerCenter = vec2.new(start.x + (size.x * 0.5), start.y + (size.y * 0.5))
-	if(towerRadius < minTowerRadius) then 
-		return false
-	end
-	for z=start.y,(start.y + size.y) do 
-		for x=start.x,(start.x + size.x) do 
-			local distanceToCenter = DistanceBetween(vec2.new(x,z), towerCenter)
-			if(distanceToCenter <= towerRadius) then
-				if((towerRadius - distanceToCenter) <= tileWallThickness) then
-					grid:Fill(uvec2.new(x,z), uvec2.new(1,1), wallTag, false, true)	-- outer wall
-				else
-					grid:Fill(uvec2.new(x,z), uvec2.new(1,1), floorTag, true, false)	-- floor
-				end
-			end
-		end
-	end
-	return true
-end
-
-function FillWithBuildings(grid,inParams)
-	local minBuildingSize = inParams:GetIntVec2("Min Building Size", ivec2.new(5,5))
-	local maxBuildingSize = inParams:GetIntVec2("Max Building Size", ivec2.new(16,16))
-	local towerChance = inParams:GetFloat("Tower Chance", 0.5)
-	local maxAttempts = inParams:GetInt("Max Building Iterations", 200000)
-	local maxBuildings = inParams:GetInt("Max Buildings", 500)
-	local gridDims = grid:GetDimensions()
-	if(gridDims.x < 2 or gridDims.y < 2) then
-		print('too small')
-		return
-	end
-	local totalBuildings = 0
-	for attempt=1,maxAttempts do 
-		-- detect areas to build on
-		local buildingSize = uvec2.new(math.random(minBuildingSize.x,maxBuildingSize.x),math.random(minBuildingSize.y,maxBuildingSize.y))
-		local buildingPosition = uvec2.new(math.random(2, gridDims.x - buildingSize.x), math.random(2, gridDims.y - buildingSize.x))
-		local testAreaSize = uvec2.new(buildingSize.x + 2, buildingSize.y + 2)
-		local testAreaPos = uvec2.new(buildingPosition.x -1, buildingPosition.y - 1)
-		
-		if(grid:AllTilesPassable(testAreaPos, testAreaSize)) then -- if area only contains outdoor floor
-			local buildingCreated = false
-			if(math.random() <= towerChance) then 
-				buildingCreated = Dungeons_GenerateRoundTower(grid, inParams, buildingPosition, buildingSize)
-			end
-			if(buildingCreated == false) then 
-				buildingCreated = Dungeons_GenerateSimpleBuilding(grid, inParams, buildingPosition, buildingSize)
-			end
-			if(buildingCreated) then 
-				totalBuildings = totalBuildings + 1
-				if(totalBuildings == maxBuildings) then 
-					print(totalBuildings, ' buildings generated')
-					return 
-				end
-				YieldGenerator(0.0)
-			end
-		end
-	end
-	print(totalBuildings, ' buildings generated. attempts=', maxAttempts)
-end
 
 function Dungeons_GenerateWorld_WanderToGoal(grid, inParams, spawnPos, goalPos)
 	local floorTag = TileTagset.new("floor,exterior")
@@ -197,88 +64,16 @@ function Dungeons_CreatePlayerSpawn(grid, spawnPos)
 	Arrrgh.MoveEntitiesWorldspace(spawnPointEntities, actualPos)
 end
 
-function Dungeons_CreateLevelExit(grid, inParams, pos)
-	local world = R3.ActiveWorld()
-	local levelExit = world:ImportScene('arrrgh/pois/levelexit.scn')
-	local actualPos = vec3.new(pos.x * Arrrgh_Globals.TileDimensions.x, 0, pos.y * Arrrgh_Globals.TileDimensions.y)
-	actualPos.x = actualPos.x + (Arrrgh_Globals.TileDimensions.x * 0.5)
-	actualPos.z = actualPos.z + (Arrrgh_Globals.TileDimensions.y * 0.5)
-	Arrrgh.MoveEntitiesWorldspace(levelExit, actualPos)
-end
-
-function Dungeons_GenerateLevelExitSafeArea(grid, inParams, goalPos)
-	local safeAreaSizeRange = inParams:GetIntVec2("Level Exit Safe Area (Min/Max)", ivec2.new(2,4))
-	local areaRadius = math.random(safeAreaSizeRange.x, safeAreaSizeRange.y)
-	local areaCenter = vec2.new(goalPos.x, goalPos.y)
-	local floorTag = TileTagset.new("floor,exterior")
-	Dungeons_FillCircle(grid, areaCenter, areaRadius, floorTag, true, false)
-end
-
-function Dungeons_GeneratePlayerSpawnSafeArea(grid, inParams, pos)
-	local safeAreaSizeRange = inParams:GetIntVec2("Player Spawn Safe Area (Min/Max)", ivec2.new(2,4))
-	local areaRadius = math.random(safeAreaSizeRange.x, safeAreaSizeRange.y)
-	local areaCenter = vec2.new(pos.x, pos.y)
-	local floorTag = TileTagset.new("floor,exterior")
-	Dungeons_FillCircle(grid, areaCenter, areaRadius, floorTag, true, false)
-end
-
-function Dungeons_CoGenerateWorld(grid, inParams)
-	local totalWorldSize = inParams:GetIntVec2("Total World Size", ivec2.new(32,32))
-	local gridSize = uvec2.new(totalWorldSize.x,totalWorldSize.y)	-- need to use uvec2 from here
-	grid:ResizeGrid(gridSize)
-
-	-- fill world with empty tiles + update graphics entities
-	grid:Fill(uvec2.new(0,0), gridSize, TileTagset.new(), false, false)
-	grid.m_isDirty = true
-	YieldGenerator()
-
-	-- choose a minimum distance between start + goal based on world size 
-	local minDistance = math.floor(math.max(gridSize.x, gridSize.y) * 0.8)
-	local spawnPos = {}	-- choose a spawn tile and goal tile, making sure they are far away
-	local goalPos = {}
-	repeat
-		spawnPos = uvec2.new(math.random(2, gridSize.x - 2), math.random(2, gridSize.y - 2))
-		goalPos = uvec2.new(math.random(2, gridSize.x - 2), math.random(2, gridSize.y - 2))
-		local distance = DistanceBetween(spawnPos,goalPos)
-	until distance >= minDistance
-
-	-- make the spawn + goal entities 
-	Dungeons_CreatePlayerSpawn(grid, inParams, spawnPos)
-	Dungeons_GeneratePlayerSpawnSafeArea(grid, inParams, spawnPos)
-	Dungeons_CreateLevelExit(grid, inParams, goalPos)
-	Dungeons_GenerateLevelExitSafeArea(grid, inParams, goalPos)
-
-	grid.m_debugDraw = true
-
-	local floorTag = TileTagset.new("floor,exterior")
-	if(Arrrgh_Globals.FillWithExteriorFloor) then 
-		grid:Fill(uvec2.new(0,0), gridSize, floorTag, true, false)
-		grid.m_isDirty = true
-		YieldGenerator()
-	end
-	
-	-- random wander between start + goal
-	if(Arrrgh_Globals.DoRandomWander) then 
-		Dungeons_GenerateWorld_WanderToGoal(grid, inParams, spawnPos, goalPos)
-	end
-
-	-- fill the start + goal tiles
-	grid:Fill(spawnPos, uvec2.new(1,1), floorTag, true, false)
-	YieldGenerator(1.0)
-	grid:Fill(goalPos, uvec2.new(1,1), floorTag, true, false)
-	YieldGenerator(1.0)
-	
-	grid.m_isDirty = true	-- update graphics
-	YieldGenerator()
-	FillWithBuildings(grid, inParams)
-	grid.m_debugDraw = false
-end
-
 function Dungeons_BasicGenerator()
+	local roomCount = 10
 	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Center Camera", Generator_CenterCamera())
-	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Ext Floor", Generator_FillWorld("floor,exterior",true,false))
-	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Middle Room", Generator_SimpleRoom(uvec2.new(16,16), uvec2.new(12,12), "wall,floor,exterior", "floor,interior"))
-	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Make spawn point", Generator_SetPlayerSpawn(uvec2.new(20,20)))
+	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Empty", Generator_FillWorld("",true,false))	-- start with empty world of passable tiles
+	for r=1,roomCount do 
+		Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Add Room", Generator_SimpleRoom(uvec2.new(math.random(5,60),math.random(5,60)), uvec2.new(math.random(4,8),math.random(4,8)), "wall,floor,exterior", "floor,interior"))
+	end
+	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Make paths between rooms", Generator_PathFromRoomToRoom("floor,interior"))
+	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Make spawn point", Generator_SpawnPlayerInFirstRoom())
+	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Fill empty tiles with impassables", Generator_FillEmptyTiles("wall,floor,exterior", false, false))
 end
 
 -- main entry point, called from variable update
