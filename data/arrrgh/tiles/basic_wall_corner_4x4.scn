@@ -1,7 +1,7 @@
 {
  "AllEntities": [
   {
-   "ID": 1,
+   "ID": 0,
    "Name": "wall.gltf",
    "Parent": 4294967295,
    "StaticMesh": {
@@ -10,7 +10,7 @@
      "ID": 4294967295
     },
     "Model": {
-     "Path": "downloaded\\KayKit_DungeonRemastered_1.1_FREE\\Assets\\gltf\\wall.gltf"
+     "Path": "downloaded\\KayKit_DungeonRemastered_1.1_FREE\\Assets\\gltf\\wall_corner.gltf"
     }
    },
    "Transform": {

@@ -233,7 +233,7 @@ namespace R3
 
 		// If running with low battery, wait a bit!
 		auto powerState = Platform::GetSystemPowerState();
-		if (powerState.m_isRunningOnBattery && powerState.m_batteryPercentageRemaining < 50)
+		if (powerState.m_isRunningOnBattery && powerState.m_batteryPercentageRemaining < 90)
 		{
 			R3_PROF_EVENT("StopKillingBattery");
 			SDL_Delay(10);

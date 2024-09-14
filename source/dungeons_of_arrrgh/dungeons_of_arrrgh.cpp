@@ -257,35 +257,80 @@ struct GeneratorRule
 	NeighbourTags m_neighbourTags;	// 3x3 grid of tags to match against
 	std::vector<std::string> m_scenesToLoad;	// scenes to instantiate if tags match
 	bool m_continue = false;	// if true, will continue evaluating even if this rule is matched (the scene will be loaded)
+	float m_yRotation = 0.0f;	// rotate around y axis
 	GeneratorRule() {}
-	GeneratorRule(std::string_view tag, std::string_view scene)		// single tag = match one tile only
+	GeneratorRule(std::string_view tag, std::string_view scene, float rot=0.0f)		// single tag = match one tile only
 	{
 		m_neighbourTags[4] = tag;
 		m_scenesToLoad.push_back(std::string(scene));
+		m_yRotation = rot;
 	}
-	GeneratorRule(const std::array<std::string_view, 9>& tags, std::string_view scene)
+	GeneratorRule(const std::array<std::string_view, 9>& tags, std::string_view scene, float rot = 0.0f)
 	{
 		for (int i = 0; i < 9; ++i)
 		{
 			m_neighbourTags[i] = tags[i];
 		}
 		m_scenesToLoad.push_back(std::string(scene));
+		m_yRotation = rot;
 	}
 };
 
 const std::vector<GeneratorRule> c_wallRules = {
 	GeneratorRule(
 		{
-			"",			"",			"",
-			"wall",		"wall",			"wall",
+			"",			"",				"",
+			"",			"wall",			"wall",
+			"",			"wall",			""
+		}, "basic_wall_corner_4x4.scn"
+	),
+	GeneratorRule(
+		{
+			"",			"",				"",
+			"wall",		"wall",			"",
+			"",			"wall",			""
+		}, "basic_wall_corner_4x4.scn", -90.0f
+	),
+	GeneratorRule(
+		{
+			"",			"wall",			"",
+			"wall",		"wall",			"",
+			"",			"",				""
+		}, "basic_wall_corner_4x4.scn", -180.0f
+	),
+	GeneratorRule(
+		{
+			"",			"wall",				"",
+			"",			"wall",			"wall",
 			"",			"",			""
+		}, "basic_wall_corner_4x4.scn", -270.0f
+	),
+	GeneratorRule(
+		{
+			"",			"",				"",
+			"wall",		"wall",			"",
+			"",			"",				""
 		}, "basic_hwall_tile_4x4.scn"
+	),
+	GeneratorRule(
+		{
+			"",			"",				"",
+			"",			"wall",			"wall",
+			"",			"",				""
+		}, "basic_hwall_tile_4x4.scn"
+	),
+	GeneratorRule(
+		{
+			"",			"",				"",
+			"",			"wall",			"",
+			"",			"wall",			""
+		}, "basic_vwall_tile_4x4.scn"
 	),
 	GeneratorRule(
 		{
 			"",			"wall",			"",
 			"",			"wall",			"",
-			"",			"wall",			""
+			"",			"",				""
 		}, "basic_vwall_tile_4x4.scn"
 	),
 	GeneratorRule("wall", "basic_crosswall_tile_4x4.scn")
@@ -297,8 +342,13 @@ const std::vector<GeneratorRule> c_floorRules = {
 	GeneratorRule("floor", "basic_floor_dirt_4x4.scn")
 };
 
+struct TileToLoad {
+	std::string m_path;
+	float m_yRotation = 0.0f;
+};
+
 // returns list of tiles to load
-void EvaluateRules(DungeonsWorldGridComponent& grid, int32_t tileX, int32_t tileZ, const std::vector<GeneratorRule>& rules,std::vector<std::string>& results)
+void EvaluateRules(DungeonsWorldGridComponent& grid, int32_t tileX, int32_t tileZ, const std::vector<GeneratorRule>& rules,std::vector<TileToLoad>& results)
 {
 	for (int r = 0; r < rules.size(); ++r)
 	{
@@ -329,7 +379,7 @@ void EvaluateRules(DungeonsWorldGridComponent& grid, int32_t tileX, int32_t tile
 		{
 			for (int i = 0; i < rules[r].m_scenesToLoad.size(); ++i)
 			{
-				results.push_back(rules[r].m_scenesToLoad[i]);
+				results.push_back({ rules[r].m_scenesToLoad[i], rules[r].m_yRotation });
 			}
 			if (!rules[r].m_continue)
 			{
@@ -339,65 +389,56 @@ void EvaluateRules(DungeonsWorldGridComponent& grid, int32_t tileX, int32_t tile
 	}
 }
 
-void DungeonsOfArrrgh::GenerateTileVisuals(uint32_t x, uint32_t z, DungeonsWorldGridComponent& grid, std::vector<R3::Entities::EntityHandle>& outEntities)
+void DungeonsOfArrrgh::GenerateTileVisuals(uint32_t x, uint32_t z, DungeonsWorldGridComponent& grid)
 {
 	R3_PROF_EVENT();
 	auto entities = GetSystem<R3::Entities::EntitySystem>();
 	auto activeWorld = entities->GetActiveWorld();
 
-	std::vector<std::string> tilesToLoad;
+	std::vector<TileToLoad> tilesToLoad;
 	EvaluateRules(grid, x, z, c_wallRules, tilesToLoad);
 	EvaluateRules(grid, x, z, c_floorRules, tilesToLoad);
-	for (const auto& tileScene : tilesToLoad)
-	{
-		auto foundInCache = m_generateVisualsEntityCache.find(tileScene);
-		if (foundInCache == m_generateVisualsEntityCache.end())
-		{
-			// load the entities via the world, serialise them, then delete the temp loaded entities + store the json
-			std::string fullPath = "arrrgh/tiles/" + tileScene;
-			auto loadedEntities = activeWorld->Import(fullPath);
-			R3::JsonSerialiser entityData = activeWorld->SerialiseEntities(loadedEntities);
-			m_generateVisualsEntityCache[tileScene] = entityData.GetJson();
-			foundInCache = m_generateVisualsEntityCache.find(tileScene);
-			for (auto it : loadedEntities)
-			{
-				activeWorld->RemoveEntity(it);
-			}
-		}
-		if (foundInCache != m_generateVisualsEntityCache.end())
-		{
-			R3::JsonSerialiser entityData(R3::JsonSerialiser::Read, foundInCache->second);
-			outEntities = activeWorld->SerialiseEntities(entityData);	// clone via serialisation
-		}
-	}
-}
 
-void DungeonsOfArrrgh::GenerateWorldVisuals(const R3::Entities::EntityHandle& e, class DungeonsWorldGridComponent& grid)
-{
-	R3_PROF_EVENT();
-	auto entities = GetSystem<R3::Entities::EntitySystem>();
-	auto activeWorld = entities->GetActiveWorld();
-	const auto dims = grid.GetDimensions();
-	std::vector<R3::Entities::EntityHandle> newTileEntities;
-	for (uint32_t z = 0; z < dims.y; ++z)
+	if (tilesToLoad.size() > 0)
 	{
-		for (uint32_t x = 0; x < dims.x; ++x)
+		auto newChild = activeWorld->AddEntity();	// root node for tile visuals
+		grid.GetContents(x, z)->m_visualEntity = newChild;
+		for (const auto& tileScene : tilesToLoad)
 		{
-			if (auto tile = grid.GetContents(x, z))
+			auto foundInCache = m_generateVisualsEntityCache.find(tileScene.m_path);
+			if (foundInCache == m_generateVisualsEntityCache.end())
 			{
-				if (tile->m_tags.m_count > 0)
+				// load the entities via the world, serialise them, then delete the temp loaded entities + store the json
+				std::string fullPath = std::format("arrrgh/tiles/{}", tileScene.m_path);
+				auto loadedEntities = activeWorld->Import(fullPath);
+				R3::JsonSerialiser entityData = activeWorld->SerialiseEntities(loadedEntities);
+				m_generateVisualsEntityCache[tileScene.m_path] = entityData.GetJson();
+				foundInCache = m_generateVisualsEntityCache.find(tileScene.m_path);
+				for (auto it : loadedEntities)
+				{
+					activeWorld->RemoveEntity(it);
+				}
+			}
+			if (foundInCache != m_generateVisualsEntityCache.end())
+			{
+				R3::JsonSerialiser entityData(R3::JsonSerialiser::Read, foundInCache->second);
+				auto clonedEntities = activeWorld->SerialiseEntities(entityData);	// clone via serialisation
+				if (clonedEntities.size() > 0)
 				{
 					glm::vec3 tileOffset = { (float)x * m_wsGridScale.x, 0.0f, (float)z * m_wsGridScale.y };
 					glm::vec3 basePos = m_wsGridOffset + tileOffset;
-					auto childName = std::format("Tile {}x{}", x, z);
-					auto newChild = activeWorld->AddEntity();
-					activeWorld->SetParent(newChild, e);
-					activeWorld->SetEntityName(newChild, childName);
-					newTileEntities.clear();
-					GenerateTileVisuals(x, z, grid, newTileEntities);
-					MoveEntitiesWorldspace(newTileEntities, basePos);	// move all new entities to the tile pos
-					for (auto impChild : newTileEntities)	// make sure any imported entities have the correct parent and are not visible by default
+					for (auto impChild : clonedEntities)	// make sure any imported entities have the correct parent and are not visible by default
 					{
+						if (auto transCmp = activeWorld->GetComponent<R3::TransformComponent>(impChild))	// move + rotate the entities
+						{
+							if (!transCmp->IsRelativeToParent())
+							{
+								auto oldPos = glm::vec3(transCmp->GetWorldspaceMatrix(impChild, *activeWorld)[3]);
+								transCmp->SetPositionWorldSpaceNoInterpolation(impChild, *activeWorld, oldPos + basePos);
+								glm::vec3 rot = transCmp->GetOrientationDegrees() + glm::vec3(0,tileScene.m_yRotation,0);
+								transCmp->SetOrientationDegrees(rot);
+							}
+						}
 						auto renderComponent = activeWorld->GetComponent<R3::StaticMeshComponent>(impChild);
 						if (renderComponent)
 						{
@@ -408,7 +449,27 @@ void DungeonsOfArrrgh::GenerateWorldVisuals(const R3::Entities::EntityHandle& e,
 							activeWorld->SetParent(impChild, newChild);
 						}
 					}
-					tile->m_visualEntity = newChild;
+				}
+			}
+		}
+	}
+}
+
+void DungeonsOfArrrgh::GenerateWorldVisuals(const R3::Entities::EntityHandle& e, class DungeonsWorldGridComponent& grid)
+{
+	R3_PROF_EVENT();
+	auto entities = GetSystem<R3::Entities::EntitySystem>();
+	auto activeWorld = entities->GetActiveWorld();
+	const auto dims = grid.GetDimensions();
+	for (uint32_t z = 0; z < dims.y; ++z)
+	{
+		for (uint32_t x = 0; x < dims.x; ++x)
+		{
+			if (auto tile = grid.GetContents(x, z))
+			{
+				if (tile->m_tags.m_count > 0)
+				{
+					GenerateTileVisuals(x, z, grid);
 				}
 			}
 		}

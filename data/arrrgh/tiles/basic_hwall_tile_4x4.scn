@@ -1,39 +1,6 @@
 {
  "AllEntities": [
   {
-   "ID": 0,
-   "Name": "floor_tile_large.gltf",
-   "Parent": 4294967295,
-   "StaticMesh": {
-    "Draw": true,
-    "MaterialsOverride": {
-     "ID": 4294967295
-    },
-    "Model": {
-     "Path": "downloaded\\KayKit_DungeonRemastered_1.1_FREE\\Assets\\gltf\\floor_tile_large.gltf"
-    }
-   },
-   "Transform": {
-    "Orientation": {
-     "W": 1.0,
-     "X": 0.0,
-     "Y": 0.0,
-     "Z": 0.0
-    },
-    "Position": {
-     "X": 2.0,
-     "Y": 0.0,
-     "Z": 2.0
-    },
-    "Relative": false,
-    "Scale": {
-     "X": 1.0,
-     "Y": 1.0,
-     "Z": 1.0
-    }
-   }
-  },
-  {
    "ID": 1,
    "Name": "wall.gltf",
    "Parent": 4294967295,

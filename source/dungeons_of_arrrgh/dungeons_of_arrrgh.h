@@ -29,7 +29,7 @@ private:
 	void UpdateVision(class DungeonsWorldGridComponent& grid, R3::Entities::World& w);
 	void DebugDrawVisibleTiles(const class DungeonsWorldGridComponent& grid, R3::Entities::World& w);
 	void MoveEntitiesWorldspace(const std::vector<R3::Entities::EntityHandle>& targets, glm::vec3 offset);
-	void GenerateTileVisuals(uint32_t x, uint32_t z, class DungeonsWorldGridComponent& grid, std::vector<R3::Entities::EntityHandle>& outEntities);
+	void GenerateTileVisuals(uint32_t x, uint32_t z, class DungeonsWorldGridComponent& grid);
 	void GenerateWorldVisuals(const R3::Entities::EntityHandle& e, class DungeonsWorldGridComponent& grid);
 	void OnWorldGridDirty(const R3::Entities::EntityHandle& e, class DungeonsWorldGridComponent& grid);
 	bool VariableUpdate();

@@ -49,7 +49,7 @@ function Dungeons_FillCircle(grid, center, radius, tags, isPassable, blocksVisib
 end
 
 function Dungeons_GenerateSimpleBuilding(grid, inParams, start, size)
-	local wallTag = TileTagset.new("wall")
+	local wallTag = TileTagset.new("floor,exterior,wall")
 	local floorTag = TileTagset.new("floor,interior")
 	grid:Fill(start, size, wallTag, false, true) -- outer walls
 	grid:Fill(uvec2.new(start.x + 1, start.y + 1), uvec2.new(size.x - 2, size.y - 2), floorTag, true, false) -- interior floor
@@ -71,7 +71,7 @@ function Dungeons_GenerateSimpleBuilding(grid, inParams, start, size)
 end
 
 function Dungeons_GenerateRoundTower(grid, inParams, start, size)
-	local wallTag = TileTagset.new("wall")
+	local wallTag = TileTagset.new("floor,exterior,wall")
 	local floorTag = TileTagset.new("floor,interior")
 	local minTowerRadius = inParams:GetInt("Min Tower Radius", 3)
 	local tileWallThickness = inParams:GetInt("Tower Wall Thickness", 1)
