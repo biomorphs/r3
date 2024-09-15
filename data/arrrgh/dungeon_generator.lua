@@ -74,14 +74,14 @@ function Dungeonns_ValidateWallRules()
 end 
 
 function Dungeons_BasicGenerator()
-	local roomCount = 10
+	local roomCount = 20
 	Arrrgh.SetFogOfWarEnabled(true)
 	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Center Camera", Generator_CenterCamera())
 	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Empty", Generator_FillWorld("",true,false))	-- start with empty world of passable tiles
 	for r=1,roomCount do 
 		Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Add Room", Generator_SimpleRoom(uvec2.new(math.random(5,60),math.random(5,60)), uvec2.new(math.random(4,8),math.random(4,8)), "wall,floor,exterior", "floor,interior"))
 	end
-	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Make paths between rooms", Generator_PathFromRoomToRoom("floor,interior", 0.25))
+	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Make paths between rooms", Generator_PathFromRoomToRoom("floor,interior", 0.1))
 	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Make spawn point", Generator_SpawnPlayerInFirstRoom())
 	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Fill empty tiles with impassables", Generator_FillEmptyTiles("wall,floor,exterior", false, true))
 end

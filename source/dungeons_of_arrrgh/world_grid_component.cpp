@@ -77,43 +77,51 @@ DungeonsWorldGridComponent::VisibleTiles DungeonsWorldGridComponent::FindVisible
 		return results;
 	}
 
-	for (auto z = iterStart.y; z < iterEnd.y; ++z)
-	{
-		for (auto x = iterStart.x; x < iterEnd.x; ++x)
+	// attempt 3
+	// for each tile in a radius
+	// fire rays from each corner of center cell to each corner of edge cell 
+
+	glm::vec3 rayStart(vCenter.x, 0, vCenter.y);
+	float angle = 0.0f;
+	const float angleIncr = 0.01f;
+
+	auto noBlockVision = [this, &results](const glm::ivec3& tile) {
+		if (auto tileData = GetContents(tile.x, tile.z))
 		{
-			// find the distance to the center of this cell
-			const glm::vec2 cellCenter(x + 0.5f, z + 0.5f);
-			const int voxelsPerCell = 1;	// more voxels = more accurate results, but slower
-			const glm::vec3 voxelSize(1.0f / (float)voxelsPerCell);
-			const float distanceToPoint = glm::ceil(glm::distance(glm::vec2(vCenter), cellCenter));
-			const bool inRadius = distanceToPoint <= distance;
-			if (inRadius)
+			bool blocksVision = tileData->m_flags.m_blockVisibility;
+			if (!blocksVision)
 			{
-				if (auto content = GetContents(x, z))
+				results.insert({ tile.x, tile.z });
+			}
+			return !blocksVision;
+		}
+		return true;
+	};
+	for (float angle = 0.0f; angle < glm::two_pi<float>(); angle += angleIncr)
+	{
+		glm::vec3 rayDir(cosf(angle), 0.0f, sinf(angle));
+		glm::vec3 edgePos = rayStart + (rayDir * (float)distance);
+		glm::ivec2 edgeTile((int)edgePos.x, (int)edgePos.z);
+		bool isVisible = false;
+		for (int centerCorner = 0; centerCorner < 4; ++centerCorner)
+		{
+			glm::vec3 rayStart((float)(centerCorner % 2), 0, (float)(centerCorner / 2));
+			rayStart += glm::vec3(vStart.x,0, vStart.y);
+			for (int edgeCorner = 0; edgeCorner < 4; edgeCorner++)
+			{
+				glm::vec3 rayEnd((float)(edgeCorner % 2), 0, (float)(edgeCorner / 2));
+				rayEnd += glm::vec3(edgeTile.x, 0, edgeTile.y);
+				auto visionBlocked = R3::DDAIntersect(rayStart, rayEnd, glm::vec3(1.0f), noBlockVision);
+				if (!visionBlocked.has_value())
 				{
-					// use DDA to 'draw' a line from the start to this tile
-					// if any vision-blocking tiles are encountered, the current tile is not visible
-					glm::vec3 walkTileStart(vCenter.x, 0, vCenter.y);
-					glm::vec3 walkTileEnd(cellCenter.x, 0, cellCenter.y);
-					auto noBlockVision = [this, voxelsPerCell](const glm::ivec3& tile) {
-						if (auto tileData = GetContents(tile.x / voxelsPerCell, tile.z / voxelsPerCell))
-						{
-							return !tileData->m_flags.m_blockVisibility;
-						}
-						return true;
-					};
-					auto visionBlocked = R3::DDAIntersect(walkTileStart, walkTileEnd, voxelSize, noBlockVision);
-					if (!visionBlocked.has_value())
-					{
-						results.insert({ x,z });
-					}
-					else
-					{
-						results.insert({ visionBlocked->x * voxelSize.x, visionBlocked->z * voxelSize.z });
-					}
+					results.insert({ edgeTile.x,edgeTile.y });
+				}
+				else
+				{
+					results.insert({ visionBlocked->x, visionBlocked->z });
 				}
 			}
-		}
+		}		
 	}
 	return results;
 }
