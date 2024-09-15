@@ -10,7 +10,8 @@ Dungeons_Generator = {}
 function Dungeons_GeneratorContext.new()
 	return {
 		SpawnPoint = uvec2.new(0,0),
-		Rooms = {}
+		Rooms = {},
+		MonsterSpawns = {}
 	}
 end
 
@@ -22,6 +23,15 @@ function Dungeons_GeneratorContext.AddRoom(context, pos, size, entrances)
 		Entrances = entrances
 	}
 	table.insert(context.Rooms, newRoom)
+end
+
+-- should generator be dictating monster levels + stuff? or the game? most likely the game
+function Dungeons_GeneratorContext.AddMonster(context, monsterType, pos)
+	local newMonster = {
+		Position = pos,
+		TypeString = monsterType
+	}
+	table.insert(context.MonsterSpawns, newMonster)
 end
 
 -- get a generator object for a grid
@@ -58,11 +68,46 @@ function Dungeons_Generator._Run(gridcmp,generator)
 	end
 end
 
+-- note that the spawner entity is not added as an actor to the grid 
+-- everything gets spawned immediately on game start then the spawners are removed
+-- a single entity called 'PlayerActor' is created
+function Dungeons_Generator.CreatePlayerSpawn(grid, spawnPos)
+	local world = R3.ActiveWorld()
+	local spawnPointEntities = world:ImportScene('arrrgh/pois/playerspawnpoint.scn')
+	local worldPos = vec3.new(spawnPos.x * Arrrgh_Globals.TileDimensions.x, 0, spawnPos.y * Arrrgh_Globals.TileDimensions.y)
+	worldPos.x = worldPos.x + (Arrrgh_Globals.TileDimensions.x * 0.5)
+	worldPos.z = worldPos.z + (Arrrgh_Globals.TileDimensions.y * 0.5)
+	Arrrgh.MoveEntitiesWorldspace(spawnPointEntities, worldPos)
+end
+
+-- monster spawners are entities with Dungeons_MonsterSpawner components 
+-- the game can interpret these however it wants
+-- note the spawners are not world grid actors
+function Dungeons_Generator.CreateMonsterSpawns(grid,context)
+	-- the monster spawns are currently just a list of typestr(s), position
+	-- create spawner components / entities that can be enumerated by the game
+	local world = R3.ActiveWorld()
+	for spawn=1,#context.MonsterSpawns do 
+		local spawnPos = context.MonsterSpawns[spawn].Position
+		local world = R3.ActiveWorld()
+		local spawnerEntities = world:ImportScene('arrrgh/pois/monster_spawner.scn')
+		local spawnCmp = world.GetComponent_Dungeons_MonsterSpawner(spawnerEntities[1])
+		spawnCmp.m_monsterType = context.MonsterSpawns[spawn].TypeString
+		spawnCmp.m_spawnPosition = spawnPos
+		local worldPos = vec3.new(spawnPos.x * Arrrgh_Globals.TileDimensions.x, 0, spawnPos.y * Arrrgh_Globals.TileDimensions.y)
+		worldPos.x = worldPos.x + (Arrrgh_Globals.TileDimensions.x * 0.5)
+		worldPos.z = worldPos.z + (Arrrgh_Globals.TileDimensions.y * 0.5)
+		Arrrgh.MoveEntitiesWorldspace(spawnerEntities, worldPos)
+	end
+end
+
 function Dungeons_Generator.OnFinish(gridcmp,generator)
 	print('Generator finished')
 	print('Player spawn point: ', generator.Context.SpawnPoint.x, generator.Context.SpawnPoint.y)
 	print(#generator.Context.Rooms, ' rooms spawned')
 	gridcmp.m_debugDraw = false
+	Dungeons_Generator.CreatePlayerSpawn(gridcmp, generator.Context.SpawnPoint)
+	Dungeons_Generator.CreateMonsterSpawns(gridcmp, generator.Context)
 end
 
 -- returns 'complete' on completion 

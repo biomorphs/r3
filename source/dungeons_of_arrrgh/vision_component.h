@@ -15,5 +15,5 @@ public:
 
 	bool m_needsUpdate = true;
 	float m_visionMaxDistance = 8.0f;
-	std::unordered_set<glm::uvec2> m_visibleTiles;	// updated when needsUpdate is true during fixed update
+	std::unordered_set<glm::uvec2> m_visibleTiles;	// updated when needsUpdate is true during fixed update, not serialised
 };

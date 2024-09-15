@@ -7,6 +7,10 @@ set(DungeonsOfArrrgh_SourceFiles
 	dungeons_of_arrrgh.cpp
 	vision_component.h
 	vision_component.cpp
+	monster_spawn_component.h
+	monster_spawn_component.cpp
+	monster_component.h
+	monster_component.cpp
 )
 
 add_library(DungeonsOfArrrgh ${DungeonsOfArrrgh_SourceFiles})

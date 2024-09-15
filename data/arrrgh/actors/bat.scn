@@ -1,0 +1,109 @@
+{
+ "AllEntities": [
+  {
+   "DungeonsVisionComponent": {
+    "MaxDistance": 3.0,
+    "NeedsUpdate": true
+   },
+   "Dungeons_Monster": {
+    "Name": "Bat"
+   },
+   "ID": 0,
+   "Name": "Bat",
+   "Parent": 4294967295,
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 1,
+   "Name": "Bat_Visual",
+   "Parent": 0,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 1
+    },
+    "Model": {
+     "Path": "downloaded\\Bat\\VAMP_BAT.OBJ"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.02822577953338623,
+       "Y": 0.02822577953338623,
+       "Z": 0.02822577953338623
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.5,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.10000000149011612,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 1.0,
+     "Z": 0.0
+    },
+    "Relative": true,
+    "Scale": {
+     "X": 16.0,
+     "Y": 16.0,
+     "Z": 16.0
+    }
+   }
+  }
+ ],
+ "WorldName": "New World"
+}

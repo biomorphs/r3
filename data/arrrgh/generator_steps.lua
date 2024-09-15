@@ -1,5 +1,15 @@
 require'arrrgh/camera'
 
+-- doesnt actually spawn a monster, it creates a spawner for later
+function Generator_SpawnMonster(monsterType, position)
+	return {
+		Run = function(grid, context)
+			-- todo, check if tile already contains a spawner or the player?
+			Dungeons_GeneratorContext.AddMonster(context, monsterType, position)
+		end
+	}
+end
+
 -- fill world with a tagset
 function Generator_FillWorld(tagString, isPassable, blockVisibility)
 	return {
@@ -23,7 +33,7 @@ function Generator_FillEmptyTiles(tagString, isPassable, blockVisibility)
 						grid:Fill(uvec2.new(x,z), uvec2.new(1,1), tagsToSet, isPassable, blockVisibility)
 					end
 				end
-				Dungeons_Generator.Yield(0.02)
+				Dungeons_Generator.Yield(0.01)
 			end
 		end
 	}
@@ -109,7 +119,7 @@ function Generator_PathFromRoomToRoom(floorTagStr, pathChance)	-- chance = 0 to 
 								if(math.random() < pathChance) then
 									for pathNode=1,#foundPath do
 										grid:Fill(foundPath[pathNode], uvec2.new(1, 1), floorTags, true, false)
-										Dungeons_Generator.Yield(0.0)
+										-- Dungeons_Generator.Yield(0.0)
 									end
 								end
 								Dungeons_Generator.Yield(0.0)
@@ -127,10 +137,7 @@ function Generator_SpawnPlayerInFirstRoom()
 	return {
 		Run = function(grid, context)
 			if(#context.Rooms > 0) then 
-				print('aa')
 				local spawnPos = uvec2.new(context.Rooms[1].Position.x + 1, context.Rooms[1].Position.y + 1)
-				print('bb')
-				print(spawnPos.x,spawnPos.y)
 				context.SpawnPoint = spawnPos
 			end
 		end

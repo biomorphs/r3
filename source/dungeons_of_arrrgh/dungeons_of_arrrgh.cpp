@@ -1,4 +1,6 @@
 #include "dungeons_of_arrrgh.h"
+#include "monster_spawn_component.h"
+#include "monster_component.h"
 #include "world_grid_component.h"
 #include "world_grid_position.h"
 #include "vision_component.h"
@@ -43,6 +45,8 @@ bool DungeonsOfArrrgh::Init()
 	entities->RegisterComponentType<DungeonsWorldGridComponent>(16);	// probably only need 1 per world, but eh
 	entities->RegisterComponentType<DungeonsVisionComponent>(8092);
 	entities->RegisterComponentType<DungeonsWorldGridPosition>(64 * 1024);
+	entities->RegisterComponentType<DungeonsMonsterSpawner>(64 * 1024);
+	entities->RegisterComponentType<DungeonsMonsterComponent>(64 * 1024);
 
 	auto scriptNamespace = "Arrrgh";
 	auto scripts = GetSystem<R3::LuaSystem>();
@@ -61,6 +65,11 @@ bool DungeonsOfArrrgh::Init()
 	scripts->RegisterFunction("SetEntityTilePosition", [this, entities](DungeonsWorldGridComponent* grid, R3::Entities::EntityHandle e, uint32_t tileX, uint32_t tileZ) {
 		SetEntityTilePosition(*grid, *entities->GetActiveWorld(), e, tileX, tileZ);
 	}, scriptNamespace);
+	scripts->RegisterFunction("GetEntityTilePosition", [this, entities](R3::Entities::EntityHandle e) {
+		return GetEntityTilePosition(*entities->GetActiveWorld(), e);
+	}, scriptNamespace);
+
+	
 	scripts->RegisterFunction("SetFogOfWarEnabled", [this](bool enabled) {
 		m_enableFogOfWar = enabled;
 	}, scriptNamespace);
@@ -156,6 +165,16 @@ void DungeonsOfArrrgh::DebugDrawTiles(const DungeonsWorldGridComponent& grid, Co
 	{
 		imRender->m_imRender->AddTriangles(outVertices.data(), (uint32_t)outVertices.size() / 3, true);
 	}
+}
+
+std::optional<glm::uvec2> DungeonsOfArrrgh::GetEntityTilePosition(R3::Entities::World& w, R3::Entities::EntityHandle e)
+{
+	auto tilePosComponent = w.GetComponent<DungeonsWorldGridPosition>(e);
+	if (tilePosComponent)
+	{
+		return tilePosComponent->GetPosition();
+	}
+	return {};
 }
 
 void DungeonsOfArrrgh::SetEntityTilePosition(DungeonsWorldGridComponent& grid, R3::Entities::World& w, R3::Entities::EntityHandle e, uint32_t tileX, uint32_t tileZ)

@@ -42,6 +42,7 @@ namespace Entities
 		std::vector<EntityHandle> GetActiveEntities(uint32_t startIndex=0, uint32_t endIndex=-1) const;	// slow! only for editor/tools/debugging
 		template<class It>	// bool(const EntityHandle& e)
 		void ForEachActiveEntity(const It&);	// slow! tools/debug only
+		std::vector<EntityHandle> GetOwnersOfComponent1(std::string_view componentTypeName);	// mainly for scripts, easy iteration without using queries
 
 		// Entity names, try not to abuse this!
 		void SetEntityName(const EntityHandle& h, std::string_view name);

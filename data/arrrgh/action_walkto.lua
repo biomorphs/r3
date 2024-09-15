@@ -1,10 +1,11 @@
-function Dungeons_NewWalkAction(walkActor, pathToWalk)
+function Dungeons_NewWalkAction(walkActor, pathToWalk, nodesToWalk)
 	local newAction = {}
 	newAction.name = "Walk"
 	newAction.moveSpeedWorldspace = 8.0
 	newAction.target = walkActor
 	newAction.walkPath = pathToWalk
 	newAction.currentTargetNode = 1
+	newAction.walkNodeCount = nodesToWalk or #pathToWalk
 	newAction.onRun = Dungeons_ActionWalkTo
 	Fastqueue.pushright(Arrrgh_Globals.ActionQueue, newAction)
 end
@@ -14,7 +15,7 @@ function Dungeons_ActionWalkTo(action)
 	local actorTransform = world.GetComponent_Transform(action.target)
 	local gridEntity = world:GetEntityByName('World Grid')
 	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
-	if(actorTransform ~= nil and gridcmp ~= nil and #action.walkPath > 0 and action.currentTargetNode <= #action.walkPath) then 
+	if(actorTransform ~= nil and gridcmp ~= nil and #action.walkPath > 0 and #action.walkPath >= action.walkNodeCount and action.currentTargetNode <= action.walkNodeCount) then 
 		local actorPos = actorTransform:GetPosition()
 		local targetTile = action.walkPath[action.currentTargetNode]
 		local targetPos = vec3.new(targetTile.x * Arrrgh_Globals.TileDimensions.x, 0, targetTile.y * Arrrgh_Globals.TileDimensions.y)
@@ -33,7 +34,7 @@ function Dungeons_ActionWalkTo(action)
 				Dungeons_SpendActionPoint()	-- each node after the first costs an action point
 			end
 			action.currentTargetNode = action.currentTargetNode + 1
-			if(action.currentTargetNode > #action.walkPath) then -- final goal reached
+			if(action.currentTargetNode > action.walkNodeCount) then -- final goal reached
 				return 'complete'
 			end
 		else

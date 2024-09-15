@@ -46,7 +46,8 @@ namespace Entities
 				"SetEntityName", &World::SetEntityName,
 				"GetEntityName", &World::GetEntityName,
 				"GetEntityByName", &World::GetEntityByName,
-				"ImportScene", &World::Import
+				"ImportScene", &World::Import,
+				"GetOwnersOfComponent1", &World::GetOwnersOfComponent1
 			);
 			scripts->RegisterFunction("ActiveWorld", [this]() -> Entities::World* {
 				return GetActiveWorld();

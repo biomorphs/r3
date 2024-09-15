@@ -361,6 +361,25 @@ namespace Entities
 		return entities;
 	}
 
+	std::vector<EntityHandle> World::GetOwnersOfComponent1(std::string_view componentTypeName)
+	{
+		std::vector<EntityHandle> results;
+		results.reserve(128);	// good idea?
+		const uint32_t componentTypeIndex = ComponentTypeRegistry::GetInstance().GetTypeIndex(componentTypeName);
+		assert(componentTypeIndex != -1);
+		const auto typeMask = (PerEntityData::ComponentBitsetType)1 << componentTypeIndex;
+		auto forEachEntity = [this,&results, typeMask](const EntityHandle& e)
+		{
+			if (HasAnyComponents(e, typeMask))
+			{
+				results.push_back(e);
+			}
+			return true;
+		};
+		ForEachActiveEntity(forEachEntity);
+		return results;
+	}
+
 	EntityHandle World::AddEntity()
 	{
 		R3_PROF_EVENT();
