@@ -64,7 +64,7 @@ DungeonsWorldGridComponent::VisibleTiles DungeonsWorldGridComponent::FindVisible
 	R3_PROF_EVENT();
 	VisibleTiles results;
 
-	// first find the area surrouding this point to test
+	// first find the area surrounding this point to test
 	glm::ivec2 iTotalDims(m_gridDimensions);
 	glm::ivec2 vStart = glm::clamp(startTile, { 0,0 }, iTotalDims);
 	glm::ivec2 iterStart = vStart - glm::ivec2(distance);

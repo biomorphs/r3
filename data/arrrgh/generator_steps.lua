@@ -112,6 +112,7 @@ function Generator_PathFromRoomToRoom(floorTagStr, pathChance)	-- chance = 0 to 
 										Dungeons_Generator.Yield(0.0)
 									end
 								end
+								Dungeons_Generator.Yield(0.0)
 							end
 						end
 					end

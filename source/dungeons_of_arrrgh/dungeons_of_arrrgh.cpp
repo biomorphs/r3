@@ -78,7 +78,6 @@ void DebugDrawTile(R3::ImmediateRenderSystem& imRender,
 	glm::vec3 offset, glm::vec2 scale, 
 	std::vector<R3::ImmediateRenderer::PosColourVertex>& verts)
 {
-	R3_PROF_EVENT();
 	glm::vec3 tileOffset = { (float)x * scale.x, 0.2f, (float)z * scale.y };
 	glm::vec3 basePos = offset + tileOffset;
 	auto contents = grid.GetContents(x, z);
