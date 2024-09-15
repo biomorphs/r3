@@ -1,3 +1,4 @@
+#include "dda.h"
 #pragma once
 
 namespace R3
@@ -58,5 +59,44 @@ namespace R3
 		}
 
 		return {};	// nothing was hit
+	}
+
+	template<class Intersector>
+	std::optional<glm::ivec2> BresenhamsLineIntersect(const glm::ivec2& rayStart, const glm::ivec2& rayEnd, Intersector& intersecter)
+	{
+		int x0 = rayStart.x;
+		int y0 = rayStart.y;
+		int x1 = rayEnd.x;
+		int y1 = rayEnd.y;
+		int dx = abs(x1 - x0);
+		int sx = x0 < x1 ? 1 : -1;
+		int dy = -abs(y1 - y0);
+		int sy = y0 < y1 ? 1 : -1;
+		int err = dx + dy;
+		int e2 = 0;
+		for (;;) 
+		{
+			auto currentPos = glm::ivec2(x0, y0);
+			if (!intersecter(currentPos))
+			{
+				return currentPos;
+			}
+			if (x0 == x1 && y0 == y1)
+			{
+				break;
+			}
+			e2 = 2 * err;
+			if (e2 >= dy) 
+			{ 
+				err += dy; 
+				x0 += sx; 
+			} // e_xy+e_x > 0
+			if (e2 <= dx) 
+			{ 
+				err += dx; 
+				y0 += sy; 
+			} // e_xy+e_y < 0
+		}
+		return {};
 	}
 }

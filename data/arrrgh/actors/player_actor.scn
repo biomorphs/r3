@@ -2,7 +2,7 @@
  "AllEntities": [
   {
    "DungeonsVisionComponent": {
-    "MaxDistance": 16.0,
+    "MaxDistance": 8.0,
     "NeedsUpdate": false
    },
    "ID": 0,

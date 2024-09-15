@@ -57,6 +57,8 @@ void DungeonsWorldGridComponent::Inspect(const R3::Entities::EntityHandle& e, R3
 	}
 }
 
+ //#define VISIBILITY_USE_DDA
+
 DungeonsWorldGridComponent::VisibleTiles DungeonsWorldGridComponent::FindVisibleTiles(glm::ivec2 startTile, uint32_t distance )
 {
 	R3_PROF_EVENT();
@@ -77,52 +79,86 @@ DungeonsWorldGridComponent::VisibleTiles DungeonsWorldGridComponent::FindVisible
 		return results;
 	}
 
-	// attempt 3
-	// for each tile in a radius
-	// fire rays from each corner of center cell to each corner of edge cell 
-
-	glm::vec3 rayStart(vCenter.x, 0, vCenter.y);
-	float angle = 0.0f;
-	const float angleIncr = 0.01f;
-
+	// line walking intersector
+#ifdef VISIBILITY_USE_DDA
 	auto noBlockVision = [this, &results](const glm::ivec3& tile) {
 		if (auto tileData = GetContents(tile.x, tile.z))
 		{
-			bool blocksVision = tileData->m_flags.m_blockVisibility;
-			if (!blocksVision)
-			{
-				results.insert({ tile.x, tile.z });
-			}
-			return !blocksVision;
+			return !tileData->m_flags.m_blockVisibility;
 		}
 		return true;
 	};
-	for (float angle = 0.0f; angle < glm::two_pi<float>(); angle += angleIncr)
-	{
-		glm::vec3 rayDir(cosf(angle), 0.0f, sinf(angle));
-		glm::vec3 edgePos = rayStart + (rayDir * (float)distance);
-		glm::ivec2 edgeTile((int)edgePos.x, (int)edgePos.z);
-		bool isVisible = false;
-		for (int centerCorner = 0; centerCorner < 4; ++centerCorner)
+#else
+	auto noBlockVision = [this, &results](const glm::ivec2& tile) {
+		if (auto tileData = GetContents(tile.x, tile.y))
 		{
-			glm::vec3 rayStart((float)(centerCorner % 2), 0, (float)(centerCorner / 2));
-			rayStart += glm::vec3(vStart.x,0, vStart.y);
-			for (int edgeCorner = 0; edgeCorner < 4; edgeCorner++)
+			return !tileData->m_flags.m_blockVisibility;
+		}
+		return true;
+	};
+#endif
+
+	// attempt 4
+	// for each tile that could be visible in radius
+	// fire rays from each corner of center cell to each corner of that tile
+	// if any corners are visible, mark all cells sharing that corner as visible
+	for (int32_t z = iterStart.y; z < iterEnd.y; ++z)
+	{
+		for (int32_t x = iterStart.x; x < iterEnd.x; ++x)
+		{
+			for (int centerCorner = 0; centerCorner < 4; ++centerCorner)
 			{
-				glm::vec3 rayEnd((float)(edgeCorner % 2), 0, (float)(edgeCorner / 2));
-				rayEnd += glm::vec3(edgeTile.x, 0, edgeTile.y);
-				auto visionBlocked = R3::DDAIntersect(rayStart, rayEnd, glm::vec3(1.0f), noBlockVision);
-				if (!visionBlocked.has_value())
+				glm::vec3 rayStart((float)(centerCorner % 2), 0, (float)(centerCorner / 2));
+				rayStart += glm::vec3(vStart.x, 0, vStart.y);	// corners of start tile
+				for (int edgeCorner = 0; edgeCorner < 4; edgeCorner++)
 				{
-					results.insert({ edgeTile.x,edgeTile.y });
-				}
-				else
-				{
-					results.insert({ visionBlocked->x, visionBlocked->z });
+					glm::vec3 rayEnd((float)(edgeCorner % 2), 0, (float)(edgeCorner / 2));
+					rayEnd += glm::vec3(x, 0, z);	// corners of target cell
+#ifdef VISIBILITY_USE_DDA
+					auto visionBlocked = R3::DDAIntersect(rayStart, rayEnd, glm::vec3(1.0f), noBlockVision);
+#else
+					auto visionBlocked = R3::BresenhamsLineIntersect(glm::ivec2(rayStart.x, rayStart.z), glm::ivec2(rayEnd.x, rayEnd.z), noBlockVision);
+#endif
+					if (!visionBlocked.has_value())	// corner is visible, add all neighbours
+					{
+						switch (edgeCorner)
+						{
+						case 0:
+							results.insert({ x - 1,z });
+							results.insert({ x - 1,z - 1 });
+							results.insert({ x, z - 1 });
+							break;
+						case 1:
+							results.insert({ x + 1,z });
+							results.insert({ x + 1,z - 1 });
+							results.insert({ x, z - 1 });
+							break;
+						case 2:
+							results.insert({ x - 1,z });
+							results.insert({ x - 1,z + 1 });
+							results.insert({ x, z + 1 });
+							break;
+						case 3:
+							results.insert({ x + 1,z });
+							results.insert({ x + 1,z + 1 });
+							results.insert({ x, z + 1 });
+							break;
+						}
+						results.insert({ x,z });
+					}
+					else // we saw something else that blocks vision, add that instead
+					{
+#ifdef VISIBILITY_USE_DDA
+						results.insert({ visionBlocked->x,visionBlocked->z });
+#else
+						results.insert({ visionBlocked->x,visionBlocked->y });
+#endif
+					}
 				}
 			}
-		}		
-	}
+		}
+	}	
+
 	return results;
 }
 
