@@ -61,6 +61,9 @@ bool DungeonsOfArrrgh::Init()
 	scripts->RegisterFunction("SetEntityTilePosition", [this, entities](DungeonsWorldGridComponent* grid, R3::Entities::EntityHandle e, uint32_t tileX, uint32_t tileZ) {
 		SetEntityTilePosition(*grid, *entities->GetActiveWorld(), e, tileX, tileZ);
 	}, scriptNamespace);
+	scripts->RegisterFunction("SetFogOfWarEnabled", [this](bool enabled) {
+		m_enableFogOfWar = enabled;
+	}, scriptNamespace);
 	return true;
 }
 
@@ -227,7 +230,10 @@ void DungeonsOfArrrgh::UpdateVision(DungeonsWorldGridComponent& grid, R3::Entiti
 			{
 				const uint32_t visionDistance = (uint32_t)ceil(v.m_visionMaxDistance);
 				v.m_visibleTiles = grid.FindVisibleTiles(glm::ivec2(tileMaybe.value()), visionDistance);
-				SetVisualEntitiesVisible(grid, w, v.m_visibleTiles, true);	// make tiles visible for rendering 
+				if (m_enableFogOfWar)									// should also check if its the player!
+				{
+					SetVisualEntitiesVisible(grid, w, v.m_visibleTiles, true);	// make tiles visible for rendering 
+				}
 			}
 			v.m_needsUpdate = false;
 		}
@@ -255,17 +261,23 @@ void DungeonsOfArrrgh::MoveEntitiesWorldspace(const std::vector<R3::Entities::En
 	}
 }
 
+// rules match tags against neighbouring tiles
+struct NeighbourTagSet {
+	DungeonsWorldGridComponent::WorldTileContents::TileTags m_includes;		// check all of these exist
+	DungeonsWorldGridComponent::WorldTileContents::TileTags m_excludes;		// check that none of these exist
+};
+
 struct GeneratorRule
 {
-	using NeighbourTags = std::array<DungeonsWorldGridComponent::WorldTileContents::TileTags, 9>;
+	using NeighbourTags = std::array<NeighbourTagSet, 9>;
 	NeighbourTags m_neighbourTags;	// 3x3 grid of tags to match against
 	std::vector<std::string> m_scenesToLoad;	// scenes to instantiate if tags match
 	bool m_continue = false;	// if true, will continue evaluating even if this rule is matched (the scene will be loaded)
-	float m_yRotation = 0.0f;	// rotate around y axis
+	float m_yRotation = 0.0f;	// rotate spawned scene entities around y axis
 	GeneratorRule() {}
-	GeneratorRule(std::string_view tag, std::string_view scene, float rot=0.0f)		// single tag = match one tile only
+	GeneratorRule(std::string_view tag, std::string_view scene, float rot = 0.0f)		// single tag = match one tile only
 	{
-		m_neighbourTags[4] = tag;
+		SetTagsFor(4, tag);	// neighbour 4 = center tile
 		m_scenesToLoad.push_back(std::string(scene));
 		m_yRotation = rot;
 	}
@@ -273,62 +285,92 @@ struct GeneratorRule
 	{
 		for (int i = 0; i < 9; ++i)
 		{
-			m_neighbourTags[i] = tags[i];
+			SetTagsFor(i, tags[i]);
 		}
 		m_scenesToLoad.push_back(std::string(scene));
 		m_yRotation = rot;
 	}
+	void SetTagsFor(int neighbour, std::string_view tagStr)
+	{
+		// parse to find includes/excludes, needs to do the same thing as tagstr
+		std::string tagStrCopy(tagStr);		// strip whitespace
+		//tagStrCopy.erase(std::remove_if(tagStrCopy.begin(), tagStrCopy.end(), std::isspace), tagStrCopy.end());
+		size_t firstChar = 0;
+		while (firstChar < tagStrCopy.length())
+		{
+			size_t nextSeparator = std::string_view(tagStrCopy.data() + firstChar).find_first_of(',');
+			if (nextSeparator == std::string_view::npos)
+			{
+				nextSeparator = tagStrCopy.length() - firstChar;
+			}
+			auto thisTag = std::string_view(tagStrCopy).substr(firstChar, nextSeparator);
+			if (thisTag.length() > 0)
+			{
+				if (thisTag[0] == '!')
+				{
+					m_neighbourTags[neighbour].m_excludes.Add(std::string_view(thisTag).substr(1));	// skip ! character
+				}
+				else
+				{
+					m_neighbourTags[neighbour].m_includes.Add(thisTag);
+				}
+			}
+			firstChar += nextSeparator + 1;
+		}
+	}
 };
 
+// !tag = must not contain this tag 
+// empty string = dont care about contents
 const std::vector<GeneratorRule> c_wallRules = {
-	GeneratorRule(
+	GeneratorRule(		// if walls on all sides, empty tile (to avoid huge fields of walls)
 		{
 			"wall",		"wall",			"wall",
 			"wall",		"wall",			"wall",
 			"wall",		"wall",			"wall"
 		}, ""
 	),
-	GeneratorRule(
+	GeneratorRule(		// top-left corner
 		{
 			"",			"",				"",
-			"wall",		"wall",			"wall",
+			"",			"wall",			"wall",
+			"",			"wall",			"!wall"
+		}, "basic_wall_corner_4x4.scn"
+	),
+	GeneratorRule(		// top-right corner
+		{
+			"",			"",				"",
+			"wall",		"wall",			"",
+			"!wall",	"wall",			""
+		}, "basic_wall_corner_4x4.scn", -90.0f
+	),
+	GeneratorRule(		// bottom-left corner
+		{
+			"",			"wall",			"!wall",
+			"",			"wall",			"wall",
 			"",			"",				""
-		}, "basic_hwall_tile_4x4.scn"
+		}, "basic_wall_corner_4x4.scn", -270.0f
+	),
+	GeneratorRule(		// bottom-right corner
+		{
+			"!wall",	"wall",			"",
+			"wall",		"wall",			"",
+			"",			"",				""
+		}, "basic_wall_corner_4x4.scn", -180.0f 
 	),
 	GeneratorRule(
 		{
-			"",			"wall",			"",
-			"",			"wall",			"",
-			"",			"wall",			""
+			"",		"wall",			"",
+			"",		"wall",			"",
+			"",		"wall",			""
 		}, "basic_vwall_tile_4x4.scn"
 	),
 	GeneratorRule(
 		{
-			"",			"",				"",
-			"",			"wall",			"wall",
-			"",			"wall",			""
-		}, "basic_wall_corner_4x4.scn"
-	),
-	GeneratorRule(
-		{
-			"",			"",				"",
-			"wall",		"wall",			"",
-			"",			"wall",			""
-		}, "basic_wall_corner_4x4.scn", -90.0f
-	),
-	GeneratorRule(
-		{
-			"",			"wall",			"",
-			"wall",		"wall",			"",
-			"",			"",				""
-		}, "basic_wall_corner_4x4.scn", -180.0f
-	),
-	GeneratorRule(
-		{
-			"",			"wall",				"",
-			"",			"wall",			"wall",
-			"",			"",			""
-		}, "basic_wall_corner_4x4.scn", -270.0f
+			"",		"",			"",
+			"wall",	"wall",			"wall",
+			"",		"",			""
+		}, "basic_hwall_tile_4x4.scn"
 	),
 	GeneratorRule("wall", "basic_crosswall_tile_4x4.scn")
 };
@@ -356,34 +398,37 @@ void EvaluateRules(DungeonsWorldGridComponent& grid, int32_t tileX, int32_t tile
 {
 	for (int r = 0; r < rules.size(); ++r)
 	{
-		bool allMatch = true;
-		for (int32_t z = 0; z < 3 && allMatch; ++z)
+		bool ruleMatches = true;
+		for (int32_t z = 0; z < 3 && ruleMatches; ++z)
 		{
-			for (int32_t x = 0; x < 3 && allMatch; ++x)
+			for (int32_t x = 0; x < 3 && ruleMatches; ++x)
 			{
 				const auto& toLookFor = rules[r].m_neighbourTags[x + (z * 3)];
-				if (toLookFor.m_count > 0)
+				if (toLookFor.m_includes.m_count > 0 || toLookFor.m_excludes.m_count > 0)
 				{
 					auto contents = grid.GetContents(tileX + x - 1, tileZ + z - 1);
 					if (contents)
 					{
-						if (!contents->m_tags.ContainsSet(toLookFor))
-						{
-							allMatch = false;
-						}
+						bool allIncludesValid = contents->m_tags.ContainsAll(toLookFor.m_includes);
+						bool allExcludesValid = !contents->m_tags.ContainsAny(toLookFor.m_excludes);
+						ruleMatches &= allIncludesValid && allExcludesValid;
 					}
 					else
 					{
-						allMatch = false;
+						// dont match if we contain rules for an empty tile
+						ruleMatches = false;
 					}
 				}
 			}
 		}
-		if (allMatch)
+		if (ruleMatches)
 		{
 			for (int i = 0; i < rules[r].m_scenesToLoad.size(); ++i)
 			{
-				results.push_back({ rules[r].m_scenesToLoad[i], rules[r].m_yRotation });
+				if (rules[r].m_scenesToLoad[i].length() > 0)	// rules can have empty string to denote empty tiles
+				{
+					results.push_back({ rules[r].m_scenesToLoad[i], rules[r].m_yRotation });
+				}
 			}
 			if (!rules[r].m_continue)
 			{
@@ -402,7 +447,6 @@ void DungeonsOfArrrgh::GenerateTileVisuals(uint32_t x, uint32_t z, DungeonsWorld
 	std::vector<TileToLoad> tilesToLoad;
 	EvaluateRules(grid, x, z, c_wallRules, tilesToLoad);
 	EvaluateRules(grid, x, z, c_floorRules, tilesToLoad);
-
 	if (tilesToLoad.size() > 0)
 	{
 		auto newChild = activeWorld->AddEntity();	// root node for tile visuals
@@ -443,10 +487,9 @@ void DungeonsOfArrrgh::GenerateTileVisuals(uint32_t x, uint32_t z, DungeonsWorld
 								transCmp->SetOrientationDegrees(rot);
 							}
 						}
-						auto renderComponent = activeWorld->GetComponent<R3::StaticMeshComponent>(impChild);
-						if (renderComponent)
+						if (auto renderComponent = activeWorld->GetComponent<R3::StaticMeshComponent>(impChild))
 						{
-							renderComponent->m_shouldDraw = false;
+							renderComponent->m_shouldDraw = !m_enableFogOfWar;
 						}
 						if (activeWorld->GetParent(impChild).GetID() == -1)
 						{

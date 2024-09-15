@@ -16,7 +16,9 @@ namespace R3
 		void Add(Tag t);	// use this instead of touching members directly
 		bool Contains(Tag t);
 		template<int OtherSize>
-		bool ContainsSet(const TagSet<OtherSize>& ts);
+		bool ContainsAll(const TagSet<OtherSize>& ts);
+		template<int OtherSize>
+		bool ContainsAny(const TagSet<OtherSize>& ts);
 		std::array<Tag, MaxSize> m_tags;
 		uint8_t m_count = 0;
 	};
@@ -24,15 +26,17 @@ namespace R3
 	template<int MaxSize>
 	TagSet<MaxSize>::TagSet(std::string_view str)
 	{
+		std::string tagStrCopy(str);		// strip whitespace
+		tagStrCopy.erase(std::remove_if(tagStrCopy.begin(), tagStrCopy.end(), isspace), tagStrCopy.end());
 		size_t firstChar = 0;
-		while (firstChar < str.length())
+		while (firstChar < tagStrCopy.length())
 		{
-			size_t nextSeparator = std::string_view(str.data() + firstChar).find_first_of(',');
+			size_t nextSeparator = std::string_view(tagStrCopy.data() + firstChar).find_first_of(',');
 			if (nextSeparator == std::string_view::npos)
 			{
-				nextSeparator = str.length() - firstChar;
+				nextSeparator = tagStrCopy.length() - firstChar;
 			}
-			auto tagStr = str.substr(firstChar, nextSeparator);
+			auto tagStr = tagStrCopy.substr(firstChar, nextSeparator);
 			Add(Tag(tagStr));
 			firstChar += nextSeparator + 1;
 		}
@@ -71,7 +75,7 @@ namespace R3
 	
 	template<int MaxSize>
 	template<int OtherSize>
-	bool TagSet<MaxSize>::ContainsSet(const TagSet<OtherSize>& ts)
+	bool TagSet<MaxSize>::ContainsAll(const TagSet<OtherSize>& ts)
 	{
 		assert(OtherSize <= MaxSize);
 		for (int io = 0; io < ts.m_count; ++io)
@@ -82,5 +86,20 @@ namespace R3
 			}
 		}
 		return true;
+	}
+
+	template<int MaxSize>
+	template<int OtherSize>
+	bool TagSet<MaxSize>::ContainsAny(const TagSet<OtherSize>& ts)
+	{
+		assert(OtherSize <= MaxSize);
+		for (int io = 0; io < ts.m_count; ++io)
+		{
+			if (Contains(ts.m_tags[io]))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 }

@@ -64,6 +64,15 @@ function Dungeons_CreatePlayerSpawn(grid, spawnPos)
 	Arrrgh.MoveEntitiesWorldspace(spawnPointEntities, actualPos)
 end
 
+function Dungeonns_ValidateWallRules()
+	-- Arrrgh.SetFogOfWarEnabled(false)
+	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Center Camera", Generator_CenterCamera())
+	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Empty", Generator_FillWorld("wall",false,true))	-- fill with impassable, vision blocking walls
+	-- single room containing player
+	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Add Room", Generator_SimpleRoom(uvec2.new(32,32), uvec2.new(6,6), "wall,floor,exterior", "floor,interior"))
+	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Make spawn point", Generator_SpawnPlayerInFirstRoom())
+end 
+
 function Dungeons_BasicGenerator()
 	local roomCount = 10
 	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Center Camera", Generator_CenterCamera())
@@ -73,7 +82,7 @@ function Dungeons_BasicGenerator()
 	end
 	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Make paths between rooms", Generator_PathFromRoomToRoom("floor,interior"))
 	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Make spawn point", Generator_SpawnPlayerInFirstRoom())
-	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Fill empty tiles with impassables", Generator_FillEmptyTiles("wall,floor,exterior", false, false))
+	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Fill empty tiles with impassables", Generator_FillEmptyTiles("wall,floor,exterior", false, true))
 end
 
 -- main entry point, called from variable update

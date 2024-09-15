@@ -40,5 +40,6 @@ private:
 	std::unordered_map<std::string, nlohmann::json> m_generateVisualsEntityCache;	// cache serialised entities for speed
 	glm::vec3 m_wsGridOffset = { 0,0,0 };
 	glm::vec2 m_wsGridScale = { 4, 4 };
+	bool m_enableFogOfWar = true;		// if disabled, visual entities are always active. does not affect gameplay visibility
 	bool m_debugDrawVisibleTiles = false;
 };
