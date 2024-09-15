@@ -89,7 +89,7 @@ DungeonsWorldGridComponent::VisibleTiles DungeonsWorldGridComponent::FindVisible
 			const bool inRadius = distanceToPoint <= distance;
 			if (inRadius)
 			{
-				if (auto content = GetContents(x, z); !content->m_flags.m_blockVisibility)
+				if (auto content = GetContents(x, z))
 				{
 					// use DDA to 'draw' a line from the start to this tile
 					// if any vision-blocking tiles are encountered, the current tile is not visible

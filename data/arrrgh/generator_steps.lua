@@ -92,7 +92,7 @@ function Generator_SimpleRoom(position, size, wallTagStr, floorTagStr)
 	}
 end
 
-function Generator_PathFromRoomToRoom(floorTagStr)
+function Generator_PathFromRoomToRoom(floorTagStr, pathChance)	-- chance = 0 to 1
 	return {
 		Run = function(grid, context)
 			local roomCount = #context.Rooms
@@ -106,10 +106,11 @@ function Generator_PathFromRoomToRoom(floorTagStr)
 								local fromPos = context.Rooms[room].Entrances[entrance]
 								local toPos = context.Rooms[otherRoom].Entrances[otherEntrance]
 								local foundPath = grid:CalculatePath(fromPos, toPos)
-								print(#foundPath)
-								for pathNode=1,#foundPath do
-									grid:Fill(foundPath[pathNode], uvec2.new(1, 1), floorTags, true, false)
-									Dungeons_Generator.Yield(0.0)
+								if(math.random() < pathChance) then
+									for pathNode=1,#foundPath do
+										grid:Fill(foundPath[pathNode], uvec2.new(1, 1), floorTags, true, false)
+										Dungeons_Generator.Yield(0.0)
+									end
 								end
 							end
 						end

@@ -9,7 +9,7 @@
      "Z": 0.0
     },
     "Sun Ambient": 0.004999999888241291,
-    "Sun Brightness": 0.20000000298023224,
+    "Sun Brightness": 0.019999999552965164,
     "Sun Colour": {
      "X": 1.0,
      "Y": 1.0,
@@ -37,17 +37,17 @@
      ],
      "IntVec2s": [
       {
-       "Key": "Min Building Size",
-       "Value": {
-        "X": 4,
-        "Y": 4
-       }
-      },
-      {
        "Key": "Total World Size",
        "Value": {
         "X": 64,
         "Y": 64
+       }
+      },
+      {
+       "Key": "Min Building Size",
+       "Value": {
+        "X": 4,
+        "Y": 4
        }
       },
       {
@@ -58,14 +58,14 @@
        }
       },
       {
-       "Key": "Player Spawn Safe Area (Min/Max)",
+       "Key": "Level Exit Safe Area (Min/Max)",
        "Value": {
         "X": 5,
         "Y": 6
        }
       },
       {
-       "Key": "Level Exit Safe Area (Min/Max)",
+       "Key": "Player Spawn Safe Area (Min/Max)",
        "Value": {
         "X": 5,
         "Y": 6
@@ -74,16 +74,16 @@
      ],
      "Ints": [
       {
-       "Key": "Max Buildings",
-       "Value": 500
+       "Key": "Min Tower Radius",
+       "Value": 5
       },
       {
        "Key": "Tower Wall Thickness",
        "Value": 1
       },
       {
-       "Key": "Min Tower Radius",
-       "Value": 5
+       "Key": "Max Buildings",
+       "Value": 500
       },
       {
        "Key": "Max Building Iterations",

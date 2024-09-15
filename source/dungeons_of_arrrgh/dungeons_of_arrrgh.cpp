@@ -330,46 +330,60 @@ const std::vector<GeneratorRule> c_wallRules = {
 			"wall",		"wall",			"wall"
 		}, ""
 	),
-	GeneratorRule(		// top-left corner
+	GeneratorRule(		// corner
 		{
-			"",			"",				"",
-			"",			"wall",			"wall",
-			"",			"wall",			"!wall"
-		}, "basic_wall_corner_4x4.scn"
+			"",			"wall",			"",
+			"wall",		"wall",			"!wall",
+			"",			"!wall",		""
+		},  "basic_wall_corner_4x4.scn", 180.0f
 	),
-	GeneratorRule(		// top-right corner
+	GeneratorRule(		// corner
 		{
-			"",			"",				"",
-			"wall",		"wall",			"",
-			"!wall",	"wall",			""
-		}, "basic_wall_corner_4x4.scn", -90.0f
+			"",			"wall",			"",
+			"!wall",	"wall",		"wall",
+			"",			"!wall",		""
+		},  "basic_wall_corner_4x4.scn", 90.0f
 	),
-	GeneratorRule(		// bottom-left corner
+	GeneratorRule(		// corner
 		{
-			"",			"wall",			"!wall",
-			"",			"wall",			"wall",
-			"",			"",				""
-		}, "basic_wall_corner_4x4.scn", -270.0f
+			"",			"!wall",			"",
+			"wall",		"wall",				"!wall",
+			"",			"wall",				""
+		},  "basic_wall_corner_4x4.scn", -90.0f
 	),
-	GeneratorRule(		// bottom-right corner
+	GeneratorRule(		// corner
 		{
-			"!wall",	"wall",			"",
-			"wall",		"wall",			"",
-			"",			"",				""
-		}, "basic_wall_corner_4x4.scn", -180.0f 
+			"",			"!wall",			"",
+			"!wall",	"wall",				"wall",
+			"",			"wall",				""
+		},  "basic_wall_corner_4x4.scn", 0.0f
 	),
 	GeneratorRule(
 		{
 			"",		"wall",			"",
-			"",		"wall",			"",
+			"!wall","wall",			"",
 			"",		"wall",			""
 		}, "basic_vwall_tile_4x4.scn"
 	),
 	GeneratorRule(
 		{
-			"",		"",			"",
-			"wall",	"wall",			"wall",
+			"",		"wall",			"",
+			"",		"wall",			"!wall",
+			"",		"wall",			""
+		}, "basic_vwall_tile_4x4.scn"
+	),
+	GeneratorRule(
+		{
+			"",		"!wall",	"",
+			"wall",	"wall",		"wall",
 			"",		"",			""
+		}, "basic_hwall_tile_4x4.scn"
+	),
+	GeneratorRule(
+		{
+			"",		"",			"",
+			"wall",	"wall",		"wall",
+			"",		"!wall",	""
 		}, "basic_hwall_tile_4x4.scn"
 	),
 	GeneratorRule("wall", "basic_crosswall_tile_4x4.scn")
@@ -451,6 +465,7 @@ void DungeonsOfArrrgh::GenerateTileVisuals(uint32_t x, uint32_t z, DungeonsWorld
 	{
 		auto newChild = activeWorld->AddEntity();	// root node for tile visuals
 		grid.GetContents(x, z)->m_visualEntity = newChild;
+		activeWorld->SetEntityName(newChild, std::format("Tile {},{}", x, z));
 		for (const auto& tileScene : tilesToLoad)
 		{
 			auto foundInCache = m_generateVisualsEntityCache.find(tileScene.m_path);
