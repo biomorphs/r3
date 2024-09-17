@@ -4,6 +4,7 @@
 #include "world_grid_component.h"
 #include "world_grid_position.h"
 #include "vision_component.h"
+#include "inspectable_component.h"
 #include "engine/systems/immediate_render_system.h"
 #include "engine/systems/lua_system.h"
 #include "engine/systems/input_system.h"
@@ -45,8 +46,9 @@ bool DungeonsOfArrrgh::Init()
 	entities->RegisterComponentType<DungeonsWorldGridComponent>(16);	// probably only need 1 per world, but eh
 	entities->RegisterComponentType<DungeonsVisionComponent>(8092);
 	entities->RegisterComponentType<DungeonsWorldGridPosition>(64 * 1024);
-	entities->RegisterComponentType<DungeonsMonsterSpawner>(64 * 1024);
-	entities->RegisterComponentType<DungeonsMonsterComponent>(64 * 1024);
+	entities->RegisterComponentType<DungeonsMonsterSpawner>(2 * 1024);
+	entities->RegisterComponentType<DungeonsMonsterComponent>(2 * 1024);
+	entities->RegisterComponentType<DungeonsInspectableComponent>(4 * 1024);
 
 	auto scriptNamespace = "Arrrgh";
 	auto scripts = GetSystem<R3::LuaSystem>();

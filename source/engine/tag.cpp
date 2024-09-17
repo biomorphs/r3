@@ -31,7 +31,7 @@ namespace R3
 				assert(ts.m_nextTag < (UINT16_MAX - 1));
 				auto newIndex = ts.m_nextTag++;
 				ts.m_stringToTag[vKey] = newIndex;
-				ts.m_tagToString[newIndex] = v.data();
+				ts.m_tagToString[newIndex] = std::string(v);
 				m_tag = newIndex;
 			}
 			else

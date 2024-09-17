@@ -29,71 +29,9 @@
    "ID": 1,
    "LuaScript": {
     "InputParams": {
-     "Floats": [
-      {
-       "Key": "Tower Chance",
-       "Value": 0.25
-      }
-     ],
-     "IntVec2s": [
-      {
-       "Key": "Min Building Size",
-       "Value": {
-        "X": 4,
-        "Y": 4
-       }
-      },
-      {
-       "Key": "Total World Size",
-       "Value": {
-        "X": 64,
-        "Y": 64
-       }
-      },
-      {
-       "Key": "Max Building Size",
-       "Value": {
-        "X": 9,
-        "Y": 9
-       }
-      },
-      {
-       "Key": "Player Spawn Safe Area (Min/Max)",
-       "Value": {
-        "X": 5,
-        "Y": 6
-       }
-      },
-      {
-       "Key": "Level Exit Safe Area (Min/Max)",
-       "Value": {
-        "X": 5,
-        "Y": 6
-       }
-      }
-     ],
-     "Ints": [
-      {
-       "Key": "Max Buildings",
-       "Value": 500
-      },
-      {
-       "Key": "Tower Wall Thickness",
-       "Value": 1
-      },
-      {
-       "Key": "Min Tower Radius",
-       "Value": 5
-      },
-      {
-       "Key": "Max Building Iterations",
-       "Value": 100000
-      },
-      {
-       "Key": "Wander steps per iteration",
-       "Value": 50
-      }
-     ]
+     "Floats": [],
+     "IntVec2s": [],
+     "Ints": []
     },
     "IsActive": true,
     "OnFixedUpdate": {

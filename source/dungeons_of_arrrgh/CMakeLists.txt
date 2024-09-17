@@ -11,6 +11,8 @@ set(DungeonsOfArrrgh_SourceFiles
 	monster_spawn_component.cpp
 	monster_component.h
 	monster_component.cpp
+	inspectable_component.h
+	inspectable_component.cpp
 )
 
 add_library(DungeonsOfArrrgh ${DungeonsOfArrrgh_SourceFiles})

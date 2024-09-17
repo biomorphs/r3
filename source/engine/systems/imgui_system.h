@@ -18,6 +18,7 @@ namespace R3
 		void PushLargeFont();		// call ImGui::PopFont(); when finished
 		void PushLargeBoldFont();	// call ImGui::PopFont(); when finished
 	private:
+		void CreateScriptBindings();
 		void LoadFonts();
 		void OnShutdown(class Device&);
 		void OnSystemEvent(void*);

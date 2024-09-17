@@ -20,7 +20,11 @@ void DungeonsWorldGridComponent::RegisterScripts(R3::LuaSystem& l)
 		"ResizeGrid", &DungeonsWorldGridComponent::ResizeGrid,
 		"GetDimensions", &DungeonsWorldGridComponent::GetDimensions,
 		"IsTilePassable", &DungeonsWorldGridComponent::IsTilePassable,
+		"TileBlocksVision", &DungeonsWorldGridComponent::TileBlocksVision,
 		"TileHasTags", &DungeonsWorldGridComponent::TileHasTags,
+		"GetTileTagsAsString", &DungeonsWorldGridComponent::GetTileTagsAsString,
+		"GetEntitiesInTile", &DungeonsWorldGridComponent::GetEntitiesInTile,
+		"GetVisualEntity", &DungeonsWorldGridComponent::GetVisualEntity,
 		"Fill", &DungeonsWorldGridComponent::Fill,
 		"AllTilesPassable", &DungeonsWorldGridComponent::AllTilesPassable,
 		"CalculatePath", &DungeonsWorldGridComponent::CalculatePath,
@@ -190,6 +194,15 @@ bool DungeonsWorldGridComponent::IsTilePassable(uint32_t tilex, uint32_t tiley)
 	return false;
 }
 
+bool DungeonsWorldGridComponent::TileBlocksVision(uint32_t tilex, uint32_t tiley)
+{
+	if (auto c = GetContents(tilex, tiley))
+	{
+		return c->m_flags.m_blockVisibility;
+	}
+	return false;
+}
+
 bool DungeonsWorldGridComponent::AllTilesPassable(glm::uvec2 start, glm::uvec2 size)
 {
 	R3_PROF_EVENT();
@@ -218,6 +231,15 @@ std::vector<R3::Entities::EntityHandle> DungeonsWorldGridComponent::GetEntitiesI
 	if (auto contents = GetContents(tileX, tileZ))
 	{
 		return contents->m_entitiesInTile;
+	}
+	return {};
+}
+
+std::string DungeonsWorldGridComponent::GetTileTagsAsString(uint32_t tileX, uint32_t tileZ)
+{
+	if (auto contents = GetContents(tileX, tileZ))
+	{
+		return contents->m_tags.AsString();
 	}
 	return {};
 }
@@ -256,6 +278,15 @@ DungeonsWorldGridComponent::WorldTileContents* DungeonsWorldGridComponent::GetCo
 		return &m_worldGridContents[tileX + (tileZ * m_gridDimensions[0])];
 	}
 	return nullptr;
+}
+
+R3::Entities::EntityHandle DungeonsWorldGridComponent::GetVisualEntity(uint32_t tileX, uint32_t tileZ)
+{
+	if (auto contents = GetContents(tileX, tileZ))
+	{
+		return contents->m_visualEntity;
+	}
+	return {};
 }
 
 // basic A*
@@ -298,6 +329,7 @@ std::vector<glm::uvec2> DungeonsWorldGridComponent::CalculatePath(glm::uvec2 sta
 				break;
 			}
 		}
+		std::ranges::reverse(finalPath.begin(), finalPath.end());	// is there a faster way to do it? may not matter for small paths
 		return finalPath;
 	};
 	openSet.push({ start, H(start) });		// begin with the first tile

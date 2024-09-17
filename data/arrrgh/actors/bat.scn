@@ -5,6 +5,9 @@
     "MaxDistance": 3.0,
     "NeedsUpdate": true
    },
+   "Dungeons_Inspectable": {
+    "InspectText": "A common bat"
+   },
    "Dungeons_Monster": {
     "Name": "Bat"
    },

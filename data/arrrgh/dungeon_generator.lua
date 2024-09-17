@@ -36,8 +36,7 @@ function Dungeons_GenerateWorld(e)
 	local scriptcmp = world.GetComponent_LuaScript(e)
 	if(scriptcmp ~= nil and gridcmp ~= nil) then
 		if(Arrrgh_Globals.WorldGenerator == nil) then 
-			local totalWorldSize = scriptcmp.m_inputParams:GetIntVec2("Total World Size", ivec2.new(32,32))
-			gridcmp:ResizeGrid(uvec2.new(totalWorldSize.x,totalWorldSize.y))
+			gridcmp:ResizeGrid(uvec2.new(64,64))
 			Arrrgh_Globals.WorldGenerator = Dungeons_Generator.new(gridEntity)
 			Dungeons_BasicGenerator()
 		end

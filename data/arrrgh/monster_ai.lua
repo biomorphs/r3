@@ -36,7 +36,7 @@ function Dungeons_MonsterAIDoTurn()
 			if(seesPlayer) then 
 				print(monsterCmp.m_name, ' can see you!')
 				local monsterTile = Arrrgh.GetEntityTilePosition(allMonsters[monster])
-				local foundPath = gridcmp:CalculatePath(playerTile,monsterTile)
+				local foundPath = gridcmp:CalculatePath(monsterTile,playerTile)
 				if(#foundPath >= 2)  then
 					Dungeons_NewWalkAction(allMonsters[monster], foundPath, 2)	
 				end

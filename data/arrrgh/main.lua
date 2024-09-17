@@ -2,11 +2,14 @@ require 'arrrgh/fastqueue'
 require 'arrrgh/arrrgh_shared'
 require 'arrrgh/camera'
 require 'arrrgh/action_walkto'
+require 'arrrgh/action_inspect'
 require 'arrrgh/world_generator'
 require 'arrrgh/monster_ai'
+require 'arrrgh/tile_debug_ui'
 
 Arrrgh_Globals.GameState = nil
 Arrrgh_Globals.ActionQueue = Fastqueue.new()
+Arrrgh_Globals.ShowActionsUi = nil	-- set to a uvec2 tile coord when open
 
 -- todo 
 -- 
@@ -24,8 +27,6 @@ Arrrgh_Globals.ActionQueue = Fastqueue.new()
 --		action(pickup) - add to inventory if possible
 --		action(talk) - talk to something
 -- UI (lots to do)
---  add IMGUI api for lua
---		keep it clean
 --  implement basic UI for game in lua 
 --		display player stats
 --		debug ui 
@@ -174,6 +175,50 @@ function Dungeons_GameTickFixed(e)
 	end
 end
 
+function Dungeons_InTouchingDistance(playerTile, targetTile)
+	local tileDistance = math.abs(playerTile.x - targetTile.x) + math.abs(playerTile.y - targetTile.y)
+	return tileDistance <= 1
+end
+
+-- returns true if an action was picked
+function Dungeons_ShowAvailableEntityActions(world, entity, playerTile, targetTile)
+	if(Dungeons_InTouchingDistance(playerTile, targetTile)) then 
+		local inspectable = world.GetComponent_Dungeons_Inspectable(entity)
+		if(inspectable ~= nil) then 
+			if(ImGui.Button("Inspect")) then 
+				Dungeons_NewInspectAction(entity)
+				return true
+			end
+		end
+	end
+	return false
+end
+
+function Dungeons_ShowAvailableActions(world, grid, playerTile, targetTile)
+	if(R3.IsLeftMouseButtonPressed()) then 
+		Arrrgh_Globals.ShowActionsUi = uvec2.new(targetTile.x, targetTile.y)
+	end
+
+	-- are there any entities on this tile that support actions?
+	local keepOpen = true
+	local actionChosen = false
+	if(Arrrgh_Globals.ShowActionsUi ~= nil) then 
+		keepOpen = ImGui.Begin("Choose an action", keepOpen)
+		local tileActors = grid:GetEntitiesInTile(Arrrgh_Globals.ShowActionsUi.x, Arrrgh_Globals.ShowActionsUi.y)
+		for actor=1,#tileActors do 
+			ImGui.Text(world:GetEntityName(tileActors[actor]))
+			if(Dungeons_ShowAvailableEntityActions(world, tileActors[actor], playerTile, Arrrgh_Globals.ShowActionsUi)) then 
+				actionChosen = true
+			end
+		end
+		ImGui.End()
+	end
+
+	if(keepOpen == false or actionChosen) then 
+		Arrrgh_Globals.ShowActionsUi = nil
+	end
+end
+
 -- player action ui happens in variable update
 function Dungeons_ChoosePlayerAction()
 	local world = R3.ActiveWorld()
@@ -184,13 +229,15 @@ function Dungeons_ChoosePlayerAction()
 	if(gridcmp ~= nil) then 
 		local playerTile = Arrrgh.GetEntityTilePosition(playerEntity)
 		local mouseTile = Arrrgh.GetTileUnderMouseCursor(gridcmp)
-		if(playerTile ~= nil and mouseTile ~= nil and (playerTile.x ~= mouseTile.x or playerTile.y ~= mouseTile.y)) then
-			if(gridcmp:IsTilePassable(mouseTile.x, mouseTile.y)) then
-				local foundPath = gridcmp:CalculatePath(mouseTile, playerTile)
+		if(playerTile ~= nil and mouseTile ~= nil) then
+			Dungeons_ShowAvailableActions(world,gridcmp,playerTile,mouseTile)
+			if((playerTile.x ~= mouseTile.x or playerTile.y ~= mouseTile.y) and gridcmp:IsTilePassable(mouseTile.x, mouseTile.y)) then
+				local foundPath = gridcmp:CalculatePath(playerTile, mouseTile)	-- can we walk to this tile?
 				if(#foundPath >= 2 and (#foundPath - 2) < Dungeons_GetActionPointsRemaining())  then
 					Arrrgh.DebugDrawTiles(gridcmp, foundPath)
 					if(R3.IsRightMouseButtonPressed()) then
 						Dungeons_NewWalkAction(playerEntity, foundPath)
+						Arrrgh_Globals.ShowActionsUi = nil
 					end
 				end
 			end
@@ -210,4 +257,5 @@ function Dungeons_GameTickVariable(e)
 			end
 		end
 	end
+	TileDebuggerUpdate()
 end

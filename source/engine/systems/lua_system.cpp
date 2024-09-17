@@ -381,13 +381,13 @@ namespace R3
 		auto forEachScriptCmp = [this](const Entities::EntityHandle& e, LuaScriptComponent& lc) {
 			if (lc.m_needsInputPopulate)
 			{
+				lc.m_inputParams.Reset();
 				lc.m_populateInputs.m_fn = LoadScriptAndGetEntrypoint(*m_globalState, lc.m_populateInputs.m_sourcePath, lc.m_populateInputs.m_entryPointName);
 				if (lc.m_populateInputs.m_fn)
 				{
 					R3_PROF_EVENT_DYN(lc.m_populateInputs.m_entryPointName.c_str());
 					try
 					{
-						lc.m_inputParams.Reset();
 						sol::protected_function_result result = lc.m_populateInputs.m_fn(&lc);
 						if (!result.valid())
 						{

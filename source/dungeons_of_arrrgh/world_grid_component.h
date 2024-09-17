@@ -32,9 +32,12 @@ public:
 	glm::uvec2 GetDimensions() const { return m_gridDimensions; }
 	const WorldTileContents* GetContents(uint32_t tileX, uint32_t tileZ) const;	// assume it will be sparse later
 	WorldTileContents* GetContents(uint32_t tileX, uint32_t tileZ);
+	R3::Entities::EntityHandle GetVisualEntity(uint32_t tileX, uint32_t tileZ);
 	std::vector<R3::Entities::EntityHandle> GetEntitiesInTile(uint32_t tileX, uint32_t tileZ);
+	std::string GetTileTagsAsString(uint32_t tileX, uint32_t tileZ);			// mainly for debugging
 	bool TileHasTags(uint32_t tilex, uint32_t tiley);
 	bool IsTilePassable(uint32_t tilex, uint32_t tiley);
+	bool TileBlocksVision(uint32_t tilex, uint32_t tiley);
 	void Fill(glm::uvec2 start, glm::uvec2 size, const WorldTileContents::TileTags& tags, bool isPassable, bool blockVisibility);
 	bool AllTilesPassable(glm::uvec2 start, glm::uvec2 size);	// return true if all tiles in range are walkable
 	std::vector<glm::uvec2> CalculatePath(glm::uvec2 start, glm::uvec2 end);	// find shortest path between tiles, taking in to account passable flag

@@ -19,6 +19,8 @@ namespace R3
 		bool ContainsAll(const TagSet<OtherSize>& ts);
 		template<int OtherSize>
 		bool ContainsAny(const TagSet<OtherSize>& ts);
+		std::string AsString();
+
 		std::array<Tag, MaxSize> m_tags;
 		uint8_t m_count = 0;
 	};
@@ -101,5 +103,21 @@ namespace R3
 			}
 		}
 		return false;
+	}
+
+	template<int MaxSize>
+	inline std::string TagSet<MaxSize>::AsString()
+	{
+		std::string result;
+		result.reserve(m_count * 8);	// avoid reallocs
+		for (auto i = 0; i < m_count; ++i)
+		{
+			result = result + m_tags[i].GetString();
+			if (i + 1 < m_count)
+			{
+				result = result + ",";
+			}
+		}
+		return result;
 	}
 }

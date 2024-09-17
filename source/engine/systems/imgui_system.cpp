@@ -1,5 +1,6 @@
 #include "imgui_system.h"
 #include "event_system.h"
+#include "lua_system.h"
 #include "render/render_system.h"
 #include "render/vulkan_helpers.h"
 #include "render/device.h"
@@ -23,6 +24,79 @@ namespace R3
 		RegisterTick("ImGui::FrameStart", [this]() {
 			return OnFrameStart();
 		});
+	}
+
+	void ImGuiSystem::CreateScriptBindings()
+	{
+		R3_PROF_EVENT();
+		auto lua = GetSystem<LuaSystem>();
+		const auto c_namespace = "ImGui";
+		lua->RegisterFunction("Begin", [](std::string_view titleText, bool keepOpen) {
+			bool actualKeepOpen = keepOpen;
+			ImGui::Begin(titleText.data(), &actualKeepOpen);
+			return actualKeepOpen;
+		}, c_namespace);
+		lua->RegisterFunction("End", []() {
+			ImGui::End();
+		}, c_namespace);
+		lua->RegisterFunction("BeginTooltip", []() {
+			return ImGui::BeginTooltip();
+		}, c_namespace);
+		lua->RegisterFunction("EndTooltip", []() {
+			ImGui::EndTooltip();
+		}, c_namespace);
+		lua->RegisterFunction("Text", [](std::string_view txt) {
+			ImGui::Text(txt.data());
+		}, c_namespace);
+		lua->RegisterFunction("TextColoured", [](glm::vec4 colour, std::string_view txt) {
+			ImVec4 imVec4(colour.r, colour.g, colour.b, colour.a);
+			ImGui::TextColored(imVec4, txt.data());
+		}, c_namespace);
+		lua->RegisterFunction("SeparatorText", [](std::string_view txt) {
+			ImGui::SeparatorText(txt.data());
+		}, c_namespace);
+		lua->RegisterFunction("Separator", []() {
+			ImGui::Separator();
+		}, c_namespace);
+		lua->RegisterFunction("SameLine", []() {
+			ImGui::SameLine();
+		}, c_namespace);
+		lua->RegisterFunction("PushDefaultFont", [this]() {
+			PushDefaultFont();
+		}, c_namespace);
+		lua->RegisterFunction("PushBoldFont", [this]() {
+			PushBoldFont();
+		}, c_namespace);
+		lua->RegisterFunction("PushItalicFont", [this]() {
+			PushItalicFont();
+		}, c_namespace);
+		lua->RegisterFunction("PushLargeFont", [this]() {
+			PushLargeFont();
+		}, c_namespace);
+		lua->RegisterFunction("PushLargeBoldFont", [this]() {
+			PushLargeBoldFont();
+		}, c_namespace);
+		lua->RegisterFunction("PopFont", []() {
+			ImGui::PopFont();
+		}, c_namespace);
+		lua->RegisterFunction("Button", [](std::string_view txt) {
+			return ImGui::Button(txt.data());
+		}, c_namespace);
+		lua->RegisterFunction("Checkbox", [](std::string_view txt, bool value) {
+			return ImGui::Checkbox(txt.data(), &value);
+		}, c_namespace);
+		lua->RegisterFunction("TreeNode", [](std::string_view txt) {
+			return ImGui::TreeNode(txt.data());
+		}, c_namespace);
+		lua->RegisterFunction("TreePop", []() {
+			return ImGui::TreePop();
+		}, c_namespace);
+		lua->RegisterFunction("InputFloat", [](std::string_view txt, float* value, float step) {
+			return ImGui::InputFloat(txt.data(), value, step);
+		}, c_namespace);
+		lua->RegisterFunction("InputInt", [](std::string_view txt, int* value, int step) {
+			return ImGui::InputInt(txt.data(), value, step);
+		}, c_namespace);
 	}
 
 	bool ImGuiSystem::Init()
@@ -99,6 +173,8 @@ namespace R3
 		GetSystem<EventSystem>()->RegisterEventHandler([this](void* ev) {
 			OnSystemEvent(ev);
 		});
+
+		CreateScriptBindings();
 
 		return true;
 	}
