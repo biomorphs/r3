@@ -22,6 +22,7 @@ function Dungeons_TileDebuggerUpdate()
 	local tileEntities = gridcmp:GetEntitiesInTile(mouseTile.x, mouseTile.y)
 	local keepOpen = true
 	ImGui.Begin("Tile Debugger", keepOpen)
+		gridcmp.m_debugDraw = ImGui.Checkbox("Debug Draw World", gridcmp.m_debugDraw)
 		ImGui.Text("Coords: [" .. mouseTile.x .. ', ' .. mouseTile.y)
 		ImGui.Text("Tags: " .. gridcmp:GetTileTagsAsString(mouseTile.x, mouseTile.y))
 		ImGui.Text("Passable: " .. tostring(gridcmp:IsTilePassable(mouseTile.x, mouseTile.y)))

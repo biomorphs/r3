@@ -64,8 +64,6 @@ end
 function Dungeons_TakeDamage(world, entity, damageAmount)
 	local targetStats = world.GetComponent_Dungeons_BaseActorStats(entity)
 	if(targetStats ~= nil) then 
-		print(targetStats)
-		print(targetStats.m_currentHP)
 		print(world:GetEntityName(entity), ' takes ', damageAmount, ' damage')
 		targetStats.m_currentHP = math.max(0, targetStats.m_currentHP - damageAmount)
 		if(targetStats.m_currentHP == 0) then 

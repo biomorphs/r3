@@ -27,6 +27,12 @@ end
 
 -- should generator be dictating monster levels + stuff? or the game? most likely the game
 function Dungeons_GeneratorContext.AddMonster(context, monsterType, pos)
+	for m=1,#context.MonsterSpawns do
+		if(pos.x == context.MonsterSpawns[m].Position.x and pos.y == context.MonsterSpawns[m].Position.y) then 
+			R3.LogWarn("A monter already exists at " .. pos.x .. ", " .. pos.y)
+			return 
+		end
+	end
 	local newMonster = {
 		Position = pos,
 		TypeString = monsterType
@@ -123,7 +129,10 @@ function Dungeons_Generator.Continue(generator)
 	end
 	local runningStatus = coroutine.status(generator.MainCoroutine)
 	if(runningStatus ~= 'dead') then
-		coroutine.resume(generator.MainCoroutine, gridCmp, generator)
+		local result, errorText = coroutine.resume(generator.MainCoroutine, gridCmp, generator)
+		if(result == false) then
+			R3.LogError("Dungeons_Generator.Continue failed - \n" .. errorText)
+		end
 		return 'working'
 	else
 		Dungeons_Generator.OnFinish(gridCmp, generator)

@@ -372,6 +372,16 @@ namespace R3
 			"GetString", &Tag::GetString,
 			"GetTag", &Tag::GetTag
 		);
+		// logging API
+		RegisterFunction("LogInfo", [](std::string_view txt) {
+			LogInfo(txt);
+		});
+		RegisterFunction("LogWarn", [](std::string_view txt) {
+			LogWarn(txt);
+		});
+		RegisterFunction("LogError", [](std::string_view txt) {
+			LogError(txt);
+		});
 	}
 
 	bool LuaSystem::RunVariableUpdateScripts()

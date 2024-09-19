@@ -75,6 +75,21 @@ function Generator_CenterCamera()
 	}
 end
 
+function Generator_FindDoor(roomPos, roomSize)
+	local doorPos = {}	-- make a door
+	local wallForDoor = math.random(0, 3)
+	if(wallForDoor == 0) then -- top
+		doorPos = uvec2.new(math.random(roomPos.x + 1, roomPos.x + roomSize.x - 2), roomPos.y)
+	elseif(wallForDoor == 1) then -- right
+		doorPos = uvec2.new(roomPos.x + roomSize.x - 1, math.random(roomPos.y + 1, roomPos.y + roomSize.y - 2))
+	elseif(wallForDoor == 2) then -- bottom
+		doorPos = uvec2.new(math.random(roomPos.x + 1, roomPos.x + roomSize.x - 2), roomPos.y + roomSize.y - 1)
+	elseif(wallForDoor == 3) then -- left
+		doorPos = uvec2.new(roomPos.x, math.random(roomPos.y + 1, roomPos.y + roomSize.y - 2))
+	end
+	return doorPos
+end
+
 -- position/size must be uvec2
 function Generator_SimpleRoom(position, size, wallTagStr, floorTagStr)
 	return {
@@ -84,18 +99,10 @@ function Generator_SimpleRoom(position, size, wallTagStr, floorTagStr)
 			grid:Fill(position, size, wallTags, false, true)	-- walls
 			grid:Fill(uvec2.new(position.x + 1, position.y + 1), uvec2.new(size.x-2, size.y - 2), floorTags, true, false)	-- floor
 			-- todo, check if a path to spawn pos is possible
-			local doorPos = {}	-- make a door
-			local wallForDoor = math.random(0, 3)
-			if(wallForDoor == 0) then -- top
-				doorPos = uvec2.new(math.random(position.x + 1, position.x + size.x - 2), position.y)
-			elseif(wallForDoor == 1) then -- right
-				doorPos = uvec2.new(position.x + size.x - 1, math.random(position.y + 1, position.y + size.y - 2))
-			elseif(wallForDoor == 2) then -- bottom
-				doorPos = uvec2.new(math.random(position.x + 1, position.x + size.x - 2), position.y + size.y - 1)
-			elseif(wallForDoor == 3) then -- left
-				doorPos = uvec2.new(position.x, math.random(position.y + 1, position.y + size.y - 2))
+			local doorPos = Generator_FindDoor(position, size)
+			if(doorPos ~= nil) then
+				grid:Fill(doorPos, uvec2.new(1, 1), floorTags, true, false)
 			end
-			grid:Fill(doorPos, uvec2.new(1, 1), floorTags, true, false)
 			Dungeons_GeneratorContext.AddRoom(context, position, size, {doorPos})
 		end
 	}
@@ -112,10 +119,10 @@ function Generator_PathFromRoomToRoom(floorTagStr, pathChance)	-- chance = 0 to 
 					for otherRoom=1,roomCount do 
 						if(otherRoom ~= room) then
 							for otherEntrance=1,#context.Rooms[otherRoom].Entrances do
-								local fromPos = context.Rooms[room].Entrances[entrance]
-								local toPos = context.Rooms[otherRoom].Entrances[otherEntrance]
-								local foundPath = grid:CalculatePath(fromPos, toPos, false)
 								if(math.random() < pathChance) then
+									local fromPos = context.Rooms[room].Entrances[entrance]
+									local toPos = context.Rooms[otherRoom].Entrances[otherEntrance]
+									local foundPath = grid:CalculatePath(fromPos, toPos, false)
 									for pathNode=1,#foundPath do
 										grid:Fill(foundPath[pathNode], uvec2.new(1, 1), floorTags, true, false)
 									end

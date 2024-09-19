@@ -83,7 +83,8 @@ namespace R3
 			return ImGui::Button(txt.data());
 		}, c_namespace);
 		lua->RegisterFunction("Checkbox", [](std::string_view txt, bool value) {
-			return ImGui::Checkbox(txt.data(), &value);
+			ImGui::Checkbox(txt.data(), &value);
+			return value;
 		}, c_namespace);
 		lua->RegisterFunction("ProgressBar", [](std::string_view txt, float value, float maxValue, glm::vec2 size) {
 			ImVec2 imSize(size.x, size.y);
