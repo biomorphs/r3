@@ -31,9 +31,6 @@ Arrrgh_Globals.ShowActionsUi = nil	-- set to a uvec2 tile coord when open
 --	need to add old font loader
 --	add 2d pass to IM render
 --  add nice draw text API 
--- basic ai
---	implement 2 dumb melee-only enemies
---		same behavior, different stats 
 -- inventories/items
 
 function Dungeons_CalculateMaxHP(baseStatsCmp)
@@ -41,6 +38,41 @@ function Dungeons_CalculateMaxHP(baseStatsCmp)
 		return baseStatsCmp.m_baseMaxHP + (2 * baseStatsCmp.m_endurance)		-- 1 endurance = 2 max hp
 	else 
 		return 1
+	end
+end
+
+-- note we separate the calculation of the base damage from the application of it
+function Dungeons_CalculateMeleeDamageDealt(world, attackerActor)
+	local attackerStats = world.GetComponent_Dungeons_BaseActorStats(attackerActor)
+	if(attackerStats == nil) then
+		print('missing stats')
+		return 0
+	end
+	return 1 + attackerStats.m_strength
+end
+
+function Dungeons_OnActorDeath(world, entity)
+	local gridEntity = world:GetEntityByName('World Grid')
+	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
+	print(world:GetEntityName(entity), ' died!')
+	-- drop loot here!
+	Arrrgh.SetEntityTilePosition(gridcmp, entity, -1, -1)	-- remove from grid
+	world:RemoveEntity(entity, false)
+end
+
+-- here we can scale damage taken based on defense, etc
+function Dungeons_TakeDamage(world, entity, damageAmount)
+	local targetStats = world.GetComponent_Dungeons_BaseActorStats(entity)
+	if(targetStats ~= nil) then 
+		print(targetStats)
+		print(targetStats.m_currentHP)
+		print(world:GetEntityName(entity), ' takes ', damageAmount, ' damage')
+		targetStats.m_currentHP = math.max(0, targetStats.m_currentHP - damageAmount)
+		if(targetStats.m_currentHP == 0) then 
+			Dungeons_OnActorDeath(world, entity)
+		end
+	else
+		print('target does not have stats')
 	end
 end
 
@@ -99,7 +131,9 @@ function Dungeons_OnTurnBegin()
 		local world = R3.ActiveWorld()
 		local playerEntity = world:GetEntityByName('PlayerActor')
 		local playerTransform = world.GetComponent_Transform(playerEntity)
-		Dungeons_CameraLookAt(playerTransform:GetPosition())
+		if(playerTransform ~= nil) then
+			Dungeons_CameraLookAt(playerTransform:GetPosition())
+		end
 	end
 end
 
@@ -123,7 +157,7 @@ end
 
 function Dungeons_GetTotalActionPoints()
 	if(Arrrgh_Globals.CurrentTurn.PlayerIndex == 0) then 
-		return 2	-- todo, get based on player/monster attributes, etc
+		return 1	-- todo, get based on player/monster attributes, etc
 	else
 		return 100	-- monster ai can do 1 action per monster per turn, up to this value
 	end
@@ -234,7 +268,7 @@ function Dungeons_ChoosePlayerAction()
 	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
 	local playerEntity = world:GetEntityByName('PlayerActor')
 	local playerTransform = world.GetComponent_Transform(playerEntity)
-	if(gridcmp ~= nil) then 
+	if(gridcmp ~= nil and playerTransform ~= nil) then 
 		local playerTile = Arrrgh.GetEntityTilePosition(playerEntity)
 		local mouseTile = Arrrgh.GetTileUnderMouseCursor(gridcmp)
 		Dungeons_UpdateMouseState(mouseTile)

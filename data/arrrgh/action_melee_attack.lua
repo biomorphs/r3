@@ -9,10 +9,9 @@ end
 
 function Dungeons_ActionMeleeAttack(action)
 	local world = R3.ActiveWorld()
-	
-	local attackDamage = 5
+	local attackDamage = Dungeons_CalculateMeleeDamageDealt(world, action.attacker)
 	print(world:GetEntityName(action.attacker), ' attacks ', world:GetEntityName(action.target), ' for ', attackDamage, ' damage!')
+	Dungeons_TakeDamage(world, action.target, attackDamage)
 	Dungeons_SpendActionPoint()
-
 	return 'complete'
 end

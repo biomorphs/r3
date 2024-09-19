@@ -29,9 +29,9 @@ void DungeonsBaseActorStatsComponent::Inspect(const R3::Entities::EntityHandle& 
 	R3_PROF_EVENT();
 	i.Inspect("Level", m_level, R3::InspectProperty(&DungeonsBaseActorStatsComponent::m_level, e, w), 1, 1, 1000);
 	ImGui::Separator();
-	i.Inspect("CurrentHP", m_level, R3::InspectProperty(&DungeonsBaseActorStatsComponent::m_currentHP, e, w), 1, 0, 1000);
+	i.Inspect("CurrentHP", m_currentHP, R3::InspectProperty(&DungeonsBaseActorStatsComponent::m_currentHP, e, w), 1, 0, 1000);
 	i.Inspect("Base Max HP", m_baseMaxHP, R3::InspectProperty(&DungeonsBaseActorStatsComponent::m_baseMaxHP, e, w), 1, 1, 1000);
 	ImGui::Separator();
-	i.Inspect("Strength", m_level, R3::InspectProperty(&DungeonsBaseActorStatsComponent::m_strength, e, w), 1, 0, 1000);
-	i.Inspect("Endurance", m_level, R3::InspectProperty(&DungeonsBaseActorStatsComponent::m_endurance, e, w), 1, 0, 1000);
+	i.Inspect("Strength", m_strength, R3::InspectProperty(&DungeonsBaseActorStatsComponent::m_strength, e, w), 1, 0, 1000);
+	i.Inspect("Endurance", m_endurance, R3::InspectProperty(&DungeonsBaseActorStatsComponent::m_endurance, e, w), 1, 0, 1000);
 }

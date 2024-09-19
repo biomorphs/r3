@@ -87,8 +87,7 @@ namespace R3
 		}, c_namespace);
 		lua->RegisterFunction("ProgressBar", [](std::string_view txt, float value, float maxValue, glm::vec2 size) {
 			ImVec2 imSize(size.x, size.y);
-			float denom = glm::min(maxValue, value + 0.000001f);	// avoid /0
-			ImGui::ProgressBar(maxValue / denom, imSize, txt.data());
+			ImGui::ProgressBar(value / (maxValue+ 0.000001f), imSize, txt.data());
 		}, c_namespace);
 		lua->RegisterFunction("TreeNode", [](std::string_view txt) {
 			return ImGui::TreeNode(txt.data());
