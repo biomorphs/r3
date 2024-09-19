@@ -5,14 +5,15 @@ require 'arrrgh/action_walkto'
 require 'arrrgh/action_inspect'
 require 'arrrgh/action_melee_attack'
 require 'arrrgh/world_generator'
+require 'arrrgh/monster_spawning'
 require 'arrrgh/monster_ai'
 require 'arrrgh/tile_debug_ui'
+require 'arrrgh/monster_overlay'
+require 'arrrgh/mouse_tile_state'
 
 Arrrgh_Globals.GameState = nil
 Arrrgh_Globals.ActionQueue = Fastqueue.new()
 Arrrgh_Globals.ShowActionsUi = nil	-- set to a uvec2 tile coord when open
--- track which tiles are clicked
-Arrrgh_Globals.MouseState = { LeftMouseDownOnTile = nil, RightMouseDownOnTile = nil, LeftClickedTile = nil, RightClickedTile = nil } 
 
 -- todo 
 --	only draw enemies within player visibility(?)
@@ -20,8 +21,6 @@ Arrrgh_Globals.MouseState = { LeftMouseDownOnTile = nil, RightMouseDownOnTile = 
 --		how did hunters do it? 
 -- make tile generator rules data driven 
 -- need ability to define new rules and sets of rules 
--- start making... a game?
--- actor interations
 -- UI (lots to do)
 --  implement basic UI for game in lua 
 --		display player stats
@@ -35,58 +34,13 @@ Arrrgh_Globals.MouseState = { LeftMouseDownOnTile = nil, RightMouseDownOnTile = 
 -- basic ai
 --	implement 2 dumb melee-only enemies
 --		same behavior, different stats 
--- monster/player stats 
---	hp,energy,mana, whatever 
---	action points 
 -- inventories/items
 
--- annoyingly we need to properly track when tiles are clicked manually
--- move this somewhere else!
--- only use TileWasLeftRightClicked
-function Dungeons_UpdateMouseState(mouseTile)
-	Arrrgh_Globals.MouseState.LeftClickedTile = nil			-- recalculate click state each frame
-	Arrrgh_Globals.MouseState.RightClickedTile = nil		-- recalculate click state each frame
-
-	if(R3.IsLeftMouseButtonPressed()) then
-		if(Arrrgh_Globals.MouseState.LeftMouseDownOnTile == nil) then
-			Arrrgh_Globals.MouseState.LeftMouseDownOnTile = mouseTile
-		end
-	else
-		if(mouseTile ~= nil and Arrrgh_Globals.MouseState.LeftMouseDownOnTile ~= nil) then
-			if(mouseTile.x == Arrrgh_Globals.MouseState.LeftMouseDownOnTile.x and mouseTile.y == Arrrgh_Globals.MouseState.LeftMouseDownOnTile.y) then 
-				Arrrgh_Globals.MouseState.LeftClickedTile = mouseTile -- pressed and released on same tile
-			end
-		end
-		Arrrgh_Globals.MouseState.LeftMouseDownOnTile = nil;
-	end
-
-	if(R3.IsRightMouseButtonPressed()) then
-		if(Arrrgh_Globals.MouseState.RightMouseDownOnTile == nil) then
-			Arrrgh_Globals.MouseState.RightMouseDownOnTile = mouseTile
-		end
-	else
-		if(mouseTile ~= nil and Arrrgh_Globals.MouseState.RightMouseDownOnTile ~= nil) then
-			if(mouseTile.x == Arrrgh_Globals.MouseState.RightMouseDownOnTile.x and mouseTile.y == Arrrgh_Globals.MouseState.RightMouseDownOnTile.y) then 
-				Arrrgh_Globals.MouseState.RightClickedTile = mouseTile -- pressed and released on same tile
-			end
-		end
-		Arrrgh_Globals.MouseState.RightMouseDownOnTile = nil;
-	end
-end
-
-function TileWasLeftClicked(tile)
-	if(Arrrgh_Globals.MouseState.LeftClickedTile ~= nil and tile ~= nil) then
-		return Arrrgh_Globals.MouseState.LeftClickedTile.x == tile.x and Arrrgh_Globals.MouseState.LeftClickedTile.y == tile.y
-	else
-		return false
-	end
-end
-
-function TileWasRightClicked(tile)
-	if(Arrrgh_Globals.MouseState.RightClickedTile ~= nil and tile ~= nil) then
-		return Arrrgh_Globals.MouseState.RightClickedTile.x == tile.x and Arrrgh_Globals.MouseState.RightClickedTile.y == tile.y
-	else
-		return false
+function Dungeons_CalculateMaxHP(baseStatsCmp)
+	if(baseStatsCmp ~= nil) then 
+		return baseStatsCmp.m_baseMaxHP + (2 * baseStatsCmp.m_endurance)		-- 1 endurance = 2 max hp
+	else 
+		return 1
 	end
 end
 
@@ -106,20 +60,14 @@ function Dungeons_SpawnPlayer()
 	local tilePos = Arrrgh.GetTileFromWorldspace(gridcmp, actualPos)
 	Arrrgh.SetEntityTilePosition(gridcmp, playerEntity[1], tilePos.x, tilePos.y)
 
-	Dungeons_CameraLookAt(actualPos, 40)
-end
+	world.AddComponent_Dungeons_BaseActorStats(playerEntity[1])
+	local baseStats = world.GetComponent_Dungeons_BaseActorStats(playerEntity[1])
+	baseStats.m_baseMaxHP = 10
+	baseStats.m_strength = 0
+	baseStats.m_endurance = 0
+	baseStats.m_currentHP = Dungeons_CalculateMaxHP(baseStats)
 
-function Dungeons_SpawnMonster(gridcmp, spawnEntity, spawnerCmp)
-	local world = R3.ActiveWorld()
-	local spawnTransform = world.GetComponent_Transform(spawnEntity)	-- use the spawner world pos
-	local batEntity = world:ImportScene('arrrgh/actors/bat.scn')
-	Arrrgh.MoveEntitiesWorldspace(batEntity, spawnTransform:GetPosition())
-	local vision = world.GetComponent_DungeonsVisionComponent(spawnEntity)
-	if(vision ~= nil) then
-		vision.m_needsUpdate = true
-	end
-	world:RemoveEntity(spawnEntity,false)
-	Arrrgh.SetEntityTilePosition(gridcmp, batEntity[1], spawnerCmp.m_spawnPosition.x, spawnerCmp.m_spawnPosition.y)
+	Dungeons_CameraLookAt(actualPos, 40)
 end
 
 function Dungeons_SpawnMonsters()
@@ -238,7 +186,7 @@ function Dungeons_ShowAvailableEntityActions(world, entity, playerTile, targetTi
 end
 
 function Dungeons_ShowAvailableActions(world, grid, playerEntity, playerTile, targetTile)
-	if(TileWasRightClicked(targetTile)) then 
+	if(Dungeons_TileWasRightClicked(targetTile)) then 
 		Arrrgh_Globals.ShowActionsUi = uvec2.new(targetTile.x, targetTile.y)
 	end
 
@@ -295,7 +243,7 @@ function Dungeons_ChoosePlayerAction()
 			if((playerTile.x ~= mouseTile.x or playerTile.y ~= mouseTile.y)) then
 				local meleeTarget = Dungeons_GetMeleeAttackTarget(world, gridcmp, playerEntity, playerTile, mouseTile)
 				if(meleeTarget ~= nil) then 
-					if(TileWasLeftClicked(mouseTile)) then
+					if(Dungeons_TileWasLeftClicked(mouseTile)) then
 						Dungeons_NewMeleeAttackAction(playerEntity, meleeTarget)
 						Arrrgh_Globals.ShowActionsUi = nil
 					end
@@ -304,7 +252,7 @@ function Dungeons_ChoosePlayerAction()
 						local foundPath = gridcmp:CalculatePath(playerTile, mouseTile, false)	-- can we walk to this tile?
 						if(#foundPath >= 2 and (#foundPath - 2) < Dungeons_GetActionPointsRemaining())  then
 							Arrrgh.DebugDrawTiles(gridcmp, foundPath)
-							if(TileWasLeftClicked(mouseTile)) then
+							if(Dungeons_TileWasLeftClicked(mouseTile)) then
 								Dungeons_NewWalkAction(playerEntity, foundPath)
 								Arrrgh_Globals.ShowActionsUi = nil
 							end
@@ -328,5 +276,6 @@ function Dungeons_GameTickVariable(e)
 			end
 		end
 	end
-	TileDebuggerUpdate()
+	Dungeons_TileDebuggerUpdate()
+	Dungeons_ShowMonsterOverlay()
 end

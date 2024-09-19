@@ -15,6 +15,8 @@ set(DungeonsOfArrrgh_SourceFiles
 	inspectable_component.cpp
 	blocks_tile_component.h
 	blocks_tile_component.cpp
+	base_actor_stats_component.h
+	base_actor_stats_component.cpp
 )
 
 add_library(DungeonsOfArrrgh ${DungeonsOfArrrgh_SourceFiles})

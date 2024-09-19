@@ -6,6 +6,7 @@
 #include "vision_component.h"
 #include "inspectable_component.h"
 #include "blocks_tile_component.h"
+#include "base_actor_stats_component.h"
 #include "engine/systems/immediate_render_system.h"
 #include "engine/systems/lua_system.h"
 #include "engine/systems/input_system.h"
@@ -51,6 +52,7 @@ bool DungeonsOfArrrgh::Init()
 	entities->RegisterComponentType<DungeonsMonsterComponent>(2 * 1024);
 	entities->RegisterComponentType<DungeonsInspectableComponent>(4 * 1024);
 	entities->RegisterComponentType<DungeonsBlocksTileComponent>(8 * 1024);
+	entities->RegisterComponentType<DungeonsBaseActorStatsComponent>(2 * 1024);
 
 	auto scriptNamespace = "Arrrgh";
 	auto scripts = GetSystem<R3::LuaSystem>();

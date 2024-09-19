@@ -1,0 +1,114 @@
+{
+ "AllEntities": [
+  {
+   "ID": 0,
+   "Name": "Visual Entity",
+   "Parent": 1,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 0
+    },
+    "Model": {
+     "Path": "downloaded\\kenney_graveyard-kit\\Models\\FBX format\\character-zombie.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\kenney_graveyard-kit\\Models\\FBX format\\Textures\\colormap.png"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.5,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Relative": true,
+    "Scale": {
+     "X": 0.03500000014901161,
+     "Y": 0.03500000014901161,
+     "Z": 0.03500000014901161
+    }
+   }
+  },
+  {
+   "DungeonsVisionComponent": {
+    "MaxDistance": 5.0,
+    "NeedsUpdate": true,
+    "m_affectsFogOfWar": false
+   },
+   "Dungeons_BlocksTile": null,
+   "Dungeons_Inspectable": {
+    "InspectText": "Oh, god, the living dead! It stinks!"
+   },
+   "Dungeons_Monster": {
+    "Name": "Zombie"
+   },
+   "ID": 1,
+   "Name": "Zombie",
+   "Parent": 4294967295,
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  }
+ ],
+ "WorldName": "New World"
+}

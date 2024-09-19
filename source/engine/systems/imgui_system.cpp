@@ -85,6 +85,11 @@ namespace R3
 		lua->RegisterFunction("Checkbox", [](std::string_view txt, bool value) {
 			return ImGui::Checkbox(txt.data(), &value);
 		}, c_namespace);
+		lua->RegisterFunction("ProgressBar", [](std::string_view txt, float value, float maxValue, glm::vec2 size) {
+			ImVec2 imSize(size.x, size.y);
+			float denom = glm::min(maxValue, value + 0.000001f);	// avoid /0
+			ImGui::ProgressBar(maxValue / denom, imSize, txt.data());
+		}, c_namespace);
 		lua->RegisterFunction("TreeNode", [](std::string_view txt) {
 			return ImGui::TreeNode(txt.data());
 		}, c_namespace);

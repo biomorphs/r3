@@ -5,7 +5,7 @@ function ShowTileDebugger(shouldShow)
 end
 
 -- call from variable update
-function TileDebuggerUpdate()
+function Dungeons_TileDebuggerUpdate()
 	if(Arrrgh_Globals.IsTileDebugOpen == false) then 
 		return 
 	end
