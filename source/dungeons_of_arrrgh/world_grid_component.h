@@ -40,7 +40,9 @@ public:
 	bool TileBlocksVision(uint32_t tilex, uint32_t tiley);
 	void Fill(glm::uvec2 start, glm::uvec2 size, const WorldTileContents::TileTags& tags, bool isPassable, bool blockVisibility);
 	bool AllTilesPassable(glm::uvec2 start, glm::uvec2 size);	// return true if all tiles in range are walkable
-	std::vector<glm::uvec2> CalculatePath(glm::uvec2 start, glm::uvec2 end);	// find shortest path between tiles, taking in to account passable flag
+	// ignoreTargetBlockingFlags - calculate a path to the tile even if it is a blocker
+	// by default, pathing to a blocking tile will always fail
+	std::vector<glm::uvec2> CalculatePath(glm::uvec2 start, glm::uvec2 end, bool ignoreTargetBlockingFlags = false);	// find shortest path between tiles, taking in to account passable flag
 	bool m_isDirty = false;				// if true, the world needs regeneration
 	bool m_debugDraw = false;			// not serialised
 private:

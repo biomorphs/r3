@@ -14,6 +14,7 @@ public:
 	void Inspect(const R3::Entities::EntityHandle& e, R3::Entities::World* w, R3::ValueInspector& i);
 
 	bool m_needsUpdate = true;
+	bool m_affectsFogOfWar = false;				// if true, any visible tiles are revealed to the player
 	float m_visionMaxDistance = 8.0f;
 	std::unordered_set<glm::uvec2> m_visibleTiles;	// updated when needsUpdate is true during fixed update, not serialised
 };

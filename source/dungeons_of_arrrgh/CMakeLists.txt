@@ -13,6 +13,8 @@ set(DungeonsOfArrrgh_SourceFiles
 	monster_component.cpp
 	inspectable_component.h
 	inspectable_component.cpp
+	blocks_tile_component.h
+	blocks_tile_component.cpp
 )
 
 add_library(DungeonsOfArrrgh ${DungeonsOfArrrgh_SourceFiles})

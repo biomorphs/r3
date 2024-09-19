@@ -11,6 +11,16 @@ function Dungeons_MonsterAIYield(timeToWait)
 	until(currentWaitTime >= timeToWait)
 end
 
+function Dungeons_MonsterShouldWalkToEnemy(monsterCmp, monsterTile, enemyTile)
+	local distance = math.abs(monsterTile.x - enemyTile.x) + math.abs(monsterTile.y - enemyTile.y)
+	return distance > 1
+end
+
+function Dungeons_EnemyInMeleeRange(monsterCmp, monsterTile, enemyTile)
+	local distance = math.abs(monsterTile.x - enemyTile.x) + math.abs(monsterTile.y - enemyTile.y)
+	return distance <= 1
+end
+
 -- runs as coroutine
 function Dungeons_MonsterAIDoTurn()
 	print('monsters are thinking...')
@@ -26,7 +36,7 @@ function Dungeons_MonsterAIDoTurn()
 		local visCmp = world.GetComponent_DungeonsVisionComponent(allMonsters[monster])
 		if(visCmp ~= nil) then 
 			visCmp.m_needsUpdate = true
-			Dungeons_MonsterAIYield(0)
+			Dungeons_MonsterAIYield(0)	-- wait for vision to update
 			local seesPlayer = false
 			for index,tilePos in pairs(visCmp.m_visibleTiles) do
 				if(tilePos.x == playerTile.x and tilePos.y == playerTile.y) then 
@@ -36,9 +46,13 @@ function Dungeons_MonsterAIDoTurn()
 			if(seesPlayer) then 
 				print(monsterCmp.m_name, ' can see you!')
 				local monsterTile = Arrrgh.GetEntityTilePosition(allMonsters[monster])
-				local foundPath = gridcmp:CalculatePath(monsterTile,playerTile)
-				if(#foundPath >= 2)  then
-					Dungeons_NewWalkAction(allMonsters[monster], foundPath, 2)	
+				if(Dungeons_EnemyInMeleeRange(monsterCmp, monsterTile, playerTile)) then 
+					Dungeons_NewMeleeAttackAction(allMonsters[monster], playerEntity)
+				elseif(Dungeons_MonsterShouldWalkToEnemy(monsterCmp, monsterTile, playerTile)) then 
+					local foundPath = gridcmp:CalculatePath(monsterTile,playerTile, true)
+					if(#foundPath >= 2)  then
+						Dungeons_NewWalkAction(allMonsters[monster], foundPath, 2)	
+					end
 				end
 			end
 		end

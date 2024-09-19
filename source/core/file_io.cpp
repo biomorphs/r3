@@ -89,6 +89,7 @@ namespace R3
 
 		std::string SanitisePath(std::string_view filePath)
 		{
+			R3_PROF_EVENT();
 			auto currentPath = std::filesystem::current_path();
 			auto relativePath = std::filesystem::relative(filePath, currentPath);
 			return relativePath.string();

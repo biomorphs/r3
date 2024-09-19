@@ -5,6 +5,7 @@
 #include "world_grid_position.h"
 #include "vision_component.h"
 #include "inspectable_component.h"
+#include "blocks_tile_component.h"
 #include "engine/systems/immediate_render_system.h"
 #include "engine/systems/lua_system.h"
 #include "engine/systems/input_system.h"
@@ -49,6 +50,7 @@ bool DungeonsOfArrrgh::Init()
 	entities->RegisterComponentType<DungeonsMonsterSpawner>(2 * 1024);
 	entities->RegisterComponentType<DungeonsMonsterComponent>(2 * 1024);
 	entities->RegisterComponentType<DungeonsInspectableComponent>(4 * 1024);
+	entities->RegisterComponentType<DungeonsBlocksTileComponent>(8 * 1024);
 
 	auto scriptNamespace = "Arrrgh";
 	auto scripts = GetSystem<R3::LuaSystem>();
@@ -70,8 +72,6 @@ bool DungeonsOfArrrgh::Init()
 	scripts->RegisterFunction("GetEntityTilePosition", [this, entities](R3::Entities::EntityHandle e) {
 		return GetEntityTilePosition(*entities->GetActiveWorld(), e);
 	}, scriptNamespace);
-
-	
 	scripts->RegisterFunction("SetFogOfWarEnabled", [this](bool enabled) {
 		m_enableFogOfWar = enabled;
 	}, scriptNamespace);
@@ -190,8 +190,16 @@ void DungeonsOfArrrgh::SetEntityTilePosition(DungeonsWorldGridComponent& grid, R
 	}
 	if (tilePosComponent->GetPosition() != glm::uvec2(tileX,tileZ))
 	{
+		bool isTileBlocker = w.GetComponent<DungeonsBlocksTileComponent>(e) != nullptr;
 		auto oldContents = grid.GetContents(tilePosComponent->GetPosition().x, tilePosComponent->GetPosition().y);
 		auto newContents = grid.GetContents(tileX, tileZ);
+
+		// make sure a blocking entity cannot enter a tile that is already blocking
+		if (newContents && isTileBlocker && newContents->m_flags.m_passable == false)
+		{
+			R3::LogError("Error - blocking entity {} entering a blocking tile {},{}", w.GetEntityName(e), tileX, tileZ);
+		}
+
 		if (oldContents)	// remove from old tile
 		{
 			auto found = std::find(oldContents->m_entitiesInTile.begin(), oldContents->m_entitiesInTile.end(), e);
@@ -199,6 +207,10 @@ void DungeonsOfArrrgh::SetEntityTilePosition(DungeonsWorldGridComponent& grid, R
 			if (found != oldContents->m_entitiesInTile.end())
 			{
 				oldContents->m_entitiesInTile.erase(found);
+				if (isTileBlocker)
+				{
+					oldContents->m_flags.m_passable = true;		// no longer blocking this tile
+				}
 			}
 		}
 		if (newContents)
@@ -209,6 +221,10 @@ void DungeonsOfArrrgh::SetEntityTilePosition(DungeonsWorldGridComponent& grid, R
 			if (found == newContents->m_entitiesInTile.end())
 			{
 				newContents->m_entitiesInTile.push_back(e);
+				if (isTileBlocker)
+				{
+					newContents->m_flags.m_passable = false;	// blocking this tile
+				}
 				tilePosComponent->m_position = { tileX, tileZ };
 			}
 		}
@@ -250,9 +266,9 @@ void DungeonsOfArrrgh::UpdateVision(DungeonsWorldGridComponent& grid, R3::Entiti
 			{
 				const uint32_t visionDistance = (uint32_t)ceil(v.m_visionMaxDistance);
 				v.m_visibleTiles = grid.FindVisibleTiles(glm::ivec2(tileMaybe.value()), visionDistance);
-				if (m_enableFogOfWar)									// should also check if its the player!
+				if (m_enableFogOfWar && v.m_affectsFogOfWar)
 				{
-					SetVisualEntitiesVisible(grid, w, v.m_visibleTiles, true);	// make tiles visible for rendering 
+					SetVisualEntitiesVisible(grid, w, v.m_visibleTiles, true);
 				}
 			}
 			v.m_needsUpdate = false;

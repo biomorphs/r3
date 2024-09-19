@@ -302,7 +302,7 @@ struct OpenSetEntry
 	};
 };
 
-std::vector<glm::uvec2> DungeonsWorldGridComponent::CalculatePath(glm::uvec2 start, glm::uvec2 end)
+std::vector<glm::uvec2> DungeonsWorldGridComponent::CalculatePath(glm::uvec2 start, glm::uvec2 end, bool ignoreTargetBlockingFlags)
 {
 	R3_PROF_EVENT();
 	std::unordered_map<glm::uvec2, glm::uvec2> cameFrom;	// track what the previous node was for any visited node (used to create final path)
@@ -348,7 +348,7 @@ std::vector<glm::uvec2> DungeonsWorldGridComponent::CalculatePath(glm::uvec2 sta
 			if (x >= 0 && y >= 0 && x < (int32_t)m_gridDimensions.x && y < (int32_t)m_gridDimensions.y)
 			{
 				glm::uvec2 neighbourTile(x, y);
-				if (IsTilePassable(x, y))	// we only care about walkable tiles
+				if (IsTilePassable(x, y) || (ignoreTargetBlockingFlags && neighbourTile == end))	// we only care about walkable tiles
 				{
 					float moveCost = 1.0f;
 					float newNeighbourG = gScore[nextNode] + moveCost;			// current g + move cost

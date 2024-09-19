@@ -3,8 +3,10 @@
   {
    "DungeonsVisionComponent": {
     "MaxDistance": 3.0,
-    "NeedsUpdate": true
+    "NeedsUpdate": true,
+    "m_affectsFogOfWar": false
    },
+   "Dungeons_BlocksTile": null,
    "Dungeons_Inspectable": {
     "InspectText": "A common bat"
    },

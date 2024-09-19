@@ -3,8 +3,10 @@
   {
    "DungeonsVisionComponent": {
     "MaxDistance": 8.0,
-    "NeedsUpdate": false
+    "NeedsUpdate": false,
+    "m_affectsFogOfWar": true
    },
+   "Dungeons_BlocksTile": null,
    "ID": 0,
    "Name": "PlayerActor",
    "Parent": 4294967295,

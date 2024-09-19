@@ -83,9 +83,8 @@ function Generator_SimpleRoom(position, size, wallTagStr, floorTagStr)
 			local floorTags = TileTagset.new(floorTagStr)
 			grid:Fill(position, size, wallTags, false, true)	-- walls
 			grid:Fill(uvec2.new(position.x + 1, position.y + 1), uvec2.new(size.x-2, size.y - 2), floorTags, true, false)	-- floor
-
-			-- make a door
-			local doorPos = {}
+			-- todo, check if a path to spawn pos is possible
+			local doorPos = {}	-- make a door
 			local wallForDoor = math.random(0, 3)
 			if(wallForDoor == 0) then -- top
 				doorPos = uvec2.new(math.random(position.x + 1, position.x + size.x - 2), position.y)
@@ -115,11 +114,10 @@ function Generator_PathFromRoomToRoom(floorTagStr, pathChance)	-- chance = 0 to 
 							for otherEntrance=1,#context.Rooms[otherRoom].Entrances do
 								local fromPos = context.Rooms[room].Entrances[entrance]
 								local toPos = context.Rooms[otherRoom].Entrances[otherEntrance]
-								local foundPath = grid:CalculatePath(fromPos, toPos)
+								local foundPath = grid:CalculatePath(fromPos, toPos, false)
 								if(math.random() < pathChance) then
 									for pathNode=1,#foundPath do
 										grid:Fill(foundPath[pathNode], uvec2.new(1, 1), floorTags, true, false)
-										-- Dungeons_Generator.Yield(0.0)
 									end
 								end
 								Dungeons_Generator.Yield(0.0)
@@ -132,7 +130,6 @@ function Generator_PathFromRoomToRoom(floorTagStr, pathChance)	-- chance = 0 to 
 	}
 end
 
--- position/size must be uvec2
 function Generator_SpawnPlayerInFirstRoom()
 	return {
 		Run = function(grid, context)
@@ -144,7 +141,6 @@ function Generator_SpawnPlayerInFirstRoom()
 	}
 end
 
--- position/size must be uvec2
 function Generator_SetPlayerSpawn(tilePos)
 	return {
 		Run = function(grid, context)
