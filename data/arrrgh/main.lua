@@ -5,6 +5,7 @@ require 'arrrgh/action_walkto'
 require 'arrrgh/action_inspect'
 require 'arrrgh/action_melee_attack'
 require 'arrrgh/action_pickup_item'
+require 'arrrgh/action_consume'
 require 'arrrgh/world_generator'
 require 'arrrgh/monster_spawning'
 require 'arrrgh/item_spawning'
@@ -12,10 +13,12 @@ require 'arrrgh/monster_ai'
 require 'arrrgh/tile_debug_ui'
 require 'arrrgh/monster_overlay'
 require 'arrrgh/mouse_tile_state'
+require 'arrrgh/inventory_screen'
 
 Arrrgh_Globals.GameState = nil
 Arrrgh_Globals.ActionQueue = Fastqueue.new()
 Arrrgh_Globals.ShowActionsUi = nil	-- set to a uvec2 tile coord when open
+Arrrgh_Globals.ShowInventory = false	-- if true, a state change will happen
 
 -- todo 
 --	only draw enemies within player visibility(?)
@@ -33,7 +36,6 @@ Arrrgh_Globals.ShowActionsUi = nil	-- set to a uvec2 tile coord when open
 --	need to add old font loader
 --	add 2d pass to IM render
 --  add nice draw text API 
--- inventories/items
 
 function Dungeons_CalculateMaxHP(baseStatsCmp)
 	if(baseStatsCmp ~= nil) then 
@@ -60,6 +62,20 @@ function Dungeons_OnActorDeath(world, entity)
 	-- drop loot here!
 	Arrrgh.SetEntityTilePosition(gridcmp, entity, -1, -1)	-- remove from grid
 	world:RemoveEntity(entity, false)
+end
+
+function Dungeons_HealActor(world, entity, hp)
+	local targetStats = world.GetComponent_Dungeons_BaseActorStats(entity)
+	if(targetStats ~= nil) then 
+		local maxHP = Dungeons_CalculateMaxHP(targetStats)
+		if(targetStats.m_currentHP < maxHP) then
+			local newHP = math.max(0, targetStats.m_currentHP + hp)
+			print(world:GetEntityName(entity), ' was healed for  ', newHP - targetStats.m_currentHP, ' HP')
+			targetStats.m_currentHP = newHP
+		end
+	else
+		print('target does not have stats')
+	end
 end
 
 -- here we can scale damage taken based on defense, etc
@@ -221,6 +237,13 @@ function Dungeons_GameTickFixed(e)
 		elseif(Dungeons_IsTurnFinished()) then
 			Dungeons_OnTurnEnd()
 			Arrrgh_Globals.GameState = 'startturn'
+		elseif(Arrrgh_Globals.ShowInventory) then 
+			Arrrgh_Globals.GameState = 'inventory'
+		end
+	end
+	if(Arrrgh_Globals.GameState == 'inventory') then 
+		if(Arrrgh_Globals.ShowInventory == false) then	-- inventory was closed, back to doturn
+			Arrrgh_Globals.GameState = 'doturn'
 		end
 	end
 end
@@ -245,6 +268,7 @@ function Dungeons_ShowAvailableEntityActions(world, entity, playerTile, targetTi
 		if(item ~= nil) then 
 			if(ImGui.Button("Pick Up")) then 
 				Dungeons_NewPickupItemAction(playerEntity, entity)
+				return true
 			end
 		end
 	end
@@ -300,6 +324,9 @@ function Dungeons_ChoosePlayerAction()
 	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
 	local playerEntity = world:GetEntityByName('PlayerActor')
 	local playerTransform = world.GetComponent_Transform(playerEntity)
+	if(R3.WasKeyReleased('KEY_i')) then 
+		Arrrgh_Globals.ShowInventory = true	-- handle input in variable update, state change happens during fixed
+	end
 	if(gridcmp ~= nil and playerTransform ~= nil) then 
 		local playerTile = Arrrgh.GetEntityTilePosition(playerEntity)
 		local mouseTile = Arrrgh.GetTileUnderMouseCursor(gridcmp)
@@ -344,4 +371,7 @@ function Dungeons_GameTickVariable(e)
 	end
 	Dungeons_TileDebuggerUpdate()
 	Dungeons_ShowMonsterOverlay()
+	if(Arrrgh_Globals.GameState == 'inventory' and Arrrgh_Globals.ShowInventory) then 
+		Arrrgh_Globals.ShowInventory = ShowPlayerInventory()
+	end
 end

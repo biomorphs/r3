@@ -15,7 +15,7 @@ function Dungeons_ActionPickupItem(action)
 	local pickupItem = world.GetComponent_Dungeons_Item(action.itemToPickup)
 	if(ownerInventory ~= nil and pickupItem) then 
 		print(world:GetEntityName(action.newOwner), ' picks up ', pickupItem.m_name)
-		ownerInventory.m_allItems:add(action.itemToPickup)
+		ownerInventory:AddItem(action.itemToPickup)
 		local allChildren = world:GetAllChildren(action.itemToPickup)
 		for c=1,#allChildren do 
 			local meshComponent = world.GetComponent_StaticMesh(allChildren[c])

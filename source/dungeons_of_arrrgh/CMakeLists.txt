@@ -19,6 +19,8 @@ set(DungeonsOfArrrgh_SourceFiles
 	inventory_component.cpp
 	item_component.h
 	item_component.cpp
+	consumable_item_component.h
+	consumable_item_component.cpp
 )
 
 add_library(DungeonsOfArrrgh ${DungeonsOfArrrgh_SourceFiles})

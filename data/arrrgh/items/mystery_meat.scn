@@ -74,6 +74,10 @@
    }
   },
   {
+   "Dungeons_ConsumableItem": {
+    "ConsumeType": null,
+    "HPOnUse": 3
+   },
    "Dungeons_Inspectable": {
     "InspectText": "Is that ham? ... It doesn't small like ham."
    },

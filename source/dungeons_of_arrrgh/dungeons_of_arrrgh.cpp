@@ -8,6 +8,7 @@
 #include "base_actor_stats_component.h"
 #include "item_component.h"
 #include "inventory_component.h"
+#include "consumable_item_component.h"
 #include "engine/systems/immediate_render_system.h"
 #include "engine/systems/lua_system.h"
 #include "engine/systems/input_system.h"
@@ -55,6 +56,7 @@ bool DungeonsOfArrrgh::Init()
 	entities->RegisterComponentType<DungeonsBaseActorStatsComponent>(2 * 1024);
 	entities->RegisterComponentType<DungeonsItemComponent>(4 * 1024);
 	entities->RegisterComponentType<DungeonsInventoryComponent>(2 * 1024);
+	entities->RegisterComponentType<DungeonsConsumableItemComponent>(2 * 1024);
 
 	auto scriptNamespace = "Arrrgh";
 	auto scripts = GetSystem<R3::LuaSystem>();
