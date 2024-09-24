@@ -10,7 +10,7 @@ end
 -- type string, scene path, base stats
 Arrrgh_Globals.Dungeons_MonsterSpawnTable = {
 	{ 'Bat', 'arrrgh/actors/bat.scn', Dungeons_MonsterBaseStats(1, 5, 0, 0) },
-	{ 'Zombie', 'arrrgh/actors/zombie.scn', Dungeons_MonsterBaseStats(1, 10, 2, 2) }
+	{ 'Zombie', 'arrrgh/actors/zombie.scn', Dungeons_MonsterBaseStats(1, 10, 1, 2) }
 }
 
 function Dungeons_FindSpecificMonster(typeStr)
@@ -32,10 +32,9 @@ function Dungeons_GetFirstRootEntity(world, entityList)
 	return nil
 end
 
-function Dungeons_SpawnMonster(gridcmp, spawnEntity, spawnerCmp)
+function Dungeons_SpawnMonster(gridcmp, monsterType, tilePos, worldPos)
 	local world = R3.ActiveWorld()
-	local spawnTransform = world.GetComponent_Transform(spawnEntity)	-- use the spawner world pos
-	local spawnIndex = Dungeons_FindSpecificMonster(spawnerCmp.m_monsterType) 
+	local spawnIndex = Dungeons_FindSpecificMonster(monsterType) 
 	if(spawnIndex == nil) then 
 		spawnIndex = math.random(1, #Arrrgh_Globals.Dungeons_MonsterSpawnTable) 
 	end
@@ -45,7 +44,7 @@ function Dungeons_SpawnMonster(gridcmp, spawnEntity, spawnerCmp)
 		print("failed to find root entity from monster scene")
 		return
 	end
-	Arrrgh.MoveEntitiesWorldspace(newEntities, spawnTransform:GetPosition())
+	Arrrgh.MoveEntitiesWorldspace(newEntities, worldPos)
 	local vision = world.GetComponent_DungeonsVisionComponent(rootEntity)
 	if(vision ~= nil) then
 		vision.m_needsUpdate = true
@@ -57,6 +56,5 @@ function Dungeons_SpawnMonster(gridcmp, spawnEntity, spawnerCmp)
 	baseStats.m_strength = Arrrgh_Globals.Dungeons_MonsterSpawnTable[spawnIndex][3].Strength
 	baseStats.m_endurance = Arrrgh_Globals.Dungeons_MonsterSpawnTable[spawnIndex][3].Endurance
 	baseStats.m_currentHP = Dungeons_CalculateMaxHP(baseStats)
-	world:RemoveEntity(spawnEntity,false)
-	Arrrgh.SetEntityTilePosition(gridcmp, rootEntity, spawnerCmp.m_spawnPosition.x, spawnerCmp.m_spawnPosition.y)
+	Arrrgh.SetEntityTilePosition(gridcmp, rootEntity, tilePos.x, tilePos.y)
 end

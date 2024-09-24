@@ -4,8 +4,10 @@ require 'arrrgh/camera'
 require 'arrrgh/action_walkto'
 require 'arrrgh/action_inspect'
 require 'arrrgh/action_melee_attack'
+require 'arrrgh/action_pickup_item'
 require 'arrrgh/world_generator'
 require 'arrrgh/monster_spawning'
+require 'arrrgh/item_spawning'
 require 'arrrgh/monster_ai'
 require 'arrrgh/tile_debug_ui'
 require 'arrrgh/monster_overlay'
@@ -78,18 +80,18 @@ function Dungeons_SpawnPlayer()
 	local world = R3.ActiveWorld()
 	local gridEntity = world:GetEntityByName('World Grid')
 	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
-	local spawnEntity = world:GetEntityByName('PlayerSpawnPoint')
-	local spawnTransform = world.GetComponent_Transform(spawnEntity)
 	local playerEntity = world:ImportScene('arrrgh/actors/player_actor.scn')
-	local actualPos = spawnTransform:GetPosition()
-	local vision = world.GetComponent_DungeonsVisionComponent(playerEntity[1])
-	vision.m_needsUpdate = true
-	actualPos.y = 0
-	Arrrgh.MoveEntitiesWorldspace(playerEntity, actualPos)
-	world:RemoveEntity(spawnEntity,false)
-	local tilePos = Arrrgh.GetTileFromWorldspace(gridcmp, actualPos)
+	local tilePos = Arrrgh_Globals.WorldGenerator.Context.SpawnPoint
+	local worldPos = vec3.new(tilePos.x * Arrrgh_Globals.TileDimensions.x, 0, tilePos.y * Arrrgh_Globals.TileDimensions.y)
+	worldPos.x = worldPos.x + (Arrrgh_Globals.TileDimensions.x * 0.5)
+	worldPos.z = worldPos.z + (Arrrgh_Globals.TileDimensions.y * 0.5)
+	worldPos.y = 0
+	Arrrgh.MoveEntitiesWorldspace(playerEntity, worldPos)
 	Arrrgh.SetEntityTilePosition(gridcmp, playerEntity[1], tilePos.x, tilePos.y)
 
+	local vision = world.GetComponent_DungeonsVisionComponent(playerEntity[1])
+	vision.m_needsUpdate = true
+	
 	world.AddComponent_Dungeons_BaseActorStats(playerEntity[1])
 	local baseStats = world.GetComponent_Dungeons_BaseActorStats(playerEntity[1])
 	baseStats.m_baseMaxHP = 10
@@ -105,14 +107,38 @@ function Dungeons_SpawnMonsters()
 	local world = R3.ActiveWorld()
 	local gridEntity = world:GetEntityByName('World Grid')
 	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
-	local allSpawners = world:GetOwnersOfComponent1('Dungeons_MonsterSpawner')
-	for monster=1,#allSpawners do 
-		local spawnerCmp = world.GetComponent_Dungeons_MonsterSpawner(allSpawners[monster])
-		if(spawnerCmp ~= nil) then 
-			Dungeons_SpawnMonster(gridcmp, allSpawners[monster], spawnerCmp)
-		else
-			print('missing spawner component!')
-		end
+
+	local monsters = Arrrgh_Globals.WorldGenerator.Context.MonsterSpawns
+	print(monsters, #monsters)
+
+	local world = R3.ActiveWorld()
+	for spawn=1,#monsters do 
+		local spawnPos = monsters[spawn].Position
+		local world = R3.ActiveWorld()
+		local monsterType = monsters[spawn].TypeString
+		local worldPos = vec3.new(spawnPos.x * Arrrgh_Globals.TileDimensions.x, 0, spawnPos.y * Arrrgh_Globals.TileDimensions.y)
+		worldPos.x = worldPos.x + (Arrrgh_Globals.TileDimensions.x * 0.5)
+		worldPos.z = worldPos.z + (Arrrgh_Globals.TileDimensions.y * 0.5)
+		worldPos.y = 0
+		Dungeons_SpawnMonster(gridcmp, monsterType, spawnPos, worldPos)	-- Monster spawner handles actual event
+	end
+end
+
+function Dungeons_SpawnItems()
+	print("Spawning items")
+	local world = R3.ActiveWorld()
+	local gridEntity = world:GetEntityByName('World Grid')
+	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
+	local items = Arrrgh_Globals.WorldGenerator.Context.Items
+	local world = R3.ActiveWorld()
+	for spawn=1,#items do 
+		local tilePos = items[spawn].Position
+		local itemName = items[spawn].Name
+		local worldPos = vec3.new(tilePos.x * Arrrgh_Globals.TileDimensions.x, 0, tilePos.y * Arrrgh_Globals.TileDimensions.y)
+		worldPos.x = worldPos.x + (Arrrgh_Globals.TileDimensions.x * 0.5)
+		worldPos.z = worldPos.z + (Arrrgh_Globals.TileDimensions.y * 0.5)
+		worldPos.y = 0
+		Dungeons_SpawnItem(gridcmp, itemName, tilePos, worldPos)	-- item spawner handles actual event
 	end
 end
 
@@ -178,6 +204,7 @@ function Dungeons_GameTickFixed(e)
 	if(Arrrgh_Globals.GameState == 'start') then 
 		Dungeons_SpawnPlayer()
 		Dungeons_SpawnMonsters()
+		Dungeons_SpawnItems()
 		Arrrgh_Globals.GameState = 'startturn'
 	end
 	if(Arrrgh_Globals.GameState == 'startturn') then 
@@ -205,12 +232,19 @@ end
 
 -- returns true if an action was picked
 function Dungeons_ShowAvailableEntityActions(world, entity, playerTile, targetTile)
+	local playerEntity = world:GetEntityByName('PlayerActor')
 	if(Dungeons_InTouchingDistance(playerTile, targetTile)) then 
 		local inspectable = world.GetComponent_Dungeons_Inspectable(entity)
 		if(inspectable ~= nil) then 
 			if(ImGui.Button("Inspect")) then 
 				Dungeons_NewInspectAction(entity)
 				return true
+			end
+		end
+		local item = world.GetComponent_Dungeons_Item(entity)
+		if(item ~= nil) then 
+			if(ImGui.Button("Pick Up")) then 
+				Dungeons_NewPickupItemAction(playerEntity, entity)
 			end
 		end
 	end

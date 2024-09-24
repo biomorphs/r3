@@ -490,6 +490,13 @@ namespace Entities
 		}
 	}
 
+	std::vector<EntityHandle> World::GetAllChildren(const EntityHandle& parent)
+	{
+		std::vector<EntityHandle> children;
+		GetAllChildren(parent, children);
+		return children;
+	}
+
 	bool World::SetParent(const EntityHandle& child, const EntityHandle& parent)
 	{
 		if (IsHandleValid(child))

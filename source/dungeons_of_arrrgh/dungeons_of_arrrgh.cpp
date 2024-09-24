@@ -1,5 +1,4 @@
 #include "dungeons_of_arrrgh.h"
-#include "monster_spawn_component.h"
 #include "monster_component.h"
 #include "world_grid_component.h"
 #include "world_grid_position.h"
@@ -7,6 +6,8 @@
 #include "inspectable_component.h"
 #include "blocks_tile_component.h"
 #include "base_actor_stats_component.h"
+#include "item_component.h"
+#include "inventory_component.h"
 #include "engine/systems/immediate_render_system.h"
 #include "engine/systems/lua_system.h"
 #include "engine/systems/input_system.h"
@@ -48,11 +49,12 @@ bool DungeonsOfArrrgh::Init()
 	entities->RegisterComponentType<DungeonsWorldGridComponent>(16);	// probably only need 1 per world, but eh
 	entities->RegisterComponentType<DungeonsVisionComponent>(8092);
 	entities->RegisterComponentType<DungeonsWorldGridPosition>(64 * 1024);
-	entities->RegisterComponentType<DungeonsMonsterSpawner>(2 * 1024);
 	entities->RegisterComponentType<DungeonsMonsterComponent>(2 * 1024);
 	entities->RegisterComponentType<DungeonsInspectableComponent>(4 * 1024);
 	entities->RegisterComponentType<DungeonsBlocksTileComponent>(8 * 1024);
 	entities->RegisterComponentType<DungeonsBaseActorStatsComponent>(2 * 1024);
+	entities->RegisterComponentType<DungeonsItemComponent>(4 * 1024);
+	entities->RegisterComponentType<DungeonsInventoryComponent>(2 * 1024);
 
 	auto scriptNamespace = "Arrrgh";
 	auto scripts = GetSystem<R3::LuaSystem>();

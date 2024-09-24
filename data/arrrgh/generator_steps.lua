@@ -1,10 +1,19 @@
 require'arrrgh/camera'
 
+-- add a item spawner
+-- we may want to add world position here later
+function Generator_SpawnItem(itemName, position)
+	return {
+		Run = function(grid, context)
+			Dungeons_GeneratorContext.AddItem(context, itemName, position)
+		end
+	}
+end
+
 -- doesnt actually spawn a monster, it creates a spawner for later
 function Generator_SpawnMonster(monsterType, position)
 	return {
 		Run = function(grid, context)
-			-- todo, check if tile already contains a spawner or the player?
 			Dungeons_GeneratorContext.AddMonster(context, monsterType, position)
 		end
 	}

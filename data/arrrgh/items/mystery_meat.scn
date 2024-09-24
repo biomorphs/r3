@@ -1,25 +1,16 @@
 {
  "AllEntities": [
   {
-   "DungeonsVisionComponent": {
-    "MaxDistance": 8.0,
-    "NeedsUpdate": false,
-    "m_affectsFogOfWar": true
-   },
-   "Dungeons_BlocksTile": null,
-   "Dungeons_Inventory": {
-    "Items": []
-   },
    "ID": 0,
-   "Name": "PlayerActor",
-   "Parent": 4294967295,
+   "Name": "Visual Entity",
+   "Parent": 1,
    "StaticMesh": {
     "Draw": true,
     "MaterialsOverride": {
      "ID": 0
     },
     "Model": {
-     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
+     "Path": "downloaded\\KayKit_Restaurant_Bits_1.0_FREE\\Assets\\fbx\\food_ingredient_ham.fbx"
     }
    },
    "StaticMeshMaterials": {
@@ -35,7 +26,7 @@
        "Z": 1.0
       },
       "AlbedoTex": {
-       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\rogue_texture.png"
+       "PathName": "downloaded\\KayKit_Restaurant_Bits_1.0_FREE\\Assets\\textures\\restaurantbits_texture.png"
       },
       "HeightmapTex": {
        "PathName": "invalid"
@@ -49,7 +40,7 @@
       },
       "ParalaxAmount": 0.07999999821186066,
       "ParalaxShadows": 0,
-      "Roughness": 0.5,
+      "Roughness": 0.30000001192092896,
       "RoughnessTex": {
        "PathName": "invalid"
       },
@@ -74,27 +65,24 @@
      "Y": 0.0,
      "Z": 0.0
     },
-    "Relative": false,
+    "Relative": true,
     "Scale": {
-     "X": 2.0,
-     "Y": 2.0,
-     "Z": 2.0
+     "X": 0.014999999664723873,
+     "Y": 0.014999999664723873,
+     "Z": 0.014999999664723873
     }
    }
   },
   {
-   "ID": 1,
-   "Name": "ActorLight",
-   "Parent": 0,
-   "PointLight": {
-    "Brightness": 256.0,
-    "Colour": {
-     "X": 1.0,
-     "Y": 1.0,
-     "Z": 1.0
-    },
-    "Distance": 64.0
+   "Dungeons_Inspectable": {
+    "InspectText": "Is that ham? ... It doesn't small like ham."
    },
+   "Dungeons_Item": {
+    "Name": "Mystery Meat"
+   },
+   "ID": 1,
+   "Name": "Mystery Meat",
+   "Parent": 4294967295,
    "Transform": {
     "Orientation": {
      "W": 1.0,
@@ -104,10 +92,10 @@
     },
     "Position": {
      "X": 0.0,
-     "Y": 5.0,
+     "Y": 0.0,
      "Z": 0.0
     },
-    "Relative": true,
+    "Relative": false,
     "Scale": {
      "X": 1.0,
      "Y": 1.0,

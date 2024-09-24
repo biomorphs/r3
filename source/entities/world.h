@@ -30,6 +30,7 @@ namespace Entities
 		bool HasParent(const EntityHandle& child, const EntityHandle& parent) const;
 		void GetChildren(const EntityHandle& parent, std::vector<EntityHandle>& results) const;	// immediate children
 		void GetAllChildren(const EntityHandle& parent, std::vector<EntityHandle>& results) const;	// all children (recursive)
+		std::vector<EntityHandle> GetAllChildren(const EntityHandle& parent);
 
 		// RemoveEntity defers deletion until CollectGarbage() called.
 		// reserveHandle = dont add this entity handle to the free list, this slot is reserved until the exact same handle is recreated

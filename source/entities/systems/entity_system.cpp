@@ -41,6 +41,7 @@ namespace Entities
 				"AddEntity", &World::AddEntity, 
 				"GetParent", &World::GetParent,
 				"SetParent", &World::SetParent,
+				"GetAllChildren", sol::resolve<std::vector<EntityHandle>(const EntityHandle&)>(&World::GetAllChildren),
 				"RemoveEntity", &World::RemoveEntity,
 				"IsHandleValid", &World::IsHandleValid,
 				"SetEntityName", &World::SetEntityName,

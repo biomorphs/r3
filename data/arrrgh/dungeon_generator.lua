@@ -48,8 +48,16 @@ function Dungeons_BasicGenerator()
 		local roomSize = rooms[r][2]
 		Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Add Room", Generator_SimpleRoom(roomPos, roomSize, "wall,floor,exterior", "floor,interior"))
 		if(r > 1) then	-- add a monster spawner in each room but the first
-			local monsterPos = uvec2.new(roomPos.x + 1, roomPos.y + 1)
+			local spawnX = math.random(1, roomSize.x-2)
+			local spawnY = math.random(1, roomSize.y-2)
+			local monsterPos = uvec2.new(roomPos.x + spawnX, roomPos.y + spawnY)
 			Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Add monster spawner", Generator_SpawnMonster("", monsterPos))
+		end
+		if(math.random() > 0) then 
+			local spawnX = math.random(1, roomSize.x-2)
+			local spawnY = math.random(1, roomSize.y-2)
+			local itemPos = uvec2.new(roomPos.x + spawnX, roomPos.y + spawnY)
+			Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Add item", Generator_SpawnItem("", itemPos))
 		end
 	end
 	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Make paths between rooms", Generator_PathFromRoomToRoom("floor,interior", 0.1))
