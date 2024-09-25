@@ -2,7 +2,7 @@ function Dungeons_NewWalkAction(walkActor, pathToWalk, nodesToWalk)
 	local newAction = {}
 	newAction.name = "Walk"
 	newAction.moveSpeedWorldspace = 8.0
-	newAction.target = walkActor
+	newAction.target = EntityHandle.new(walkActor)
 	newAction.walkPath = pathToWalk
 	newAction.currentTargetNode = 1
 	newAction.walkNodeCount = nodesToWalk or #pathToWalk

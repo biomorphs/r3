@@ -1,8 +1,8 @@
 function Dungeons_NewPickupItemAction(newOwnerActor, itemToPickup)
 	local newAction = {}
 	newAction.name = "Pick Up Item"
-	newAction.newOwner = newOwnerActor
-	newAction.itemToPickup = itemToPickup
+	newAction.newOwner = EntityHandle.new(newOwnerActor)
+	newAction.itemToPickup = EntityHandle.new(itemToPickup)
 	newAction.onRun = Dungeons_ActionPickupItem
 	Fastqueue.pushright(Arrrgh_Globals.ActionQueue, newAction)
 end

@@ -75,7 +75,7 @@
   },
   {
    "Dungeons_ConsumableItem": {
-    "ConsumeType": null,
+    "ConsumeType": 0,
     "HPOnUse": 3
    },
    "Dungeons_Inspectable": {

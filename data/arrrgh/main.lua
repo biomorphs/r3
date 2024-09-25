@@ -61,6 +61,10 @@ function Dungeons_OnActorDeath(world, entity)
 	print(world:GetEntityName(entity), ' died!')
 	-- drop loot here!
 	Arrrgh.SetEntityTilePosition(gridcmp, entity, -1, -1)	-- remove from grid
+	local allChildren = world:GetAllChildren(entity)
+	for c=1,#allChildren do 
+		world:RemoveEntity(allChildren[c], false)
+	end
 	world:RemoveEntity(entity, false)
 end
 
@@ -125,8 +129,6 @@ function Dungeons_SpawnMonsters()
 	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
 
 	local monsters = Arrrgh_Globals.WorldGenerator.Context.MonsterSpawns
-	print(monsters, #monsters)
-
 	local world = R3.ActiveWorld()
 	for spawn=1,#monsters do 
 		local spawnPos = monsters[spawn].Position

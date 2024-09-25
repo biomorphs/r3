@@ -65,7 +65,6 @@ end
 -- add a step to the generator
 -- stepObject = a table/object with a member void Run(gridcmp,context)
 function Dungeons_Generator.AddStep(generator,name,stepObject)
-	print('Adding step ', name)
 	local newStep = {
 		Name = name,
 		Step = stepObject

@@ -1,4 +1,15 @@
 
+
+-- filter out consume option if there is no effect
+function ShouldConsumeItem(world, playerEntity, consumable)
+	local playerStats = world.GetComponent_Dungeons_BaseActorStats(playerEntity)
+	if(consumable.m_hpOnUse > 0 and playerStats.m_currentHP >= Dungeons_CalculateMaxHP(playerStats)) then 
+		return false
+	end
+	return true
+end
+
+
 function ShowPlayerInventory()
 	local world = R3.ActiveWorld()
 	local playerEntity = world:GetEntityByName('PlayerActor')
@@ -18,7 +29,7 @@ function ShowPlayerInventory()
 						showInventory = false
 					end
 				end
-				if(consumable ~= nil) then 
+				if(consumable ~= nil and ShouldConsumeItem(world, playerEntity, consumable)) then 
 					local consumeText = "Eat"
 					if(consumable:IsDrink()) then 
 						consumeText = "Drink"

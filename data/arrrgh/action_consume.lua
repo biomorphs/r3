@@ -1,8 +1,8 @@
 function Dungeons_NewConsumeAction(consumer, itemToConsume)
 	local newAction = {}
 	newAction.name = "Consume Item"
-	newAction.consumer = consumer
-	newAction.consumable = itemToConsume
+	newAction.consumer = EntityHandle.new(consumer)
+	newAction.consumable = EntityHandle.new(itemToConsume)
 	newAction.onRun = Dungeons_ActionConsume
 	Fastqueue.pushright(Arrrgh_Globals.ActionQueue, newAction)
 end

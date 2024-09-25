@@ -231,9 +231,9 @@ void DungeonsOfArrrgh::SetEntityTilePosition(DungeonsWorldGridComponent& grid, R
 				{
 					newContents->m_flags.m_passable = false;	// blocking this tile
 				}
-				tilePosComponent->m_position = { tileX, tileZ };
 			}
 		}
+		tilePosComponent->m_position = { tileX, tileZ };
 	}
 }
 

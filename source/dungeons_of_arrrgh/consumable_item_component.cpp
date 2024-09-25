@@ -18,7 +18,7 @@ void DungeonsConsumableItemComponent::SerialiseJson(R3::JsonSerialiser& s)
 {
 	R3_PROF_EVENT();
 	s("HPOnUse", m_hpOnUse);
-	s("ConsumeType", m_type);
+	s("ConsumeType", (int32_t&)m_type);
 }
 
 void DungeonsConsumableItemComponent::Inspect(const R3::Entities::EntityHandle& e, R3::Entities::World* w, R3::ValueInspector& i)

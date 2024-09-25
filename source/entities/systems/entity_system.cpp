@@ -34,7 +34,7 @@ namespace Entities
 		if (scripts)
 		{
 			scripts->RegisterType<EntityHandle>("EntityHandle",
-				sol::constructors<EntityHandle()>(),
+				sol::constructors<EntityHandle(), EntityHandle(const EntityHandle&)>(),
 				"GetID", &EntityHandle::GetID
 			);
 			scripts->RegisterType<World>("World",

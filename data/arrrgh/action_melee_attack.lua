@@ -1,8 +1,8 @@
 function Dungeons_NewMeleeAttackAction(attacker, target)
 	local newAction = {}
 	newAction.name = "Melee Attack"
-	newAction.attacker = attacker
-	newAction.target = target
+	newAction.attacker = EntityHandle.new(attacker)
+	newAction.target = EntityHandle.new(target)
 	newAction.onRun = Dungeons_ActionMeleeAttack
 	Fastqueue.pushright(Arrrgh_Globals.ActionQueue, newAction)
 end

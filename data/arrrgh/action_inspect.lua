@@ -1,7 +1,7 @@
 function Dungeons_NewInspectAction(actorToInspect)
 	local newAction = {}
 	newAction.name = "Inspect"
-	newAction.target = actorToInspect
+	newAction.target = EntityHandle.new(actorToInspect)	-- always make a new handle, otherwise its a reference
 	newAction.onRun = Dungeons_ActionInspect
 	Fastqueue.pushright(Arrrgh_Globals.ActionQueue, newAction)
 end
