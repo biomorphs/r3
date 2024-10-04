@@ -9,28 +9,40 @@ function Dungeons_NewEquipAction(newOwner, item)
 end
 
 function Dungeons_ActionEquipItem(action)
-	print('aaa')
 	local world = R3.ActiveWorld()
 	local ownerEquipment = world.GetComponent_Dungeons_EquippedItems(action.newOwner)
-	print(ownerEquipment)
 	local ownerInventory = world.GetComponent_Dungeons_Inventory(action.newOwner)
-	print(ownerInventory)
 	local targetItem = world.GetComponent_Dungeons_Item(action.itemToEquip)
-	print(targetItem)
 	local wearable = world.GetComponent_Dungeons_WearableItem(action.itemToEquip)
-	print(wearable)
 	if(wearable == nil) then 
 		print("Item is not wearable")
-		return
+		return 'complete'
 	end
-	if(ownerEquipment ~= nil and ownerInventory ~= nil and targetItem ~= nil) then 
-		local foundSlot = ownerEquipment.m_slots:find(wearable.m_slot)
-		print(foundSlot)
-		print(ownerEquipment.m_slots)
-		-- if(foundSlot == ) then 
-		-- 	print("No matching slot " .. wearable.m_slot)
-		-- 	return
-		-- end
+	if(targetItem == nil) then 
+		print("Target is not an item")
+		return 'complete'
 	end
+	if(ownerEquipment == nil or ownerInventory == nil) then 
+		print("Actor has no inventory or equipment")
+		return 'complete'
+	end
+	local targetEquipmentSlot = ownerEquipment.m_slots:find(wearable.m_slot)
+	if(targetEquipmentSlot == nil) then 
+		print(world:GetEntityName(action.newOwner) .. " has no equipment slot for " .. world:GetEntityName(action.itemToEquip))
+		return 'complete'
+	end
+	if(world:IsHandleValid(targetEquipmentSlot)) then -- already has something equipped in this slot, transfer to inventory
+		if(ownerInventory:AddItem(targetEquipmentSlot) == false) then
+			print("Cannot transfer " .. world:GetEntityName(action.itemToEquip) .. " to inventory")
+			return 'complete'
+		end
+	end
+	if(ownerInventory:RemoveItem(action.itemToEquip) == false) then -- only allow equip directly from inventory (may change this later)
+		print("Cannot remove " .. world:GetEntityName(action.itemToEquip) .. " from inventory")
+		return 'complete'
+	end
+	-- equip the new item (maybe we want a OnItemEquipped callback?)
+	ownerEquipment.m_slots[wearable.m_slot] = action.itemToEquip
+	print(world:GetEntityName(action.newOwner) .. " equipped " .. world:GetEntityName(action.itemToEquip))
 	return 'complete'
 end

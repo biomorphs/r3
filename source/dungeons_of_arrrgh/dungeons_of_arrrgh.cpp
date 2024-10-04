@@ -11,6 +11,7 @@
 #include "equipped_items_component.h"
 #include "inventory_component.h"
 #include "consumable_item_component.h"
+#include "item_stats_component.h"
 #include "engine/systems/immediate_render_system.h"
 #include "engine/systems/lua_system.h"
 #include "engine/systems/input_system.h"
@@ -61,6 +62,7 @@ bool DungeonsOfArrrgh::Init()
 	entities->RegisterComponentType<DungeonsInventoryComponent>(2 * 1024);
 	entities->RegisterComponentType<DungeonsEquippedItemsComponent>(1024);
 	entities->RegisterComponentType<DungeonsConsumableItemComponent>(2 * 1024);
+	entities->RegisterComponentType<DungeonsItemStatsComponent>(2 * 1024);
 
 	auto scriptNamespace = "Arrrgh";
 	auto scripts = GetSystem<R3::LuaSystem>();
@@ -84,6 +86,9 @@ bool DungeonsOfArrrgh::Init()
 	}, scriptNamespace);
 	scripts->RegisterFunction("SetFogOfWarEnabled", [this](bool enabled) {
 		m_enableFogOfWar = enabled;
+	}, scriptNamespace);
+	scripts->RegisterFunction("GetAllEquippedItemStats", [this, entities](R3::Entities::EntityHandle actor) {
+		return GetAllEquippedItemStats(*entities->GetActiveWorld(), actor);
 	}, scriptNamespace);
 	return true;
 }
@@ -177,6 +182,26 @@ void DungeonsOfArrrgh::DebugDrawTiles(const DungeonsWorldGridComponent& grid, Co
 	{
 		imRender->m_imRender->AddTriangles(outVertices.data(), (uint32_t)outVertices.size() / 3, true);
 	}
+}
+
+std::unordered_map<R3::Tag, int32_t> DungeonsOfArrrgh::GetAllEquippedItemStats(R3::Entities::World& w, R3::Entities::EntityHandle actor)
+{
+	std::unordered_map<R3::Tag, int32_t> results;
+	if (auto equipment = w.GetComponent<DungeonsEquippedItemsComponent>(actor))
+	{
+		for (const auto& slot : equipment->m_slots)
+		{
+			if (auto itemStats = w.GetComponent<DungeonsItemStatsComponent>(slot.second))
+			{
+				for (const auto& stat : itemStats->m_stats)
+				{
+					results[stat.m_tag] = results[stat.m_tag] + stat.m_value;
+				}
+			}
+		}
+		
+	}
+	return results;
 }
 
 std::optional<glm::uvec2> DungeonsOfArrrgh::GetEntityTilePosition(R3::Entities::World& w, R3::Entities::EntityHandle e)

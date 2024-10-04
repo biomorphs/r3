@@ -3,7 +3,7 @@
 #include "entities/component_helpers.h"
 
 // represents base stats shared by all 'living' actors
-// leve, hp, mana, stamina, base combat stats, etc
+// level, hp, mana, stamina, base combat stats, etc
 class DungeonsBaseActorStatsComponent
 {
 public:

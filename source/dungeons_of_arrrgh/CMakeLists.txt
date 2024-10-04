@@ -25,6 +25,8 @@ set(DungeonsOfArrrgh_SourceFiles
 	wearable_item_component.cpp
 	equipped_items_component.h
 	equipped_items_component.cpp
+	item_stats_component.h
+	item_stats_component.cpp
 )
 
 add_library(DungeonsOfArrrgh ${DungeonsOfArrrgh_SourceFiles})

@@ -1,8 +1,10 @@
--- name, scene path
+-- name, scene path, item stats list
 Arrrgh_Globals.Dungeons_ItemSpawnTable = {
 	{ 'Mystery Meat', 'arrrgh/items/mystery_meat.scn' },
 	{ 'Suspicious Burger', 'arrrgh/items/burger.scn' },
-	{ 'Dagger', 'arrrgh/items/dagger.scn' }
+	{ 'Rusty Dagger', 'arrrgh/items/rusty_dagger.scn', { { "Melee Damage", 1} } },
+	{ 'Dagger', 'arrrgh/items/dagger.scn', { { "Melee Damage", 2} } },
+	{ 'Sharp Dagger', 'arrrgh/items/dagger.scn', { { "Melee Damage", 3} } }
 }
 
 function Dungeons_FindSpecificItem(name)
@@ -28,11 +30,24 @@ function Dungeons_SpawnItem(gridcmp, itemName, tilePos, worldPos)
 	end
 	Arrrgh.MoveEntitiesWorldspace(newEntities, worldPos)
 	Arrrgh.SetEntityTilePosition(gridcmp, rootEntity, tilePos.x, tilePos.y)
-
 	for e=1,#newEntities do 
 		local staticMesh = world.GetComponent_StaticMesh(newEntities[e])
 		if(staticMesh ~= nil) then 
 			staticMesh.m_shouldDraw = false
+		end
+	end
+
+	local item = world.GetComponent_Dungeons_Item(rootEntity)
+	item.m_name = Arrrgh_Globals.Dungeons_ItemSpawnTable[spawnIndex][1]
+	world:SetEntityName(rootEntity, Arrrgh_Globals.Dungeons_ItemSpawnTable[spawnIndex][1])
+
+	-- apply stats
+	local statsList = Arrrgh_Globals.Dungeons_ItemSpawnTable[spawnIndex][3]
+	if(statsList ~= nil) then 
+		world.AddComponent_Dungeons_ItemStats(rootEntity)
+		local newStats = world.GetComponent_Dungeons_ItemStats(rootEntity)
+		for stat=1,#statsList do 
+			newStats.m_stats:add(DungeonsItemStat.new(statsList[stat][1], statsList[stat][2]))
 		end
 	end
 end

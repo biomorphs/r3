@@ -51,7 +51,10 @@ function Dungeons_CalculateMeleeDamageDealt(world, attackerActor)
 		print('missing stats')
 		return 0
 	end
-	return 1 + attackerStats.m_strength
+	local equippedItemStats = Arrrgh.GetAllEquippedItemStats(attackerActor)
+	local itemMeleeDamage = equippedItemStats[Tag.new("Melee Damage")] or 0
+	local actorStrength = attackerStats.m_strength + equippedItemStats[Tag.new("Strength")] or 0
+	return 1 + actorStrength + itemMeleeDamage
 end
 
 function Dungeons_OnActorDeath(world, entity)

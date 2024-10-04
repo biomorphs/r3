@@ -7,6 +7,10 @@
 #include <unordered_map>
 #include <unordered_set>
 
+namespace R3
+{
+	class Tag;
+}
 namespace R3::Entities {
 	class World;
 };
@@ -24,6 +28,7 @@ public:
 	std::optional<glm::uvec2> GetTileFromWorldspace(class DungeonsWorldGridComponent& grid, glm::vec3 worldspace);
 	std::optional<glm::uvec2> GetTileUnderMouseCursor(class DungeonsWorldGridComponent& grid);
 private:	
+	std::unordered_map<R3::Tag, int32_t> GetAllEquippedItemStats(R3::Entities::World& w, R3::Entities::EntityHandle actor);
 	std::optional<glm::uvec2> GetEntityTilePosition(R3::Entities::World& w, R3::Entities::EntityHandle e);
 	void SetEntityTilePosition(DungeonsWorldGridComponent& grid, R3::Entities::World& w, R3::Entities::EntityHandle e, uint32_t tileX, uint32_t tileZ);
 	void SetVisualEntitiesVisible(const DungeonsWorldGridComponent& grid, R3::Entities::World& w, const std::unordered_set<glm::uvec2>& tiles, bool visible);
