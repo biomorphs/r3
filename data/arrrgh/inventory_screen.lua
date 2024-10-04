@@ -9,7 +9,6 @@ function ShouldConsumeItem(world, playerEntity, consumable)
 	return true
 end
 
-
 function ShowPlayerInventory()
 	local world = R3.ActiveWorld()
 	local playerEntity = world:GetEntityByName('PlayerActor')
@@ -20,12 +19,19 @@ function ShowPlayerInventory()
 			local itemCmp = world.GetComponent_Dungeons_Item(playerInventory.m_allItems[i])
 			local inspectable = world.GetComponent_Dungeons_Inspectable(playerInventory.m_allItems[i])
 			local consumable = world.GetComponent_Dungeons_ConsumableItem(playerInventory.m_allItems[i])
+			local wearable = world.GetComponent_Dungeons_WearableItem(playerInventory.m_allItems[i])
 			if(itemCmp ~= nil) then 
 				ImGui.Text(itemCmp.m_name)
 				if(inspectable ~= nil) then 
 					ImGui.SameLine()
 					if(ImGui.Button("Inspect")) then 
 						Dungeons_NewInspectAction(playerInventory.m_allItems[i])
+						showInventory = false
+					end
+				end
+				if(wearable ~= nil) then 
+					if(ImGui.Button("Equip")) then 
+						Dungeons_NewEquipAction(playerEntity, playerInventory.m_allItems[i])
 						showInventory = false
 					end
 				end

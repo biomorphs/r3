@@ -20,8 +20,9 @@ public:
 	int32_t m_baseMaxHP = 1;
 	
 	// combat stats
-	int32_t m_strength = 0;		// affects melee damage
-	int32_t m_endurance = 0;	// affects max hp
+	int32_t m_strength = 0;			// affects melee damage
+	int32_t m_endurance = 0;		// affects max hp
+	int32_t m_baseHitChance = 0;	// chance to hit (%)
 
 	// dynamic stats (change during regular gameplay)
 	int32_t m_currentHP = 0;

@@ -10,7 +10,8 @@ void DungeonsBaseActorStatsComponent::RegisterScripts(R3::LuaSystem& l)
 		"m_baseMaxHP", &DungeonsBaseActorStatsComponent::m_baseMaxHP,
 		"m_strength", &DungeonsBaseActorStatsComponent::m_strength,
 		"m_endurance", &DungeonsBaseActorStatsComponent::m_endurance,
-		"m_currentHP", &DungeonsBaseActorStatsComponent::m_currentHP
+		"m_currentHP", &DungeonsBaseActorStatsComponent::m_currentHP,
+		"m_baseHitChance", &DungeonsBaseActorStatsComponent::m_baseHitChance
 	);
 }
 
@@ -22,6 +23,7 @@ void DungeonsBaseActorStatsComponent::SerialiseJson(R3::JsonSerialiser& s)
 	s("Strength", m_strength);
 	s("Endurance", m_endurance);
 	s("CurrentHP", m_currentHP);
+	s("BaseHitChance", m_baseHitChance);
 }
 
 void DungeonsBaseActorStatsComponent::Inspect(const R3::Entities::EntityHandle& e, R3::Entities::World* w, R3::ValueInspector& i)
@@ -34,4 +36,5 @@ void DungeonsBaseActorStatsComponent::Inspect(const R3::Entities::EntityHandle& 
 	ImGui::Separator();
 	i.Inspect("Strength", m_strength, R3::InspectProperty(&DungeonsBaseActorStatsComponent::m_strength, e, w), 1, 0, 1000);
 	i.Inspect("Endurance", m_endurance, R3::InspectProperty(&DungeonsBaseActorStatsComponent::m_endurance, e, w), 1, 0, 1000);
+	i.Inspect("Base Hit Chance", m_baseHitChance, R3::InspectProperty(&DungeonsBaseActorStatsComponent::m_baseHitChance, e, w), 1, 0, 100);
 }

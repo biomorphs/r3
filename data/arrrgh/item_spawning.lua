@@ -1,6 +1,8 @@
 -- name, scene path
 Arrrgh_Globals.Dungeons_ItemSpawnTable = {
-	{ 'Mystery Meat', 'arrrgh/items/mystery_meat.scn' }
+	{ 'Mystery Meat', 'arrrgh/items/mystery_meat.scn' },
+	{ 'Suspicious Burger', 'arrrgh/items/burger.scn' },
+	{ 'Dagger', 'arrrgh/items/dagger.scn' }
 }
 
 function Dungeons_FindSpecificItem(name)
@@ -26,4 +28,11 @@ function Dungeons_SpawnItem(gridcmp, itemName, tilePos, worldPos)
 	end
 	Arrrgh.MoveEntitiesWorldspace(newEntities, worldPos)
 	Arrrgh.SetEntityTilePosition(gridcmp, rootEntity, tilePos.x, tilePos.y)
+
+	for e=1,#newEntities do 
+		local staticMesh = world.GetComponent_StaticMesh(newEntities[e])
+		if(staticMesh ~= nil) then 
+			staticMesh.m_shouldDraw = false
+		end
+	end
 end

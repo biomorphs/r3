@@ -6,12 +6,14 @@ require 'arrrgh/action_inspect'
 require 'arrrgh/action_melee_attack'
 require 'arrrgh/action_pickup_item'
 require 'arrrgh/action_consume'
+require 'arrrgh/action_equip'
 require 'arrrgh/world_generator'
 require 'arrrgh/monster_spawning'
 require 'arrrgh/item_spawning'
 require 'arrrgh/monster_ai'
 require 'arrrgh/tile_debug_ui'
 require 'arrrgh/monster_overlay'
+require 'arrrgh/player_overlay'
 require 'arrrgh/mouse_tile_state'
 require 'arrrgh/inventory_screen'
 
@@ -21,9 +23,6 @@ Arrrgh_Globals.ShowActionsUi = nil	-- set to a uvec2 tile coord when open
 Arrrgh_Globals.ShowInventory = false	-- if true, a state change will happen
 
 -- todo 
---	only draw enemies within player visibility(?)
---		fog of war or just current vision?
---		how did hunters do it? 
 -- make tile generator rules data driven 
 -- need ability to define new rules and sets of rules 
 -- UI (lots to do)
@@ -82,6 +81,19 @@ function Dungeons_HealActor(world, entity, hp)
 	end
 end
 
+-- calculate whether a melee attack would hit right now
+function Dungeons_DidMeleeAttackHit(world, attacker, defender)
+	local attackerStats = world.GetComponent_Dungeons_BaseActorStats(attacker)
+	local defenderStats = world.GetComponent_Dungeons_BaseActorStats(defender)
+	
+	-- for now we only care about hit chance
+	if(attackerStats ~= nil and defenderStats ~= nil) then 
+		return (math.random(0,100) < attackerStats.m_baseHitChance)
+	else
+		return false
+	end
+end
+
 -- here we can scale damage taken based on defense, etc
 function Dungeons_TakeDamage(world, entity, damageAmount)
 	local targetStats = world.GetComponent_Dungeons_BaseActorStats(entity)
@@ -118,6 +130,13 @@ function Dungeons_SpawnPlayer()
 	baseStats.m_strength = 0
 	baseStats.m_endurance = 0
 	baseStats.m_currentHP = Dungeons_CalculateMaxHP(baseStats)
+	baseStats.m_baseHitChance = 75
+
+	local equipment = world.GetComponent_Dungeons_EquippedItems(playerEntity[1])
+	equipment:AddSlot(Tag.new("Weapon"))
+	equipment:AddSlot(Tag.new("Helmet"))
+	equipment:AddSlot(Tag.new("Body Armour"))
+	equipment:AddSlot(Tag.new("Boots"))
 
 	Dungeons_CameraLookAt(actualPos, 40)
 end
@@ -373,6 +392,7 @@ function Dungeons_GameTickVariable(e)
 	end
 	Dungeons_TileDebuggerUpdate()
 	Dungeons_ShowMonsterOverlay()
+	Dungeons_ShowPlayerOverlay()
 	if(Arrrgh_Globals.GameState == 'inventory' and Arrrgh_Globals.ShowInventory) then 
 		Arrrgh_Globals.ShowInventory = ShowPlayerInventory()
 	end

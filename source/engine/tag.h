@@ -12,8 +12,8 @@ namespace R3
 		Tag(uint16_t v) : m_tag(v) {}
 		Tag(const Tag& other) : m_tag(other.m_tag) {}
 		void SerialiseJson(class JsonSerialiser& s);
-		std::string GetString();
-		uint16_t GetTag() { return m_tag; }
+		std::string GetString() const;
+		uint16_t GetTag() const { return m_tag; }
 		static std::vector<Tag> GetAllTags();
 		bool operator==(const Tag& other) const {
 			return m_tag == other.m_tag;
@@ -22,3 +22,13 @@ namespace R3
 		uint16_t m_tag = -1;	// string data stored in static singleton. 0 or -1 are unused
 	};
 }
+
+// hashing so we can have maps of tags
+template<>
+struct std::hash<R3::Tag>
+{
+	size_t operator()(const R3::Tag& t) const
+	{
+		return std::hash<uint16_t>{}(t.GetTag());
+	}
+};

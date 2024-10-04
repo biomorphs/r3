@@ -2,6 +2,7 @@
 #include "commands/set_value_cmd.h"
 #include "editor/editor_command_list.h"
 #include "engine/file_dialogs.h"
+#include "engine/tag.h"
 #include "engine/systems/texture_system.h"
 #include "entities/entity_handle.h"
 #include "entities/world.h"
@@ -12,6 +13,18 @@
 namespace R3
 {
 	constexpr float c_floatEpsilon = 0.00001f;		// smallest change to a float value we register as a modification
+
+	bool UndoRedoInspector::Inspect(std::string label, Tag currentValue, std::function<void(Tag)> setFn)
+	{
+		char textBuffer[1024 * 16] = { '\0' };
+		strcpy_s(textBuffer, currentValue.GetString().c_str());
+		if (ImGui::InputText(label.data(), textBuffer, sizeof(textBuffer), ImGuiInputTextFlags_EnterReturnsTrue))
+		{
+			m_cmds.Push(std::make_unique<SetValueCommand<Tag>>(label, currentValue, Tag(textBuffer), setFn));
+			return true;
+		}
+		return false;
+	}
 
 	bool UndoRedoInspector::Inspect(std::string label, bool currentValue, std::function<void(bool)> setFn)
 	{

@@ -75,7 +75,7 @@
   },
   {
    "DungeonsVisionComponent": {
-    "MaxDistance": 5.0,
+    "MaxDistance": 4.0,
     "NeedsUpdate": true,
     "m_affectsFogOfWar": false
    },

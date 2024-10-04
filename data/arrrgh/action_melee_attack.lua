@@ -9,9 +9,14 @@ end
 
 function Dungeons_ActionMeleeAttack(action)
 	local world = R3.ActiveWorld()
-	local attackDamage = Dungeons_CalculateMeleeDamageDealt(world, action.attacker)
-	print(world:GetEntityName(action.attacker), ' attacks ', world:GetEntityName(action.target), ' for ', attackDamage, ' damage!')
-	Dungeons_TakeDamage(world, action.target, attackDamage)
+	local didHit = Dungeons_DidMeleeAttackHit(world, action.attacker, action.target)
+	if(didHit == false) then 
+		print(world:GetEntityName(action.attacker), ' missed ', world:GetEntityName(action.target), '! Whiff!')
+	else
+		local attackDamage = Dungeons_CalculateMeleeDamageDealt(world, action.attacker)
+		print(world:GetEntityName(action.attacker), ' attacks ', world:GetEntityName(action.target), ' for ', attackDamage, ' damage!')
+		Dungeons_TakeDamage(world, action.target, attackDamage)
+	end
 	Dungeons_SpendActionPoint()
 	return 'complete'
 end

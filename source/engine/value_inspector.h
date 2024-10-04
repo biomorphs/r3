@@ -12,6 +12,7 @@ namespace R3
 		class World;
 	}
 	struct TextureHandle;
+	class Tag;
 
 	// Base interface used for inspecting/modifying values in the ui
 	// Try to use one of these wherever possible to ensure a unified look/feel
@@ -21,7 +22,8 @@ namespace R3
 	{
 	public:
 		virtual ~ValueInspector() {}
-		virtual bool Inspect(std::string label, bool currentValue, std::function<void(bool)> newVal) = 0;
+		virtual bool Inspect(std::string label, bool currentValue, std::function<void(bool)> setFn) = 0;
+		virtual bool Inspect(std::string label, Tag currentValue, std::function<void(Tag)> newVal) = 0;
 		virtual bool Inspect(std::string_view label, std::string_view currentValue, std::function<void(std::string)> newValue) = 0;
 		virtual bool Inspect(std::string_view label, int currentValue, std::function<void(int)> setFn, int step, int minv, int maxv) = 0;
 		virtual bool Inspect(std::string_view label, float currentValue, std::function<void(float)> setFn, float step, float minv, float maxv) = 0;

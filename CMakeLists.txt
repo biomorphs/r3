@@ -16,6 +16,11 @@ set(nlohmann-json_IMPLICIT_CONVERSIONS OFF)
 # Enable all safety checks in sol 
 add_compile_definitions(SOL_ALL_SAFETIES_ON=1)
 
+# Enable /bigobj for msvc builds (sol adds a load of templates)
+if (MSVC)
+  add_compile_options(/bigobj)
+endif ()
+
 # vcpkg dependencies
 find_package(SDL2 REQUIRED)
 find_package(sol2 REQUIRED)

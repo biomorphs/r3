@@ -1,16 +1,17 @@
-function Dungeons_MonsterBaseStats(level, maxHP, strength, endurance)
+function Dungeons_MonsterBaseStats(level, maxHP, strength, endurance, baseHitChance)
 	return {
 		Level = level,
 		MaxHP = maxHP,
 		Strength = strength or 0,
-		Endurance = endurance or 0
+		Endurance = endurance or 0,
+		BaseHitChance = baseHitChance or 50
 	}
 end
 
 -- type string, scene path, base stats
 Arrrgh_Globals.Dungeons_MonsterSpawnTable = {
-	{ 'Bat', 'arrrgh/actors/bat.scn', Dungeons_MonsterBaseStats(1, 5, 0, 0) },
-	{ 'Zombie', 'arrrgh/actors/zombie.scn', Dungeons_MonsterBaseStats(1, 10, 1, 2) }
+	{ 'Bat', 'arrrgh/actors/bat.scn', Dungeons_MonsterBaseStats(1, 5, 0, 0, 60) },
+	{ 'Zombie', 'arrrgh/actors/zombie.scn', Dungeons_MonsterBaseStats(1, 10, 1, 2, 30) }
 }
 
 function Dungeons_FindSpecificMonster(typeStr)
@@ -56,5 +57,13 @@ function Dungeons_SpawnMonster(gridcmp, monsterType, tilePos, worldPos)
 	baseStats.m_strength = Arrrgh_Globals.Dungeons_MonsterSpawnTable[spawnIndex][3].Strength
 	baseStats.m_endurance = Arrrgh_Globals.Dungeons_MonsterSpawnTable[spawnIndex][3].Endurance
 	baseStats.m_currentHP = Dungeons_CalculateMaxHP(baseStats)
+	baseStats.m_baseHitChance = Arrrgh_Globals.Dungeons_MonsterSpawnTable[spawnIndex][3].BaseHitChance
 	Arrrgh.SetEntityTilePosition(gridcmp, rootEntity, tilePos.x, tilePos.y)
+
+	for e=1,#newEntities do 
+		local staticMesh = world.GetComponent_StaticMesh(newEntities[e])
+		if(staticMesh ~= nil) then 
+			staticMesh.m_shouldDraw = false
+		end
+	end
 end

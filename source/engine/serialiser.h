@@ -73,6 +73,7 @@ namespace R3
 		}
 
 		// Main serialisation operator
+		// this is getting ridiculous, refactor asap
 		template<class ValueType>
 		void operator()(std::string_view name, ValueType& t)
 		{
@@ -202,6 +203,7 @@ namespace R3
 			constexpr bool keyIsInt = std::is_integral<KeyType>::value;
 			constexpr bool keyIsFloat = std::is_floating_point<KeyType>::value;
 			constexpr bool keyIsString = (std::is_same<KeyType, std::string>::value);
+			constexpr bool keyHasSerialiserMember = HasSerialiser<KeyType>::value;
 			constexpr bool valueIsInt = std::is_integral<ValueType>::value;
 			constexpr bool valueIsFloat = std::is_floating_point<ValueType>::value;
 			constexpr bool valueIsString = (std::is_same<ValueType, std::string>::value);
@@ -216,7 +218,24 @@ namespace R3
 				for (auto& it : v)
 				{
 					json itJson;
-					itJson["Key"] = it.first;
+					if constexpr (keyIsInt || keyIsFloat || keyIsString)
+					{
+						itJson["Key"] = it.first;
+					}
+					else
+					{
+						KeyType keyVal = it.first;	// we need a non-const ref to the key, so make a temp copy
+						JsonSerialiser keyJs(m_mode);
+						if constexpr (keyHasSerialiserMember)
+						{
+							keyVal.SerialiseJson(keyJs);
+						}
+						else
+						{
+							SerialiseJson(keyVal, keyJs);
+						}
+						itJson["Key"] = keyJs.m_json;
+					}
 					if constexpr (valueIsInt || valueIsFloat || valueIsString)
 					{
 						itJson["Value"] = it.second;
@@ -243,7 +262,23 @@ namespace R3
 				std::vector<json> listJson = m_json[name];
 				for (int i = 0; i < listJson.size(); ++i)
 				{
-					KeyType key = listJson[i]["Key"];
+					KeyType key;
+					if constexpr (keyIsInt || keyIsFloat || keyIsString)
+					{
+						key = listJson[i]["Key"];
+					}
+					else
+					{
+						JsonSerialiser js(m_mode, listJson[i]["Key"]);
+						if constexpr (keyHasSerialiserMember)
+						{
+							key.SerialiseJson(js);
+						}
+						else
+						{
+							SerialiseJson(key, js);
+						}
+					}
 					ValueType value;
 					if constexpr (valueIsInt || valueIsFloat || valueIsString)
 					{

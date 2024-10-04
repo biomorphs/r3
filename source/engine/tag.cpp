@@ -41,7 +41,7 @@ namespace R3
 		}
 	}
 
-	std::string Tag::GetString()
+	std::string Tag::GetString() const
 	{
 		std::string result;
 		if (m_tag != 0 && m_tag != -1)

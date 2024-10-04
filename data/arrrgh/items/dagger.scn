@@ -1,28 +1,16 @@
 {
  "AllEntities": [
   {
-   "DungeonsVisionComponent": {
-    "MaxDistance": 8.0,
-    "NeedsUpdate": false,
-    "m_affectsFogOfWar": true
-   },
-   "Dungeons_BlocksTile": null,
-   "Dungeons_EquippedItems": {
-    "Slots": []
-   },
-   "Dungeons_Inventory": {
-    "Items": []
-   },
    "ID": 0,
-   "Name": "PlayerActor",
-   "Parent": 4294967295,
+   "Name": "Visual Entity",
+   "Parent": 1,
    "StaticMesh": {
     "Draw": true,
     "MaterialsOverride": {
      "ID": 0
     },
     "Model": {
-     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\Rogue_Hooded.glb"
+     "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Assets\\fbx\\dagger.fbx"
     }
    },
    "StaticMeshMaterials": {
@@ -38,7 +26,7 @@
        "Z": 1.0
       },
       "AlbedoTex": {
-       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\rogue_texture.png"
+       "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Assets\\fbx\\rogue_texture.png"
       },
       "HeightmapTex": {
        "PathName": "invalid"
@@ -46,13 +34,13 @@
       "MetalTex": {
        "PathName": "invalid"
       },
-      "Metallic": 0.0,
+      "Metallic": 1.0,
       "NormalTex": {
        "PathName": "invalid"
       },
       "ParalaxAmount": 0.07999999821186066,
       "ParalaxShadows": 0,
-      "Roughness": 0.5,
+      "Roughness": 0.25,
       "RoughnessTex": {
        "PathName": "invalid"
       },
@@ -67,6 +55,41 @@
    },
    "Transform": {
     "Orientation": {
+     "W": 0.5,
+     "X": 0.5,
+     "Y": 0.5,
+     "Z": -0.5
+    },
+    "Position": {
+     "X": -1.5,
+     "Y": 1.0,
+     "Z": 0.0
+    },
+    "Relative": true,
+    "Scale": {
+     "X": 3.0,
+     "Y": 3.0,
+     "Z": 3.0
+    }
+   }
+  },
+  {
+   "Dungeons_Inspectable": {
+    "InspectText": "A steel dagger. Fast and sharp!"
+   },
+   "Dungeons_Item": {
+    "Name": "Dagger"
+   },
+   "Dungeons_WearableItem": {
+    "Slot": {
+     "Str": "Weapon"
+    }
+   },
+   "ID": 1,
+   "Name": "Dagger",
+   "Parent": 4294967295,
+   "Transform": {
+    "Orientation": {
      "W": 1.0,
      "X": 0.0,
      "Y": 0.0,
@@ -78,39 +101,6 @@
      "Z": 0.0
     },
     "Relative": false,
-    "Scale": {
-     "X": 2.0,
-     "Y": 2.0,
-     "Z": 2.0
-    }
-   }
-  },
-  {
-   "ID": 1,
-   "Name": "ActorLight",
-   "Parent": 0,
-   "PointLight": {
-    "Brightness": 256.0,
-    "Colour": {
-     "X": 1.0,
-     "Y": 1.0,
-     "Z": 1.0
-    },
-    "Distance": 64.0
-   },
-   "Transform": {
-    "Orientation": {
-     "W": 1.0,
-     "X": 0.0,
-     "Y": 0.0,
-     "Z": 0.0
-    },
-    "Position": {
-     "X": 0.0,
-     "Y": 5.0,
-     "Z": 0.0
-    },
-    "Relative": true,
     "Scale": {
      "X": 1.0,
      "Y": 1.0,

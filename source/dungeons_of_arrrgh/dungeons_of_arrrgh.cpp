@@ -7,6 +7,8 @@
 #include "blocks_tile_component.h"
 #include "base_actor_stats_component.h"
 #include "item_component.h"
+#include "wearable_item_component.h"
+#include "equipped_items_component.h"
 #include "inventory_component.h"
 #include "consumable_item_component.h"
 #include "engine/systems/immediate_render_system.h"
@@ -55,7 +57,9 @@ bool DungeonsOfArrrgh::Init()
 	entities->RegisterComponentType<DungeonsBlocksTileComponent>(8 * 1024);
 	entities->RegisterComponentType<DungeonsBaseActorStatsComponent>(2 * 1024);
 	entities->RegisterComponentType<DungeonsItemComponent>(4 * 1024);
+	entities->RegisterComponentType<DungeonsWearableItemComponent>(4 * 1024);
 	entities->RegisterComponentType<DungeonsInventoryComponent>(2 * 1024);
+	entities->RegisterComponentType<DungeonsEquippedItemsComponent>(1024);
 	entities->RegisterComponentType<DungeonsConsumableItemComponent>(2 * 1024);
 
 	auto scriptNamespace = "Arrrgh";
@@ -249,10 +253,21 @@ void DungeonsOfArrrgh::SetVisualEntitiesVisible(const DungeonsWorldGridComponent
 			w.GetAllChildren(contents->m_visualEntity, children);
 			for (const auto& child : children)
 			{
-				auto meshComponent = w.GetComponent<R3::StaticMeshComponent>(child);
-				if (meshComponent)
+				if (auto meshComponent = w.GetComponent<R3::StaticMeshComponent>(child))
 				{
 					meshComponent->m_shouldDraw = visible;
+				}
+			}
+			for (const auto& actor : contents->m_entitiesInTile)
+			{
+				std::vector<R3::Entities::EntityHandle> children;
+				w.GetAllChildren(actor, children);
+				for (const auto& child : children)
+				{
+					if (auto meshComponent = w.GetComponent<R3::StaticMeshComponent>(child))
+					{
+						meshComponent->m_shouldDraw = visible;
+					}
 				}
 			}
 		}
