@@ -82,7 +82,8 @@
     "InspectText": "Is that ham? ... It doesn't small like ham."
    },
    "Dungeons_Item": {
-    "Name": "Mystery Meat"
+    "Name": "Mystery Meat",
+    "OnPickup": ""
    },
    "ID": 1,
    "Name": "Mystery Meat",

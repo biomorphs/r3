@@ -1,9 +1,9 @@
 {
  "AllEntities": [
   {
-   "ID": 3,
+   "ID": 0,
    "Name": "Visual Entity",
-   "Parent": 4,
+   "Parent": 1,
    "StaticMesh": {
     "Draw": true,
     "MaterialsOverride": {
@@ -42,9 +42,10 @@
     "InspectText": "Is that a burger...? What the hell?!"
    },
    "Dungeons_Item": {
-    "Name": "Suspicious Burger"
+    "Name": "Suspicious Burger",
+    "OnPickup": ""
    },
-   "ID": 4,
+   "ID": 1,
    "Name": "Burger",
    "Parent": 4294967295,
    "Transform": {

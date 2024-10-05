@@ -78,9 +78,12 @@
     "InspectText": "A steel dagger. Fast and sharp!"
    },
    "Dungeons_Item": {
-    "Name": "Dagger"
+    "Name": "Dagger",
+    "OnPickup": ""
    },
    "Dungeons_WearableItem": {
+    "OnEquip": "",
+    "OnRemove": "",
     "Slot": {
      "Str": "Weapon"
     }

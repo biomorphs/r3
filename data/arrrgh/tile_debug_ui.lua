@@ -1,4 +1,4 @@
-Arrrgh_Globals.IsTileDebugOpen = true
+Arrrgh_Globals.IsTileDebugOpen = false
 
 function ShowTileDebugger(shouldShow) 
 	Arrrgh_Globals.IsTileDebugOpen = shouldShow
