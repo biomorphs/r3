@@ -2,7 +2,8 @@ require 'arrrgh/prop_torch'
 
 -- name, scene path
 Arrrgh_Globals.Dungeons_PropSpawnTable = {
-	{ 'Torch', 'arrrgh/props/wall_torch.scn' }
+	{ 'Torch', 'arrrgh/props/wall_torch.scn' },
+	{ 'Bookshelves', 'arrrgh/props/book_shelves.scn' }
 }
 
 function Dungeons_FindSpecificProp(name)

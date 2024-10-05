@@ -47,23 +47,29 @@ function Dungeons_BasicGenerator()
 		local roomPos = rooms[r][1]
 		local roomSize = rooms[r][2]
 		Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Add Room", Generator_SimpleRoom(roomPos, roomSize, "wall,floor,exterior", "floor,interior"))
-		if(r > 1) then	-- add a monster spawner in each room but the first
+		if(r > 1 and math.random() < 0.9) then	-- add a monster spawner in each room but the first
 			local spawnX = math.random(1, roomSize.x-2)
 			local spawnY = math.random(1, roomSize.y-2)
 			local monsterPos = uvec2.new(roomPos.x + spawnX, roomPos.y + spawnY)
 			Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Add monster spawner", Generator_SpawnMonster("", monsterPos))
 		end
-		if(math.random() > 0) then -- add an item in each room
+		if(math.random() < 0.75) then -- add an item in each room
 			local spawnX = math.random(1, roomSize.x-2)
 			local spawnY = math.random(1, roomSize.y-2)
 			local itemPos = uvec2.new(roomPos.x + spawnX, roomPos.y + spawnY)
 			Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Add item", Generator_SpawnItem("", itemPos))
 		end
-		if(math.random() > 0) then -- add a torch to each room
-			local spawnX = 2
+		if(math.random() < 0.9) then -- add a torch to each room
+			local spawnX = math.random(1, roomSize.x-2)
 			local spawnY = roomSize.y - 1
 			local itemPos = uvec2.new(roomPos.x + spawnX, roomPos.y + spawnY)
 			Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Add torch", Generator_AddProp("Torch", itemPos, 0.0))
+		end
+		if(math.random() < 0.3) then -- add a bookshelf to each room
+			local spawnX = math.random(1, roomSize.x-2)
+			local spawnY = roomSize.y - 1
+			local itemPos = uvec2.new(roomPos.x + spawnX, roomPos.y + spawnY)
+			Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Add Bookshelves", Generator_AddProp("Bookshelves", itemPos, 0.0))
 		end
 	end
 	Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Make paths between rooms", Generator_PathFromRoomToRoom("floor,interior", 0.1))

@@ -294,6 +294,10 @@ void DungeonsOfArrrgh::SetVisualEntitiesVisible(const DungeonsWorldGridComponent
 						meshComponent->m_shouldDraw = visible;
 					}
 				}
+				if (auto meshComponent = w.GetComponent<R3::StaticMeshComponent>(actor))
+				{
+					meshComponent->m_shouldDraw = visible;
+				}
 			}
 		}
 	}

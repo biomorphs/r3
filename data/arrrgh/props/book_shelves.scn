@@ -1,0 +1,369 @@
+{
+ "AllEntities": [
+  {
+   "Dungeons_Inspectable": {
+    "InspectText": "The books are musty. There's nothing interesting here."
+   },
+   "ID": 0,
+   "Name": "Book case",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 0
+    },
+    "Model": {
+     "Path": "downloaded\\Dungeon Pack\\Models\\gltf\\bookcaseWideFilled.gltf.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.32694560289382935,
+       "Y": 0.10152623057365417,
+       "Z": 0.05927089974284172
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.4000000059604645,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.4556451439857483,
+       "Y": 0.025721905753016472,
+       "Z": 0.025721905753016472
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.4000000059604645,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.799102783203125,
+       "Y": 0.799102783203125,
+       "Z": 0.799102783203125
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.5,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.02250262163579464,
+       "Y": 0.03225809335708618,
+       "Z": 0.023053331300616264
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.20000000298023224,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.30000001192092896,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.6370967626571655,
+       "Y": 0.03853411599993706,
+       "Z": 0.29919853806495667
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.5,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.0008779907366260886,
+       "Y": 0.0039107645861804485,
+       "Z": 0.004032254219055176
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.4000000059604645,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.06510145217180252,
+       "Y": 0.12051038444042206,
+       "Z": 0.3104838728904724
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.5,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.10092172026634216,
+       "Y": 0.11823292821645737,
+       "Z": 0.12790560722351074
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.5,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.019794002175331116,
+       "Y": 0.03207586705684662,
+       "Z": 0.037408243864774704
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.5,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": -4.371138473402425e-08,
+     "X": -4.371139183945161e-08,
+     "Y": 1.0,
+     "Z": -4.371139183945161e-08
+    },
+    "Position": {
+     "X": 1.0,
+     "Y": 0.0,
+     "Z": 0.699999988079071
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 2.0,
+     "Y": 2.0,
+     "Z": 2.0
+    }
+   }
+  }
+ ],
+ "WorldName": "New World"
+}
