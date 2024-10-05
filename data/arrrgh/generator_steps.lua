@@ -1,5 +1,17 @@
 require'arrrgh/camera'
 
+-- add a prop
+-- a prop is simply a named scene that can be loaded + added to the world
+-- useful for torches, furniture, interactive items, more complex objects
+-- props position is per-tile, no world-space positioning during generation
+function Generator_AddProp(name, position, rotation)
+	return {
+		Run = function(grid, context)
+			Dungeons_GeneratorContext.AddProp(context, name, position, rotation)
+		end
+	}
+end
+
 -- add a item spawner
 -- we may want to add world position here later
 function Generator_SpawnItem(itemName, position)

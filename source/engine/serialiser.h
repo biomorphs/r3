@@ -208,10 +208,6 @@ namespace R3
 			constexpr bool valueIsFloat = std::is_floating_point<ValueType>::value;
 			constexpr bool valueIsString = (std::is_same<ValueType, std::string>::value);
 			constexpr bool valueHasSerialiserMember = HasSerialiser<ValueType>::value;
-			if constexpr (!keyIsInt && !keyIsFloat && !keyIsString)
-			{
-				LogError("Maps with this key type are not supported");
-			}
 			if (m_mode == Mode::Write)
 			{
 				std::vector<json> listJson;

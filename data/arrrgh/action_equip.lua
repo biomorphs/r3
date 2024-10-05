@@ -36,13 +36,23 @@ function Dungeons_ActionEquipItem(action)
 			print("Cannot transfer " .. world:GetEntityName(action.itemToEquip) .. " to inventory")
 			return 'complete'
 		end
+		local targetSlotWearable = world.GetComponent_Dungeons_WearableItem(targetEquipmentSlot)
+		if(targetSlotWearable ~= nil and targetSlotWearable.m_onRemoveFn ~= "") then	-- call onRemove
+			if(_G[targetSlotWearable.m_onRemoveFn] ~= nil) then 
+				_G[targetSlotWearable.m_onRemoveFn](action.newOwner, targetSlotWearable)
+			end
+		end
 	end
 	if(ownerInventory:RemoveItem(action.itemToEquip) == false) then -- only allow equip directly from inventory (may change this later)
 		print("Cannot remove " .. world:GetEntityName(action.itemToEquip) .. " from inventory")
 		return 'complete'
 	end
-	-- equip the new item (maybe we want a OnItemEquipped callback?)
 	ownerEquipment.m_slots[wearable.m_slot] = action.itemToEquip
 	print(world:GetEntityName(action.newOwner) .. " equipped " .. world:GetEntityName(action.itemToEquip))
+	if(wearable.m_onEquipFn ~= "") then	-- call onRemove
+		if(_G[wearable.m_onEquipFn] ~= nil) then 
+			_G[wearable.m_onEquipFn](action.newOwner, action.itemToEquip)
+		end
+	end
 	return 'complete'
 end

@@ -4,7 +4,7 @@ Arrrgh_Globals.Dungeons_ItemSpawnTable = {
 	{ 'Suspicious Burger', 'arrrgh/items/burger.scn' },
 	{ 'Rusty Dagger', 'arrrgh/items/rusty_dagger.scn', { { "Melee Damage", 1} } },
 	{ 'Dagger', 'arrrgh/items/dagger.scn', { { "Melee Damage", 2} } },
-	{ 'Sharp Dagger', 'arrrgh/items/dagger.scn', { { "Melee Damage", 3} } }
+	{ 'Sharp Dagger', 'arrrgh/items/dagger.scn', { { "Melee Damage", 3} } },
 }
 
 function Dungeons_FindSpecificItem(name)

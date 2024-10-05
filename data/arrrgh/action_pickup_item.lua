@@ -22,8 +22,15 @@ function Dungeons_ActionPickupItem(action)
 			if(meshComponent ~= nil) then 
 				meshComponent.m_shouldDraw = false
 			end
+			Arrrgh.SetEntityTilePosition(gridcmp, allChildren[c], -1, -1)	-- remove children from grid
 		end
 		Arrrgh.SetEntityTilePosition(gridcmp, action.itemToPickup, -1, -1)	-- remove item from grid
+		world:SetParent(action.itemToPickup, EntityHandle.new()) -- items in inventory have no parent (so they cannot become visible as part of actor)
+		if(pickupItem.m_onPickupFn ~= "") then -- call onPickup for the item
+			if(_G[pickupItem.m_onPickupFn] ~= nil) then		-- _G = assumes global scope
+				_G[pickupItem.m_onPickupFn](action.newOwner, action.itemToPickup)
+			end
+		end
 	end
 	return 'complete'
 end

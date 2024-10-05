@@ -12,7 +12,8 @@ function Dungeons_GeneratorContext.new()
 		SpawnPoint = uvec2.new(0,0),
 		Rooms = {},
 		MonsterSpawns = {},
-		Items = {}
+		Items = {},
+		Props = {}
 	}
 end
 
@@ -49,6 +50,15 @@ function Dungeons_GeneratorContext.AddItem(context, name, tilePos)
 		Name = name
 	}
 	table.insert(context.Items, newItem)
+end
+
+function Dungeons_GeneratorContext.AddProp(context, name, tilePos, rotation)
+	local newProp = {
+		Position = tilePos,
+		Name = name,
+		Rotation = rotation
+	}
+	table.insert(context.Props, newProp)
 end
 
 -- get a generator object for a grid
@@ -118,7 +128,7 @@ end
 
 -- yields until time passed
 function Dungeons_Generator.Yield(timeToWait)
-	timeToWait = timeToWait or 0.1
+	timeToWait = timeToWait or 0.025
 	local currentWaitTime = 0 
 	repeat
 		currentWaitTime = currentWaitTime + R3.GetVariableDelta() -- variable delta is good enough

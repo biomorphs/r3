@@ -2,7 +2,7 @@
  "AllEntities": [
   {
    "DungeonsVisionComponent": {
-    "MaxDistance": 8.0,
+    "MaxDistance": 7.0,
     "NeedsUpdate": false,
     "m_affectsFogOfWar": true
    },
@@ -90,13 +90,14 @@
    "Name": "ActorLight",
    "Parent": 0,
    "PointLight": {
-    "Brightness": 256.0,
+    "Brightness": 12.0,
     "Colour": {
      "X": 1.0,
      "Y": 1.0,
      "Z": 1.0
     },
-    "Distance": 64.0
+    "Distance": 32.0,
+    "Enabled": true
    },
    "Transform": {
     "Orientation": {

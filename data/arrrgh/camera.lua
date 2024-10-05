@@ -35,7 +35,7 @@ function Dungeons_UpdateCamera(e)
 	local cameraEntity = world:GetEntityByName('GameCamera')
 	local cameraTransform = world.GetComponent_Transform(cameraEntity)
 	local cameraPos = cameraTransform:GetPosition()
-	local targetPosition = vec3.new(Arrrgh_Globals.CameraLookAt.x, Arrrgh_Globals.CameraLookAt.y + Arrrgh_Globals.CameraHeight, Arrrgh_Globals.CameraLookAt.z - 4.0)
+	local targetPosition = vec3.new(Arrrgh_Globals.CameraLookAt.x, Arrrgh_Globals.CameraLookAt.y + Arrrgh_Globals.CameraHeight, Arrrgh_Globals.CameraLookAt.z - 12.0)
 	local camToTarget = vec3.new(targetPosition.x - cameraPos.x,targetPosition.y - cameraPos.y,targetPosition.z - cameraPos.z)
 	local targetLength = R3.Vec3Length(camToTarget)
 	local speedLimit = targetLength * 2	-- scale max speed by distance to goal

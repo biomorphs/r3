@@ -14,5 +14,6 @@ namespace R3
 		glm::vec3 m_colour = { 1,1,1 };
 		float m_distance = 8.0f;		// max distance it can cast light
 		float m_brightness = 1.0f;
+		bool m_enabled = true;
 	};
 }

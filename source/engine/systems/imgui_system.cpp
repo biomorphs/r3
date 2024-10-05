@@ -58,6 +58,9 @@ namespace R3
 		lua->RegisterFunction("Separator", []() {
 			ImGui::Separator();
 		}, c_namespace);
+		lua->RegisterFunction("NewLine", []() {
+			ImGui::NewLine();
+		}, c_namespace);
 		lua->RegisterFunction("SameLine", []() {
 			ImGui::SameLine();
 		}, c_namespace);

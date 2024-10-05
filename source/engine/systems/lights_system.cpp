@@ -76,7 +76,7 @@ namespace R3
 			auto activeWorld = entities->GetActiveWorld();
 			auto& imRender = Systems::GetSystem<ImmediateRenderSystem>()->m_imRender;
 			auto drawLights = [&](const Entities::EntityHandle& e, PointLightComponent& pl, TransformComponent& t) {
-				imRender->AddSphere(glm::vec3(t.GetWorldspaceInterpolated(e, *activeWorld)[3]), pl.m_distance, { pl.m_colour, 1 });
+				imRender->AddSphere(glm::vec3(t.GetWorldspaceInterpolated(e, *activeWorld)[3]), pl.m_distance, { pl.m_colour, pl.m_enabled ? 1.0f : 0.25f });
 				return true;
 			};
 			if (activeWorld)
@@ -111,10 +111,13 @@ namespace R3
 		}
 
 		auto collectLights = [&](const Entities::EntityHandle& e, PointLightComponent& pl, TransformComponent& t) {
-			Pointlight newlight;
-			newlight.m_colourBrightness = {pl.m_colour, pl.m_brightness};
-			newlight.m_positionDistance = { glm::vec3(t.GetWorldspaceInterpolated(e, *activeWorld)[3]), pl.m_distance};
-			allPointlights.push_back(newlight);
+			if (pl.m_enabled)
+			{
+				Pointlight newlight;
+				newlight.m_colourBrightness = { pl.m_colour, pl.m_brightness };
+				newlight.m_positionDistance = { glm::vec3(t.GetWorldspaceInterpolated(e, *activeWorld)[3]), pl.m_distance };
+				allPointlights.push_back(newlight);
+			}
 			return true;
 		};
 		if (activeWorld)

@@ -10,6 +10,7 @@ require 'arrrgh/action_equip'
 require 'arrrgh/world_generator'
 require 'arrrgh/monster_spawning'
 require 'arrrgh/item_spawning'
+require 'arrrgh/prop_spawning'
 require 'arrrgh/monster_ai'
 require 'arrrgh/tile_debug_ui'
 require 'arrrgh/monster_overlay'
@@ -53,8 +54,8 @@ function Dungeons_CalculateMeleeDamageDealt(world, attackerActor)
 	end
 	local equippedItemStats = Arrrgh.GetAllEquippedItemStats(attackerActor)
 	local itemMeleeDamage = equippedItemStats[Tag.new("Melee Damage")] or 0
-	local actorStrength = attackerStats.m_strength + equippedItemStats[Tag.new("Strength")] or 0
-	return 1 + actorStrength + itemMeleeDamage
+	local itemStrength = equippedItemStats[Tag.new("Strength")] or 0
+	return 1 + attackerStats.m_strength + itemStrength + itemMeleeDamage
 end
 
 function Dungeons_OnActorDeath(world, entity)
@@ -137,6 +138,7 @@ function Dungeons_SpawnPlayer()
 
 	local equipment = world.GetComponent_Dungeons_EquippedItems(playerEntity[1])
 	equipment:AddSlot(Tag.new("Weapon"))
+	equipment:AddSlot(Tag.new("Offhand"))
 	equipment:AddSlot(Tag.new("Helmet"))
 	equipment:AddSlot(Tag.new("Body Armour"))
 	equipment:AddSlot(Tag.new("Boots"))
@@ -170,7 +172,6 @@ function Dungeons_SpawnItems()
 	local gridEntity = world:GetEntityByName('World Grid')
 	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
 	local items = Arrrgh_Globals.WorldGenerator.Context.Items
-	local world = R3.ActiveWorld()
 	for spawn=1,#items do 
 		local tilePos = items[spawn].Position
 		local itemName = items[spawn].Name
@@ -179,6 +180,20 @@ function Dungeons_SpawnItems()
 		worldPos.z = worldPos.z + (Arrrgh_Globals.TileDimensions.y * 0.5)
 		worldPos.y = 0
 		Dungeons_SpawnItem(gridcmp, itemName, tilePos, worldPos)	-- item spawner handles actual event
+	end
+end
+
+function Dungeons_SpawnProps()
+	print("Spawning props")
+	local world = R3.ActiveWorld()
+	local gridEntity = world:GetEntityByName('World Grid')
+	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
+	local props = Arrrgh_Globals.WorldGenerator.Context.Props
+	for prop=1,#props do 
+		local tilePos = props[prop].Position
+		local name = props[prop].Name
+		local worldPos = vec3.new(tilePos.x * Arrrgh_Globals.TileDimensions.x, 0, tilePos.y * Arrrgh_Globals.TileDimensions.y)
+		Dungeons_SpawnProp(gridcmp, name, tilePos, worldPos, props[prop].Rotation)
 	end
 end
 
@@ -245,6 +260,7 @@ function Dungeons_GameTickFixed(e)
 		Dungeons_SpawnPlayer()
 		Dungeons_SpawnMonsters()
 		Dungeons_SpawnItems()
+		Dungeons_SpawnProps()
 		Arrrgh_Globals.GameState = 'startturn'
 	end
 	if(Arrrgh_Globals.GameState == 'startturn') then 
@@ -283,18 +299,21 @@ function Dungeons_ShowAvailableEntityActions(world, entity, playerTile, targetTi
 	if(Dungeons_InTouchingDistance(playerTile, targetTile)) then 
 		local inspectable = world.GetComponent_Dungeons_Inspectable(entity)
 		if(inspectable ~= nil) then 
-			if(ImGui.Button("Inspect")) then 
+			if(ImGui.Button("Inspect##" .. entity:GetID())) then 
 				Dungeons_NewInspectAction(entity)
 				return true
 			end
+			ImGui.SameLine()
 		end
 		local item = world.GetComponent_Dungeons_Item(entity)
 		if(item ~= nil) then 
-			if(ImGui.Button("Pick Up")) then 
+			if(ImGui.Button("Pick Up##" .. entity:GetID())) then 
 				Dungeons_NewPickupItemAction(playerEntity, entity)
 				return true
 			end
+			ImGui.SameLine()
 		end
+		ImGui.NewLine()
 	end
 	return false
 end

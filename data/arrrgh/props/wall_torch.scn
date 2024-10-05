@@ -1,0 +1,110 @@
+{
+ "AllEntities": [
+  {
+   "Dungeons_Inspectable": {
+    "InspectText": "A torch. It gives off a warm glow"
+   },
+   "Dungeons_Item": {
+    "Name": "Torch",
+    "OnPickup": "Dungeons_TorchOnPickup"
+   },
+   "Dungeons_WearableItem": {
+    "OnEquip": "Dungeons_TorchOnEquip",
+    "OnRemove": "Dungeons_TorchOnUnequip",
+    "Slot": {
+     "Str": "Offhand"
+    }
+   },
+   "ID": 0,
+   "Name": "Torch",
+   "Parent": 4294967295,
+   "Transform": {
+    "Orientation": {
+     "W": 0.9848078489303589,
+     "X": -0.1736481934785843,
+     "Y": -0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 2.0,
+     "Y": 2.5,
+     "Z": 1.5615150928497314
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 1,
+   "Name": "Visual Entity",
+   "Parent": 0,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "downloaded\\KayKit_DungeonRemastered_1.1_FREE\\Assets\\gltf\\torch.gltf"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Relative": true,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 2,
+   "Name": "Point Light",
+   "Parent": 0,
+   "PointLight": {
+    "Brightness": 24.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 0.21774190664291382,
+     "Z": 0.0
+    },
+    "Distance": 40.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 0.7625548839569092,
+     "Z": 0.0
+    },
+    "Relative": true,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  }
+ ],
+ "WorldName": "New World"
+}

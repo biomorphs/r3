@@ -218,12 +218,12 @@ void DungeonsOfArrrgh::SetEntityTilePosition(DungeonsWorldGridComponent& grid, R
 {
 	R3_PROF_EVENT();
 	auto tilePosComponent = w.GetComponent<DungeonsWorldGridPosition>(e);
-	if (!tilePosComponent)
+	if (!tilePosComponent && tileX != -1 && tileZ != -1)
 	{
 		w.AddComponent<DungeonsWorldGridPosition>(e);
 		tilePosComponent = w.GetComponent<DungeonsWorldGridPosition>(e);
 	}
-	if (tilePosComponent->GetPosition() != glm::uvec2(tileX,tileZ))
+	if (tilePosComponent && tilePosComponent->GetPosition() != glm::uvec2(tileX,tileZ))
 	{
 		bool isTileBlocker = w.GetComponent<DungeonsBlocksTileComponent>(e) != nullptr;
 		auto oldContents = grid.GetContents(tilePosComponent->GetPosition().x, tilePosComponent->GetPosition().y);
