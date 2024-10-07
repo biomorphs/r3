@@ -58,11 +58,31 @@ function Dungeons_CalculateMeleeDamageDealt(world, attackerActor)
 	return 1 + attackerStats.m_strength + itemStrength + itemMeleeDamage
 end
 
+function Dungeons_DropItemsOnDeath(gridcmp, world, entity)
+	-- monsters can drop loot 
+	local tilePosCmp = world.GetComponent_Dungeons_WorldGridPosition(entity)
+	local monsterCmp = world.GetComponent_Dungeons_Monster(entity)
+	if(monsterCmp ~= nil and tilePosCmp ~= nil) then 
+		local worldPos = vec3.new(tilePosCmp:GetPosition().x * Arrrgh_Globals.TileDimensions.x, 0, tilePosCmp:GetPosition().y * Arrrgh_Globals.TileDimensions.y)
+		worldPos.x = worldPos.x + (Arrrgh_Globals.TileDimensions.x * 0.5)
+		worldPos.z = worldPos.z + (Arrrgh_Globals.TileDimensions.y * 0.5)
+		worldPos.y = 0
+		local itemName = Dungeons_SpawnItem(gridcmp, "", tilePosCmp:GetPosition(), worldPos, true)
+		if(itemName ~= nil) then 
+			print(world:GetEntityName(entity) .. " dropped " .. itemName .. " on death.")
+		end
+	end
+end
+
 function Dungeons_OnActorDeath(world, entity)
 	local gridEntity = world:GetEntityByName('World Grid')
 	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
 	print(world:GetEntityName(entity), ' died!')
-	-- drop loot here!
+	
+	if(math.random() < 1.0) then 
+		Dungeons_DropItemsOnDeath(gridcmp, world, entity)
+	end
+
 	Arrrgh.SetEntityTilePosition(gridcmp, entity, -1, -1)	-- remove from grid
 	local allChildren = world:GetAllChildren(entity)
 	for c=1,#allChildren do 

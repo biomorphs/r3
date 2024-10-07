@@ -16,7 +16,8 @@ function Dungeons_FindSpecificItem(name)
 	return nil
 end
 
-function Dungeons_SpawnItem(gridcmp, itemName, tilePos, worldPos)
+-- returns name of item spawned or nothing
+function Dungeons_SpawnItem(gridcmp, itemName, tilePos, worldPos, spawnVisible)
 	local world = R3.ActiveWorld()
 	local spawnIndex = Dungeons_FindSpecificItem(itemName) 
 	if(spawnIndex == nil) then 
@@ -30,10 +31,12 @@ function Dungeons_SpawnItem(gridcmp, itemName, tilePos, worldPos)
 	end
 	Arrrgh.MoveEntitiesWorldspace(newEntities, worldPos)
 	Arrrgh.SetEntityTilePosition(gridcmp, rootEntity, tilePos.x, tilePos.y)
+
+	local makeVisible = spawnVisible or false -- inbisible by default
 	for e=1,#newEntities do 
 		local staticMesh = world.GetComponent_StaticMesh(newEntities[e])
 		if(staticMesh ~= nil) then 
-			staticMesh.m_shouldDraw = false
+			staticMesh.m_shouldDraw = makeVisible
 		end
 	end
 
@@ -50,4 +53,6 @@ function Dungeons_SpawnItem(gridcmp, itemName, tilePos, worldPos)
 			newStats.m_stats:add(DungeonsItemStat.new(statsList[stat][1], statsList[stat][2]))
 		end
 	end
+	
+	return item.m_name
 end

@@ -24,23 +24,23 @@ function ShowPlayerInventory()
 				ImGui.Text(itemCmp.m_name)
 				if(inspectable ~= nil) then 
 					ImGui.SameLine()
-					if(ImGui.Button("Inspect##" .. playerEntity:GetID())) then 
+					if(ImGui.Button("Inspect##" .. playerInventory.m_allItems[i]:GetID())) then 
 						Dungeons_NewInspectAction(playerInventory.m_allItems[i])
 						showInventory = false
 					end
 					ImGui.SameLine()
 				end
 				if(wearable ~= nil) then 
-					if(ImGui.Button("Equip##" .. playerEntity:GetID())) then 
+					if(ImGui.Button("Equip##" .. playerInventory.m_allItems[i]:GetID())) then 
 						Dungeons_NewEquipAction(playerEntity, playerInventory.m_allItems[i])
 						showInventory = false
 					end
 					ImGui.SameLine()
 				end
 				if(consumable ~= nil and ShouldConsumeItem(world, playerEntity, consumable)) then 
-					local consumeText = "Eat##" .. playerEntity:GetID()
+					local consumeText = "Eat##" .. playerInventory.m_allItems[i]:GetID()
 					if(consumable:IsDrink()) then 
-						consumeText = "Drink##" .. playerEntity:GetID()
+						consumeText = "Drink##" .. playerInventory.m_allItems[i]:GetID()
 					end
 					if(ImGui.Button(consumeText)) then
 						Dungeons_NewConsumeAction(playerEntity, playerInventory.m_allItems[i])
