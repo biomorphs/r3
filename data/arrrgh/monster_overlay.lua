@@ -12,7 +12,7 @@ function Dungeons_ShowMonsterOverlay()
 				local monsterCmp = world.GetComponent_Dungeons_Monster(tileEntities[tIndex])
 				local statsCmp = world.GetComponent_Dungeons_BaseActorStats(tileEntities[tIndex])
 				if(monsterCmp ~= nil and statsCmp ~= nil) then
-					local maxHP = Dungeons_CalculateMaxHP(statsCmp)
+					local maxHP = Dungeons_CalculateMaxHP(tileEntities[tIndex], statsCmp)
 					local currentHP = statsCmp.m_currentHP
 					local text = '' .. currentHP .. ' / ' .. maxHP
 					local keepOpen = true

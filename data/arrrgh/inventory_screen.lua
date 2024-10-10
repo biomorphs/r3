@@ -3,7 +3,7 @@
 -- filter out consume option if there is no effect
 function ShouldConsumeItem(world, playerEntity, consumable)
 	local playerStats = world.GetComponent_Dungeons_BaseActorStats(playerEntity)
-	if(consumable.m_hpOnUse > 0 and playerStats.m_currentHP >= Dungeons_CalculateMaxHP(playerStats)) then 
+	if(consumable.m_hpOnUse > 0 and playerStats.m_currentHP >= Dungeons_CalculateMaxHP(playerEntity, playerStats)) then 
 		return false
 	end
 	return true

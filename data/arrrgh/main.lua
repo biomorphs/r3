@@ -37,9 +37,11 @@ Arrrgh_Globals.ShowInventory = false	-- if true, a state change will happen
 --	add 2d pass to IM render
 --  add nice draw text API 
 
-function Dungeons_CalculateMaxHP(baseStatsCmp)
-	if(baseStatsCmp ~= nil) then 
-		return baseStatsCmp.m_baseMaxHP + (2 * baseStatsCmp.m_endurance)		-- 1 endurance = 2 max hp
+function Dungeons_CalculateMaxHP(entity, statsCmp)
+	local allStats = Arrrgh.GetAllEquippedItemStats(entity)
+	if(statsCmp ~= nil) then 
+		local endurance = statsCmp.m_endurance + (allStats[Tag.new("Endurance")] or 0)
+		return statsCmp.m_baseMaxHP + (2 * endurance)		-- 1 endurance = 2 max hp
 	else 
 		return 1
 	end
@@ -79,7 +81,7 @@ function Dungeons_OnActorDeath(world, entity)
 	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
 	print(world:GetEntityName(entity), ' died!')
 	
-	if(math.random() < 1.0) then 
+	if(math.random() < 0.5) then 
 		Dungeons_DropItemsOnDeath(gridcmp, world, entity)
 	end
 
@@ -94,7 +96,7 @@ end
 function Dungeons_HealActor(world, entity, hp)
 	local targetStats = world.GetComponent_Dungeons_BaseActorStats(entity)
 	if(targetStats ~= nil) then 
-		local maxHP = Dungeons_CalculateMaxHP(targetStats)
+		local maxHP = Dungeons_CalculateMaxHP(entity, targetStats)
 		if(targetStats.m_currentHP < maxHP) then
 			local newHP = math.max(0, targetStats.m_currentHP + hp)
 			print(world:GetEntityName(entity), ' was healed for  ', newHP - targetStats.m_currentHP, ' HP')
@@ -122,6 +124,12 @@ end
 function Dungeons_TakeDamage(world, entity, damageAmount)
 	local targetStats = world.GetComponent_Dungeons_BaseActorStats(entity)
 	if(targetStats ~= nil) then 
+		local equippedItemStats = Arrrgh.GetAllEquippedItemStats(entity)
+		local itemArmour = equippedItemStats[Tag.new("Armour")] or 0
+
+		-- scale damage amount by armour value 
+		damageAmount = math.max(0,damageAmount - itemArmour)
+
 		print(world:GetEntityName(entity), ' takes ', damageAmount, ' damage')
 		targetStats.m_currentHP = math.max(0, targetStats.m_currentHP - damageAmount)
 		if(targetStats.m_currentHP == 0) then 
@@ -153,7 +161,7 @@ function Dungeons_SpawnPlayer()
 	baseStats.m_baseMaxHP = 10
 	baseStats.m_strength = 0
 	baseStats.m_endurance = 0
-	baseStats.m_currentHP = Dungeons_CalculateMaxHP(baseStats)
+	baseStats.m_currentHP = Dungeons_CalculateMaxHP(playerEntity[1], baseStats)
 	baseStats.m_baseHitChance = 75
 
 	local equipment = world.GetComponent_Dungeons_EquippedItems(playerEntity[1])
@@ -380,6 +388,33 @@ function Dungeons_GetMeleeAttackTarget(world, gridcmp, playerEntity, playerTile,
 	return nil
 end
 
+function Dungeons_KeyboardChooseActions(world, gridcmp, playerEntity, playerTile)
+	local targetTile = nil
+	if(R3.IsKeyDown("KEY_w")) then 
+		targetTile = uvec2.new(playerTile.x, playerTile.y + 1)
+	elseif(R3.IsKeyDown("KEY_s")) then 
+		targetTile = uvec2.new(playerTile.x, playerTile.y - 1)
+	elseif(R3.IsKeyDown("KEY_d")) then 
+		targetTile = uvec2.new(playerTile.x - 1, playerTile.y)
+	elseif(R3.IsKeyDown("KEY_a")) then 
+		targetTile = uvec2.new(playerTile.x + 1, playerTile.y)
+	else
+		return false
+	end
+	local meleeTarget = Dungeons_GetMeleeAttackTarget(world, gridcmp, playerEntity, playerTile, targetTile)
+	if(meleeTarget ~= nil) then 
+		Dungeons_NewMeleeAttackAction(playerEntity, meleeTarget)
+		return true
+	elseif(gridcmp:IsTilePassable(targetTile.x, targetTile.y)) then
+		local foundPath = gridcmp:CalculatePath(playerTile, targetTile, false)	-- can we walk to this tile?
+		if(#foundPath >= 2 and (#foundPath - 2) < Dungeons_GetActionPointsRemaining())  then
+			Dungeons_NewWalkAction(playerEntity, foundPath)
+			return true
+		end
+	end
+	return false
+end
+
 -- player action ui happens in variable update
 function Dungeons_ChoosePlayerAction()
 	local world = R3.ActiveWorld()
@@ -394,6 +429,7 @@ function Dungeons_ChoosePlayerAction()
 		local playerTile = Arrrgh.GetEntityTilePosition(playerEntity)
 		local mouseTile = Arrrgh.GetTileUnderMouseCursor(gridcmp)
 		Dungeons_UpdateMouseState(mouseTile)
+		Dungeons_KeyboardChooseActions(world, gridcmp, playerEntity, playerTile)
 		if(playerTile ~= nil and mouseTile ~= nil) then
 			Dungeons_ShowAvailableActions(world,gridcmp,playerEntity, playerTile,mouseTile)
 			if((playerTile.x ~= mouseTile.x or playerTile.y ~= mouseTile.y)) then

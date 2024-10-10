@@ -162,7 +162,7 @@ namespace R3
 				selectCmd->m_deselectAll = true;
 				m_cmds->Push(std::move(selectCmd));
 			});
-			std::string deleteStr = m_selectedEntities.size() == 1 ? "Deleted selected entity" : "Delete selected entities";
+			std::string deleteStr = m_selectedEntities.size() == 1 ? "Delete selected entity" : "Delete selected entities";
 			contextMenu.AddItem(deleteStr, [this]() {
 				auto deleteCmd = std::make_unique<WorldEditorDeleteEntitiesCmd>(this);
 				m_cmds->Push(std::move(deleteCmd));

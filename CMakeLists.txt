@@ -16,9 +16,9 @@ set(nlohmann-json_IMPLICIT_CONVERSIONS OFF)
 # Enable all safety checks in sol 
 add_compile_definitions(SOL_ALL_SAFETIES_ON=1)
 
-# Enable /bigobj for msvc builds (sol adds a load of templates)
 if (MSVC)
-  add_compile_options(/bigobj)
+  add_compile_options(/bigobj)	# Enable /bigobj for msvc builds (sol adds a load of templates)
+  add_compile_options(/MP)		# Multi-processor compilation (off by default)
 endif ()
 
 # vcpkg dependencies

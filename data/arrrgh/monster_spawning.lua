@@ -56,7 +56,7 @@ function Dungeons_SpawnMonster(gridcmp, monsterType, tilePos, worldPos)
 	baseStats.m_baseMaxHP = Arrrgh_Globals.Dungeons_MonsterSpawnTable[spawnIndex][3].MaxHP
 	baseStats.m_strength = Arrrgh_Globals.Dungeons_MonsterSpawnTable[spawnIndex][3].Strength
 	baseStats.m_endurance = Arrrgh_Globals.Dungeons_MonsterSpawnTable[spawnIndex][3].Endurance
-	baseStats.m_currentHP = Dungeons_CalculateMaxHP(baseStats)
+	baseStats.m_currentHP = Dungeons_CalculateMaxHP(rootEntity, baseStats)
 	baseStats.m_baseHitChance = Arrrgh_Globals.Dungeons_MonsterSpawnTable[spawnIndex][3].BaseHitChance
 	Arrrgh.SetEntityTilePosition(gridcmp, rootEntity, tilePos.x, tilePos.y)
 

@@ -147,8 +147,8 @@ function Generator_PathFromRoomToRoom(floorTagStr, pathChance)	-- chance = 0 to 
 									for pathNode=1,#foundPath do
 										grid:Fill(foundPath[pathNode], uvec2.new(1, 1), floorTags, true, false)
 									end
+									Dungeons_Generator.Yield(0.0)
 								end
-								Dungeons_Generator.Yield(0.0)
 							end
 						end
 					end

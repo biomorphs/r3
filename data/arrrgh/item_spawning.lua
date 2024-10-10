@@ -5,6 +5,9 @@ Arrrgh_Globals.Dungeons_ItemSpawnTable = {
 	{ 'Rusty Dagger', 'arrrgh/items/rusty_dagger.scn', { { "Melee Damage", 1} } },
 	{ 'Dagger', 'arrrgh/items/dagger.scn', { { "Melee Damage", 2} } },
 	{ 'Sharp Dagger', 'arrrgh/items/dagger.scn', { { "Melee Damage", 3} } },
+	{ 'Torn Leather Body Armour', 'arrrgh/items/body_armour_leather_torn.scn', { { "Armour", 1} } },
+	{ 'Leather Body Armour', 'arrrgh/items/body_armour_leather.scn', { { "Armour", 2} } },
+	{ 'Armour of God', 'arrrgh/items/body_armour_leather.scn', { { "Armour", 3}, { "Strength", 2}, { "Endurance", 2} } }
 }
 
 function Dungeons_FindSpecificItem(name)
@@ -32,7 +35,7 @@ function Dungeons_SpawnItem(gridcmp, itemName, tilePos, worldPos, spawnVisible)
 	Arrrgh.MoveEntitiesWorldspace(newEntities, worldPos)
 	Arrrgh.SetEntityTilePosition(gridcmp, rootEntity, tilePos.x, tilePos.y)
 
-	local makeVisible = spawnVisible or false -- inbisible by default
+	local makeVisible = spawnVisible or false -- invisible by default
 	for e=1,#newEntities do 
 		local staticMesh = world.GetComponent_StaticMesh(newEntities[e])
 		if(staticMesh ~= nil) then 

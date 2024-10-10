@@ -21,22 +21,31 @@ function Dungeons_EnemyInMeleeRange(monsterCmp, monsterTile, enemyTile)
 	return distance <= 1
 end
 
+function UpdateMonsterVision(world, monsters)
+	for monster=1,#monsters do 
+		-- first update vision of each monster in case something changed in the world
+		local monsterCmp = world.GetComponent_Dungeons_Monster(monsters[monster])
+		local visCmp = world.GetComponent_DungeonsVisionComponent(monsters[monster])
+		if(visCmp ~= nil) then 
+			visCmp.m_needsUpdate = true
+		end
+	end
+	Dungeons_MonsterAIYield(0)	-- wait for vision to update
+end
+
 -- runs as coroutine
 function Dungeons_MonsterAIDoTurn()
-	print('monsters are thinking...')
 	local world = R3.ActiveWorld()
 	local gridEntity = world:GetEntityByName('World Grid')
 	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
 	local playerEntity = world:GetEntityByName('PlayerActor')
 	local playerTile = Arrrgh.GetEntityTilePosition(playerEntity)
 	local allMonsters = world:GetOwnersOfComponent1('Dungeons_Monster')
+	UpdateMonsterVision(world,allMonsters)	-- first update vision of each monster in case something changed in the world
 	for monster=1,#allMonsters do 
-		-- first update vision of each monster in case something changed in the world
-		local monsterCmp = World.GetComponent_Dungeons_Monster(allMonsters[monster])
+		local monsterCmp = world.GetComponent_Dungeons_Monster(allMonsters[monster])
 		local visCmp = world.GetComponent_DungeonsVisionComponent(allMonsters[monster])
 		if(visCmp ~= nil) then 
-			visCmp.m_needsUpdate = true
-			Dungeons_MonsterAIYield(0)	-- wait for vision to update
 			local seesPlayer = false
 			for index,tilePos in pairs(visCmp.m_visibleTiles) do
 				if(tilePos.x == playerTile.x and tilePos.y == playerTile.y) then 
@@ -54,9 +63,9 @@ function Dungeons_MonsterAIDoTurn()
 						Dungeons_NewWalkAction(allMonsters[monster], foundPath, 2)	
 					end
 				end
+				Dungeons_MonsterAIYield(0)
 			end
 		end
-		Dungeons_MonsterAIYield(0)
 	end
 end
 
