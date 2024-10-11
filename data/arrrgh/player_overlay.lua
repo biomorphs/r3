@@ -1,14 +1,13 @@
 
 function Dungeons_ShowPlayerOverlay()
 	local world = R3.ActiveWorld()
-	local playerEntity = world:GetEntityByName('PlayerActor')
-	local playerStats = world.GetComponent_Dungeons_BaseActorStats(playerEntity)
-	local playerEquipment = world.GetComponent_Dungeons_EquippedItems(playerEntity)
+	local playerStats = world.GetComponent_Dungeons_BaseActorStats(Arrrgh_Globals.PlayerEntity)
+	local playerEquipment = world.GetComponent_Dungeons_EquippedItems(Arrrgh_Globals.PlayerEntity)
 	if(playerStats ~= nil and playerEquipment ~= nil) then 
 		local keepOpen = true
-		local allStats = Arrrgh.GetAllEquippedItemStats(playerEntity)
+		local allStats = Arrrgh.GetAllEquippedItemStats(Arrrgh_Globals.PlayerEntity)
 		ImGui.Begin("Player Status", keepOpen)
-		local maxHP = Dungeons_CalculateMaxHP(playerEntity, playerStats)
+		local maxHP = Dungeons_CalculateMaxHP(Arrrgh_Globals.PlayerEntity, playerStats)
 		local currentHP = playerStats.m_currentHP
 		local text = '' .. currentHP .. ' / ' .. maxHP
 		ImGui.ProgressBar(text, currentHP, maxHP, vec2.new(128,24))

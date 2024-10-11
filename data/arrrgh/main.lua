@@ -22,6 +22,7 @@ Arrrgh_Globals.GameState = nil
 Arrrgh_Globals.ActionQueue = Fastqueue.new()
 Arrrgh_Globals.ShowActionsUi = nil	-- set to a uvec2 tile coord when open
 Arrrgh_Globals.ShowInventory = false	-- if true, a state change will happen
+Arrrgh_Globals.PlayerEntity = EntityHandle.new()
 
 -- todo 
 -- make tile generator rules data driven 
@@ -236,8 +237,7 @@ function Dungeons_OnTurnBegin()
 	if(Arrrgh_Globals.CurrentTurn.PlayerIndex == 0) then 
 		-- focus on player on turn start
 		local world = R3.ActiveWorld()
-		local playerEntity = world:GetEntityByName('PlayerActor')
-		local playerTransform = world.GetComponent_Transform(playerEntity)
+		local playerTransform = world.GetComponent_Transform(Arrrgh_Globals.PlayerEntity)
 		if(playerTransform ~= nil) then
 			Dungeons_CameraLookAt(playerTransform:GetPosition())
 		end
@@ -285,14 +285,15 @@ function Dungeons_GameTickFixed(e)
 		Dungeons_OnGameStart()
 	end
 	if(Arrrgh_Globals.GameState == 'start') then 
-		-- if player entity already exists, assume a script reload, don't try to respawn the world!
 		local world = R3.ActiveWorld()
-		if(world:IsHandleValid(world:GetEntityByName('PlayerActor')) == false) then
+		local playerEntity = world:GetEntityByName('PlayerActor')
+		if(world:IsHandleValid(playerEntity) == false) then		-- if player already exists, assume a script reload
 			Dungeons_SpawnPlayer()
 			Dungeons_SpawnMonsters()
 			Dungeons_SpawnItems()
 			Dungeons_SpawnProps()
 		end
+		Arrrgh_Globals.PlayerEntity = world:GetEntityByName('PlayerActor')
 		Arrrgh_Globals.GameState = 'startturn'
 	end
 	if(Arrrgh_Globals.GameState == 'startturn') then 
@@ -327,7 +328,6 @@ end
 
 -- returns true if an action was picked
 function Dungeons_ShowAvailableEntityActions(world, entity, playerTile, targetTile)
-	local playerEntity = world:GetEntityByName('PlayerActor')
 	if(Dungeons_InTouchingDistance(playerTile, targetTile)) then 
 		local inspectable = world.GetComponent_Dungeons_Inspectable(entity)
 		if(inspectable ~= nil) then 
@@ -340,7 +340,7 @@ function Dungeons_ShowAvailableEntityActions(world, entity, playerTile, targetTi
 		local item = world.GetComponent_Dungeons_Item(entity)
 		if(item ~= nil) then 
 			if(ImGui.Button("Pick Up##" .. entity:GetID())) then 
-				Dungeons_NewPickupItemAction(playerEntity, entity)
+				Dungeons_NewPickupItemAction(Arrrgh_Globals.PlayerEntity, entity)
 				return true
 			end
 			ImGui.SameLine()
@@ -424,23 +424,22 @@ function Dungeons_ChoosePlayerAction()
 	local world = R3.ActiveWorld()
 	local gridEntity = world:GetEntityByName('World Grid')
 	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
-	local playerEntity = world:GetEntityByName('PlayerActor')
-	local playerTransform = world.GetComponent_Transform(playerEntity)
+	local playerTransform = world.GetComponent_Transform(Arrrgh_Globals.PlayerEntity)
 	if(R3.WasKeyReleased('KEY_i')) then 
 		Arrrgh_Globals.ShowInventory = true	-- handle input in variable update, state change happens during fixed
 	end
 	if(gridcmp ~= nil and playerTransform ~= nil) then 
-		local playerTile = Arrrgh.GetEntityTilePosition(playerEntity)
+		local playerTile = Arrrgh.GetEntityTilePosition(Arrrgh_Globals.PlayerEntity)
 		local mouseTile = Arrrgh.GetTileUnderMouseCursor(gridcmp)
 		Dungeons_UpdateMouseState(mouseTile)
-		Dungeons_KeyboardChooseActions(world, gridcmp, playerEntity, playerTile)
+		Dungeons_KeyboardChooseActions(world, gridcmp, Arrrgh_Globals.PlayerEntity, playerTile)
 		if(playerTile ~= nil and mouseTile ~= nil) then
-			Dungeons_ShowAvailableActions(world,gridcmp,playerEntity, playerTile,mouseTile)
+			Dungeons_ShowAvailableActions(world,gridcmp,Arrrgh_Globals.PlayerEntity, playerTile,mouseTile)
 			if((playerTile.x ~= mouseTile.x or playerTile.y ~= mouseTile.y)) then
-				local meleeTarget = Dungeons_GetMeleeAttackTarget(world, gridcmp, playerEntity, playerTile, mouseTile)
+				local meleeTarget = Dungeons_GetMeleeAttackTarget(world, gridcmp, Arrrgh_Globals.PlayerEntity, playerTile, mouseTile)
 				if(meleeTarget ~= nil) then 
 					if(Dungeons_TileWasLeftClicked(mouseTile)) then
-						Dungeons_NewMeleeAttackAction(playerEntity, meleeTarget)
+						Dungeons_NewMeleeAttackAction(Arrrgh_Globals.PlayerEntity, meleeTarget)
 						Arrrgh_Globals.ShowActionsUi = nil
 					end
 				else
@@ -449,7 +448,7 @@ function Dungeons_ChoosePlayerAction()
 						if(#foundPath >= 2 and (#foundPath - 2) < Dungeons_GetActionPointsRemaining())  then
 							Arrrgh.DebugDrawTiles(gridcmp, foundPath)
 							if(Dungeons_TileWasLeftClicked(mouseTile)) then
-								Dungeons_NewWalkAction(playerEntity, foundPath)
+								Dungeons_NewWalkAction(Arrrgh_Globals.PlayerEntity, foundPath)
 								Arrrgh_Globals.ShowActionsUi = nil
 							end
 						end

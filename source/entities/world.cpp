@@ -40,7 +40,7 @@ namespace Entities
 		return "";
 	}
 
-	EntityHandle World::GetEntityByName(std::string name)
+	EntityHandle World::GetEntityByName(std::string_view name)
 	{
 		R3_PROF_EVENT();
 		EntityHandle foundEntity;
