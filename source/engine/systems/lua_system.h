@@ -18,6 +18,7 @@ namespace R3
 		static std::string_view GetName() { return "LuaSystem"; }
 		virtual void RegisterTickFns();
 
+		void ReloadScripts();	// actual reload is deferred until variable update
 		void SetWorldScriptsActive(bool v);
 		bool GetWorldScriptsActive();
 
@@ -37,6 +38,7 @@ namespace R3
 		void RegisterFunction(std::string_view name, Fn fn, std::string_view nameSpace = "R3");
 
 	private:
+		void UnloadCachedPackages();	// all packages included via require() will be marked for reload 
 		bool ShowGui();
 		void RegisterBuiltinTypes();
 		bool RunGC();
@@ -45,6 +47,7 @@ namespace R3
 		bool InitialiseGlobalState();
 		bool m_runActiveWorldScripts = false;
 		bool m_showGui = false;
+		bool m_reloadAllScripts = false;
 		Mutex m_globalStateMutex;
 		std::unique_ptr<sol::state> m_globalState;
 	};

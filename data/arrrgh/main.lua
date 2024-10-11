@@ -285,10 +285,14 @@ function Dungeons_GameTickFixed(e)
 		Dungeons_OnGameStart()
 	end
 	if(Arrrgh_Globals.GameState == 'start') then 
-		Dungeons_SpawnPlayer()
-		Dungeons_SpawnMonsters()
-		Dungeons_SpawnItems()
-		Dungeons_SpawnProps()
+		-- if player entity already exists, assume a script reload, don't try to respawn the world!
+		local world = R3.ActiveWorld()
+		if(world:IsHandleValid(world:GetEntityByName('PlayerActor')) == false) then
+			Dungeons_SpawnPlayer()
+			Dungeons_SpawnMonsters()
+			Dungeons_SpawnItems()
+			Dungeons_SpawnProps()
+		end
 		Arrrgh_Globals.GameState = 'startturn'
 	end
 	if(Arrrgh_Globals.GameState == 'startturn') then 

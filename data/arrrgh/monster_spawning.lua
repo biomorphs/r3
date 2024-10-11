@@ -10,8 +10,11 @@ end
 
 -- type string, scene path, base stats
 Arrrgh_Globals.Dungeons_MonsterSpawnTable = {
-	{ 'Bat', 'arrrgh/actors/bat.scn', Dungeons_MonsterBaseStats(1, 5, 0, 0, 60) },
-	{ 'Zombie', 'arrrgh/actors/zombie.scn', Dungeons_MonsterBaseStats(1, 10, 1, 2, 30) }
+	{ 'Bat', 'arrrgh/actors/bat.scn', Dungeons_MonsterBaseStats(1, 5, 0, 0, 50) },
+	{ 'Rabid Bat', 'arrrgh/actors/bat.scn', Dungeons_MonsterBaseStats(2, 7, 1, 1, 50) },
+	{ 'Weak Zombie', 'arrrgh/actors/zombie.scn', Dungeons_MonsterBaseStats(1, 10, 0, 1, 20) },
+	{ 'Zombie', 'arrrgh/actors/zombie.scn', Dungeons_MonsterBaseStats(1, 10, 1, 1, 25) },
+	{ 'Hulking Zombie', 'arrrgh/actors/zombie.scn', Dungeons_MonsterBaseStats(2, 12, 2, 2, 30) }
 }
 
 function Dungeons_FindSpecificMonster(typeStr)

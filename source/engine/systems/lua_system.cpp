@@ -233,6 +233,10 @@ namespace R3
 		if (m_showGui)
 		{
 			ImGui::Begin("Lua");
+			if (ImGui::Button("Reload all"))
+			{
+				ReloadScripts();
+			}
 			ImGui::Text(m_runActiveWorldScripts ? "World Scripts Active" : "World Scripts Deactivated");
 			ScopedTryLock lock(m_globalStateMutex);
 			if (lock.IsLocked())
@@ -384,9 +388,35 @@ namespace R3
 		});
 	}
 
+	void LuaSystem::ReloadScripts()
+	{
+		m_reloadAllScripts = true;
+	}
+
+	void LuaSystem::UnloadCachedPackages()
+	{
+		R3_PROF_EVENT();
+		ScopedLock lockState(m_globalStateMutex);
+		const auto package = (*m_globalState)["package"];
+		sol::table loaded = package["loaded"];
+		loaded.for_each([&loaded](sol::object key, sol::object value) {
+			if (key.get_type() == sol::type::string && value.get_type() == sol::type::boolean)
+			{
+				auto keyStr = key.as<std::string>();
+				LogInfo("Unloading lua package {}", keyStr);
+				loaded[keyStr] = nullptr;	// does this set them to nil?
+			}
+		});
+	}
+
 	bool LuaSystem::RunVariableUpdateScripts()
 	{
 		R3_PROF_EVENT();
+		if (m_reloadAllScripts)
+		{
+			UnloadCachedPackages();
+		}
+
 		auto entities = Systems::GetSystem<Entities::EntitySystem>();
 		auto forEachScriptCmp = [this](const Entities::EntityHandle& e, LuaScriptComponent& lc) {
 			if (lc.m_needsInputPopulate)
@@ -413,9 +443,9 @@ namespace R3
 				}
 				lc.m_needsInputPopulate = false;
 			}
-			if (m_runActiveWorldScripts)
+			if (m_reloadAllScripts || m_runActiveWorldScripts)
 			{
-				if (lc.m_needsRecompile)
+				if (m_reloadAllScripts || lc.m_needsRecompile)
 				{
 					lc.m_needsRecompile = false;
 					lc.m_onFixedUpdate.m_fn = LoadScriptAndGetEntrypoint(*m_globalState, lc.m_onFixedUpdate.m_sourcePath, lc.m_onFixedUpdate.m_entryPointName);
@@ -447,6 +477,7 @@ namespace R3
 			ScopedLock lockState(m_globalStateMutex);
 			Entities::Queries::ForEach<LuaScriptComponent>(entities->GetActiveWorld(), forEachScriptCmp);
 		}
+		m_reloadAllScripts = false;
 		return true;
 	}
 
