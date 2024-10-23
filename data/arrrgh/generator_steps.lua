@@ -98,27 +98,31 @@ end
 
 function Generator_FindDoor(roomPos, roomSize)
 	local doorPos = {}	-- make a door
-	local wallForDoor = math.random(0, 3)
+	local wallForDoor = R3.RandomInt(0, 3)
 	if(wallForDoor == 0) then -- top
-		doorPos = uvec2.new(math.random(roomPos.x + 1, roomPos.x + roomSize.x - 2), roomPos.y)
+		doorPos = uvec2.new(R3.RandomInt(roomPos.x + 1, roomPos.x + roomSize.x - 2), roomPos.y)
 	elseif(wallForDoor == 1) then -- right
-		doorPos = uvec2.new(roomPos.x + roomSize.x - 1, math.random(roomPos.y + 1, roomPos.y + roomSize.y - 2))
+		doorPos = uvec2.new(roomPos.x + roomSize.x - 1, R3.RandomInt(roomPos.y + 1, roomPos.y + roomSize.y - 2))
 	elseif(wallForDoor == 2) then -- bottom
-		doorPos = uvec2.new(math.random(roomPos.x + 1, roomPos.x + roomSize.x - 2), roomPos.y + roomSize.y - 1)
+		doorPos = uvec2.new(R3.RandomInt(roomPos.x + 1, roomPos.x + roomSize.x - 2), roomPos.y + roomSize.y - 1)
 	elseif(wallForDoor == 3) then -- left
-		doorPos = uvec2.new(roomPos.x, math.random(roomPos.y + 1, roomPos.y + roomSize.y - 2))
+		doorPos = uvec2.new(roomPos.x, R3.RandomInt(roomPos.y + 1, roomPos.y + roomSize.y - 2))
 	end
 	return doorPos
 end
 
 -- position/size must be uvec2
-function Generator_SimpleRoom(position, size, wallTagStr, floorTagStr)
+function Generator_SimpleRoom(position, size, wallTagStr, floorTagStr, carpetTagStr)
 	return {
 		Run = function(grid, context)
 			local wallTags = TileTagset.new(wallTagStr)
 			local floorTags = TileTagset.new(floorTagStr)
+			local carpetTags = TileTagset.new(carpetTagStr)
 			grid:Fill(position, size, wallTags, false, true)	-- walls
 			grid:Fill(uvec2.new(position.x + 1, position.y + 1), uvec2.new(size.x-2, size.y - 2), floorTags, true, false)	-- floor
+			if(size.x > 4 and size.y > 4) then 
+				grid:Fill(uvec2.new(position.x + 2, position.y + 2), uvec2.new(size.x-4, size.y - 4), carpetTags, true, false) -- carpet
+			end
 			-- todo, check if a path to spawn pos is possible
 			local doorPos = Generator_FindDoor(position, size)
 			if(doorPos ~= nil) then
@@ -140,7 +144,7 @@ function Generator_PathFromRoomToRoom(floorTagStr, pathChance)	-- chance = 0 to 
 					for otherRoom=1,roomCount do 
 						if(otherRoom ~= room) then
 							for otherEntrance=1,#context.Rooms[otherRoom].Entrances do
-								if(math.random() < pathChance) then
+								if(R3.RandomFloat(0.0,1.0) < pathChance) then
 									local fromPos = context.Rooms[room].Entrances[entrance]
 									local toPos = context.Rooms[otherRoom].Entrances[otherEntrance]
 									local foundPath = grid:CalculatePath(fromPos, toPos, false)

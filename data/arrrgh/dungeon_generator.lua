@@ -33,8 +33,8 @@ function Dungeons_BasicGenerator()
 	local rooms = {}
 	local attempts = 0
 	while(attempts < 1000 and #rooms < roomCount) do
-		local roomPos = uvec2.new(math.random(3,Arrrgh_Globals.WorldMaxSize.x - 7),math.random(3,Arrrgh_Globals.WorldMaxSize.y - 7))
-		local roomSize = uvec2.new(math.random(4,7),math.random(4,7))
+		local roomPos = uvec2.new(R3.RandomInt(3,Arrrgh_Globals.WorldMaxSize.x - 7),R3.RandomInt(3,Arrrgh_Globals.WorldMaxSize.y - 7))
+		local roomSize = uvec2.new(R3.RandomInt(4,7),R3.RandomInt(4,7))
 		if(Dungeons_DoRoomsOverlap(roomPos,roomSize,rooms,1) == false) then
 			table.insert(rooms, {roomPos, roomSize})
 		end
@@ -47,29 +47,29 @@ function Dungeons_BasicGenerator()
 	for r=1,#rooms do 
 		local roomPos = rooms[r][1]
 		local roomSize = rooms[r][2]
-		Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Add Room", Generator_SimpleRoom(roomPos, roomSize, "wall,floor,exterior", "floor,interior"))
+		Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Add Room", Generator_SimpleRoom(roomPos, roomSize, "wall,floor,exterior", "floor,interior", "floor,interior,carpet"))
 		for m=1,4 do 
-			if(r > 1 and math.random() < 0.33) then	-- add monster spawners in each room but the first
-				local spawnX = math.random(1, roomSize.x-2)
-				local spawnY = math.random(1, roomSize.y-2)
+			if(r > 1 and R3.RandomFloat(0.0,1.0) < 0.33) then	-- add monster spawners in each room but the first
+				local spawnX = R3.RandomInt(1, roomSize.x-2)
+				local spawnY = R3.RandomInt(1, roomSize.y-2)
 				local monsterPos = uvec2.new(roomPos.x + spawnX, roomPos.y + spawnY)
 				Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Add monster spawner", Generator_SpawnMonster("", monsterPos))
 			end
 		end
-		if(math.random() < 0.75) then -- add an item in each room
-			local spawnX = math.random(1, roomSize.x-2)
-			local spawnY = math.random(1, roomSize.y-2)
+		if(R3.RandomFloat(0.0,1.0) < 0.75) then -- add an item in each room
+			local spawnX = R3.RandomInt(1, roomSize.x-2)
+			local spawnY = R3.RandomInt(1, roomSize.y-2)
 			local itemPos = uvec2.new(roomPos.x + spawnX, roomPos.y + spawnY)
 			Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Add item", Generator_SpawnItem("", itemPos))
 		end
-		if(math.random() < 0.9) then -- add a torch to each room
-			local spawnX = math.random(1, roomSize.x-2)
+		if(R3.RandomFloat(0.0,1.0) < 0.9) then -- add a torch to each room
+			local spawnX = R3.RandomInt(1, roomSize.x-2)
 			local spawnY = roomSize.y - 1
 			local itemPos = uvec2.new(roomPos.x + spawnX, roomPos.y + spawnY)
 			Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Add torch", Generator_AddProp("Torch", itemPos, 0.0))
 		end
-		if(math.random() < 0.3) then -- add a bookshelf to each room
-			local spawnX = math.random(1, roomSize.x-2)
+		if(R3.RandomFloat(0.0,1.0) < 0.3) then -- add a bookshelf to each room
+			local spawnX = R3.RandomInt(1, roomSize.x-2)
 			local spawnY = roomSize.y - 1
 			local itemPos = uvec2.new(roomPos.x + spawnX, roomPos.y + spawnY)
 			Dungeons_Generator.AddStep(Arrrgh_Globals.WorldGenerator, "Add Bookshelves", Generator_AddProp("Bookshelves", itemPos, 0.0))
@@ -82,13 +82,15 @@ end
 
 -- main entry point, called from variable update
 -- generator runs as a coroutine
-function Dungeons_GenerateWorld(e)
+function Dungeons_GenerateWorld(e, seed)
 	local world = R3.ActiveWorld()
 	local gridEntity = world:GetEntityByName('World Grid')
 	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
 	local scriptcmp = world.GetComponent_LuaScript(e)
 	if(scriptcmp ~= nil and gridcmp ~= nil) then
 		if(Arrrgh_Globals.WorldGenerator == nil) then 
+			local newSeed = seed or 0
+			R3.SetGlobalSeed(newSeed)
 			gridcmp:ResizeGrid(uvec2.new(Arrrgh_Globals.WorldMaxSize.x,Arrrgh_Globals.WorldMaxSize.y))
 			Arrrgh_Globals.WorldGenerator = Dungeons_Generator.new(gridEntity)
 			Dungeons_BasicGenerator()

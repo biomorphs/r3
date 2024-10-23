@@ -1,0 +1,78 @@
+{
+ "AllEntities": [
+  {
+   "ID": 0,
+   "Name": "CarpetFloor",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 0
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "downloaded\\textures\\coarse-loose-fabric-bl\\coarse-loose-fabric_ao.png"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.1346253901720047,
+       "Y": 0.3709677457809448,
+       "Z": 0.18799303472042084
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\textures\\coarse-loose-fabric-bl\\coarse-loose-fabric_albedo.png"
+      },
+      "HeightmapTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "downloaded\\textures\\coarse-loose-fabric-bl\\coarse-loose-fabric_metallic.png"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\textures\\coarse-loose-fabric-bl\\coarse-loose-fabric_normal-ogl.png"
+      },
+      "ParalaxAmount": 0.07999999821186066,
+      "ParalaxShadows": 0,
+      "Roughness": 0.3999999761581421,
+      "RoughnessTex": {
+       "PathName": "downloaded\\textures\\coarse-loose-fabric-bl\\coarse-loose-fabric_roughness.png"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 2.0,
+     "Y": 0.0,
+     "Z": 2.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 4.0,
+     "Y": 0.10000000149011612,
+     "Z": 4.0
+    }
+   }
+  }
+ ],
+ "WorldName": "New World"
+}

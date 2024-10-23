@@ -6,6 +6,7 @@
 #include "entities/world.h"
 #include "entities/queries.h"
 #include "core/profiler.h"
+#include "core/random.h"
 #include "core/file_io.h"
 #include <cassert>
 #include <imgui.h>
@@ -385,6 +386,15 @@ namespace R3
 		});
 		RegisterFunction("LogError", [](std::string_view txt) {
 			LogError(txt);
+		});
+		RegisterFunction("SetGlobalSeed", [](uint32_t v) {
+			Random::SetGlobalSeed(v);
+		});
+		RegisterFunction("RandomFloat", [](float minV, float maxV) {
+			return Random::GetFloat(minV, maxV);
+		});
+		RegisterFunction("RandomInt", [](int32_t minV, int32_t maxV) {
+			return Random::GetInt(minV, maxV);
 		});
 	}
 

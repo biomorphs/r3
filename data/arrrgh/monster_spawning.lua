@@ -13,8 +13,7 @@ Arrrgh_Globals.Dungeons_MonsterSpawnTable = {
 	{ 'Bat', 'arrrgh/actors/bat.scn', Dungeons_MonsterBaseStats(1, 5, 0, 0, 50) },
 	{ 'Rabid Bat', 'arrrgh/actors/bat.scn', Dungeons_MonsterBaseStats(2, 7, 1, 1, 50) },
 	{ 'Weak Zombie', 'arrrgh/actors/zombie.scn', Dungeons_MonsterBaseStats(1, 10, 0, 1, 20) },
-	{ 'Zombie', 'arrrgh/actors/zombie.scn', Dungeons_MonsterBaseStats(1, 10, 1, 1, 25) },
-	{ 'Hulking Zombie', 'arrrgh/actors/zombie.scn', Dungeons_MonsterBaseStats(2, 12, 2, 2, 30) }
+	{ 'Zombie', 'arrrgh/actors/zombie.scn', Dungeons_MonsterBaseStats(1, 10, 1, 1, 25) }
 }
 
 function Dungeons_FindSpecificMonster(typeStr)
@@ -40,7 +39,7 @@ function Dungeons_SpawnMonster(gridcmp, monsterType, tilePos, worldPos)
 	local world = R3.ActiveWorld()
 	local spawnIndex = Dungeons_FindSpecificMonster(monsterType) 
 	if(spawnIndex == nil) then 
-		spawnIndex = math.random(1, #Arrrgh_Globals.Dungeons_MonsterSpawnTable) 
+		spawnIndex = R3.RandomInt(1, #Arrrgh_Globals.Dungeons_MonsterSpawnTable) 
 	end
 	local newEntities = world:ImportScene(Arrrgh_Globals.Dungeons_MonsterSpawnTable[spawnIndex][2])
 	local rootEntity = Dungeons_GetFirstRootEntity(world, newEntities)
@@ -62,6 +61,12 @@ function Dungeons_SpawnMonster(gridcmp, monsterType, tilePos, worldPos)
 	baseStats.m_currentHP = Dungeons_CalculateMaxHP(rootEntity, baseStats)
 	baseStats.m_baseHitChance = Arrrgh_Globals.Dungeons_MonsterSpawnTable[spawnIndex][3].BaseHitChance
 	Arrrgh.SetEntityTilePosition(gridcmp, rootEntity, tilePos.x, tilePos.y)
+	
+	local monsterComponent = world.GetComponent_Dungeons_Monster(rootEntity)
+	if(monsterComponent ~= nil) then 
+		monsterComponent.m_name = Arrrgh_Globals.Dungeons_MonsterSpawnTable[spawnIndex][1]
+	end
+	world:SetEntityName(rootEntity, Arrrgh_Globals.Dungeons_MonsterSpawnTable[spawnIndex][1])
 
 	for e=1,#newEntities do 
 		local staticMesh = world.GetComponent_StaticMesh(newEntities[e])

@@ -6,8 +6,7 @@ Arrrgh_Globals.Dungeons_ItemSpawnTable = {
 	{ 'Dagger', 'arrrgh/items/dagger.scn', { { "Melee Damage", 2} } },
 	{ 'Sharp Dagger', 'arrrgh/items/dagger.scn', { { "Melee Damage", 3} } },
 	{ 'Torn Leather Body Armour', 'arrrgh/items/body_armour_leather_torn.scn', { { "Armour", 1} } },
-	{ 'Leather Body Armour', 'arrrgh/items/body_armour_leather.scn', { { "Armour", 2} } },
-	{ 'Armour of God', 'arrrgh/items/body_armour_leather.scn', { { "Armour", 3}, { "Strength", 2}, { "Endurance", 2} } }
+	{ 'Leather Body Armour', 'arrrgh/items/body_armour_leather.scn', { { "Armour", 2} } }
 }
 
 function Dungeons_FindSpecificItem(name)
@@ -24,7 +23,7 @@ function Dungeons_SpawnItem(gridcmp, itemName, tilePos, worldPos, spawnVisible)
 	local world = R3.ActiveWorld()
 	local spawnIndex = Dungeons_FindSpecificItem(itemName) 
 	if(spawnIndex == nil) then 
-		spawnIndex = math.random(1, #Arrrgh_Globals.Dungeons_ItemSpawnTable) 
+		spawnIndex = R3.RandomInt(1, #Arrrgh_Globals.Dungeons_ItemSpawnTable) 
 	end
 	local newEntities = world:ImportScene(Arrrgh_Globals.Dungeons_ItemSpawnTable[spawnIndex][2])
 	local rootEntity = Dungeons_GetFirstRootEntity(world, newEntities)

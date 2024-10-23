@@ -82,7 +82,7 @@ function Dungeons_OnActorDeath(world, entity)
 	local gridcmp = world.GetComponent_Dungeons_WorldGridComponent(gridEntity)
 	print(world:GetEntityName(entity), ' died!')
 	
-	if(math.random() < 0.5) then 
+	if(R3.RandomFloat(0.0,1.0) < 0.5) then 
 		Dungeons_DropItemsOnDeath(gridcmp, world, entity)
 	end
 
@@ -115,7 +115,7 @@ function Dungeons_DidMeleeAttackHit(world, attacker, defender)
 	
 	-- for now we only care about hit chance
 	if(attackerStats ~= nil and defenderStats ~= nil) then 
-		return (math.random(0,100) < attackerStats.m_baseHitChance)
+		return (R3.RandomInt(0,100) < attackerStats.m_baseHitChance)
 	else
 		return false
 	end

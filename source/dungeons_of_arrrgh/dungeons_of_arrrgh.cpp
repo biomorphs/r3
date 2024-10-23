@@ -23,7 +23,6 @@
 #include "entities/systems/entity_system.h"
 #include "entities/queries.h"
 #include "core/profiler.h"
-#include "core/random.h"
 #include "core/log.h"
 #include <sol/sol.hpp>
 
@@ -483,6 +482,7 @@ const std::vector<GeneratorRule> c_floorRules = {
 			"wall",		"wall",			"wall"
 		}, ""
 	),
+	GeneratorRule("floor,carpet", "basic_floor_carpet_tile_4x4.scn"),
 	GeneratorRule("floor,interior", "basic_floor_wood_4x4.scn"),
 	GeneratorRule("floor,exterior", "basic_floor_tile_4x4.scn"),
 	GeneratorRule("floor", "basic_floor_dirt_4x4.scn")
