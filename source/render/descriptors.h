@@ -49,6 +49,7 @@ namespace R3
 	{
 	public:
 		DescriptorSetWriter(VkDescriptorSet targetSet);
+		void WriteStorageImage(uint32_t binding, VkImageView view, VkImageLayout layout);
 		void WriteImage(uint32_t binding, uint32_t arrayIndex, VkImageView view, VkSampler sampler, VkImageLayout layout);
 		void WriteUniformBuffer(uint32_t binding, VkBuffer buffer, uint64_t bufferOffset = 0, uint64_t bufferSize = 0);
 		void WriteStorageBuffer(uint32_t binding, VkBuffer buffer, uint64_t bufferOffset = 0, uint64_t bufferSize = 0);

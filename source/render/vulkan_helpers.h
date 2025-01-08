@@ -29,7 +29,7 @@ namespace R3
 		bool RunCommandsImmediate(VkDevice d, VkQueue cmdQueue, VkCommandPool cmdPool, VkFence waitFence, std::function<void(VkCommandBuffer&)> fn);
 
 		// Images
-		bool BlitColourImageToImage(VkCommandBuffer cmds, VkImage srcImage, VkExtent2D srcSize, VkImage destImage, VkExtent2D destSize);
+		bool BlitColourImageToImage(VkCommandBuffer cmds, VkImage srcImage, VkExtent2D srcSize, VkImage destImage, VkExtent2D destSize, VkFilter filter = VK_FILTER_LINEAR);
 		VkImageCreateInfo CreateImage2DNoMSAANoMips(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extents);
 		VkImageCreateInfo CreateImage2DNoMSAA(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extents, uint32_t mipLevels);
 		VkImageViewCreateInfo CreateImageView2DNoMSAANoMips(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags);
@@ -54,6 +54,7 @@ namespace R3
 		VkPipelineColorBlendAttachmentState CreatePipelineColourBlendAttachment_NoBlending();
 		VkPipelineColorBlendAttachmentState CreatePipelineColourBlendAttachment_AlphaBlending();
 		VkPipelineColorBlendStateCreateInfo CreatePipelineColourBlendState(const std::vector<VkPipelineColorBlendAttachmentState>& attachments);
+		VkPipeline CreateComputePipeline(VkDevice device, VkShaderModule shader, VkPipelineLayout layout, std::string_view entryPoint = "main");
 
 		// Synchronisation helpers
 		VkImageMemoryBarrier MakeImageBarrier(VkImage image, VkImageAspectFlags aspectFlags, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageLayout oldLayout, VkImageLayout newLayout);
@@ -85,7 +86,7 @@ namespace R3
 
 		struct QueueFamilyIndices
 		{
-			uint32_t m_graphicsIndex = -1;
+			uint32_t m_graphicsIndex = -1;	// supports both graphics AND synchronous compute!
 			uint32_t m_presentIndex = -1;
 		};
 		QueueFamilyIndices FindQueueFamilyIndices(const PhysicalDeviceDescriptor& pdd, VkSurfaceKHR surface);

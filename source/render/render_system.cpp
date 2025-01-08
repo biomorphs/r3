@@ -246,6 +246,11 @@ namespace R3
 			CheckResult(vkWaitForFences(m_device->GetVkDevice(), 1, &fd.m_inFlightFence, VK_TRUE, UINT64_MAX));
 		}
 
+		{
+			R3_PROF_EVENT("Per Frame Deleters");
+			fd.m_deleters.DeleteAll();		// Run when we know for sure the previous frame completed
+		}
+
 		m_currentSwapImage = -1;
 		{
 			R3_PROF_EVENT("Acquire swap image");

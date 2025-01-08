@@ -18,7 +18,7 @@ namespace R3
 		Device* m_device = nullptr;				// device used for rendering
 		RenderGraphPass* m_pass = nullptr;		// the currently running pass
 		RenderTargetCache* m_targets = nullptr;	// render target cache
-		VkCommandBuffer_T* m_graphicsCmds = nullptr;	// main cmd buffer
+		VkCommandBuffer_T* m_graphicsCmds = nullptr;	// main cmd buffer, supports graphics + compute
 		std::vector<RenderTarget*> m_resolvedTargets;	// all targets used by a pass
 		glm::vec2 m_renderExtents;		// extents of render pass
 

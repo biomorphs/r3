@@ -35,6 +35,19 @@ namespace R3
 		CallbackArray<RunCallback> m_onRun;	// do the work here
 	};
 
+	// runs compute cmds that will write to a specific colour render target
+	class ComputeDrawPass : public RenderGraphPass
+	{
+	public:
+		virtual ~ComputeDrawPass() = default;
+		virtual void Run(RenderPassContext& ctx);
+		void ResolveTargets(RenderPassContext& ctx);
+		using RunCallback = std::function<void(RenderPassContext&)>;
+		std::vector<RenderTargetInfo> m_inputColourAttachments;	// targets used as input
+		std::vector<RenderTargetInfo> m_outputColourAttachments;	// write output to these attachments
+		CallbackArray<RunCallback> m_onRun;		// do the compute work here
+	};
+
 	// used to draw to a set of targets
 	class DrawPass : public RenderGraphPass
 	{

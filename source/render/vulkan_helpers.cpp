@@ -79,7 +79,7 @@ namespace R3
 			return true;
 		}
 
-		bool BlitColourImageToImage(VkCommandBuffer cmds, VkImage srcImage, VkExtent2D srcSize, VkImage destImage, VkExtent2D destSize)
+		bool BlitColourImageToImage(VkCommandBuffer cmds, VkImage srcImage, VkExtent2D srcSize, VkImage destImage, VkExtent2D destSize, VkFilter filter)
 		{
 			VkImageBlit2 blitRegion = {};
 			blitRegion.sType = VK_STRUCTURE_TYPE_IMAGE_BLIT_2;
@@ -106,7 +106,7 @@ namespace R3
 			blitInfo.dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 			blitInfo.srcImage = srcImage;
 			blitInfo.srcImageLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-			blitInfo.filter = VK_FILTER_LINEAR;
+			blitInfo.filter = filter;
 			blitInfo.regionCount = 1;
 			blitInfo.pRegions = &blitRegion;
 
@@ -351,6 +351,28 @@ namespace R3
 			return blending;
 		}
 
+		VkPipeline CreateComputePipeline(VkDevice device, VkShaderModule shader, VkPipelineLayout layout, std::string_view entryPoint)
+		{
+			VkPipelineShaderStageCreateInfo stageinfo = {};
+			stageinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			stageinfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+			stageinfo.module = shader;
+			stageinfo.pName = entryPoint.data();
+
+			VkComputePipelineCreateInfo computePipelineCreateInfo{};
+			computePipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+			computePipelineCreateInfo.pNext = nullptr;
+			computePipelineCreateInfo.layout = layout;
+			computePipelineCreateInfo.stage = stageinfo;
+			VkPipeline result = VK_NULL_HANDLE;
+			if (!CheckResult(vkCreateComputePipelines(device, nullptr, 1, &computePipelineCreateInfo, nullptr, &result)))
+			{
+				LogError("Failed to create compute pipeline");
+			}
+
+			return result;
+		}
+
 		VkImageMemoryBarrier MakeImageBarrier(VkImage image, VkImageAspectFlags aspectFlags, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageLayout oldLayout, VkImageLayout newLayout)
 		{
 			return MakeImageBarrier(image, 1, aspectFlags, srcAccessMask, dstAccessMask, oldLayout, newLayout);
@@ -573,7 +595,7 @@ namespace R3
 				// is it discrete?
 				if (devices[i].m_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
 				{
-					// does it have a graphics queue and a queue that can present to the surface?
+					// does it have a graphics queue that supports compute and a queue that can present to the surface?
 					QueueFamilyIndices qfi = FindQueueFamilyIndices(devices[i], surface);
 					bool hasQueueFamilies = qfi.m_graphicsIndex != -1 && qfi.m_presentIndex != -1;
 					bool extensionsSupported = AreExtensionsSupported(devices[i].m_supportedExtensions, GetRequiredDeviceExtensions());
@@ -597,7 +619,8 @@ namespace R3
 			QueueFamilyIndices qfi;
 			for (int q = 0; q < pdd.m_queues.size() && (qfi.m_graphicsIndex == -1 && qfi.m_presentIndex == -1); ++q)
 			{
-				if (pdd.m_queues[q].queueFlags & VK_QUEUE_GRAPHICS_BIT)	// graphics queue?
+				const VkFlags graphicsComputeFlags = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT;
+				if (pdd.m_queues[q].queueFlags & graphicsComputeFlags)	// graphics + compute queue?
 				{
 					qfi.m_graphicsIndex = q;
 				}

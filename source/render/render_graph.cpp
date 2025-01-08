@@ -20,6 +20,53 @@ namespace R3
 		return {};
 	}
 
+	void ComputeDrawPass::ResolveTargets(RenderPassContext& ctx)
+	{
+		R3_PROF_EVENT();
+		std::vector<VkImageMemoryBarrier> barriers;
+
+		for (const auto& it : m_inputColourAttachments)
+		{
+			if (auto inputTarget = ctx.m_targets->GetTarget(it))
+			{
+				ctx.m_resolvedTargets.push_back(inputTarget);
+				// input targets must use GENERAL image layout to allow direct read
+				auto barrier = DoTransition(inputTarget, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_GENERAL);
+				if (barrier)
+				{
+					barriers.push_back(*barrier);
+				}
+			}
+		}
+		for (const auto& it : m_outputColourAttachments)
+		{
+			if (auto outputTarget = ctx.m_targets->GetTarget(it))
+			{
+				ctx.m_resolvedTargets.push_back(outputTarget);
+				// output targets must use GENERAL image layout to allow direct write
+				auto barrier = DoTransition(outputTarget, VK_ACCESS_SHADER_WRITE_BIT, VK_IMAGE_LAYOUT_GENERAL);
+				if (barrier)
+				{
+					barriers.push_back(*barrier);
+				}
+			}
+		}
+		
+		if (barriers.size() > 0)
+		{
+			auto srcStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;	// barrier must happen between output to attachment + before compute
+			auto dstStages = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+			vkCmdPipelineBarrier(ctx.m_graphicsCmds, srcStages, dstStages, 0, 0, nullptr, 0, nullptr, (uint32_t)barriers.size(), barriers.data());
+		}
+	}
+
+	void ComputeDrawPass::Run(RenderPassContext& ctx)
+	{
+		R3_PROF_EVENT();
+		ResolveTargets(ctx);
+		m_onRun.Run(ctx);
+	}
+
 	void DrawPass::ResolveTargets(RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();

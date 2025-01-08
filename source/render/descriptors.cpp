@@ -61,6 +61,23 @@ namespace R3
 		m_writes.push_back(writeTextures);
 	}
 
+	void DescriptorSetWriter::WriteStorageImage(uint32_t binding, VkImageView view, VkImageLayout layout)
+	{
+		VkDescriptorImageInfo newImgInfo = {};
+		newImgInfo.imageLayout = layout;
+		newImgInfo.imageView = view;
+		m_imgInfos.push_back(newImgInfo);
+
+		VkWriteDescriptorSet writeTextures = {};
+		writeTextures.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		writeTextures.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+		writeTextures.descriptorCount = 1;
+		writeTextures.dstBinding = binding;
+		writeTextures.dstSet = m_target;
+		writeTextures.pImageInfo = &m_imgInfos[m_imgInfos.size() - 1];
+		m_writes.push_back(writeTextures);
+	}
+
 	void DescriptorSetWriter::WriteImage(uint32_t binding, uint32_t arrayIndex, VkImageView view, VkSampler sampler, VkImageLayout layout)
 	{
 		VkDescriptorImageInfo newImgInfo = {};
