@@ -1,4 +1,6 @@
 set(EngineLib_SourceFiles
+	tonemap_compute.h
+	tonemap_compute.cpp
 	tag.h
 	tag.cpp
 	tag_set.h

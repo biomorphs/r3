@@ -95,15 +95,6 @@ void main() {
 		globals.m_skyColourAmbient.w
 	);
 	
-	vec3 finalLight = ambient + directLight;	
-	
-	// tonemap using reinhard operator for now 
-	// should be a separate fullscreen pass
-    finalLight = finalLight / (finalLight + vec3(1.0));
-	
-#ifdef R3_CONVERT_OUTPUT_TO_SRGB
-	finalLight = LinearToSRGB(finalLight);
-#endif
-
+	vec3 finalLight = ambient + directLight;
 	outColour = vec4(finalLight,finalAlpha);
 }

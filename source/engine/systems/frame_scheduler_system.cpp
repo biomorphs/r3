@@ -5,6 +5,7 @@
 #include "static_mesh_system.h"
 #include "static_mesh_simple_renderer.h"
 #include "texture_system.h"
+#include "engine/tonemap_compute.h"
 #include "render/render_graph.h"
 #include "render/render_system.h"
 #include "core/profiler.h"
@@ -12,11 +13,28 @@
 
 namespace R3
 {
+	FrameScheduler::FrameScheduler()
+	{
+	}
+
+	FrameScheduler::~FrameScheduler()
+	{
+	}
+
 	void FrameScheduler::RegisterTickFns()
 	{
 		Systems::GetInstance().RegisterTick("FrameScheduler::BuildRenderGraph", [this]() {
 			return BuildRenderGraph();
 		});
+	}
+
+	bool FrameScheduler::Init()
+	{
+		m_tonemapComputeRenderer = std::make_unique<TonemapCompute>();
+		GetSystem<RenderSystem>()->m_onShutdownCbs.AddCallback([this](Device& d) {
+			m_tonemapComputeRenderer->Cleanup(d);
+		});
+		return true;
 	}
 
 	VkFormat FrameScheduler::GetMainColourTargetFormat()
@@ -60,7 +78,7 @@ namespace R3
 	std::unique_ptr<TransferPass> FrameScheduler::MakeMainBlitToSwapPass(const RenderTargetInfo& mainColour, const RenderTargetInfo& swapchain)
 	{
 		R3_PROF_EVENT();
-		auto blitPass = std::make_unique<TransferPass>();		// blit HDR colour to swap chain
+		auto blitPass = std::make_unique<TransferPass>();		// blit LDR colour to swap chain
 		blitPass->m_inputs.push_back(mainColour);
 		blitPass->m_outputs.push_back(swapchain);
 		blitPass->m_onRun.AddCallback([this, mainColour, swapchain](RenderPassContext& ctx) {
@@ -90,6 +108,22 @@ namespace R3
 		return imguiPass;
 	}
 
+	std::unique_ptr<ComputeDrawPass> FrameScheduler::MakeTonemapToLDRPass(const RenderTargetInfo& mainColour, const RenderTargetInfo& mainColourLDR)
+	{
+		// This pass reads the main colour image, runs tonemap operator and writes to the swap chain image
+		auto tonemapPass = std::make_unique<ComputeDrawPass>();
+		tonemapPass->m_inputColourAttachments.push_back(mainColour);	// HDR input
+		tonemapPass->m_outputColourAttachments.push_back(mainColourLDR);	// output to LDR image
+		tonemapPass->m_onRun.AddCallback([this, mainColour, mainColourLDR](RenderPassContext& ctx) {
+			auto inTarget = ctx.GetResolvedTarget(mainColour);
+			auto inSize = ctx.m_targets->GetTargetSize(inTarget->m_info);
+			auto outTarget = ctx.GetResolvedTarget(mainColourLDR);
+			auto outSize = ctx.m_targets->GetTargetSize(outTarget->m_info);
+			m_tonemapComputeRenderer->Run(*ctx.m_device, ctx.m_graphicsCmds, *inTarget, inSize, *outTarget, outSize);
+		});
+		return tonemapPass;
+	}
+
 	// This describes the entire renderer as a series of passes that run in series
 	bool FrameScheduler::BuildRenderGraph()
 	{
@@ -97,19 +131,23 @@ namespace R3
 		auto render = GetSystem<RenderSystem>();
 
 		RenderTargetInfo swapchainImage("Swapchain");	// Swap chain image, this will be presented to the screen each frame
-		RenderTargetInfo mainColour("MainColour");		// HDR colour buffer
+		RenderTargetInfo mainColour("MainColour");		// HDR colour buffer, linear encoding
 		mainColour.m_format = GetMainColourTargetFormat();
-		mainColour.m_usageFlags = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		mainColour.m_usageFlags = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 		RenderTargetInfo mainDepth("MainDepth");		// Main depth buffer
 		mainDepth.m_format = GetMainDepthStencilFormat();
 		mainDepth.m_usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 		mainDepth.m_aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
+		RenderTargetInfo mainColourLDR("MainColourLDR");		// LDR colour buffer after tonemapping
+		mainColourLDR.m_format = VK_FORMAT_R16G16B16A16_SFLOAT;	// still using floating point storage
+		mainColourLDR.m_usageFlags = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
 
 		auto& graph = render->GetRenderGraph();
 		graph.m_allPasses.clear();
-		graph.m_allPasses.push_back(MakeMainPass(mainColour, mainDepth));
-		graph.m_allPasses.push_back(MakeMainBlitToSwapPass(mainColour, swapchainImage));
-		graph.m_allPasses.push_back(MakeImguiPass(swapchainImage));		
+		graph.m_allPasses.push_back(MakeMainPass(mainColour, mainDepth));	// main render (HDR)
+		graph.m_allPasses.push_back(MakeTonemapToLDRPass(mainColour, mainColourLDR));	// HDR -> LDR
+		graph.m_allPasses.push_back(MakeMainBlitToSwapPass(mainColourLDR, swapchainImage));	// blit LDR -> swap
+		graph.m_allPasses.push_back(MakeImguiPass(swapchainImage));		// imgui to swap
 		
 		return true;
 	}
