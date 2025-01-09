@@ -103,6 +103,7 @@ namespace R3
 
 		if (!m_allPointlights.IsCreated())
 		{
+			m_allPointlights.SetDebugName("Point lights");
 			if (!m_allPointlights.Create(d, c_maxLights * c_framesInFlight, c_maxLights, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 			{
 				LogError("Failed to create vertex buffer");

@@ -9,12 +9,14 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		m_allData = VulkanHelpers::CreateBuffer(d.GetVMA(), dataMaxSize, usageFlags | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
+		VulkanHelpers::SetBufferName(d.GetVkDevice(), m_allData, m_debugName);
 		m_allDataAddress = VulkanHelpers::GetBufferDeviceAddress(d.GetVkDevice(), m_allData);
 		m_allDataMaxSize = dataMaxSize;
 		m_stagingBuffer = VulkanHelpers::CreateBuffer(d.GetVMA(), stagingMaxSize,
 			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 			VMA_MEMORY_USAGE_AUTO,
 			VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);	// host coherant, write combined)
+		VulkanHelpers::SetBufferName(d.GetVkDevice(), m_stagingBuffer, m_debugName + " (Staging)");
 		m_stagingMaxSize = stagingMaxSize;
 		if (!VulkanHelpers::CheckResult(vmaMapMemory(d.GetVMA(), m_stagingBuffer.m_allocation, &m_stagingMappedPtr)))
 		{
@@ -145,5 +147,10 @@ namespace R3
 	VkBuffer WriteOnlyGpuBuffer::GetBuffer()
 	{
 		return m_allData.m_buffer;
+	}
+
+	void WriteOnlyGpuBuffer::SetDebugName(std::string_view n)
+	{
+		m_debugName = n;
 	}
 }

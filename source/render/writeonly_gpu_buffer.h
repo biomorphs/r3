@@ -18,6 +18,7 @@ namespace R3
 		WriteOnlyGpuBuffer() = default;
 		WriteOnlyGpuBuffer(const WriteOnlyGpuBuffer&) = delete;
 		WriteOnlyGpuBuffer(WriteOnlyGpuBuffer&&) = delete;
+		void SetDebugName(std::string_view);		// call this before create!
 		bool Create(Device& d, uint64_t dataMaxSize, uint64_t stagingMaxSize, VkBufferUsageFlags usageFlags);	// allocates memory, needs the device
 		uint64_t Allocate(uint64_t sizeBytes);									// allocate from internal data
 		bool Write(uint64_t writeStartOffset, uint64_t sizeBytes, const void* data);	// writes to staging buffer + schedules copy
@@ -44,6 +45,7 @@ namespace R3
 			uint64_t m_size;			// bytes to copy
 		};
 		moodycamel::ConcurrentQueue<ScheduledWrite> m_stagingWrites;	// all writes to flush 
+		std::string m_debugName;
 	};
 
 	// helper for storing write-only arrays on the gpu
@@ -54,6 +56,10 @@ namespace R3
 		WriteOnlyGpuArray() = default;
 		WriteOnlyGpuArray(const WriteOnlyGpuArray&) = delete;
 		WriteOnlyGpuArray(WriteOnlyGpuArray&&) = delete;
+		void SetDebugName(std::string_view n)	// call before create!
+		{
+			m_buffer.SetDebugName(n);
+		}
 		bool Create(Device& d, uint64_t maxStored, uint64_t maxStaging, VkBufferUsageFlags usageFlags)
 		{
 			return m_buffer.Create(d, maxStored * sizeof(Type), maxStaging * sizeof(Type), usageFlags);

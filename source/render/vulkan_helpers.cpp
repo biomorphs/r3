@@ -8,11 +8,79 @@
 #include <string>
 #include <cassert>
 #include <set>
+#include <filesystem>
 
 namespace R3
 {
 	namespace VulkanHelpers
 	{
+		namespace Extensions
+		{
+			PFN_vkCmdBeginDebugUtilsLabelEXT m_vkCmdBeginDebugUtilsLabelEXT = nullptr;
+			PFN_vkCmdEndDebugUtilsLabelEXT m_vkCmdEndDebugUtilsLabelEXT = nullptr;
+			PFN_vkSetDebugUtilsObjectNameEXT m_vkSetDebugUtilsObjectNameEXT = nullptr;
+
+			bool Initialise(VkDevice d)
+			{
+				m_vkCmdBeginDebugUtilsLabelEXT = (PFN_vkCmdBeginDebugUtilsLabelEXT)vkGetDeviceProcAddr(d, "vkCmdBeginDebugUtilsLabelEXT");
+				m_vkCmdEndDebugUtilsLabelEXT = (PFN_vkCmdEndDebugUtilsLabelEXT)vkGetDeviceProcAddr(d, "vkCmdEndDebugUtilsLabelEXT");
+				m_vkSetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetDeviceProcAddr(d, "vkSetDebugUtilsObjectNameEXT");
+				return m_vkCmdBeginDebugUtilsLabelEXT != nullptr
+					&& m_vkCmdEndDebugUtilsLabelEXT != nullptr
+					&& m_vkSetDebugUtilsObjectNameEXT != nullptr;
+			}
+		};
+
+		CommandBufferRegionLabel::CommandBufferRegionLabel(VkCommandBuffer cmds, std::string_view label, glm::vec4 colour)
+			: m_cmds(cmds)
+		{
+			assert(label.size() > 0);
+			// see https://community.khronos.org/t/cannot-link-due-to-undefined-references/6918
+			VkDebugUtilsLabelEXT labelInfo = {};
+			labelInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+			labelInfo.color[0] = colour.x;
+			labelInfo.color[1] = colour.y;
+			labelInfo.color[2] = colour.z;
+			labelInfo.color[3] = colour.w;
+			labelInfo.pLabelName = label.data();
+			Extensions::m_vkCmdBeginDebugUtilsLabelEXT(cmds, &labelInfo);
+		}
+
+		CommandBufferRegionLabel::~CommandBufferRegionLabel()
+		{
+			Extensions::m_vkCmdEndDebugUtilsLabelEXT(m_cmds);
+		}
+
+		void SetVulkanObjectName(VkDevice d, uint64_t objectHandle, VkObjectType type, std::string_view name)
+		{
+			VkDebugUtilsObjectNameInfoEXT objectLabel = {};
+			objectLabel.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+			objectLabel.objectHandle = objectHandle;
+			objectLabel.objectType = type;
+			objectLabel.pObjectName = name.data();
+			CheckResult(Extensions::m_vkSetDebugUtilsObjectNameEXT(d, &objectLabel));
+		}
+
+		void SetBufferName(VkDevice d, AllocatedBuffer& buffer, std::string_view name)
+		{
+			SetVulkanObjectName(d, reinterpret_cast<uint64_t>(buffer.m_buffer), VK_OBJECT_TYPE_BUFFER, name);
+		}
+
+		void SetShaderName(VkDevice d, VkShaderModule sm, std::string_view name)
+		{
+			SetVulkanObjectName(d, reinterpret_cast<uint64_t>(sm), VK_OBJECT_TYPE_SHADER_MODULE, name);
+		}
+
+		void SetCommandBufferName(VkDevice d, VkCommandBuffer cmds, std::string_view name)
+		{
+			SetVulkanObjectName(d, reinterpret_cast<uint64_t>(cmds), VK_OBJECT_TYPE_COMMAND_BUFFER, name);
+		}
+
+		void SetImageName(VkDevice d, VkImage img, std::string_view name)
+		{
+			SetVulkanObjectName(d, reinterpret_cast<uint64_t>(img), VK_OBJECT_TYPE_IMAGE, name);
+		}
+
 		bool CheckResult(const VkResult& r)
 		{
 			if (r)
@@ -42,6 +110,7 @@ namespace R3
 				LogError("Failed to create cmd buffer");
 				return false;
 			}
+			VulkanHelpers::SetCommandBufferName(d, commandBuffer, "Immediate submit cmds");
 
 			VkCommandBufferBeginInfo beginInfo = { 0 };
 			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -218,6 +287,7 @@ namespace R3
 			else
 			{
 				result = CreateShaderModule(device, spirv);
+				SetShaderName(device, result, std::filesystem::path(filePath).filename().string());
 			}
 			return result;
 		}
@@ -418,6 +488,11 @@ namespace R3
 			return results;
 		}
 
+		void AppendRequiredInstanceExtensions(std::vector<const char*>& extensions)
+		{
+			extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+		}
+
 		std::vector<VkExtensionProperties> GetSupportedInstanceExtensions()
 		{
 			R3_PROF_EVENT();
@@ -474,6 +549,7 @@ namespace R3
 
 			// Setup extensions
 			std::vector<const char*> requiredExtensions = GetSDLRequiredInstanceExtensions(w.GetHandle());
+			AppendRequiredInstanceExtensions(requiredExtensions);
 			std::vector<VkExtensionProperties> supportedExtensions = GetSupportedInstanceExtensions();
 			LogInfo("Supported Vulkan Extensions:");
 			for (auto it : supportedExtensions)

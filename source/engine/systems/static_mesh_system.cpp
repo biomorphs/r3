@@ -260,6 +260,7 @@ namespace R3
 		auto models = Systems::GetSystem<ModelDataSystem>();
 		if (!m_allVertices.IsCreated())
 		{
+			m_allMaterialsGpu.SetDebugName("Static mesh vertices");
 			if (!m_allVertices.Create(d, c_maxVerticesToStore, c_maxVerticesToStore, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT))
 			{
 				LogError("Failed to create vertex buffer");
@@ -267,6 +268,7 @@ namespace R3
 		}
 		if (!m_allIndices.IsCreated())
 		{
+			m_allMaterialsGpu.SetDebugName("Static mesh indices");
 			if (!m_allIndices.Create(d, c_maxIndicesToStore, c_maxIndicesToStore / 2, VK_BUFFER_USAGE_INDEX_BUFFER_BIT))
 			{
 				LogError("Failed to create index buffer");
@@ -274,6 +276,7 @@ namespace R3
 		}
 		if (!m_allMaterialsGpu.IsCreated())
 		{
+			m_allMaterialsGpu.SetDebugName("Static mesh materials");
 			if (!m_allMaterialsGpu.Create(d, c_maxMaterialsToStore, c_maxMaterialsToStore, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 			{
 				LogError("Failed to create material buffer");

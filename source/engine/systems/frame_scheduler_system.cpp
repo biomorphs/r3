@@ -79,6 +79,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		auto blitPass = std::make_unique<TransferPass>();		// blit LDR colour to swap chain
+		blitPass->m_name = "Blit to Swapchain";
 		blitPass->m_inputs.push_back(mainColour);
 		blitPass->m_outputs.push_back(swapchain);
 		blitPass->m_onRun.AddCallback([this, mainColour, swapchain](RenderPassContext& ctx) {
@@ -97,6 +98,7 @@ namespace R3
 		auto render = GetSystem<RenderSystem>();
 		auto imgui = GetSystem<ImGuiSystem>();
 		auto imguiPass = std::make_unique<DrawPass>();			// imgui draw direct to swap image
+		imguiPass->m_name = "ImGUI Render";
 		imguiPass->m_colourAttachments.push_back({ colourTarget, DrawPass::AttachmentLoadOp::Load });
 		imguiPass->m_getExtentsFn = [render]() -> glm::vec2 {
 			return render->GetWindowExtents();
@@ -112,6 +114,7 @@ namespace R3
 	{
 		// This pass reads the main colour image, runs tonemap operator and writes to the swap chain image
 		auto tonemapPass = std::make_unique<ComputeDrawPass>();
+		tonemapPass->m_name = "Tonemap Compute";
 		tonemapPass->m_inputColourAttachments.push_back(mainColour);	// HDR input
 		tonemapPass->m_outputColourAttachments.push_back(mainColourLDR);	// output to LDR image
 		tonemapPass->m_onRun.AddCallback([this, mainColour, mainColourLDR](RenderPassContext& ctx) {

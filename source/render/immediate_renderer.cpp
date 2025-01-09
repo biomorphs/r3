@@ -515,6 +515,7 @@ namespace R3
 		R3_PROF_EVENT();
 		size_t bufferSize = maxVerticesPerFrame * c_framesInFlight * sizeof(PosColourVertex);
 		m_allVertexData = VulkanHelpers::CreateBuffer(d.GetVMA(), bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
+		VulkanHelpers::SetBufferName(d.GetVkDevice(), m_allVertexData, "Immediate render vertex data");
 		m_allvertsBufferAddress = VulkanHelpers::GetBufferDeviceAddress(d.GetVkDevice(), m_allVertexData);
 		if (m_allVertexData.m_allocation == VK_NULL_HANDLE)
 		{

@@ -29,7 +29,7 @@ namespace R3
 		CommandBufferAllocator();
 		~CommandBufferAllocator();
 		VkCommandPool_T* GetPool(Device& d);	// gets/creates the pool for this thread
-		std::optional<ManagedCommandBuffer> CreateCommandBuffer(Device& d, bool isPrimary);	// secondary = can't be directly submitted, can be called from other primary buffers
+		std::optional<ManagedCommandBuffer> CreateCommandBuffer(Device& d, bool isPrimary, std::string_view name);	// secondary = can't be directly submitted, can be called from other primary buffers
 		void Release(ManagedCommandBuffer cmdBuffer);	// free a cmd buffer back to the allocator
 	private:
 		void Destroy(Device& d);

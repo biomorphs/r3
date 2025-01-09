@@ -222,6 +222,7 @@ namespace R3
 	{
 		if (!m_globalConstantsBuffer.IsCreated())
 		{
+			m_globalConstantsBuffer.SetDebugName("Static mesh global constants");
 			if (!m_globalConstantsBuffer.Create(d, c_maxGlobalConstantBuffers, c_maxGlobalConstantBuffers, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT))
 			{
 				LogError("Failed to create constant buffer");
@@ -234,6 +235,7 @@ namespace R3
 			m_globalInstancesHostVisible = VulkanHelpers::CreateBuffer(d.GetVMA(),
 				c_maxInstances * c_maxInstanceBuffers * sizeof(StaticMeshInstanceGpu),
 				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+			VulkanHelpers::SetBufferName(d.GetVkDevice(), m_globalInstancesHostVisible, "Static mesh global instances");
 			void* mapped = nullptr;
 			vmaMapMemory(d.GetVMA(), m_globalInstancesHostVisible.m_allocation, &mapped);
 			m_globalInstancesMappedPtr = static_cast<StaticMeshInstanceGpu*>(mapped);
@@ -243,6 +245,7 @@ namespace R3
 			m_drawIndirectHostVisible = VulkanHelpers::CreateBuffer(d.GetVMA(),
 				c_maxInstances * c_maxInstanceBuffers * sizeof(VkDrawIndexedIndirectCommand),
 				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+			VulkanHelpers::SetBufferName(d.GetVkDevice(), m_drawIndirectHostVisible, "Static mesh draw indirect");
 			void* mapped = nullptr;
 			vmaMapMemory(d.GetVMA(), m_drawIndirectHostVisible.m_allocation, &mapped);
 			m_drawIndirectMappedPtr = static_cast<StaticMeshInstanceGpu*>(mapped);
@@ -369,7 +372,7 @@ namespace R3
 			return true;
 		}
 		m_frameStats.m_writeCmdsStartTime = time->GetElapsedTimeReal();
-		auto cmdBuffer = render->GetCommandBufferAllocator()->CreateCommandBuffer(*render->GetDevice(), false);
+		auto cmdBuffer = render->GetCommandBufferAllocator()->CreateCommandBuffer(*render->GetDevice(), false, "Static mesh draw cmds");
 		if (!cmdBuffer)
 		{
 			LogWarn("Failed to get a cmd buffer");

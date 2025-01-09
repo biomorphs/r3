@@ -71,7 +71,7 @@ namespace R3
 		return {};
 	}
 
-	std::optional<ManagedCommandBuffer> CommandBufferAllocator::CreateCommandBuffer(Device& d, bool isPrimary)
+	std::optional<ManagedCommandBuffer> CommandBufferAllocator::CreateCommandBuffer(Device& d, bool isPrimary, std::string_view name)
 	{
 		R3_PROF_EVENT();
 
@@ -97,6 +97,7 @@ namespace R3
 				LogError("failed to allocate command buffer!");
 				return {};
 			}
+			VulkanHelpers::SetCommandBufferName(d.GetVkDevice(), newBuffer.m_cmdBuffer, name);
 			newBuffer.m_ownerThread = std::this_thread::get_id();
 			newBuffer.m_isPrimary = isPrimary;
 			return newBuffer;

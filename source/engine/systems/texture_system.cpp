@@ -11,6 +11,7 @@
 #include "core/profiler.h"
 #include "core/file_io.h"
 #include "core/log.h"
+#include <filesystem>
 #include <vulkan/vulkan.h>
 #include <imgui.h>
 #include <imgui_impl_vulkan.h>
@@ -579,6 +580,7 @@ namespace R3
 			LogError("Failed to allocate memory for texture {}", path);
 			return false;
 		}
+		VulkanHelpers::SetImageName(device->GetVkDevice(), loadedData->m_image, std::filesystem::path(path).filename().string());
 		auto viewCreateInfo = VulkanHelpers::CreateImageView2DNoMSAA(format, loadedData->m_image, VK_IMAGE_ASPECT_COLOR_BIT, mipCount);
 		r = vkCreateImageView(device->GetVkDevice(), &viewCreateInfo, nullptr, &loadedData->m_imageView);
 		if (!VulkanHelpers::CheckResult(r))

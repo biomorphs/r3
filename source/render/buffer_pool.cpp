@@ -7,8 +7,9 @@
 
 namespace R3
 {
-	BufferPool::BufferPool(uint64_t totalBudget)
+	BufferPool::BufferPool(std::string_view name, uint64_t totalBudget)
 		: m_totalBudget(totalBudget)
+		, m_debugName(name)
 	{
 
 	}
@@ -56,6 +57,7 @@ namespace R3
 			usage,
 			memUsage,
 			VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);	// required for mapping
+		VulkanHelpers::SetBufferName(d->GetVkDevice(), newBuffer.m_buffer, m_debugName);
 		if (newBuffer.m_buffer.m_buffer == VK_NULL_HANDLE)
 		{
 			LogWarn("Failed to create buffer of size {}", minSizeBytes);

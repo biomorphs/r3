@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/glm_headers.h"
 #include <vulkan/vulkan_core.h>
 #include <vk_mem_alloc.h>
 #include <vector>
@@ -21,6 +22,33 @@ namespace R3
 	// our aim is NOT to abstract away vulkan, just hide the annoying bits
 	namespace VulkanHelpers
 	{
+		namespace Extensions
+		{
+			extern PFN_vkCmdBeginDebugUtilsLabelEXT m_vkCmdBeginDebugUtilsLabelEXT;
+			extern PFN_vkCmdEndDebugUtilsLabelEXT m_vkCmdEndDebugUtilsLabelEXT;
+			extern PFN_vkSetDebugUtilsObjectNameEXT m_vkSetDebugUtilsObjectNameEXT;
+
+			bool Initialise(VkDevice);
+		};
+
+		// scoped object that annotates a region of a command buffer with a name/colour
+		class CommandBufferRegionLabel
+		{
+		public:
+			CommandBufferRegionLabel(VkCommandBuffer cmds, std::string_view label, glm::vec4 colour = { 0,0,0,0 });
+			~CommandBufferRegionLabel();
+			CommandBufferRegionLabel(CommandBufferRegionLabel&&) = delete;
+			CommandBufferRegionLabel(const CommandBufferRegionLabel&) = delete;
+		private:
+			VkCommandBuffer m_cmds;
+		};
+
+		// Attach a name to a vulkan object
+		void SetBufferName(VkDevice, AllocatedBuffer&, std::string_view name);
+		void SetShaderName(VkDevice, VkShaderModule, std::string_view name);
+		void SetCommandBufferName(VkDevice, VkCommandBuffer, std::string_view name);
+		void SetImageName(VkDevice, VkImage, std::string_view name);
+
 		// Checks result, outputs any errors, crashes if fatal
 		bool CheckResult(const VkResult& r);
 

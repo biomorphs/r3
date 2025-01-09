@@ -61,7 +61,7 @@ namespace R3
 	RenderSystem::RenderSystem()
 	{
 		m_vk = std::make_unique<VkStuff>();
-		m_stagingBuffers = std::make_unique<BufferPool>();
+		m_stagingBuffers = std::make_unique<BufferPool>("Global staging buffer");
 		m_mainDeleters.PushDeleter([this]() {
 			m_stagingBuffers = nullptr;
 		});
@@ -278,7 +278,7 @@ namespace R3
 			return true;
 		}
 		
-		auto graphicsCmds = m_cmdBufferAllocator->CreateCommandBuffer(*m_device, true);
+		auto graphicsCmds = m_cmdBufferAllocator->CreateCommandBuffer(*m_device, true, "Main Graphics Commands");
 		if (!graphicsCmds)
 		{
 			LogError("Failed to create cmd buffer!");
@@ -378,7 +378,12 @@ namespace R3
 		constexpr bool c_enableDynamicRendering = true;		// allows us to bypass renderpasses/subpasses
 		bool enableValidationLayers = Platform::GetCmdLine().find("-debugvulkan") != std::string::npos;
 		m_device = std::make_unique<Device>(m_mainWindow.get());
-		return m_device->Initialise(enableValidationLayers, c_enableDynamicRendering);
+		if (!m_device->Initialise(enableValidationLayers, c_enableDynamicRendering))
+		{
+			LogError("Failed to initialise device");
+			return false;
+		}
+		return VulkanHelpers::Extensions::Initialise(m_device->GetVkDevice());
 	}
 
 	bool RenderSystem::Init()

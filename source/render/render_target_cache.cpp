@@ -105,6 +105,7 @@ namespace R3
 			LogError("Failed to create new attachment image");
 			return nullptr;
 		}
+		VulkanHelpers::SetImageName(render->GetDevice()->GetVkDevice(), newImage, info.m_name);
 		// Create an ImageView for the image so it can be used in shaders
 		VkImageView newView = VK_NULL_HANDLE;
 		VkImageViewCreateInfo vci = VulkanHelpers::CreateImageView2DNoMSAANoMips(info.m_format, newImage, info.m_aspectFlags);

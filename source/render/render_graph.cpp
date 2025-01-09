@@ -64,7 +64,10 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		ResolveTargets(ctx);
-		m_onRun.Run(ctx);
+		{
+			VulkanHelpers::CommandBufferRegionLabel passLabel(ctx.m_graphicsCmds, m_name, {0.2f, 0.2f, 1.0f, 1.0f});
+			m_onRun.Run(ctx);
+		}
 	}
 
 	void DrawPass::ResolveTargets(RenderPassContext& ctx)
@@ -123,55 +126,58 @@ namespace R3
 		R3_PROF_EVENT();
 		ctx.m_renderExtents = m_getExtentsFn();
 		ResolveTargets(ctx);	// populate list of actual targets
-		m_onBegin.Run(ctx);		// run the initial callbacks
+		{
+			VulkanHelpers::CommandBufferRegionLabel passLabel(ctx.m_graphicsCmds, m_name, { 0.2f, 1.0f, 0.2f, 1.0f });
+			m_onBegin.Run(ctx);		// run the initial callbacks
 
-		VkClearColorValue clearColour = { 0, 0, 0, 1 };
-		if (m_getClearColourFn)
-		{
-			glm::vec4 c = m_getClearColourFn();
-			clearColour = { c.x, c.y, c.z, c.w };
+			VkClearColorValue clearColour = { 0, 0, 0, 1 };
+			if (m_getClearColourFn)
+			{
+				glm::vec4 c = m_getClearColourFn();
+				clearColour = { c.x, c.y, c.z, c.w };
+			}
+			float clearDepth = 1.0f;
+			if (m_getClearDepthFn)
+			{
+				clearDepth = m_getClearDepthFn();
+			}
+			// Now set up the attachments for drawing
+			std::vector<VkRenderingAttachmentInfo> colourAttachments;
+			VkRenderingAttachmentInfo depthAttachment = {};
+			for (int i = 0; i < m_colourAttachments.size(); ++i)
+			{
+				VkRenderingAttachmentInfo rai = {};
+				rai.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+				rai.clearValue.color = clearColour;
+				rai.loadOp = GetVkLoadOp(m_colourAttachments[i].m_loadOp);
+				rai.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+				rai.imageView = ctx.GetResolvedTarget(m_colourAttachments[i].m_info)->m_view;
+				rai.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;	// check
+				colourAttachments.push_back(rai);
+			}
+			VkRenderingInfo ri = {};
+			ri.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+			ri.colorAttachmentCount = (uint32_t)colourAttachments.size();
+			ri.pColorAttachments = colourAttachments.data();
+			ri.layerCount = 1;
+			ri.renderArea.offset = { 0,0 };
+			ri.renderArea.extent = { (uint32_t)ctx.m_renderExtents.x, (uint32_t)ctx.m_renderExtents.y };
+			ri.flags = VK_RENDERING_CONTENTS_SECONDARY_COMMAND_BUFFERS_BIT;		// can execute secondary command buffers
+			if (m_depthAttachment)
+			{
+				depthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+				depthAttachment.clearValue.depthStencil = { clearDepth, 0 };
+				depthAttachment.loadOp = GetVkLoadOp(m_depthAttachment->m_loadOp);
+				depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+				depthAttachment.imageView = ctx.GetResolvedTarget(m_depthAttachment->m_info)->m_view;
+				depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;	// check this
+				ri.pDepthAttachment = &depthAttachment;
+			}
+			vkCmdBeginRendering(ctx.m_graphicsCmds, &ri);
+			m_onDraw.Run(ctx);
+			vkCmdEndRendering(ctx.m_graphicsCmds);
+			m_onEnd.Run(ctx);
 		}
-		float clearDepth = 1.0f;
-		if (m_getClearDepthFn)
-		{
-			clearDepth = m_getClearDepthFn();
-		}
-		// Now set up the attachments for drawing
-		std::vector<VkRenderingAttachmentInfo> colourAttachments;
-		VkRenderingAttachmentInfo depthAttachment = {};
-		for (int i = 0; i < m_colourAttachments.size(); ++i)
-		{
-			VkRenderingAttachmentInfo rai = {};
-			rai.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-			rai.clearValue.color = clearColour;
-			rai.loadOp = GetVkLoadOp(m_colourAttachments[i].m_loadOp);
-			rai.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-			rai.imageView = ctx.GetResolvedTarget(m_colourAttachments[i].m_info)->m_view;
-			rai.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;	// check
-			colourAttachments.push_back(rai);
-		}
-		VkRenderingInfo ri = {};
-		ri.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
-		ri.colorAttachmentCount = (uint32_t)colourAttachments.size();
-		ri.pColorAttachments = colourAttachments.data();
-		ri.layerCount = 1;
-		ri.renderArea.offset = { 0,0 };
-		ri.renderArea.extent = { (uint32_t)ctx.m_renderExtents.x, (uint32_t)ctx.m_renderExtents.y };
-		ri.flags = VK_RENDERING_CONTENTS_SECONDARY_COMMAND_BUFFERS_BIT;		// can execute secondary command buffers
-		if (m_depthAttachment)
-		{
-			depthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-			depthAttachment.clearValue.depthStencil = { clearDepth, 0 };
-			depthAttachment.loadOp = GetVkLoadOp(m_depthAttachment->m_loadOp);
-			depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-			depthAttachment.imageView = ctx.GetResolvedTarget(m_depthAttachment->m_info)->m_view;
-			depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;	// check this
-			ri.pDepthAttachment = &depthAttachment;
-		}
-		vkCmdBeginRendering(ctx.m_graphicsCmds, &ri);
-		m_onDraw.Run(ctx);
-		vkCmdEndRendering(ctx.m_graphicsCmds);
-		m_onEnd.Run(ctx);
 	}
 
 	void TransferPass::ResolveTargets(RenderPassContext& ctx)
@@ -220,7 +226,10 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		ResolveTargets(ctx);
-		m_onRun.Run(ctx);
+		{
+			VulkanHelpers::CommandBufferRegionLabel passLabel(ctx.m_graphicsCmds, m_name, { 1.0f, 0.2f, 0.2f, 1.0f });
+			m_onRun.Run(ctx);
+		}
 	}
 
 	void RenderGraph::Run(GraphContext& context)

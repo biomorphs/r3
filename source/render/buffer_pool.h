@@ -20,7 +20,7 @@ namespace R3
 	class BufferPool
 	{
 	public:
-		BufferPool(uint64_t totalBudget = 1024 * 1024 * 128);
+		BufferPool(std::string_view debugName, uint64_t totalBudget = 1024 * 1024 * 128);
 		~BufferPool();
 
 		std::optional<PooledBuffer> GetBuffer(uint64_t minSizeBytes,VkBufferUsageFlags usage,VmaMemoryUsage memUsage);
@@ -36,5 +36,6 @@ namespace R3
 		std::vector<ReleasedBuffer> m_releasedBuffers;
 		const uint64_t c_framesBeforeAvailable = 6;
 		uint64_t m_totalBudget = 0;
+		std::string m_debugName;
 	};
 }
