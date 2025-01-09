@@ -16,7 +16,6 @@
 #include "render/device.h"
 #include "render/pipeline_builder.h"
 #include "render/descriptors.h"
-#include "render/render_helpers.h"
 #include "render/render_pass_context.h"
 #include "render/render_target_cache.h"
 #include "core/profiler.h"
@@ -61,8 +60,8 @@ namespace R3
 		RegisterTick("StaticMeshSimpleRenderer::ShowGui", [this]() {
 			return ShowGui();
 		});
-		RegisterTick("StaticMeshSimpleRenderer::BuildCommandBuffer", [this]() {
-			return BuildCommandBuffer();
+		RegisterTick("StaticMeshSimpleRenderer::CollectInstances", [this]() {
+			return CollectInstances();
 		});
 	}
 
@@ -283,14 +282,16 @@ namespace R3
 		}
 	}
 
-	uint32_t StaticMeshSimpleRenderer::WriteInstances(VkCommandBuffer_T* buffer)
+	uint32_t StaticMeshSimpleRenderer::WriteInstances()
 	{
 		R3_PROF_EVENT();
 		auto entities = Systems::GetSystem<Entities::EntitySystem>();
-		auto render = Systems::GetSystem<RenderSystem>();
 		auto staticMeshes = GetSystem<StaticMeshSystem>();
-		auto textures = GetSystem<TextureSystem>();
 		auto activeWorld = entities->GetActiveWorld();
+		if (activeWorld == nullptr)
+		{
+			return true;
+		}
 		const auto transformComponentTypeId = Entities::ComponentTypeRegistry::GetTypeIndex<TransformComponent>();
 		StaticMeshGpuData currentMeshData;				// Try to cache what we can while iterating, yes this is messy, but its fast!
 		ModelDataHandle currentMeshDataHandle;
@@ -358,59 +359,10 @@ namespace R3
 		return thisInstanceOffset - m_currentInstanceBufferStart;
 	}
 
-	bool StaticMeshSimpleRenderer::BuildCommandBuffer()
+	bool StaticMeshSimpleRenderer::CollectInstances()
 	{
 		R3_PROF_EVENT();
-		m_frameStats = {};
-		auto entities = Systems::GetSystem<Entities::EntitySystem>();
-		auto render = Systems::GetSystem<RenderSystem>();
-		auto staticMeshes = GetSystem<StaticMeshSystem>();
-		auto textures = GetSystem<TextureSystem>();
-		auto time = GetSystem<TimeSystem>();
-		if (!entities->GetActiveWorld())
-		{
-			return true;
-		}
-		m_frameStats.m_writeCmdsStartTime = time->GetElapsedTimeReal();
-		auto cmdBuffer = render->GetCommandBufferAllocator()->CreateCommandBuffer(*render->GetDevice(), false, "Static mesh draw cmds");
-		if (!cmdBuffer)
-		{
-			LogWarn("Failed to get a cmd buffer");
-			return false;
-		}
-		m_thisFrameCmdBuffer = *cmdBuffer;
-
-		// todo, get these formats from somewhere, or refactor this to avoid secondary cmd buffer altogether?
-		if (!RenderHelpers::BeginSecondaryCommandBuffer(m_thisFrameCmdBuffer.m_cmdBuffer, VK_FORMAT_R16G16B16A16_SFLOAT, VK_FORMAT_D32_SFLOAT))
-		{
-			LogError("Failed to begin writing cmds");
-			return false;
-		}
-		RenderHelpers::BindPipeline(m_thisFrameCmdBuffer.m_cmdBuffer, m_simpleTriPipeline);
-		vkCmdBindIndexBuffer(m_thisFrameCmdBuffer.m_cmdBuffer, staticMeshes->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-		vkCmdBindDescriptorSets(m_thisFrameCmdBuffer.m_cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_globalDescriptorSet, 0, nullptr);
-		VkDescriptorSet allTextures = textures->GetAllTexturesSet();
-		if (allTextures != VK_NULL_HANDLE)
-		{
-			vkCmdBindDescriptorSets(m_thisFrameCmdBuffer.m_cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 1, 1, &allTextures, 0, nullptr);
-		}
-		PushConstants pc;
-		pc.m_globalConstantIndex = m_currentGlobalConstantsBuffer;
-		vkCmdPushConstants(m_thisFrameCmdBuffer.m_cmdBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-		uint32_t drawCount = WriteInstances(m_thisFrameCmdBuffer.m_cmdBuffer);
-		size_t drawOffsetBytes = m_currentInstanceBufferStart * sizeof(VkDrawIndexedIndirectCommand);
-		vkCmdDrawIndexedIndirect(m_thisFrameCmdBuffer.m_cmdBuffer, m_drawIndirectHostVisible.m_buffer, drawOffsetBytes, drawCount, sizeof(VkDrawIndexedIndirectCommand));
-		m_currentInstanceBufferStart += c_maxInstances;
-		if (m_currentInstanceBufferStart >= (c_maxInstances * c_maxInstanceBuffers))
-		{
-			m_currentInstanceBufferStart = 0;
-		}
-		if (!VulkanHelpers::CheckResult(vkEndCommandBuffer(m_thisFrameCmdBuffer.m_cmdBuffer)))
-		{
-			LogError("failed to end recording command buffer!");
-			return false;
-		}
-		m_frameStats.m_writeCmdsEndTime = time->GetElapsedTimeReal();
+		m_currentFrameTotalInstances = WriteInstances();
 		return true;
 	}
 
@@ -423,7 +375,7 @@ namespace R3
 
 	void StaticMeshSimpleRenderer::OnMainPassDraw(class RenderPassContext& ctx)
 	{
-		MainPassDraw(*ctx.m_device, ctx.m_graphicsCmds);
+		MainPassDraw(*ctx.m_device, ctx.m_graphicsCmds, ctx.m_renderExtents);
 	}
 
 	void StaticMeshSimpleRenderer::MainPassBegin(Device& d, VkCommandBuffer cmds, VkFormat mainColourFormat, VkFormat mainDepthFormat)
@@ -455,23 +407,51 @@ namespace R3
 		}
 	}
 
-	void StaticMeshSimpleRenderer::MainPassDraw(Device& d, VkCommandBuffer cmds)
+	void StaticMeshSimpleRenderer::MainPassDraw(Device& d, VkCommandBuffer cmds, glm::vec2 extents)
 	{
 		R3_PROF_EVENT();
-		if (m_simpleTriPipeline == VK_NULL_HANDLE)
+		auto entities = Systems::GetSystem<Entities::EntitySystem>();
+		auto staticMeshes = GetSystem<StaticMeshSystem>();
+		auto textures = GetSystem<TextureSystem>();
+		auto time = GetSystem<TimeSystem>();
+		if (m_simpleTriPipeline == VK_NULL_HANDLE || entities->GetActiveWorld() == nullptr)
 		{
 			return;
 		}
+		m_frameStats.m_writeCmdsStartTime = time->GetElapsedTimeReal();
+		VkViewport viewport = { 0 };
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = extents.x;
+		viewport.height = extents.y;
+		viewport.minDepth = 0.0f;	// normalised! must be between 0 and 1
+		viewport.maxDepth = 1.0f;	// ^^
+		VkRect2D scissor = { 0 };
+		scissor.offset = { 0, 0 };
+		scissor.extent = { (uint32_t)viewport.width, (uint32_t)viewport.height };	// draw the full image
+		vkCmdBindPipeline(cmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_simpleTriPipeline);
+		vkCmdSetViewport(cmds, 0, 1, &viewport);
+		vkCmdSetScissor(cmds, 0, 1, &scissor);
 
-		// submit secondary cmd buffer
-		if (m_thisFrameCmdBuffer.m_cmdBuffer)
+		vkCmdBindIndexBuffer(cmds, staticMeshes->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+		vkCmdBindDescriptorSets(cmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_globalDescriptorSet, 0, nullptr);
+		VkDescriptorSet allTextures = textures->GetAllTexturesSet();
+		if (allTextures != VK_NULL_HANDLE)
 		{
-			R3_PROF_GPU_EVENT("StaticMeshSimpleRenderer::MainPassDraw");
-			vkCmdExecuteCommands(cmds, 1, &m_thisFrameCmdBuffer.m_cmdBuffer);
+			vkCmdBindDescriptorSets(cmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 1, 1, &allTextures, 0, nullptr);
 		}
+		PushConstants pc;
+		pc.m_globalConstantIndex = m_currentGlobalConstantsBuffer;
+		vkCmdPushConstants(cmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 
-		auto render = Systems::GetSystem<RenderSystem>();
-		render->GetCommandBufferAllocator()->Release(m_thisFrameCmdBuffer);
-		m_thisFrameCmdBuffer = {};
+		size_t drawOffsetBytes = m_currentInstanceBufferStart * sizeof(VkDrawIndexedIndirectCommand);
+		vkCmdDrawIndexedIndirect(cmds, m_drawIndirectHostVisible.m_buffer, drawOffsetBytes, m_currentFrameTotalInstances, sizeof(VkDrawIndexedIndirectCommand));
+		m_currentInstanceBufferStart += c_maxInstances;
+		m_currentFrameTotalInstances = 0;
+		if (m_currentInstanceBufferStart >= (c_maxInstances * c_maxInstanceBuffers))
+		{
+			m_currentInstanceBufferStart = 0;
+		}
+		m_frameStats.m_writeCmdsEndTime = time->GetElapsedTimeReal();
 	}
 }

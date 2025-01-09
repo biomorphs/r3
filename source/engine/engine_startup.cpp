@@ -93,7 +93,7 @@ namespace R3
 			}
 			{
 				auto& renderUpdate = updateSequence.AddSequence("RenderUpdate");
-				renderUpdate.AddFn("StaticMeshSimpleRenderer::BuildCommandBuffer");
+				renderUpdate.AddFn("StaticMeshSimpleRenderer::CollectInstances");
 				renderUpdate.AddFn("FrameScheduler::BuildRenderGraph");
 			}
 			{

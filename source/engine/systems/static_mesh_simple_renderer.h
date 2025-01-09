@@ -4,7 +4,6 @@
 #include "render/vulkan_helpers.h"
 #include "render/writeonly_gpu_buffer.h"
 #include "render/descriptors.h"
-#include "render/command_buffer_allocator.h"
 
 namespace R3
 {
@@ -24,11 +23,11 @@ namespace R3
 	private:
 		struct GlobalConstants;
 		bool ShowGui();
+		bool CollectInstances();
 		void Cleanup(Device&);
-		bool BuildCommandBuffer();
-		uint32_t WriteInstances(VkCommandBuffer_T* buffer);		// returns instance count
+		uint32_t WriteInstances();		// returns instance count
 		void MainPassBegin(Device&, VkCommandBuffer, VkFormat mainColourFormat, VkFormat mainDepthFormat);
-		void MainPassDraw(Device&, VkCommandBuffer);
+		void MainPassDraw(Device&, VkCommandBuffer, glm::vec2 extents);
 		bool CreatePipelineData(Device&, VkFormat mainColourFormat, VkFormat mainDepthFormat);
 		bool CreateGlobalDescriptorSet();
 		void ProcessEnvironmentSettings(GlobalConstants&);
@@ -57,11 +56,11 @@ namespace R3
 		AllocatedBuffer m_drawIndirectHostVisible;
 		void* m_drawIndirectMappedPtr = nullptr;
 		uint32_t m_currentInstanceBufferStart = 0;	// index into m_globalInstancesMappedPtr and m_drawIndirectBuffer
+		uint32_t m_currentFrameTotalInstances = 0;	// total instances written to global instances this frame
 		const uint32_t c_maxInstances = 1024 * 256;
 		const uint32_t c_maxInstanceBuffers = 4;
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_simpleTriPipeline = VK_NULL_HANDLE;
-		ManagedCommandBuffer m_thisFrameCmdBuffer;
 		bool m_showGui = false;
 	};
 }

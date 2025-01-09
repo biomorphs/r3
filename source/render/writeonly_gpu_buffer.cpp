@@ -83,13 +83,29 @@ namespace R3
 		ScheduledWrite writeToFlush;
 		int copiesIssued = 0;
 		std::vector<VkBufferCopy> copyRegions;
+		copyRegions.reserve(m_stagingWrites.size_approx());
+		VkBufferCopy coalescedCopy = {};
 		while (m_stagingWrites.try_dequeue(writeToFlush))
 		{
-			VkBufferCopy copyRegion{};
-			copyRegion.srcOffset = writeToFlush.m_stagingOffset;
-			copyRegion.dstOffset = writeToFlush.m_targetOffset;
-			copyRegion.size = writeToFlush.m_size;
-			copyRegions.push_back(copyRegion);
+			// if this can be coalesced, add it to the coalesced write and continue
+			if (writeToFlush.m_stagingOffset == (coalescedCopy.srcOffset + coalescedCopy.size) && writeToFlush.m_targetOffset == (coalescedCopy.dstOffset + coalescedCopy.size))
+			{
+				coalescedCopy.size += writeToFlush.m_size;
+			}
+			else
+			{
+				if (coalescedCopy.size > 0)	// make sure to add the coalesced writes from before
+				{
+					copyRegions.push_back(coalescedCopy);
+				}
+				coalescedCopy.srcOffset = writeToFlush.m_stagingOffset;	// continue from this region
+				coalescedCopy.dstOffset = writeToFlush.m_targetOffset;
+				coalescedCopy.size = writeToFlush.m_size;
+			}
+		}
+		if (coalescedCopy.size > 0)	// make sure to add the last coalesced write
+		{
+			copyRegions.push_back(coalescedCopy);
 		}
 		if (copyRegions.size() > 0)
 		{
