@@ -27,12 +27,12 @@ namespace R3
 		void Cleanup(Device&);
 		bool BuildCommandBuffer();
 		uint32_t WriteInstances(VkCommandBuffer_T* buffer);		// returns instance count
-		void MainPassBegin(Device&, VkCommandBuffer);
+		void MainPassBegin(Device&, VkCommandBuffer, VkFormat mainColourFormat, VkFormat mainDepthFormat);
 		void MainPassDraw(Device&, VkCommandBuffer);
-		bool CreatePipelineData(Device&);
+		bool CreatePipelineData(Device&, VkFormat mainColourFormat, VkFormat mainDepthFormat);
 		bool CreateGlobalDescriptorSet();
 		void ProcessEnvironmentSettings(GlobalConstants&);
-		bool InitialiseGpuData(Device&);
+		bool InitialiseGpuData(Device&, VkFormat mainColourFormat, VkFormat mainDepthFormat);
 		struct StaticMeshInstanceGpu {				// needs to match PerInstanceData in shaders
 			glm::mat4 m_transform;
 			uint32_t m_materialIndex;

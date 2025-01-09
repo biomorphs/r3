@@ -77,16 +77,6 @@ namespace R3
 		m_vk = nullptr;
 	}
 
-	VkFormat RenderSystem::GetMainColourTargetFormat()
-	{
-		return VK_FORMAT_R16G16B16A16_SFLOAT;
-	}
-
-	VkFormat RenderSystem::GetMainDepthStencilFormat()
-	{
-		return VK_FORMAT_D32_SFLOAT;
-	}
-
 	void RenderSystem::RunGraph(RenderGraph& r, VkCommandBuffer_T* cmdBuffer, VkImage_T* swapImage, VkImageView_T* swapImageView)
 	{
 		R3_PROF_EVENT();

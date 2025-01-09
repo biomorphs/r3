@@ -18,6 +18,7 @@
 #include "render/descriptors.h"
 #include "render/render_helpers.h"
 #include "render/render_pass_context.h"
+#include "render/render_target_cache.h"
 #include "core/profiler.h"
 #include "core/log.h"
 #include <imgui.h>
@@ -118,11 +119,10 @@ namespace R3
 		return true;
 	}
 
-	bool StaticMeshSimpleRenderer::CreatePipelineData(Device& d)
+	bool StaticMeshSimpleRenderer::CreatePipelineData(Device& d, VkFormat mainColourFormat, VkFormat mainDepthFormat)
 	{
 		R3_PROF_EVENT();
 		auto textures = GetSystem<TextureSystem>();
-		auto render = Systems::GetSystem<RenderSystem>();
 		VkPushConstantRange constantRange;	// Create pipeline layout
 		constantRange.offset = 0;	// needs to match in the shader if >0!
 		constantRange.size = sizeof(PushConstants);
@@ -172,9 +172,7 @@ namespace R3
 			VulkanHelpers::CreatePipelineColourBlendAttachment_NoBlending()
 		};
 		pb.m_colourBlendState = VulkanHelpers::CreatePipelineColourBlendState(allAttachments);
-		auto colourBufferFormat = render->GetMainColourTargetFormat();
-		auto depthBufferFormat = render->GetMainDepthStencilFormat();
-		m_simpleTriPipeline = pb.Build(d.GetVkDevice(), m_pipelineLayout, 1, &colourBufferFormat, depthBufferFormat);
+		m_simpleTriPipeline = pb.Build(d.GetVkDevice(), m_pipelineLayout, 1, &mainColourFormat, mainDepthFormat);
 		if (m_simpleTriPipeline == VK_NULL_HANDLE)
 		{
 			LogError("Failed to create pipeline!");
@@ -220,7 +218,7 @@ namespace R3
 		return true;
 	}
 
-	bool StaticMeshSimpleRenderer::InitialiseGpuData(Device& d)
+	bool StaticMeshSimpleRenderer::InitialiseGpuData(Device& d, VkFormat mainColourFormat, VkFormat mainDepthFormat)
 	{
 		if (!m_globalConstantsBuffer.IsCreated())
 		{
@@ -259,7 +257,7 @@ namespace R3
 		}
 		if (m_pipelineLayout == VK_NULL_HANDLE || m_simpleTriPipeline == VK_NULL_HANDLE)
 		{
-			CreatePipelineData(d);
+			CreatePipelineData(d, mainColourFormat, mainDepthFormat);
 		}
 		return true;
 	}
@@ -378,7 +376,9 @@ namespace R3
 			return false;
 		}
 		m_thisFrameCmdBuffer = *cmdBuffer;
-		if (!RenderHelpers::BeginSecondaryCommandBuffer(m_thisFrameCmdBuffer.m_cmdBuffer))
+
+		// todo, get these formats from somewhere, or refactor this to avoid secondary cmd buffer altogether?
+		if (!RenderHelpers::BeginSecondaryCommandBuffer(m_thisFrameCmdBuffer.m_cmdBuffer, VK_FORMAT_R16G16B16A16_SFLOAT, VK_FORMAT_D32_SFLOAT))
 		{
 			LogError("Failed to begin writing cmds");
 			return false;
@@ -413,7 +413,9 @@ namespace R3
 
 	void StaticMeshSimpleRenderer::OnMainPassBegin(class RenderPassContext& ctx)
 	{
-		MainPassBegin(*ctx.m_device, ctx.m_graphicsCmds);
+		auto mainColourTarget = ctx.GetResolvedTarget("MainColour");
+		auto mainDepthTarget = ctx.GetResolvedTarget("MainDepth");
+		MainPassBegin(*ctx.m_device, ctx.m_graphicsCmds, mainColourTarget->m_info.m_format, mainDepthTarget->m_info.m_format);
 	}
 
 	void StaticMeshSimpleRenderer::OnMainPassDraw(class RenderPassContext& ctx)
@@ -421,10 +423,10 @@ namespace R3
 		MainPassDraw(*ctx.m_device, ctx.m_graphicsCmds);
 	}
 
-	void StaticMeshSimpleRenderer::MainPassBegin(Device& d, VkCommandBuffer cmds)
+	void StaticMeshSimpleRenderer::MainPassBegin(Device& d, VkCommandBuffer cmds, VkFormat mainColourFormat, VkFormat mainDepthFormat)
 	{
 		R3_PROF_EVENT();
-		if (!InitialiseGpuData(d))
+		if (!InitialiseGpuData(d, mainColourFormat, mainDepthFormat))
 		{
 			return;
 		}

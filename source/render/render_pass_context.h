@@ -1,6 +1,7 @@
 #pragma once
 #include "core/glm_headers.h"
 #include <vector>
+#include <string_view>
 
 struct VkCommandBuffer_T;
 namespace R3
@@ -23,5 +24,6 @@ namespace R3
 		glm::vec2 m_renderExtents;		// extents of render pass
 
 		RenderTarget* GetResolvedTarget(const RenderTargetInfo& info);
+		RenderTarget* GetResolvedTarget(std::string_view targetName);
 	};
 }

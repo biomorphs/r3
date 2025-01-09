@@ -8,10 +8,9 @@ namespace R3
 {
 	namespace RenderHelpers
 	{
-		bool BeginSecondaryCommandBuffer(VkCommandBuffer buffer)
+		bool BeginSecondaryCommandBuffer(VkCommandBuffer buffer, VkFormat colourFormat, VkFormat depthFormat)
 		{
 			R3_PROF_EVENT();
-			auto render = Systems::GetSystem<RenderSystem>();
 			VkCommandBufferBeginInfo beginInfo = { 0 };
 			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;	// this pass is ran inside another render pass
@@ -19,10 +18,10 @@ namespace R3
 			bufferInheritance.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
 			VkCommandBufferInheritanceRenderingInfoKHR dynamicRenderInheritance = { 0 };	// dynamic rendering
 			dynamicRenderInheritance.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_RENDERING_INFO_KHR;
-			auto colourBufferFormat = render->GetMainColourTargetFormat();
+			auto colourBufferFormat = colourFormat;
 			dynamicRenderInheritance.colorAttachmentCount = 1;
 			dynamicRenderInheritance.pColorAttachmentFormats = &colourBufferFormat;
-			dynamicRenderInheritance.depthAttachmentFormat = render->GetMainDepthStencilFormat();
+			dynamicRenderInheritance.depthAttachmentFormat = depthFormat;
 			dynamicRenderInheritance.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 			bufferInheritance.pNext = &dynamicRenderInheritance;
 			beginInfo.pInheritanceInfo = &bufferInheritance;

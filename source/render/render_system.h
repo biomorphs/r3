@@ -36,10 +36,6 @@ namespace R3
 		CommandBufferAllocator* GetCommandBufferAllocator();
 		RenderGraph& GetRenderGraph() { return *m_renderGraph; }
 
-		// temp, should be coming from graph  somehow?
-		VkFormat GetMainColourTargetFormat();
-		VkFormat GetMainDepthStencilFormat();
-
 		// Run some graphics code immediately
 		void RunGraphicsCommandsImmediate(std::function<void(VkCommandBuffer_T*)> fn);
 

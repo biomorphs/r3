@@ -9,7 +9,7 @@ namespace R3
 	{
 		// Begin writing to a secondary command buffer that will draw to the main colour + depth
 		// Assumed to execute during a render pass
-		bool BeginSecondaryCommandBuffer(VkCommandBuffer buffer);
+		bool BeginSecondaryCommandBuffer(VkCommandBuffer buffer, VkFormat colourFormat, VkFormat depthFormat);
 
 		// Bind a pipeline that will be drawing to the main viewport
 		void BindPipeline(VkCommandBuffer buffer, VkPipeline p);
