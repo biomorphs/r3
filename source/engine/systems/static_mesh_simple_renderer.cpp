@@ -285,6 +285,7 @@ namespace R3
 	uint32_t StaticMeshSimpleRenderer::WriteInstances()
 	{
 		R3_PROF_EVENT();
+		m_frameStats.m_totalTriangles = m_frameStats.m_totalModelInstances = m_frameStats.m_totalPartInstances = 0;
 		auto entities = Systems::GetSystem<Entities::EntitySystem>();
 		auto staticMeshes = GetSystem<StaticMeshSystem>();
 		auto activeWorld = entities->GetActiveWorld();
