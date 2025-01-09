@@ -82,17 +82,19 @@ namespace R3
 		R3_PROF_EVENT();
 		ScheduledWrite writeToFlush;
 		int copiesIssued = 0;
+		std::vector<VkBufferCopy> copyRegions;
 		while (m_stagingWrites.try_dequeue(writeToFlush))
 		{
 			VkBufferCopy copyRegion{};
 			copyRegion.srcOffset = writeToFlush.m_stagingOffset;
 			copyRegion.dstOffset = writeToFlush.m_targetOffset;
 			copyRegion.size = writeToFlush.m_size;
-			vkCmdCopyBuffer(cmds, m_stagingBuffer.m_buffer, m_allData.m_buffer, 1, &copyRegion);
-			++copiesIssued;
+			copyRegions.push_back(copyRegion);
 		}
-		if (copiesIssued > 0)
+		if (copyRegions.size() > 0)
 		{
+			vkCmdCopyBuffer(cmds, m_stagingBuffer.m_buffer, m_allData.m_buffer, static_cast<uint32_t>(copyRegions.size()), copyRegions.data());
+
 			// use a memory barrier to ensure the transfer finishes before any vertex reads
 			// dst stage probably needs to be customisable 
 			VkMemoryBarrier writeBarrier = { 0 };
