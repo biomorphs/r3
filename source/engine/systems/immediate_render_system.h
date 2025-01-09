@@ -19,5 +19,6 @@ namespace R3
 		void OnMainPassDraw(class RenderPassContext&);
 
 		std::unique_ptr<ImmediateRenderer> m_imRender;
+		bool m_initialised = false;
 	};
 }

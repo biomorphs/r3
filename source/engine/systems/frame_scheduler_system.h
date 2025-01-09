@@ -18,9 +18,6 @@ namespace R3
 		static std::string_view GetName() { return "FrameScheduler"; }
 		virtual void RegisterTickFns();
 		virtual bool Init();
-
-		VkFormat GetMainColourTargetFormat();
-		VkFormat GetMainDepthStencilFormat();
 	private:
 		bool BuildRenderGraph();
 		std::unique_ptr<DrawPass> MakeMainPass(const RenderTargetInfo& mainColour, const RenderTargetInfo& mainDepth);

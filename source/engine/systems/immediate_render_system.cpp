@@ -22,12 +22,6 @@ namespace R3
 	{
 		auto frameScheduler = GetSystem<FrameScheduler>();
 		auto render = GetSystem<RenderSystem>();
-		// assuming this is ran after render init (dangerous)
-		if (!m_imRender->Initialise(*render->GetDevice(), frameScheduler->GetMainColourTargetFormat(), frameScheduler->GetMainDepthStencilFormat()))
-		{
-			LogError("Failed to create immediate renderer");
-			return false;
-		}
 		render->m_onShutdownCbs.AddCallback([this](Device& d) {
 			m_imRender->Destroy(d);
 			m_imRender = {};
@@ -46,6 +40,17 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		auto render = GetSystem<RenderSystem>();
+		if (!m_initialised)
+		{
+			auto mainColour = ctx.GetResolvedTarget("MainColour");
+			auto mainDepth = ctx.GetResolvedTarget("MainDepth");
+			if (!m_imRender->Initialise(*render->GetDevice(), mainColour->m_info.m_format, mainDepth->m_info.m_format))
+			{
+				LogError("Failed to create immediate renderer");
+				return;
+			}
+			m_initialised = true;
+		}
 		m_imRender->WriteVertexData(*render->GetDevice(), *render->GetStagingBufferPool(), ctx.m_graphicsCmds);
 	}
 

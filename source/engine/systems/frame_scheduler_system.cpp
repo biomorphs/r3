@@ -37,16 +37,6 @@ namespace R3
 		return true;
 	}
 
-	VkFormat FrameScheduler::GetMainColourTargetFormat()
-	{
-		return VK_FORMAT_R16G16B16A16_SFLOAT;	// HDR-lite
-	}
-
-	VkFormat FrameScheduler::GetMainDepthStencilFormat()
-	{
-		return VK_FORMAT_D32_SFLOAT;			// Probably too fat
-	}
-
 	std::unique_ptr<DrawPass> FrameScheduler::MakeMainPass(const RenderTargetInfo& mainColour, const RenderTargetInfo& mainDepth)
 	{
 		R3_PROF_EVENT();
@@ -135,10 +125,10 @@ namespace R3
 
 		RenderTargetInfo swapchainImage("Swapchain");	// Swap chain image, this will be presented to the screen each frame
 		RenderTargetInfo mainColour("MainColour");		// HDR colour buffer, linear encoding
-		mainColour.m_format = GetMainColourTargetFormat();
+		mainColour.m_format = VK_FORMAT_R16G16B16A16_SFLOAT;
 		mainColour.m_usageFlags = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 		RenderTargetInfo mainDepth("MainDepth");		// Main depth buffer
-		mainDepth.m_format = GetMainDepthStencilFormat();
+		mainDepth.m_format = VK_FORMAT_D32_SFLOAT;		// may be overkill
 		mainDepth.m_usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 		mainDepth.m_aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
 		RenderTargetInfo mainColourLDR("MainColourLDR");		// LDR colour buffer after tonemapping
