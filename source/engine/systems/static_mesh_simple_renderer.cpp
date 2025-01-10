@@ -282,18 +282,139 @@ namespace R3
 		}
 	}
 
+	/////////////////////////////////////////////////////////////////
+	// new stuff
+	void StaticMeshSimpleRenderer::CollectModelInstancesFromEntities()
+	{
+		R3_PROF_EVENT();
+		for (auto& instanceList : m_allMeshInstances)
+		{
+			instanceList.second.clear();	// just empty the array for each mesh to avoid constant reallocations
+		}
+		auto activeWorld = Systems::GetSystem<Entities::EntitySystem>()->GetActiveWorld();
+		if (activeWorld)
+		{
+			// cache previous instance array to avoid lookups for consecutive entities with same model
+			uint32_t lastMeshHandle = -1;
+			std::vector<StaticMeshInstance>* lastMeshInstanceArray = nullptr;
+			auto forEachEntity = [&](const Entities::EntityHandle& e, StaticMeshComponent& s, TransformComponent& t)
+			{
+				if (s.m_modelHandle.m_index != -1 && s.m_shouldDraw)	// doesn't mean the model is actually ready to draw!
+				{
+					StaticMeshInstance meshInstance;
+					if (s.m_materialOverride.GetID() != -1)
+					{
+						if (auto matOverrideCmp = activeWorld->GetComponent<StaticMeshMaterialsComponent>(s.m_materialOverride))
+						{
+							meshInstance.m_materialBaseIndex = matOverrideCmp->m_gpuDataIndex;	// not validated yet!
+						}
+					}
+					meshInstance.m_transform = t.GetWorldspaceInterpolated(e, *activeWorld);
+
+					if (lastMeshHandle != s.m_modelHandle.m_index)
+					{
+						lastMeshInstanceArray = &m_allMeshInstances[s.m_modelHandle.m_index];
+						lastMeshHandle = s.m_modelHandle.m_index;
+					}
+					lastMeshInstanceArray->push_back(meshInstance);
+				}
+				return true;
+			};
+			Entities::Queries::ForEach<StaticMeshComponent, TransformComponent>(activeWorld, forEachEntity);
+		}
+	}
+
+	void StaticMeshSimpleRenderer::CollectModelPartInstances()
+	{
+		R3_PROF_EVENT();
+		auto staticMeshes = GetSystem<StaticMeshSystem>();
+		m_allPartInstances.clear();
+		m_opaqueInstances.clear();
+
+		for (const auto &meshEntry : m_allMeshInstances)	// for each model
+		{
+			StaticMeshGpuData currentMeshData;
+			if (meshEntry.second.size() > 0 && staticMeshes->GetMeshDataForModel(ModelDataHandle(meshEntry.first), currentMeshData))
+			{
+				for (uint32_t partIndex = 0; partIndex < currentMeshData.m_meshPartCount; ++partIndex)	// for each part
+				{
+					StaticMeshPart partData;
+					if (staticMeshes->GetMeshPart(currentMeshData.m_firstMeshPartOffset + partIndex, partData))
+					{
+						for (const auto& meshInstance : meshEntry.second)	// for each instance of this part
+						{						
+							StaticMeshPartInstance partInstance;
+							partInstance.m_fullTransform = meshInstance.m_transform * partData.m_transform;	// final part transform
+							partInstance.m_resolvedMaterialIndex = meshInstance.m_materialBaseIndex == -1 ? currentMeshData.m_materialGpuIndex : meshInstance.m_materialBaseIndex;	// base index
+							partInstance.m_resolvedMaterialIndex += partData.m_materialIndex - currentMeshData.m_materialGpuIndex;	// relative to part materials 
+							partInstance.m_partGlobalIndex = currentMeshData.m_firstMeshPartOffset + partIndex;
+							m_allPartInstances.emplace_back(partInstance);			// add resolved part data to global array
+							const auto globalPartIndex = static_cast<uint32_t>(m_allPartInstances.size() - 1);
+
+							// insert part instances into draw buckets depending on material, flags, etc
+							m_opaqueInstances.push_back(globalPartIndex);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	void StaticMeshSimpleRenderer::PrepareOpaqueDrawData()
+	{
+		R3_PROF_EVENT();
+		auto staticMeshes = GetSystem<StaticMeshSystem>();
+		uint32_t thisDrawOffset = m_currentDrawBufferStart + m_currentFrameTotalDraws;
+		uint32_t thisInstanceOffset = m_currentInstanceBufferStart + m_currentFrameTotalInstances;
+		m_opaqueDrawsStart = thisDrawOffset;
+		StaticMeshPart partData;
+		uint32_t lastPartDataIndex = -1;
+		for (const auto& partInstanceIndex : m_opaqueInstances)		// indexes into m_allPartInstances
+		{
+			const auto& partInstanceData = m_allPartInstances[partInstanceIndex];
+			if (lastPartDataIndex != partInstanceData.m_partGlobalIndex)
+			{
+				staticMeshes->GetMeshPart(partInstanceData.m_partGlobalIndex, partData);
+				lastPartDataIndex = partInstanceData.m_partGlobalIndex;
+			}
+			
+			// We can do culling here
+
+			// Write the instance data
+			StaticMeshInstanceGpu* instancesPtr = static_cast<StaticMeshInstanceGpu*>(m_globalInstancesMappedPtr) + thisInstanceOffset;
+			instancesPtr->m_transform = partInstanceData.m_fullTransform;
+			instancesPtr->m_materialIndex = partInstanceData.m_resolvedMaterialIndex;
+
+			// write a draw call
+			VkDrawIndexedIndirectCommand* drawPtr = static_cast<VkDrawIndexedIndirectCommand*>(m_drawIndirectMappedPtr) + thisDrawOffset;
+			drawPtr->firstInstance = thisInstanceOffset;
+			drawPtr->instanceCount = 1;
+			drawPtr->firstIndex = static_cast<uint32_t>(partData.m_indexStartOffset);
+			drawPtr->indexCount = partData.m_indexCount;
+			drawPtr->vertexOffset = partData.m_vertexDataOffset;
+
+			thisInstanceOffset++;
+			thisDrawOffset++;
+		}
+		const auto drawCount = thisDrawOffset - (m_currentDrawBufferStart + m_currentFrameTotalDraws);
+		const auto instanceCount = thisInstanceOffset - (m_currentInstanceBufferStart + m_currentFrameTotalInstances);
+		m_currentFrameTotalDraws += drawCount;
+		m_currentFrameTotalInstances += instanceCount;
+		m_opaqueDrawsCount = drawCount;
+	}
+
+	/////////////////////////////////////////////////////////////////
+
 	uint32_t StaticMeshSimpleRenderer::WriteInstances()
 	{
 		R3_PROF_EVENT();
-		m_frameStats.m_totalTriangles = m_frameStats.m_totalModelInstances = m_frameStats.m_totalPartInstances = 0;
-		auto entities = Systems::GetSystem<Entities::EntitySystem>();
+		
 		auto staticMeshes = GetSystem<StaticMeshSystem>();
-		auto activeWorld = entities->GetActiveWorld();
+		auto activeWorld = Systems::GetSystem<Entities::EntitySystem>()->GetActiveWorld();
 		if (activeWorld == nullptr)
 		{
-			return true;
+			return 0;
 		}
-		const auto transformComponentTypeId = Entities::ComponentTypeRegistry::GetTypeIndex<TransformComponent>();
 		StaticMeshGpuData currentMeshData;				// Try to cache what we can while iterating, yes this is messy, but its fast!
 		ModelDataHandle currentMeshDataHandle;
 		std::vector<StaticMeshPart> currentMeshParts;	// cache the parts to avoid touching the meshes constantly
@@ -363,7 +484,21 @@ namespace R3
 	bool StaticMeshSimpleRenderer::CollectInstances()
 	{
 		R3_PROF_EVENT();
-		m_currentFrameTotalInstances = WriteInstances();
+
+		// Reset frame stats
+		m_frameStats.m_totalTriangles = m_frameStats.m_totalModelInstances = m_frameStats.m_totalPartInstances = 0;
+
+		// old render writes same num of instances + draws
+		uint32_t oldInstancesWritten = WriteInstances();
+		m_currentFrameTotalInstances += oldInstancesWritten;
+		m_currentFrameTotalDraws += oldInstancesWritten;
+
+		{
+			R3_PROF_EVENT("New Stuff");
+			CollectModelInstancesFromEntities();
+			CollectModelPartInstances();
+			PrepareOpaqueDrawData();
+		}
 		return true;
 	}
 
@@ -445,14 +580,24 @@ namespace R3
 		pc.m_globalConstantIndex = m_currentGlobalConstantsBuffer;
 		vkCmdPushConstants(cmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 
-		size_t drawOffsetBytes = m_currentInstanceBufferStart * sizeof(VkDrawIndexedIndirectCommand);
-		vkCmdDrawIndexedIndirect(cmds, m_drawIndirectHostVisible.m_buffer, drawOffsetBytes, m_currentFrameTotalInstances, sizeof(VkDrawIndexedIndirectCommand));
+		// Draw opaques
+		size_t drawOffsetBytes = m_opaqueDrawsStart * sizeof(VkDrawIndexedIndirectCommand);
+		vkCmdDrawIndexedIndirect(cmds, m_drawIndirectHostVisible.m_buffer, drawOffsetBytes, m_opaqueDrawsCount, sizeof(VkDrawIndexedIndirectCommand));
+
+		// Update instance + draw buffers for next frame
 		m_currentInstanceBufferStart += c_maxInstances;
-		m_currentFrameTotalInstances = 0;
 		if (m_currentInstanceBufferStart >= (c_maxInstances * c_maxInstanceBuffers))
 		{
 			m_currentInstanceBufferStart = 0;
 		}
+		m_currentFrameTotalInstances = 0;
+
+		m_currentDrawBufferStart += c_maxInstances;
+		if (m_currentDrawBufferStart >= (c_maxInstances + c_maxInstanceBuffers))
+		{
+			m_currentDrawBufferStart = 0;
+		}
+		m_currentFrameTotalDraws = 0;
 		m_frameStats.m_writeCmdsEndTime = time->GetElapsedTimeReal();
 	}
 }

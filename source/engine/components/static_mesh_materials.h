@@ -17,7 +17,7 @@ namespace R3
 		void Inspect(const Entities::EntityHandle& e, Entities::World* w, ValueInspector& i);
 
 		std::vector<StaticMeshMaterial> m_materials;
-		uint64_t m_gpuDataIndex = -1;	// indexes into StaticMeshSystem::m_allMaterialsGpu
+		uint32_t m_gpuDataIndex = -1;	// indexes into StaticMeshSystem::m_allMaterialsGpu
 
 	private:
 		void PopulateFromMesh(const Entities::EntityHandle& e, Entities::World* w);

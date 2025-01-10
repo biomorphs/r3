@@ -19,11 +19,10 @@ namespace R3
 		glm::mat4 m_transform;					// relative to the model
 		glm::vec3 m_boundsMin;					// mesh space bounds
 		glm::vec3 m_boundsMax;
-		uint64_t m_vertexStartOffset;			// offset into verts
 		uint64_t m_indexStartOffset;			// offset into indices (index data is local to the mesh, verts must be offset by mesh vertex offset)
-		uint32_t m_vertexCount;
 		uint32_t m_indexCount;					//
 		uint32_t m_materialIndex;				// index into mesh data material array
+		uint32_t m_vertexDataOffset;			// used when generating draw calls
 	};
 	struct StaticMeshMaterial
 	{

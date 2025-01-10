@@ -230,8 +230,7 @@ namespace R3
 					pt.m_indexCount = m->m_meshes[part].m_indexCount;
 					pt.m_indexStartOffset = newMesh.m_indexDataOffset + m->m_meshes[part].m_indexDataOffset;
 					pt.m_materialIndex = newMesh.m_materialGpuIndex + m->m_meshes[part].m_materialIndex;	// GPU index!
-					pt.m_vertexCount = m->m_meshes[part].m_vertexCount;
-					pt.m_vertexStartOffset = newMesh.m_vertexDataOffset + m->m_meshes[part].m_vertexDataOffset;
+					pt.m_vertexDataOffset = static_cast<uint32_t>(newMesh.m_vertexDataOffset);
 				}
 			}
 			// now copy the vertex + index data to staging
@@ -289,7 +288,7 @@ namespace R3
 			{
 				if (smc.m_gpuDataIndex == -1 && smc.m_materials.size() > 0)
 				{
-					smc.m_gpuDataIndex = m_allMaterialsGpu.Allocate(smc.m_materials.size());
+					smc.m_gpuDataIndex = static_cast<uint32_t>(m_allMaterialsGpu.Allocate(smc.m_materials.size()));
 				}
 				if(smc.m_gpuDataIndex != -1)	// update all instance mats each frame (probably bad)
 				{
