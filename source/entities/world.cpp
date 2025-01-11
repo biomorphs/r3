@@ -15,8 +15,8 @@ namespace Entities
 {
 	World::World()
 	{
-		m_allEntities.reserve(1024 * 1024);
-		m_allEntityNames.reserve(1024 * 1024);
+		m_allEntities.reserve(1024 * 256);
+		m_allEntityNames.reserve(1024 * 256);
 	}
 
 	World::~World()
@@ -399,7 +399,9 @@ namespace Entities
 			m_freeEntityIndices.pop_front();
 			assert(m_allEntities[newIndex].m_publicID == -1);
 			assert(m_allEntities[newIndex].m_ownedComponentBits == 0);
+#ifdef R3_ENTITY_INDICES_IN_VECTOR
 			assert(m_allEntities[newIndex].m_componentIndices.size() == 0);
+#endif
 			m_allEntities[newIndex].m_publicID = newId;
 			m_allEntityNames[newIndex].clear();
 		}
@@ -436,7 +438,9 @@ namespace Entities
 			{
 				assert(m_allEntities[reservedIndex].m_publicID == -1);
 				assert(m_allEntities[reservedIndex].m_ownedComponentBits == 0);
+#ifdef R3_ENTITY_INDICES_IN_VECTOR
 				assert(m_allEntities[reservedIndex].m_componentIndices.size() == 0);
+#endif
 				m_allEntities[reservedIndex].m_publicID = handleToRestore.GetID();
 				m_allEntityNames[reservedIndex].clear();
 				m_reservedSlots.erase(reservation);
@@ -579,10 +583,12 @@ namespace Entities
 		uint32_t newCmpIndex = m_allComponents[resolvedTypeIndex]->Create(e);
 		auto newBits = (PerEntityData::ComponentBitsetType)1 << resolvedTypeIndex;
 		m_allEntities[e.GetPrivateIndex()].m_ownedComponentBits |= newBits;
+#ifdef R3_ENTITY_INDICES_IN_VECTOR
 		if (m_allEntities[e.GetPrivateIndex()].m_componentIndices.size() < resolvedTypeIndex + 1)
 		{
 			m_allEntities[e.GetPrivateIndex()].m_componentIndices.resize(resolvedTypeIndex + 1, -1);
 		}
+#endif
 		m_allEntities[e.GetPrivateIndex()].m_componentIndices[resolvedTypeIndex] = newCmpIndex;
 	}
 
@@ -692,7 +698,11 @@ namespace Entities
 				}
 				// reset + push the entity to the free or reserved list
 				theEntity.m_publicID = -1;
+#ifdef R3_ENTITY_INDICES_IN_VECTOR
 				theEntity.m_componentIndices.clear();	// clear out the old values but keep the memory around
+#else
+				theEntity.m_componentIndices.fill(-1);
+#endif
 				theEntity.m_children.clear();
 				if (toDelete.m_reserveHandle)
 				{

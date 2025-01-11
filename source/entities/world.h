@@ -5,6 +5,9 @@
 #include <vector>
 #include <deque>
 #include <memory>
+#include <array>
+
+// #define R3_ENTITY_INDICES_IN_VECTOR
 
 namespace R3
 {
@@ -95,10 +98,20 @@ namespace Entities
 		void AddComponentInternal(const EntityHandle& e, uint32_t resolvedTypeIndex);
 		struct PerEntityData
 		{
+#ifndef R3_ENTITY_INDICES_IN_VECTOR
+			PerEntityData()
+			{
+				m_componentIndices.fill(-1);
+			}
+#endif
 			using ComponentBitsetType = uint64_t;
 			uint32_t m_publicID = -1;						// used to publicaly identify an entity in a world
 			ComponentBitsetType m_ownedComponentBits = 0;	// each bit represents a component type that this entity owns/contains
+#ifdef R3_ENTITY_INDICES_IN_VECTOR
 			std::vector<uint32_t> m_componentIndices;		// index into component storage per type. take care!
+#else
+			std::array<uint32_t, 64> m_componentIndices;	// testing
+#endif
 			EntityHandle m_parent;							// if a parent exists, it should have a EntityChildrenComponent!
 			std::vector<EntityHandle> m_children;
 		};
