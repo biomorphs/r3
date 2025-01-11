@@ -2,7 +2,10 @@
  "AllEntities": [
   {
    "ID": 0,
+   "Name": "",
+   "Parent": 4294967295,
    "StaticMesh": {
+    "Draw": true,
     "MaterialsOverride": {
      "ID": 4294967295
     },
@@ -22,6 +25,7 @@
      "Y": -1.0,
      "Z": 0.0
     },
+    "Relative": false,
     "Scale": {
      "X": 64.0,
      "Y": 2.0,
@@ -31,14 +35,17 @@
   },
   {
    "ID": 1,
+   "Name": "",
+   "Parent": 4294967295,
    "PointLight": {
-    "Brightness": 8.0,
+    "Brightness": 32.0,
     "Colour": {
      "X": 1.0,
      "Y": 1.0,
      "Z": 1.0
     },
-    "Distance": 32.0
+    "Distance": 64.0,
+    "Enabled": true
    },
    "Transform": {
     "Orientation": {
@@ -52,6 +59,7 @@
      "Y": 14.72006607055664,
      "Z": 0.0
     },
+    "Relative": false,
     "Scale": {
      "X": 1.0,
      "Y": 1.0,
@@ -62,15 +70,27 @@
   {
    "ID": 2,
    "LuaScript": {
+    "InputParams": {
+     "Floats": [],
+     "IntVec2s": [],
+     "Ints": []
+    },
+    "IsActive": true,
     "OnFixedUpdate": {
-     "EntryPoint": "MakeARotatingCube_FixedUpdate",
+     "EntryPoint": "MakeManyRotatingCubes_FixedUpdate",
      "SourcePath": "testlevels\\scripts\\make_a_rotating_cube.lua"
     },
     "OnVariableUpdate": {
      "EntryPoint": "",
      "SourcePath": ""
+    },
+    "PopulateInputs": {
+     "EntryPoint": "",
+     "SourcePath": ""
     }
-   }
+   },
+   "Name": "",
+   "Parent": 4294967295
   }
  ],
  "WorldName": "New World"

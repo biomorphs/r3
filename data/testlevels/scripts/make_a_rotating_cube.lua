@@ -15,37 +15,35 @@ function RotateCubePls(e)
 	myTransform:SetOrientation(myRotation)
 end
 
-function MakeARotatingCube_FixedUpdate(e)
+function MakeARotatingCube_FixedUpdate(world)
+	local newCube = world:AddEntity()
+	
+	local newTransform = world.AddComponent_Transform(newCube)
+	newTransform:SetPositionNoInterpolation(vec3.new(-32.0 + math.random() * 64.0,1.0 + math.random() * 32.0,-32.0 + math.random() * 64.0))
+	
+	local newMesh = world.AddComponent_StaticMesh(newCube)
+	newMesh:SetModelFromPath("common/models/cube.fbx")
+	
+	-- local newScript = world.AddComponent_LuaScript(newCube)
+	-- newScript:SetFixedUpdateSource("testlevels/scripts/make_a_rotating_cube.lua")
+	-- newScript:SetFixedUpdateEntrypoint("RotateCubePls")
+	-- newScript.m_needsRecompile = true
+	-- newScript.m_isActive = true
+end
+
+function MakeManyRotatingCubes_FixedUpdate(e)
 	local world = R3.ActiveWorld()
 	if(world == nil) then 
 		print('No active world?')
 		return;
 	end
-	
-	local newCube = world:AddEntity()
-	
-	local newTransform = world.AddComponent_Transform(newCube)
-	newTransform:SetPositionNoInterpolation(vec3.new(-16.0 + math.random() * 32.0,1.0 + math.random() * 12.0,-16.0 + math.random() * 32.0))
-	
-	local newMesh = world.AddComponent_StaticMesh(newCube)
-	newMesh:SetModelFromPath("common/models/cube.fbx")
-	
-	local newScript = world.AddComponent_LuaScript(newCube)
-	newScript:SetFixedUpdateSource("testlevels/scripts/make_a_rotating_cube.lua")
-	newScript:SetFixedUpdateEntrypoint("RotateCubePls")
-	newScript.m_needsRecompile = true
-	newScript.m_isActive = true
-	
+	for i=1,40000 do
+		MakeARotatingCube_FixedUpdate(world)
+	end
 	local myScriptCmp = world.GetComponent_LuaScript(e)
 	if(myScriptCmp == nil) then 
 	 	print('No script cmp?!')
 	 	return
 	end
 	myScriptCmp.m_isActive = false
-end
-
-function MakeManyRotatingCubes_FixedUpdate(e)
-	for i=1,4000 do
-		MakeARotatingCube_FixedUpdate(e)
-	end
 end
