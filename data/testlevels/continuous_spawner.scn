@@ -1,0 +1,78 @@
+{
+ "AllEntities": [
+  {
+   "EnvironmentSettings": {
+    "Sky Ambient": 0.004999999888241291,
+    "Sky Colour": {
+     "X": 0.013169873505830765,
+     "Y": 0.04709765687584877,
+     "Z": 0.18145161867141724
+    },
+    "Sun Ambient": 0.00800000037997961,
+    "Sun Brightness": 4.0,
+    "Sun Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Sun Direction": {
+     "X": 0.4000000059604645,
+     "Y": -0.800000011920929,
+     "Z": 1.0
+    }
+   },
+   "ID": 0,
+   "Name": "Globals",
+   "Parent": 1
+  },
+  {
+   "ID": 1,
+   "Name": "New World",
+   "Parent": 4294967295
+  },
+  {
+   "ID": 2,
+   "LuaScript": {
+    "InputParams": {
+     "Floats": [
+      {
+       "Key": "Spawn Frequency",
+       "Value": 0.0
+      }
+     ],
+     "IntVec2s": [],
+     "Ints": [
+      {
+       "Key": "X Dims",
+       "Value": 64
+      },
+      {
+       "Key": "Z Dims",
+       "Value": 64
+      },
+      {
+       "Key": "Spawn Count",
+       "Value": 16
+      }
+     ]
+    },
+    "IsActive": true,
+    "OnFixedUpdate": {
+     "EntryPoint": "Spawner_FixedUpdate",
+     "SourcePath": "testlevels\\scripts\\continous_spawner.lua"
+    },
+    "OnVariableUpdate": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    },
+    "PopulateInputs": {
+     "EntryPoint": "Spawner_PopulateInputs",
+     "SourcePath": "testlevels\\scripts\\continous_spawner.lua"
+    }
+   },
+   "Name": "Script",
+   "Parent": 4294967295
+  }
+ ],
+ "WorldName": "New World"
+}

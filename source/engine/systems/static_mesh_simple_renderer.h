@@ -59,6 +59,10 @@ namespace R3
 			uint32_t m_totalTriangles = 0;
 			double m_writeCmdsStartTime = 0.0;
 			double m_writeCmdsEndTime = 0.0;
+			double m_collectInstancesStartTime = 0.0;
+			double m_collectInstancesEndTime = 0.0;
+			double m_prepareBucketsStartTime = 0.0;
+			double m_prepareBucketsEndTime = 0.0;
 		};
 		glm::vec4 m_mainPassColourClearValue = { 0,0,0,1 };
 		FrameStats m_frameStats;

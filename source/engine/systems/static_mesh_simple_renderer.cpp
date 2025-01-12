@@ -105,7 +105,11 @@ namespace R3
 			ImGui::Text(txt.c_str());
 			txt = std::format("    {:L} Triangles", m_frameStats.m_totalTriangles);
 			ImGui::Text(txt.c_str());
-			txt = std::format("Command buffer took {:.3f}ms to build", 1000.0 * (m_frameStats.m_writeCmdsEndTime - m_frameStats.m_writeCmdsStartTime));
+			txt = std::format("Part instances took {:.3f}ms to collect", 1000.0 * (m_frameStats.m_collectInstancesEndTime - m_frameStats.m_collectInstancesStartTime));
+			ImGui::Text(txt.c_str());
+			txt = std::format("Draw buckets took {:.3f}ms to prepare", 1000.0 * (m_frameStats.m_prepareBucketsEndTime - m_frameStats.m_prepareBucketsStartTime));
+			ImGui::Text(txt.c_str());
+			txt = std::format("Command buffer took {:.3f}ms to write", 1000.0 * (m_frameStats.m_writeCmdsEndTime - m_frameStats.m_writeCmdsStartTime));
 			ImGui::Text(txt.c_str());
 			ImGui::End();
 		}
@@ -319,6 +323,8 @@ namespace R3
 							return false;
 						}
 					}
+					m_frameStats.m_totalModelInstances++;
+					m_frameStats.m_totalPartInstances += currentMeshPartCount;
 				}
 				return true;
 			};
@@ -332,6 +338,7 @@ namespace R3
 		auto staticMeshes = GetSystem<StaticMeshSystem>();
 		bucket.m_firstDrawOffset = (m_currentDrawBufferStart + m_currentDrawBufferOffset);
 		bucket.m_drawCount = 0;
+		uint64_t totalIndices = 0;
 		for (const auto& bucketInstance : bucket.m_partInstances)
 		{
 			const StaticMeshPart* currentPartData = staticMeshes->GetMeshPart(bucketInstance.m_partGlobalIndex);
@@ -345,19 +352,24 @@ namespace R3
 			drawPtr->vertexOffset = currentPartData->m_vertexDataOffset;
 			drawPtr->firstInstance = bucketInstance.m_partInstanceIndex;
 			m_currentDrawBufferOffset++;
+			totalIndices += currentPartData->m_indexCount;
 		}
 		bucket.m_drawCount = m_currentDrawBufferStart + m_currentDrawBufferOffset - bucket.m_firstDrawOffset;
+		m_frameStats.m_totalTriangles += static_cast<uint32_t>(totalIndices / 3);
 	}
 
 	bool StaticMeshSimpleRenderer::CollectInstances()
 	{
 		R3_PROF_EVENT();
 
-		// Reset frame stats
 		m_frameStats.m_totalTriangles = m_frameStats.m_totalModelInstances = m_frameStats.m_totalPartInstances = 0;
-
+		m_frameStats.m_collectInstancesStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		CollectAllPartInstances();
+		m_frameStats.m_collectInstancesEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
+
+		m_frameStats.m_prepareBucketsStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		PrepareDrawBucket(m_allOpaques);
+		m_frameStats.m_prepareBucketsEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 
 		return true;
 	}
