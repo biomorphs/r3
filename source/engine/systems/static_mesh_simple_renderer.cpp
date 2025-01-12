@@ -313,7 +313,16 @@ namespace R3
 							MeshPartDrawBucket::BucketPartInstance bucketInstance;
 							bucketInstance.m_partGlobalIndex = currentMeshFirstPartIndex + part;
 							bucketInstance.m_partInstanceIndex = m_currentInstanceBufferStart + m_currentInstanceBufferOffset;
-							m_allOpaques.m_partInstances.emplace_back(bucketInstance);
+
+							const StaticMeshMaterial* meshMaterial = staticMeshes->GetMeshMaterial(materialBaseIndex + relativePartMatIndex);
+							if (meshMaterial->m_albedoOpacity.w >= 1.0f)
+							{
+								m_allOpaques.m_partInstances.emplace_back(bucketInstance);
+							}
+							else
+							{
+								m_allTransparents.m_partInstances.emplace_back(bucketInstance);
+							}
 
 							m_currentInstanceBufferOffset++;
 						}
@@ -369,6 +378,7 @@ namespace R3
 
 		m_frameStats.m_prepareBucketsStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		PrepareDrawBucket(m_allOpaques);
+		PrepareDrawBucket(m_allTransparents);
 		m_frameStats.m_prepareBucketsEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 
 		return true;

@@ -36,12 +36,10 @@ namespace R3
 		void OnMainPassEnd(class RenderPassContext& ctx);
 		inline glm::vec4 GetMainColourClearValue() { return m_mainPassColourClearValue; }
 
-		MeshPartDrawBucket m_allOpaques;
-		void CollectAllPartInstances();
-		void PrepareDrawBucket(MeshPartDrawBucket& bucket);
-
 	private:
 		struct GlobalConstants;
+		void CollectAllPartInstances();
+		void PrepareDrawBucket(MeshPartDrawBucket& bucket);
 		bool ShowGui();
 		bool CollectInstances();
 		void Cleanup(Device&);
@@ -65,6 +63,10 @@ namespace R3
 			double m_prepareBucketsStartTime = 0.0;
 			double m_prepareBucketsEndTime = 0.0;
 		};
+
+		MeshPartDrawBucket m_allOpaques;
+		MeshPartDrawBucket m_allTransparents;
+
 		glm::vec4 m_mainPassColourClearValue = { 0,0,0,1 };
 		FrameStats m_frameStats;
 

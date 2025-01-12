@@ -23,7 +23,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		m_allData.reserve(1024 * 4);
-		m_allMaterials.reserve(1024 * 32);
+		m_allMaterials.resize(c_maxMaterialsToStore);
 		m_allParts.reserve(1024 * 32);
 	}
 
@@ -131,8 +131,15 @@ namespace R3
 		return false;
 	}
 
+	const StaticMeshMaterial* StaticMeshSystem::GetMeshMaterial(uint32_t materialIndex)
+	{
+		assert(materialIndex < m_allMaterials.size());
+		return &m_allMaterials[materialIndex];
+	}
+
 	const StaticMeshPart* StaticMeshSystem::GetMeshPart(uint32_t partIndex)
 	{
+		assert(partIndex < m_allParts.size());
 		return &m_allParts[partIndex];
 	}
 
@@ -185,12 +192,10 @@ namespace R3
 			{
 				ScopedLock lock(m_allDataMutex);
 				uint64_t gpuIndex = m_allMaterialsGpu.Allocate(newMesh.m_materialCount);
-				newMesh.m_materialArrayIndex = static_cast<uint32_t>(m_allMaterials.size());
 				newMesh.m_materialGpuIndex = static_cast<uint32_t>(gpuIndex);
-				m_allMaterials.resize(m_allMaterials.size() + newMesh.m_materialCount);
-				for (uint32_t mat = 0; mat < newMesh.m_materialCount; ++mat)	// write cpu materials offset from m_materialArrayIndex
+				for (uint32_t mat = 0; mat < newMesh.m_materialCount; ++mat)	// write cpu materials offset from gpuIndex
 				{
-					auto& md = m_allMaterials[mat + newMesh.m_materialArrayIndex];
+					auto& md = m_allMaterials[mat + gpuIndex];
 					md.m_albedoOpacity = { m->m_materials[mat].m_albedo, m->m_materials[mat].m_opacity };
 					md.m_metallic = m->m_materials[mat].m_metallic;
 					md.m_roughness = m->m_materials[mat].m_roughness;
@@ -221,7 +226,7 @@ namespace R3
 				}
 				if (gpuIndex != -1)
 				{
-					m_allMaterialsGpu.Write(gpuIndex, newMesh.m_materialCount, &m_allMaterials[newMesh.m_materialArrayIndex]);
+					m_allMaterialsGpu.Write(gpuIndex, newMesh.m_materialCount, &m_allMaterials[gpuIndex]);
 				}
 				
 				newMesh.m_firstMeshPartOffset = static_cast<uint32_t>(m_allParts.size());
@@ -295,9 +300,10 @@ namespace R3
 				{
 					smc.m_gpuDataIndex = static_cast<uint32_t>(m_allMaterialsGpu.Allocate(smc.m_materials.size()));
 				}
-				if(smc.m_gpuDataIndex != -1)	// update all instance mats each frame (probably bad)
+				if(smc.m_gpuDataIndex != -1)	// update all instance mats each frame
 				{
 					m_allMaterialsGpu.Write(smc.m_gpuDataIndex, smc.m_materials.size(), smc.m_materials.data());
+					memcpy(&m_allMaterials[smc.m_gpuDataIndex], smc.m_materials.data(), smc.m_materials.size());
 				}
 				return true;
 			};
