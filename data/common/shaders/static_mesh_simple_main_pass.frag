@@ -13,7 +13,7 @@ layout(location = 4) in mat3 inTBN;
 layout(location = 0) out vec4 outColour;
 
 void main() {
-	GlobalConstants globals = AllGlobals[PushConstants.m_globalIndex];
+	GlobalConstants globals = PushConstants.m_globals.AllGlobals[0];
 	vec3 worldPos = inWorldSpacePos;
 	vec3 normal = normalize(inWorldspaceNormal);
 	vec3 viewDir = normalize(globals.m_cameraWorldSpacePos.xyz - worldPos);
@@ -57,22 +57,25 @@ void main() {
 		normal = normalize(inTBN * normal);
 	}
 	
+	AllLightsData lightsData = globals.m_lightsBuffer.data[0];
+	
 	// Apply sun direct light
-	vec3 sunRadiance = globals.m_sunColourAmbient.xyz * globals.m_sunDirectionBrightness.w;
+	vec4 sunDirectionBrightness = lightsData.m_sunDirectionBrightness;
+	vec3 sunRadiance = lightsData.m_sunColourAmbient.xyz * sunDirectionBrightness.w;
 	float sunShadowMul = 1.0;
 	if(paralaxEnabled && myMaterial.m_paralaxShadowsEnabled > 0)
 	{
-		vec3 lightToPixelTangentSpace = normalize(inTBN * globals.m_sunDirectionBrightness.xyz);	// may need negating
+		vec3 lightToPixelTangentSpace = normalize(inTBN * sunDirectionBrightness.xyz);	// may need negating
 		float initialHeight = 1.0 - texture(allTextures[myMaterial.m_heightmapTexture],texCoords).r;
 		sunShadowMul = ParallaxSoftShadowMultiplier(myMaterial.m_heightmapTexture, lightToPixelTangentSpace, inUV, initialHeight, myMaterial.m_paralaxAmount);
 	}
-	vec3 directLight = sunShadowMul * PBRDirectLighting(mat, viewDir, -globals.m_sunDirectionBrightness.xyz, normal, sunRadiance, 1.0);
+	vec3 directLight = sunShadowMul * PBRDirectLighting(mat, viewDir, -sunDirectionBrightness.xyz, normal, sunRadiance, 1.0);
 	
 	// Apply point lights (direct)
-	uint pointLightCount = globals.m_pointLightCount;
+	uint pointLightCount = lightsData.m_pointlightCount;
 	for(uint p=0;p<pointLightCount;++p)
 	{
-		Pointlight pl = globals.m_pointlightBuffer.lights[globals.m_firstPointLightOffset + p];
+		Pointlight pl = lightsData.m_allPointlights.lights[p];
 		vec3 lightRadiance = pl.m_colourBrightness.xyz * pl.m_colourBrightness.w;
 		float attenuation = GetPointlightAttenuation(pl, worldPos);
 		vec3 lightToPixel = normalize(pl.m_positionDistance.xyz - worldPos);
@@ -89,10 +92,10 @@ void main() {
 	
 	// Ambient is a hack, tries to combine sky + sun colour somehow
 	vec3 ambient = PBRGetAmbientLighting(mat, 
-		globals.m_sunColourAmbient.xyz, 
-		globals.m_sunColourAmbient.w,
-		globals.m_skyColourAmbient.xyz,
-		globals.m_skyColourAmbient.w
+		lightsData.m_sunColourAmbient.xyz, 
+		lightsData.m_sunColourAmbient.w,
+		lightsData.m_skyColourAmbient.xyz,
+		lightsData.m_skyColourAmbient.w
 	);
 	
 	vec3 finalLight = ambient + directLight;

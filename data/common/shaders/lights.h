@@ -8,6 +8,19 @@ layout(buffer_reference, std430) readonly buffer PointlightBuffer {
 	Pointlight lights[];
 };
 
+struct AllLightsData
+{
+	vec4 m_sunDirectionBrightness;
+	vec4 m_sunColourAmbient;
+	vec4 m_skyColourAmbient;
+	PointlightBuffer m_allPointlights;
+	uint m_pointlightCount;	
+};
+
+layout(buffer_reference, std430) readonly buffer AllLightsBuffer { 
+	AllLightsData data[];
+};
+
 // based on Moving Frostbite to Physically Based Rendering 3.0
 // inv. square falloff with radius to force taper to 0
 float GetPointlightAttenuation(Pointlight pl, vec3 worldPos)

@@ -4,14 +4,9 @@
 struct GlobalConstants { 
 	mat4 m_projViewTransform;
 	vec4 m_cameraWorldSpacePos;
-	vec4 m_sunColourAmbient;
-	vec4 m_sunDirectionBrightness;
-	vec4 m_skyColourAmbient;
 	VertexBuffer m_vertexBuffer;
 	MaterialBuffer m_materialBuffer;
-	PointlightBuffer m_pointlightBuffer;
-	uint m_firstPointLightOffset;
-	uint m_pointLightCount;
+	AllLightsBuffer m_lightsBuffer;
 };
 
 struct PerInstanceData {
@@ -20,14 +15,14 @@ struct PerInstanceData {
 };
 
 // global constants stored in an array to allow overlapping frames
-layout(set = 0, binding = 0) uniform GlobalConstantsBuffer
+layout(buffer_reference, std430) readonly buffer GlobalConstantsBuffer
 {
-	GlobalConstants AllGlobals[4];
+	GlobalConstants AllGlobals[];
 };
 
 //all instance data passed in global set via storage buffer (use gl_InstanceIndex to get the current index)
-layout(std140,set = 0, binding = 1) readonly buffer AllInstancesBuffer{
-
+layout(std140,set = 0, binding = 0) readonly buffer AllInstancesBuffer
+{
 	PerInstanceData AllInstances[];
 };
 
@@ -38,6 +33,5 @@ layout (set = 1, binding = 0) uniform sampler2D allTextures[1024];
 // don't know a better way of doing this yet, but its cheap
 layout(push_constant) uniform constants
 {
-	uint m_globalIndex;		// index into m_allGlobals
-	uint m_padding;
+	GlobalConstantsBuffer m_globals;
 } PushConstants;

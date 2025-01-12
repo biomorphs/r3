@@ -94,6 +94,7 @@ namespace R3
 			{
 				auto& renderUpdate = updateSequence.AddSequence("RenderUpdate");
 				renderUpdate.AddFn("StaticMeshSimpleRenderer::CollectInstances");
+				renderUpdate.AddFn("LightsSystem::CollectAllLights");
 				renderUpdate.AddFn("FrameScheduler::BuildRenderGraph");
 			}
 			{

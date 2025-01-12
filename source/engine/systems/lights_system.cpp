@@ -2,6 +2,7 @@
 #include "engine/imgui_menubar_helper.h"
 #include "engine/systems/immediate_render_system.h"
 #include "engine/components/point_light.h"
+#include "engine/components/environment_settings.h"
 #include "engine/components/transform.h"
 #include "entities/world.h"
 #include "entities/queries.h"
@@ -18,6 +19,9 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 
+		RegisterTick("LightsSystem::CollectAllLights", [this]() {
+			return CollectAllLights();
+		});
 		RegisterTick("LightsSystem::DrawLightBounds", [this]() {
 			return DrawLightBounds();
 		});
@@ -29,22 +33,62 @@ namespace R3
 		auto render = Systems::GetSystem<RenderSystem>();
 		render->m_onShutdownCbs.AddCallback([this](Device& d) {
 			m_allPointlights.Destroy(d);
+			m_allLightsData.Destroy(d);
 		});
 	}
 
-	VkDeviceAddress LightsSystem::GetPointlightsDeviceAddress()
+	VkDeviceAddress LightsSystem::GetAllLightsDeviceAddress()
 	{
-		return m_allPointlights.GetDataDeviceAddress();
+		return m_allLightsData.GetDataDeviceAddress() + (m_currentFrame * sizeof(AllLights));
 	}
 
-	uint32_t LightsSystem::GetFirstPointlightOffset()
+	glm::vec3 LightsSystem::GetSkyColour()
 	{
-		return m_currentInFrameOffset;
+		return m_skyColour;
 	}
 
-	uint32_t LightsSystem::GetTotalPointlightsThisFrame()
+	bool LightsSystem::CollectAllLights()
 	{
-		return m_totalPointlightsThisFrame;
+		R3_PROF_EVENT();
+		auto activeWorld = Systems::GetSystem<Entities::EntitySystem>()->GetActiveWorld();
+		if (activeWorld == nullptr || !m_allPointlights.IsCreated() || !m_allLightsData.IsCreated())
+		{
+			return true;
+		}
+
+		if (++m_currentFrame >= c_framesInFlight)
+		{
+			m_currentFrame = 0;
+		}
+
+		AllLights thisFrameLightData;
+		auto collectSunSkySettings = [&](const Entities::EntityHandle& e, EnvironmentSettingsComponent& cmp) {
+			thisFrameLightData.m_sunColourAmbient = { cmp.m_sunColour, cmp.m_sunAmbientFactor };
+			thisFrameLightData.m_skyColourAmbient = { cmp.m_skyColour, cmp.m_skyAmbientFactor };
+			thisFrameLightData.m_sunDirectionBrightness = { glm::normalize(cmp.m_sunDirection), cmp.m_sunBrightness };
+			return true;
+		};
+		Entities::Queries::ForEach<EnvironmentSettingsComponent>(activeWorld, collectSunSkySettings);
+		m_skyColour = glm::vec3(thisFrameLightData.m_skyColourAmbient);	
+
+		const uint32_t pointLightBaseOffset = m_currentFrame * c_maxLights;
+		thisFrameLightData.m_pointLightsBufferAddress = m_allPointlights.GetDataDeviceAddress() + pointLightBaseOffset * sizeof(Pointlight);
+		auto collectPointLights = [&](const Entities::EntityHandle& e, PointLightComponent& pl, TransformComponent& t) {
+			if (pl.m_enabled)
+			{
+				Pointlight newlight;
+				newlight.m_colourBrightness = { pl.m_colour, pl.m_brightness };
+				newlight.m_positionDistance = { glm::vec3(t.GetWorldspaceInterpolated(e, *activeWorld)[3]), pl.m_distance };
+				m_allPointlights.Write(pointLightBaseOffset + thisFrameLightData.m_pointlightCount, 1, &newlight);
+				thisFrameLightData.m_pointlightCount++;
+			}
+			return true;
+		};
+		Entities::Queries::ForEach<PointLightComponent, TransformComponent>(activeWorld, collectPointLights);
+		m_allLightsData.Write(m_currentFrame, 1, &thisFrameLightData);
+		m_totalPointlightsThisFrame = thisFrameLightData.m_pointlightCount;
+
+		return true;
 	}
 
 	bool LightsSystem::ShowGui()
@@ -90,50 +134,27 @@ namespace R3
 	void LightsSystem::CollectLightsForDrawing(RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
-		OnMainPassBegin(*ctx.m_device, ctx.m_graphicsCmds);	// shim
-	}
-
-	void LightsSystem::OnMainPassBegin(Device& d, VkCommandBuffer cmds)
-	{
-		R3_PROF_EVENT();
-		auto entities = Systems::GetSystem<Entities::EntitySystem>();
-		auto activeWorld = entities->GetActiveWorld();
-		static std::vector<Pointlight> allPointlights;
-		allPointlights.reserve(1024);
 
 		if (!m_allPointlights.IsCreated())
 		{
 			m_allPointlights.SetDebugName("Point lights");
-			if (!m_allPointlights.Create(d, c_maxLights * c_framesInFlight, c_maxLights, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+			if (!m_allPointlights.Create(*ctx.m_device, c_maxLights * c_framesInFlight, c_maxLights, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 			{
-				LogError("Failed to create vertex buffer");
+				LogError("Failed to create point light buffer");
 			}
 			m_allPointlights.Allocate(c_maxLights * c_framesInFlight);
 		}
-
-		auto collectLights = [&](const Entities::EntityHandle& e, PointLightComponent& pl, TransformComponent& t) {
-			if (pl.m_enabled)
+		if (!m_allLightsData.IsCreated())
+		{
+			m_allLightsData.SetDebugName("All Light Data");
+			if (!m_allLightsData.Create(*ctx.m_device, c_framesInFlight, c_framesInFlight, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 			{
-				Pointlight newlight;
-				newlight.m_colourBrightness = { pl.m_colour, pl.m_brightness };
-				newlight.m_positionDistance = { glm::vec3(t.GetWorldspaceInterpolated(e, *activeWorld)[3]), pl.m_distance };
-				allPointlights.push_back(newlight);
+				LogError("Failed to create all light buffer");
 			}
-			return true;
-		};
-		if (activeWorld)
-		{
-			Entities::Queries::ForEach<PointLightComponent, TransformComponent>(activeWorld, collectLights);
+			m_allLightsData.Allocate(c_framesInFlight);
 		}
 
-		m_currentInFrameOffset += c_maxLights;
-		if (m_currentInFrameOffset >= (c_maxLights * c_framesInFlight))
-		{
-			m_currentInFrameOffset = 0;
-		}
-		m_allPointlights.Write(m_currentInFrameOffset, allPointlights.size(), allPointlights.data());
-		m_allPointlights.Flush(d, cmds);
-		m_totalPointlightsThisFrame = static_cast<uint32_t>(allPointlights.size());
-		allPointlights.clear();
+		m_allPointlights.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+		m_allLightsData.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 	}
 }

@@ -48,9 +48,10 @@ namespace R3
 			return GetSystem<RenderSystem>()->GetWindowExtents();
 		};
 		mainPass->m_getClearColourFn = []() -> glm::vec4 {
-			return GetSystem<StaticMeshSimpleRenderer>()->GetMainColourClearValue();
+			return glm::vec4(GetSystem<LightsSystem>()->GetSkyColour(), 1.0f);
 		};
 		mainPass->m_onBegin.AddCallback([](RenderPassContext& ctx) {
+			R3_PROF_GPU_EVENT("Main Pass Begin");
 			GetSystem<LightsSystem>()->CollectLightsForDrawing(ctx);
 			GetSystem<TextureSystem>()->ProcessLoadedTextures(ctx);
 			GetSystem<StaticMeshSystem>()->OnMainPassBegin(ctx);

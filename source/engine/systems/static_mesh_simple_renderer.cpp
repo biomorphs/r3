@@ -29,21 +29,15 @@ namespace R3
 	{
 		glm::mat4 m_projViewTransform;
 		glm::vec4 m_cameraWorldSpacePos;
-		glm::vec4 m_sunColourAmbient = {0,0,0,0};
-		glm::vec4 m_sunDirectionBrightness = { 0,-1,0,0 };
-		glm::vec4 m_skyColourAmbient = { 0,0,0,0 };
 		VkDeviceAddress m_vertexBufferAddress;
 		VkDeviceAddress m_materialBufferAddress;
-		VkDeviceAddress m_pointLightsBufferAddress;
-		uint32_t m_firstPointLightOffset;
-		uint32_t m_pointlightCount;
+		VkDeviceAddress m_lightDataBufferAddress;
 	};
 
-	// one per draw call
+	// pushed once per pipeline, provides global constants buffer address for this frame
 	struct PushConstants 
 	{
-		uint32_t m_globalConstantIndex;
-		uint32_t m_padding;
+		VkDeviceAddress m_globalsBufferAddress;
 	};
 
 	StaticMeshSimpleRenderer::StaticMeshSimpleRenderer()
@@ -187,8 +181,7 @@ namespace R3
 		R3_PROF_EVENT();
 		auto render = GetSystem<RenderSystem>();
 		DescriptorLayoutBuilder layoutBuilder;
-		layoutBuilder.AddBinding(0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);		// uniform buffer for global constants
-		layoutBuilder.AddBinding(1, 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);		// storage buffer for instance data
+		layoutBuilder.AddBinding(0, 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);		// uniform buffer for global constants
 		m_globalsDescriptorLayout = layoutBuilder.Create(*render->GetDevice(), false);	// dont need bindless here
 		if (m_globalsDescriptorLayout == nullptr)
 		{
@@ -198,7 +191,6 @@ namespace R3
 
 		m_descriptorAllocator = std::make_unique<DescriptorSetSimpleAllocator>();
 		std::vector<VkDescriptorPoolSize> poolSizes = {
-			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
 			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1 }
 		};
 		if (!m_descriptorAllocator->Initialise(*render->GetDevice(), 1, poolSizes))
@@ -210,8 +202,7 @@ namespace R3
 		// Create the global set and write it now, it will never be updated again
 		m_globalDescriptorSet = m_descriptorAllocator->Allocate(*render->GetDevice(), m_globalsDescriptorLayout);
 		DescriptorSetWriter writer(m_globalDescriptorSet);
-		writer.WriteUniformBuffer(0, m_globalConstantsBuffer.GetBuffer());
-		writer.WriteStorageBuffer(1, m_globalInstancesHostVisible.m_buffer);
+		writer.WriteStorageBuffer(0, m_globalInstancesHostVisible.m_buffer);
 		writer.FlushWrites();
 
 		return true;
@@ -222,7 +213,7 @@ namespace R3
 		if (!m_globalConstantsBuffer.IsCreated())
 		{
 			m_globalConstantsBuffer.SetDebugName("Static mesh global constants");
-			if (!m_globalConstantsBuffer.Create(d, c_maxGlobalConstantBuffers, c_maxGlobalConstantBuffers, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT))
+			if (!m_globalConstantsBuffer.Create(d, c_maxGlobalConstantBuffers, c_maxGlobalConstantBuffers, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 			{
 				LogError("Failed to create constant buffer");
 				return false;
@@ -262,24 +253,6 @@ namespace R3
 			CreatePipelineData(d, mainColourFormat, mainDepthFormat);
 		}
 		return true;
-	}
-
-	void StaticMeshSimpleRenderer::ProcessEnvironmentSettings(GlobalConstants& g)
-	{
-		R3_PROF_EVENT();
-		auto entities = GetSystem<Entities::EntitySystem>();
-		auto w = entities->GetActiveWorld();
-		if (w)
-		{
-			auto getSettings = [&g, this](const Entities::EntityHandle& e, EnvironmentSettingsComponent& cmp) {
-				g.m_sunColourAmbient = { cmp.m_sunColour, cmp.m_sunAmbientFactor };
-				g.m_skyColourAmbient = { cmp.m_skyColour, cmp.m_skyAmbientFactor };
-				g.m_sunDirectionBrightness = { glm::normalize(cmp.m_sunDirection), cmp.m_sunBrightness };
-				m_mainPassColourClearValue = glm::vec4(cmp.m_skyColour, 1);
-				return true;
-			};
-			Entities::Queries::ForEach<EnvironmentSettingsComponent>(w, getSettings);
-		}
 	}
 
 	void StaticMeshSimpleRenderer::CollectAllPartInstances()
@@ -327,16 +300,24 @@ namespace R3
 						const glm::mat4 partTransform = instanceTransform * currentPart->m_transform;
 
 						// write instance data now even if it will not be used (faster than duplicating later)
-						StaticMeshInstanceGpu* instancesPtr = static_cast<StaticMeshInstanceGpu*>(m_globalInstancesMappedPtr) + m_currentInstanceBufferStart;
-						instancesPtr->m_transform = partTransform;
-						instancesPtr->m_materialIndex = materialBaseIndex + relativePartMatIndex;
-						
-						MeshPartDrawBucket::BucketPartInstance bucketInstance;
-						bucketInstance.m_partGlobalIndex = currentMeshFirstPartIndex + part;
-						bucketInstance.m_partInstanceIndex = m_currentInstanceBufferStart;
-						m_allOpaques.m_partInstances.emplace_back(bucketInstance);
+						if (m_currentInstanceBufferOffset < c_maxInstances)
+						{
+							StaticMeshInstanceGpu* instancesPtr = static_cast<StaticMeshInstanceGpu*>(m_globalInstancesMappedPtr) + m_currentInstanceBufferStart + m_currentInstanceBufferOffset;
+							instancesPtr->m_transform = partTransform;
+							instancesPtr->m_materialIndex = materialBaseIndex + relativePartMatIndex;
 
-						m_currentInstanceBufferStart++;
+							MeshPartDrawBucket::BucketPartInstance bucketInstance;
+							bucketInstance.m_partGlobalIndex = currentMeshFirstPartIndex + part;
+							bucketInstance.m_partInstanceIndex = m_currentInstanceBufferStart + m_currentInstanceBufferOffset;
+							m_allOpaques.m_partInstances.emplace_back(bucketInstance);
+
+							m_currentInstanceBufferOffset++;
+						}
+						else
+						{
+							LogWarn("Max instances {} hit! Increase StaticMeshSimpleRenderer::c_maxInstances or simplify the scene!", c_maxInstances);
+							return false;
+						}
 					}
 				}
 				return true;
@@ -349,7 +330,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		auto staticMeshes = GetSystem<StaticMeshSystem>();
-		bucket.m_firstDrawOffset = m_currentDrawBufferStart;
+		bucket.m_firstDrawOffset = (m_currentDrawBufferStart + m_currentDrawBufferOffset);
 		bucket.m_drawCount = 0;
 		for (const auto& bucketInstance : bucket.m_partInstances)
 		{
@@ -357,15 +338,15 @@ namespace R3
 
 			// use currentPartData bounds to test visibility...
 
-			VkDrawIndexedIndirectCommand* drawPtr = static_cast<VkDrawIndexedIndirectCommand*>(m_drawIndirectMappedPtr) + m_currentDrawBufferStart;
+			VkDrawIndexedIndirectCommand* drawPtr = static_cast<VkDrawIndexedIndirectCommand*>(m_drawIndirectMappedPtr) + m_currentDrawBufferStart + m_currentDrawBufferOffset;
 			drawPtr->indexCount = currentPartData->m_indexCount;
 			drawPtr->instanceCount = 1;
 			drawPtr->firstIndex = (uint32_t)currentPartData->m_indexStartOffset;
 			drawPtr->vertexOffset = currentPartData->m_vertexDataOffset;
 			drawPtr->firstInstance = bucketInstance.m_partInstanceIndex;
-			m_currentDrawBufferStart++;
+			m_currentDrawBufferOffset++;
 		}
-		bucket.m_drawCount = m_currentDrawBufferStart - bucket.m_firstDrawOffset;
+		bucket.m_drawCount = m_currentDrawBufferStart + m_currentDrawBufferOffset - bucket.m_firstDrawOffset;
 	}
 
 	bool StaticMeshSimpleRenderer::CollectInstances()
@@ -410,16 +391,9 @@ namespace R3
 		globals.m_projViewTransform = cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix();
 		globals.m_vertexBufferAddress = staticMeshes->GetVertexDataDeviceAddress();
 		globals.m_materialBufferAddress = staticMeshes->GetMaterialsDeviceAddress();
-		globals.m_pointLightsBufferAddress = lights->GetPointlightsDeviceAddress();
-		globals.m_firstPointLightOffset = lights->GetFirstPointlightOffset();
-		globals.m_pointlightCount = lights->GetTotalPointlightsThisFrame();
-		ProcessEnvironmentSettings(globals);
+		globals.m_lightDataBufferAddress = lights->GetAllLightsDeviceAddress();
 		m_globalConstantsBuffer.Write(m_currentGlobalConstantsBuffer, 1, &globals);
-		m_globalConstantsBuffer.Flush(d, cmds);
-		if (++m_currentGlobalConstantsBuffer >= c_maxGlobalConstantBuffers)
-		{
-			m_currentGlobalConstantsBuffer = 0;
-		}
+		m_globalConstantsBuffer.Flush(d, cmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 	}
 
 	void StaticMeshSimpleRenderer::MainPassDraw(Device& d, VkCommandBuffer cmds, glm::vec2 extents)
@@ -456,11 +430,11 @@ namespace R3
 			vkCmdBindDescriptorSets(cmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 1, 1, &allTextures, 0, nullptr);
 		}
 		PushConstants pc;
-		pc.m_globalConstantIndex = m_currentGlobalConstantsBuffer;
+		pc.m_globalsBufferAddress = m_globalConstantsBuffer.GetDataDeviceAddress() + (m_currentGlobalConstantsBuffer * sizeof(GlobalConstants));
 		vkCmdPushConstants(cmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 
 		// Draw opaques
-		vkCmdDrawIndexedIndirect(cmds, m_drawIndirectHostVisible.m_buffer, m_allOpaques.m_firstDrawOffset, m_allOpaques.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
+		vkCmdDrawIndexedIndirect(cmds, m_drawIndirectHostVisible.m_buffer, m_allOpaques.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_allOpaques.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 
 		// Update instance + draw buffers for next frame
 		m_currentInstanceBufferStart += c_maxInstances;
@@ -468,12 +442,21 @@ namespace R3
 		{
 			m_currentInstanceBufferStart = 0;
 		}
+		m_currentInstanceBufferOffset = 0;
 
 		m_currentDrawBufferStart += c_maxInstances;
-		if (m_currentDrawBufferStart >= (c_maxInstances + c_maxInstanceBuffers))
+		if (m_currentDrawBufferStart >= (c_maxInstances * c_maxInstanceBuffers))
 		{
 			m_currentDrawBufferStart = 0;
 		}
+		m_currentDrawBufferOffset = 0;
+
+		m_currentGlobalConstantsBuffer++;
+		if (m_currentGlobalConstantsBuffer >= c_maxGlobalConstantBuffers)
+		{
+			m_currentGlobalConstantsBuffer = 0;
+		}
+
 		m_frameStats.m_writeCmdsEndTime = time->GetElapsedTimeReal();
 	}
 }

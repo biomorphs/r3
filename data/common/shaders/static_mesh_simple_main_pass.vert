@@ -12,7 +12,7 @@ layout(location = 4) out mat3 outTBN;
 
 
 void main() {
-	GlobalConstants globals = AllGlobals[PushConstants.m_globalIndex];
+	GlobalConstants globals = PushConstants.m_globals.AllGlobals[0];
 	PerInstanceData thisInstance = AllInstances[gl_InstanceIndex];
 	StaticMeshMaterial myMaterial = globals.m_materialBuffer.materials[thisInstance.m_materialIndex];
 	MeshVertex v = globals.m_vertexBuffer.vertices[gl_VertexIndex];

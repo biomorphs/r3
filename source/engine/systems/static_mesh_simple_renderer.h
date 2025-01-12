@@ -35,8 +35,6 @@ namespace R3
 		void OnMainPassDraw(class RenderPassContext& ctx);
 		inline glm::vec4 GetMainColourClearValue() { return m_mainPassColourClearValue; }
 
-		/////////////////////////////////////////////////////////////////
-		// newer stuff 
 		MeshPartDrawBucket m_allOpaques;
 		void CollectAllPartInstances();
 		void PrepareDrawBucket(MeshPartDrawBucket& bucket);
@@ -50,7 +48,6 @@ namespace R3
 		void MainPassDraw(Device&, VkCommandBuffer, glm::vec2 extents);
 		bool CreatePipelineData(Device&, VkFormat mainColourFormat, VkFormat mainDepthFormat);
 		bool CreateGlobalDescriptorSet();
-		void ProcessEnvironmentSettings(GlobalConstants&);
 		bool InitialiseGpuData(Device&, VkFormat mainColourFormat, VkFormat mainDepthFormat);
 		struct StaticMeshInstanceGpu {				// needs to match PerInstanceData in shaders
 			glm::mat4 m_transform;
@@ -71,19 +68,21 @@ namespace R3
 		VkDescriptorSet_T* m_globalDescriptorSet = nullptr;	
 
 		WriteOnlyGpuArray<GlobalConstants> m_globalConstantsBuffer;
-		const int c_maxGlobalConstantBuffers = 4;	// ring buffer writes to avoid synchronisation
+		const int c_maxGlobalConstantBuffers = 3;	// ring buffer writes to avoid synchronisation
 		int m_currentGlobalConstantsBuffer = 0;
 
 		AllocatedBuffer m_globalInstancesHostVisible;
 		StaticMeshInstanceGpu* m_globalInstancesMappedPtr = nullptr;
 		uint32_t m_currentInstanceBufferStart = 0;	// index into m_globalInstancesMappedPtr for this frame
+		uint32_t m_currentInstanceBufferOffset = 0;	// offset from m_currentInstanceBufferStart
 
 		AllocatedBuffer m_drawIndirectHostVisible;
 		void* m_drawIndirectMappedPtr = nullptr;
-		uint32_t m_currentDrawBufferStart = 0;		// index into m_drawIndirectHostVisible for this frame
-		
+		uint32_t m_currentDrawBufferStart = 0;		// base index into m_drawIndirectHostVisible for this frame
+		uint32_t m_currentDrawBufferOffset = 0;		// offset from m_currentDrawBufferStart
+
 		const uint32_t c_maxInstances = 1024 * 256;
-		const uint32_t c_maxInstanceBuffers = 4;
+		const uint32_t c_maxInstanceBuffers = 3;
 
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_simpleTriPipeline = VK_NULL_HANDLE;
