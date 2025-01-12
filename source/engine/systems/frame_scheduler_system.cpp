@@ -63,6 +63,9 @@ namespace R3
 			GetSystem<StaticMeshSimpleRenderer>()->OnMainPassDraw(ctx);
 			GetSystem<ImmediateRenderSystem>()->OnMainPassDraw(ctx);
 		});
+		mainPass->m_onEnd.AddCallback([](RenderPassContext& ctx) {
+			GetSystem<StaticMeshSimpleRenderer>()->OnMainPassEnd(ctx);
+		});
 		return mainPass;
 	}
 

@@ -33,6 +33,7 @@ namespace R3
 		virtual bool Init();
 		void OnMainPassBegin(class RenderPassContext& ctx);
 		void OnMainPassDraw(class RenderPassContext& ctx);
+		void OnMainPassEnd(class RenderPassContext& ctx);
 		inline glm::vec4 GetMainColourClearValue() { return m_mainPassColourClearValue; }
 
 		MeshPartDrawBucket m_allOpaques;

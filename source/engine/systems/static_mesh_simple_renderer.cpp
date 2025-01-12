@@ -386,6 +386,30 @@ namespace R3
 		MainPassDraw(*ctx.m_device, ctx.m_graphicsCmds, ctx.m_renderExtents);
 	}
 
+	void StaticMeshSimpleRenderer::OnMainPassEnd(class RenderPassContext& ctx)
+	{
+		// Update draw buffers for next frame
+		m_currentInstanceBufferStart += c_maxInstances;
+		if (m_currentInstanceBufferStart >= (c_maxInstances * c_maxInstanceBuffers))
+		{
+			m_currentInstanceBufferStart = 0;
+		}
+		m_currentInstanceBufferOffset = 0;
+
+		m_currentDrawBufferStart += c_maxInstances;
+		if (m_currentDrawBufferStart >= (c_maxInstances * c_maxInstanceBuffers))
+		{
+			m_currentDrawBufferStart = 0;
+		}
+		m_currentDrawBufferOffset = 0;
+
+		m_currentGlobalConstantsBuffer++;
+		if (m_currentGlobalConstantsBuffer >= c_maxGlobalConstantBuffers)
+		{
+			m_currentGlobalConstantsBuffer = 0;
+		}
+	}
+
 	void StaticMeshSimpleRenderer::MainPassBegin(Device& d, VkCommandBuffer cmds, VkFormat mainColourFormat, VkFormat mainDepthFormat)
 	{
 		R3_PROF_EVENT();
@@ -420,6 +444,7 @@ namespace R3
 			return;
 		}
 		m_frameStats.m_writeCmdsStartTime = time->GetElapsedTimeReal();
+
 		VkViewport viewport = { 0 };
 		viewport.x = 0.0f;
 		viewport.y = 0.0f;
@@ -433,7 +458,6 @@ namespace R3
 		vkCmdBindPipeline(cmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_simpleTriPipeline);
 		vkCmdSetViewport(cmds, 0, 1, &viewport);
 		vkCmdSetScissor(cmds, 0, 1, &scissor);
-
 		vkCmdBindIndexBuffer(cmds, staticMeshes->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 		vkCmdBindDescriptorSets(cmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_globalDescriptorSet, 0, nullptr);
 		VkDescriptorSet allTextures = textures->GetAllTexturesSet();
@@ -447,27 +471,6 @@ namespace R3
 
 		// Draw opaques
 		vkCmdDrawIndexedIndirect(cmds, m_drawIndirectHostVisible.m_buffer, m_allOpaques.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_allOpaques.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
-
-		// Update draw buffers for next frame
-		m_currentInstanceBufferStart += c_maxInstances;
-		if (m_currentInstanceBufferStart >= (c_maxInstances * c_maxInstanceBuffers))
-		{
-			m_currentInstanceBufferStart = 0;
-		}
-		m_currentInstanceBufferOffset = 0;
-
-		m_currentDrawBufferStart += c_maxInstances;
-		if (m_currentDrawBufferStart >= (c_maxInstances * c_maxInstanceBuffers))
-		{
-			m_currentDrawBufferStart = 0;
-		}
-		m_currentDrawBufferOffset = 0;
-
-		m_currentGlobalConstantsBuffer++;
-		if (m_currentGlobalConstantsBuffer >= c_maxGlobalConstantBuffers)
-		{
-			m_currentGlobalConstantsBuffer = 0;
-		}
 
 		m_frameStats.m_writeCmdsEndTime = time->GetElapsedTimeReal();
 	}
