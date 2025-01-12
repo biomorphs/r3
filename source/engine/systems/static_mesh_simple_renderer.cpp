@@ -436,7 +436,7 @@ namespace R3
 		// Draw opaques
 		vkCmdDrawIndexedIndirect(cmds, m_drawIndirectHostVisible.m_buffer, m_allOpaques.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_allOpaques.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 
-		// Update instance + draw buffers for next frame
+		// Update draw buffers for next frame
 		m_currentInstanceBufferStart += c_maxInstances;
 		if (m_currentInstanceBufferStart >= (c_maxInstances * c_maxInstanceBuffers))
 		{

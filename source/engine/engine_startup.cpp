@@ -93,8 +93,11 @@ namespace R3
 			}
 			{
 				auto& renderUpdate = updateSequence.AddSequence("RenderUpdate");
-				renderUpdate.AddFn("StaticMeshSimpleRenderer::CollectInstances");
-				renderUpdate.AddFn("LightsSystem::CollectAllLights");
+				{
+					auto& renderASyncUpdate = renderUpdate.AddAsync("UpdateAsync");
+					renderASyncUpdate.AddFn("StaticMeshSimpleRenderer::CollectInstances");
+					renderASyncUpdate.AddFn("LightsSystem::CollectAllLights");
+				}
 				renderUpdate.AddFn("FrameScheduler::BuildRenderGraph");
 			}
 			{
