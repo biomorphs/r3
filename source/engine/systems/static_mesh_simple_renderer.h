@@ -8,24 +8,18 @@
 
 namespace R3
 {
-	// Instance of an entire model
-	struct StaticMeshInstance
+	// A bucket of draw calls
+	struct MeshPartDrawBucket
 	{
-		glm::mat4 m_transform;
-		uint32_t m_materialBaseIndex = -1;		// -1 = use model materials
+		struct BucketPartInstance
+		{
+			uint32_t m_partInstanceIndex;		// index into instance data (gpu memory)
+			uint32_t m_partGlobalIndex;			// index into mesh parts aarray
+		};
+		std::vector<BucketPartInstance> m_partInstances;	// collected from entities
+		uint32_t m_firstDrawOffset;						// index into m_globalInstancesMappedPtr
+		uint32_t m_drawCount;							// num. draw indirects
 	};
-
-	// An instance of a single model part, with resolved material index
-	struct StaticMeshPartInstance
-	{
-		glm::mat4 m_fullTransform;				// instance * part * model transform (i.e. ready to use)
-		uint32_t m_resolvedMaterialIndex;		// actual material index (should always be valid)
-		uint32_t m_partGlobalIndex;				// indexes into m_globalInstancesMappedPtr
-	};
-
-	using AllMeshInstances = std::unordered_map<uint32_t, std::vector<StaticMeshInstance>>;		// map of model handle -> model instance	
-	using AllPartInstances = std::vector<StaticMeshPartInstance>;	// giant array of all part instances populated from AllMeshInstances
-	using InstancesBucket = std::vector<uint32_t>;	// indices into AllPartInstances
 
 	class Device;
 	class DescriptorSetSimpleAllocator;
@@ -42,25 +36,16 @@ namespace R3
 		inline glm::vec4 GetMainColourClearValue() { return m_mainPassColourClearValue; }
 
 		/////////////////////////////////////////////////////////////////
-		// new stuff
-
-		AllMeshInstances m_allMeshInstances;		// all model instances collected from entities (key = model handle id)
-		AllPartInstances m_allPartInstances;		// giant array of all part instances expanded from AllMeshInstances
-
-		InstancesBucket m_opaqueInstances;			// indexes into m_allPartInstances
-		uint32_t m_opaqueDrawsStart = 0;			// index into m_drawIndirectBuffer
-		uint32_t m_opaqueDrawsCount = 0;
-
-		void CollectModelInstancesFromEntities();	// populates m_allMeshInstances
-		void CollectModelPartInstances();			// populates m_allPartInstances and m_allDrawBuckets
-		void PrepareOpaqueDrawData();				// populates gpu data, generates m_opaqueInstancesStart and m_opaqueInstancesCount for drawing
+		// newer stuff 
+		MeshPartDrawBucket m_allOpaques;
+		void CollectAllPartInstances();
+		void PrepareDrawBucket(MeshPartDrawBucket& bucket);
 
 	private:
 		struct GlobalConstants;
 		bool ShowGui();
 		bool CollectInstances();
 		void Cleanup(Device&);
-		uint32_t WriteInstances();		// returns instance count
 		void MainPassBegin(Device&, VkCommandBuffer, VkFormat mainColourFormat, VkFormat mainDepthFormat);
 		void MainPassDraw(Device&, VkCommandBuffer, glm::vec2 extents);
 		bool CreatePipelineData(Device&, VkFormat mainColourFormat, VkFormat mainDepthFormat);
@@ -92,12 +77,10 @@ namespace R3
 		AllocatedBuffer m_globalInstancesHostVisible;
 		StaticMeshInstanceGpu* m_globalInstancesMappedPtr = nullptr;
 		uint32_t m_currentInstanceBufferStart = 0;	// index into m_globalInstancesMappedPtr for this frame
-		uint32_t m_currentFrameTotalInstances = 0;	// total instances written to global instances this frame
 
 		AllocatedBuffer m_drawIndirectHostVisible;
 		void* m_drawIndirectMappedPtr = nullptr;
 		uint32_t m_currentDrawBufferStart = 0;		// index into m_drawIndirectHostVisible for this frame
-		uint32_t m_currentFrameTotalDraws = 0;		// total draws prepared this frame
 		
 		const uint32_t c_maxInstances = 1024 * 256;
 		const uint32_t c_maxInstanceBuffers = 4;

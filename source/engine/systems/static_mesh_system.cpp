@@ -131,6 +131,11 @@ namespace R3
 		return false;
 	}
 
+	const StaticMeshPart* StaticMeshSystem::GetMeshPart(uint32_t partIndex)
+	{
+		return &m_allParts[partIndex];
+	}
+
 	bool StaticMeshSystem::GetMeshPart(uint32_t partIndex, StaticMeshPart& result)
 	{
 		if (partIndex < m_allParts.size())

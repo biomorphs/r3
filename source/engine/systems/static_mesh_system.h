@@ -45,14 +45,14 @@ namespace R3
 		glm::vec3 m_boundsMax;
 		uint64_t m_vertexDataOffset;			// one giant vertex buffer
 		uint64_t m_indexDataOffset;				// one giant index buffer
-		uint32_t m_totalVertices;
-		uint32_t m_totalIndices;
-		uint32_t m_materialArrayIndex;			// index into the cpu-side array of materials
 		uint32_t m_materialGpuIndex;			// index into the gpu-side array of materials, only use on gpu!!
-		uint32_t m_materialCount;
 		uint32_t m_firstMeshPartOffset;			// one big buffer
 		uint32_t m_meshPartCount;
 		uint32_t m_modelHandleIndex;			// used to identify which model data this came from
+		uint32_t m_totalVertices;
+		uint32_t m_totalIndices;
+		uint32_t m_materialArrayIndex;			// index into the cpu-side array of materials
+		uint32_t m_materialCount;
 	};
 
 	struct MeshVertex;
@@ -72,6 +72,7 @@ namespace R3
 		bool GetMeshDataForModel(const ModelDataHandle& handle, StaticMeshGpuData& result);
 		bool GetMeshPart(uint32_t partIndex, StaticMeshPart& result);
 		bool GetMeshMaterial(uint32_t materialIndex, StaticMeshMaterial& result);
+		const StaticMeshPart* GetMeshPart(uint32_t partIndex);
 
 		// Searches the active world entities for any entities with static mesh components that intersect the ray
 		// returns the closest hit entity (nearest to rayStart)
