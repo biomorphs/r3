@@ -6,6 +6,7 @@
 #include "static_mesh_simple_renderer.h"
 #include "texture_system.h"
 #include "engine/tonemap_compute.h"
+#include "engine/deferred_lighting_compute.h"
 #include "render/render_graph.h"
 #include "render/render_system.h"
 #include "core/profiler.h"
@@ -35,8 +36,10 @@ namespace R3
 	bool FrameScheduler::Init()
 	{
 		m_tonemapComputeRenderer = std::make_unique<TonemapCompute>();
+		m_deferredLightingCompute = std::make_unique<DeferredLightingCompute>();
 		GetSystem<RenderSystem>()->m_onShutdownCbs.AddCallback([this](Device& d) {
 			m_tonemapComputeRenderer->Cleanup(d);
+			m_deferredLightingCompute->Cleanup(d);
 		});
 		return true;
 	}
@@ -69,6 +72,26 @@ namespace R3
 		});
 		
 		return gbufferPass;
+	}
+
+	std::unique_ptr<ComputeDrawPass> FrameScheduler::MakeDeferredLightingPass(const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainColour)
+	{
+		R3_PROF_EVENT();
+		auto lightingPass = std::make_unique<ComputeDrawPass>();
+		lightingPass->m_name = "Deferred Lighting";
+		lightingPass->m_inputColourAttachments.push_back(positionBuffer);
+		lightingPass->m_inputColourAttachments.push_back(normalBuffer);
+		lightingPass->m_inputColourAttachments.push_back(albedoBuffer);
+		lightingPass->m_outputColourAttachments.push_back(mainColour);	// output to HDR colour
+		lightingPass->m_onRun.AddCallback([this, mainColour, positionBuffer, normalBuffer, albedoBuffer](RenderPassContext& ctx) {
+			auto inPosMetal = ctx.GetResolvedTarget(positionBuffer);
+			auto inNormalRoughness = ctx.GetResolvedTarget(normalBuffer);
+			auto inAlbedoAO = ctx.GetResolvedTarget(albedoBuffer);
+			auto outTarget = ctx.GetResolvedTarget(mainColour);
+			auto outSize = ctx.m_targets->GetTargetSize(outTarget->m_info);
+			m_deferredLightingCompute->Run(*ctx.m_device, ctx.m_graphicsCmds, *inPosMetal, *inNormalRoughness, *inAlbedoAO, *outTarget, outSize);
+		});
+		return lightingPass;
 	}
 
 	std::unique_ptr<DrawPass> FrameScheduler::MakeForwardPass(const RenderTargetInfo& mainColour, const RenderTargetInfo& mainDepth)
@@ -196,6 +219,7 @@ namespace R3
 		auto& graph = render->GetRenderGraph();
 		graph.m_allPasses.clear();
 		graph.m_allPasses.push_back(MakeGBufferPass(gBufferPosition, gBufferNormal, gBufferAlbedo, mainDepth));	// write gbuffer
+		graph.m_allPasses.push_back(MakeDeferredLightingPass(gBufferPosition, gBufferNormal, gBufferAlbedo, mainColour));	// deferred lighting
 		graph.m_allPasses.push_back(MakeForwardPass(mainColour, mainDepth));	// forward render to main colour
 		graph.m_allPasses.push_back(MakeTonemapToLDRPass(mainColour, mainColourLDR));	// HDR -> LDR
 		graph.m_allPasses.push_back(MakeColourBlitToPass("LDR to swap", mainColourLDR, swapchainImage));	// blit LDR -> swap
@@ -217,6 +241,7 @@ namespace R3
 	bool FrameScheduler::ShowGui()
 	{
 		ImGui::Begin("Render target visualiser");
+		ImGui::Checkbox("Enable Visualisation", &m_colourTargetDebuggerEnabled);
 		if (ImGui::BeginCombo("Colour Target", m_colourDebugTargetName.c_str()))
 		{
 			for (int target = 0; target < m_allCurrentTargets.size(); ++target)

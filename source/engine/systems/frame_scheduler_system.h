@@ -9,6 +9,7 @@ namespace R3
 	class TransferPass;
 	struct RenderTargetInfo;
 	class TonemapCompute;
+	class DeferredLightingCompute;
 	// Builds + maintains the render graph
 	class FrameScheduler : public System
 	{
@@ -24,11 +25,12 @@ namespace R3
 
 		std::unique_ptr<DrawPass> MakeForwardPass(const RenderTargetInfo& mainColour, const RenderTargetInfo& mainDepth);
 		std::unique_ptr<DrawPass> MakeGBufferPass(const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainDepth);
+		std::unique_ptr<ComputeDrawPass> MakeDeferredLightingPass(const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainColour);
 		std::unique_ptr<ComputeDrawPass> MakeTonemapToLDRPass(const RenderTargetInfo& mainColour, const RenderTargetInfo& mainColourLDR);
 		std::unique_ptr<TransferPass> MakeColourBlitToPass(std::string_view name, const RenderTargetInfo& srcTarget, const RenderTargetInfo& destTarget);
 		std::unique_ptr<DrawPass> MakeImguiPass(const RenderTargetInfo& colourTarget);
 		std::unique_ptr<TonemapCompute> m_tonemapComputeRenderer;
-
+		std::unique_ptr<DeferredLightingCompute> m_deferredLightingCompute;
 		std::vector<RenderTargetInfo> m_allCurrentTargets;	// keep the list of all render targets around for debugging
 
 		// Colour target visualiser (blits a target to swap chain)

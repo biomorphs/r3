@@ -15,6 +15,6 @@ glslc static_mesh.vert -o ..\..\shaders_spirv\common\static_mesh.vert.spv
 glslc static_mesh_forward.frag -o ..\..\shaders_spirv\common\static_mesh_forward.frag.spv
 glslc static_mesh_gbuffer.frag -o ..\..\shaders_spirv\common\static_mesh_gbuffer.frag.spv
 glslc tonemap_compute.comp -o ..\..\shaders_spirv\common\tonemap_compute.comp.spv
-
+glslc deferred_lighting_compute.comp -o ..\..\shaders_spirv\common\deferred_lighting_compute.comp.spv
 pause
 

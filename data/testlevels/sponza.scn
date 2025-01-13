@@ -501,7 +501,7 @@
      "Ints": [
       {
        "Key": "Light Count",
-       "Value": 64
+       "Value": 256
       }
      ]
     },
