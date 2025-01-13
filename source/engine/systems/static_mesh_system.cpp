@@ -254,19 +254,13 @@ namespace R3
 		return true;
 	}
 
-	void StaticMeshSystem::OnMainPassBegin(class RenderPassContext& ctx)
-	{
-		OnMainPassBegin(*ctx.m_device, ctx.m_graphicsCmds);
-	}
-
-	void StaticMeshSystem::OnMainPassBegin(Device& d, VkCommandBuffer cmds)
+	void StaticMeshSystem::PrepareForRendering(class RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
-		auto models = Systems::GetSystem<ModelDataSystem>();
 		if (!m_allVertices.IsCreated())
 		{
 			m_allVertices.SetDebugName("Static mesh vertices");
-			if (!m_allVertices.Create(d, c_maxVerticesToStore, c_maxVerticesToStore, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT))
+			if (!m_allVertices.Create(*ctx.m_device, c_maxVerticesToStore, c_maxVerticesToStore, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT))
 			{
 				LogError("Failed to create vertex buffer");
 			}
@@ -274,7 +268,7 @@ namespace R3
 		if (!m_allIndices.IsCreated())
 		{
 			m_allIndices.SetDebugName("Static mesh indices");
-			if (!m_allIndices.Create(d, c_maxIndicesToStore, c_maxIndicesToStore / 2, VK_BUFFER_USAGE_INDEX_BUFFER_BIT))
+			if (!m_allIndices.Create(*ctx.m_device, c_maxIndicesToStore, c_maxIndicesToStore / 2, VK_BUFFER_USAGE_INDEX_BUFFER_BIT))
 			{
 				LogError("Failed to create index buffer");
 			}
@@ -282,7 +276,7 @@ namespace R3
 		if (!m_allMaterialsGpu.IsCreated())
 		{
 			m_allMaterialsGpu.SetDebugName("Static mesh materials");
-			if (!m_allMaterialsGpu.Create(d, c_maxMaterialsToStore, c_maxMaterialsToStore, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+			if (!m_allMaterialsGpu.Create(*ctx.m_device, c_maxMaterialsToStore, c_maxMaterialsToStore, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 			{
 				LogError("Failed to create material buffer");
 			}
@@ -291,19 +285,19 @@ namespace R3
 			R3_PROF_EVENT("UploadInstanceMaterials");
 			auto entities = Systems::GetSystem<Entities::EntitySystem>();
 			auto forEachEntity = [&](const Entities::EntityHandle& e, StaticMeshMaterialsComponent& smc)
-			{
-				if (smc.m_gpuDataIndex == -1 && smc.m_materials.size() > 0)
 				{
-					smc.m_gpuDataIndex = static_cast<uint32_t>(m_allMaterialsGpu.Allocate(smc.m_materials.size()));
-				}
-				if(smc.m_gpuDataIndex != -1)	// update all instance mats each frame
-				{
-					m_allMaterialsGpu.Write(smc.m_gpuDataIndex, smc.m_materials.size(), smc.m_materials.data());
-					memcpy(&m_allMaterials[smc.m_gpuDataIndex], smc.m_materials.data(), smc.m_materials.size() * sizeof(StaticMeshMaterial));
-				}
-				return true;
-			};
-			
+					if (smc.m_gpuDataIndex == -1 && smc.m_materials.size() > 0)
+					{
+						smc.m_gpuDataIndex = static_cast<uint32_t>(m_allMaterialsGpu.Allocate(smc.m_materials.size()));
+					}
+					if (smc.m_gpuDataIndex != -1)	// update all instance mats each frame
+					{
+						m_allMaterialsGpu.Write(smc.m_gpuDataIndex, smc.m_materials.size(), smc.m_materials.data());
+						memcpy(&m_allMaterials[smc.m_gpuDataIndex], smc.m_materials.data(), smc.m_materials.size() * sizeof(StaticMeshMaterial));
+					}
+					return true;
+				};
+
 			if (entities->GetActiveWorld())
 			{
 				Entities::Queries::ForEach<StaticMeshMaterialsComponent>(entities->GetActiveWorld(), forEachEntity);
@@ -311,11 +305,10 @@ namespace R3
 		}
 		{
 			R3_PROF_EVENT("FlushStagingWrites");
-			m_allVertices.Flush(d, cmds);
-			m_allIndices.Flush(d, cmds);
-			m_allMaterialsGpu.Flush(d, cmds);
+			m_allVertices.Flush(*ctx.m_device, ctx.m_graphicsCmds);
+			m_allIndices.Flush(*ctx.m_device, ctx.m_graphicsCmds);
+			m_allMaterialsGpu.Flush(*ctx.m_device, ctx.m_graphicsCmds);
 		}
-		// now we are safe to issue draws
 	}
 
 	bool StaticMeshSystem::ShowGui()

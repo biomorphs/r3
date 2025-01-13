@@ -22,7 +22,7 @@ namespace R3
 		bool ShowGui();
 		bool BuildRenderGraph();
 
-		std::unique_ptr<DrawPass> MakeMainPass(const RenderTargetInfo& mainColour, const RenderTargetInfo& mainDepth);
+		std::unique_ptr<DrawPass> MakeForwardPass(const RenderTargetInfo& mainColour, const RenderTargetInfo& mainDepth);
 		std::unique_ptr<ComputeDrawPass> MakeTonemapToLDRPass(const RenderTargetInfo& mainColour, const RenderTargetInfo& mainColourLDR);
 		std::unique_ptr<TransferPass> MakeColourBlitToPass(std::string_view name, const RenderTargetInfo& srcTarget, const RenderTargetInfo& destTarget);
 		std::unique_ptr<DrawPass> MakeImguiPass(const RenderTargetInfo& colourTarget);

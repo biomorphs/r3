@@ -41,11 +41,11 @@ namespace R3
 		return true;
 	}
 
-	std::unique_ptr<DrawPass> FrameScheduler::MakeMainPass(const RenderTargetInfo& mainColour, const RenderTargetInfo& mainDepth)
+	std::unique_ptr<DrawPass> FrameScheduler::MakeForwardPass(const RenderTargetInfo& mainColour, const RenderTargetInfo& mainDepth)
 	{
 		R3_PROF_EVENT();
 		auto mainPass = std::make_unique<DrawPass>();	
-		mainPass->m_name = "Main Pass";
+		mainPass->m_name = "Forward Pass";
 		mainPass->m_colourAttachments.push_back({ mainColour, DrawPass::AttachmentLoadOp::Clear });
 		mainPass->m_depthAttachment = { mainDepth, DrawPass::AttachmentLoadOp::Clear };
 		mainPass->m_getExtentsFn = []() -> glm::vec2 {
@@ -55,20 +55,20 @@ namespace R3
 			return glm::vec4(GetSystem<LightsSystem>()->GetSkyColour(), 1.0f);
 		};
 		mainPass->m_onBegin.AddCallback([](RenderPassContext& ctx) {
-			R3_PROF_GPU_EVENT("Main Pass Begin");
+			R3_PROF_GPU_EVENT("Forward Pass Begin");
 			GetSystem<LightsSystem>()->CollectLightsForDrawing(ctx);
 			GetSystem<TextureSystem>()->ProcessLoadedTextures(ctx);
-			GetSystem<StaticMeshSystem>()->OnMainPassBegin(ctx);
-			GetSystem<StaticMeshSimpleRenderer>()->OnMainPassBegin(ctx);
-			GetSystem<ImmediateRenderSystem>()->OnMainPassBegin(ctx);
+			GetSystem<StaticMeshSystem>()->PrepareForRendering(ctx);
+			GetSystem<StaticMeshSimpleRenderer>()->PrepareForRendering(ctx);
+			GetSystem<ImmediateRenderSystem>()->PrepareForRendering(ctx);
 		});
 		mainPass->m_onDraw.AddCallback([](RenderPassContext& ctx) {
-			R3_PROF_GPU_EVENT("Main Pass");
-			GetSystem<StaticMeshSimpleRenderer>()->OnMainPassDraw(ctx);
-			GetSystem<ImmediateRenderSystem>()->OnMainPassDraw(ctx);
+			R3_PROF_GPU_EVENT("Forward Pass");
+			GetSystem<StaticMeshSimpleRenderer>()->OnForwardPassDraw(ctx);
+			GetSystem<ImmediateRenderSystem>()->OnForwardPassDraw(ctx);
 		});
 		mainPass->m_onEnd.AddCallback([](RenderPassContext& ctx) {
-			GetSystem<StaticMeshSimpleRenderer>()->OnMainPassEnd(ctx);
+			GetSystem<StaticMeshSimpleRenderer>()->OnDrawEnd(ctx);
 		});
 		return mainPass;
 	}
@@ -154,7 +154,7 @@ namespace R3
 
 		auto& graph = render->GetRenderGraph();
 		graph.m_allPasses.clear();
-		graph.m_allPasses.push_back(MakeMainPass(mainColour, mainDepth));	// main render (HDR)
+		graph.m_allPasses.push_back(MakeForwardPass(mainColour, mainDepth));	// main render (HDR)
 		graph.m_allPasses.push_back(MakeTonemapToLDRPass(mainColour, mainColourLDR));	// HDR -> LDR
 		graph.m_allPasses.push_back(MakeColourBlitToPass("LDR to swap", mainColourLDR, swapchainImage));	// blit LDR -> swap
 		if (m_colourTargetDebuggerEnabled && m_colourDebugTargetName.length() > 0)

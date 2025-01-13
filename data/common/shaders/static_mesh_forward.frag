@@ -1,7 +1,7 @@
 #version 450
 #extension GL_EXT_buffer_reference : require
 
-#include "static_mesh_simple_shared.h"
+#include "static_mesh_shared.h"
 #include "pbr.h"
 #include "utils.h"
 

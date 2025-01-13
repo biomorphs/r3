@@ -2,13 +2,13 @@
  "AllEntities": [
   {
    "EnvironmentSettings": {
-    "Sky Ambient": 0.004999999888241291,
+    "Sky Ambient": 0.01249999925494194,
     "Sky Colour": {
      "X": 0.013169873505830765,
      "Y": 0.04709765687584877,
      "Z": 0.18145161867141724
     },
-    "Sun Ambient": 0.00800000037997961,
+    "Sun Ambient": 0.03799999877810478,
     "Sun Brightness": 4.0,
     "Sun Colour": {
      "X": 1.0,

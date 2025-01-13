@@ -36,7 +36,7 @@ namespace R3
 		return true;
 	}
 
-	void ImmediateRenderSystem::OnMainPassBegin(RenderPassContext& ctx)
+	void ImmediateRenderSystem::PrepareForRendering(RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
 		auto render = GetSystem<RenderSystem>();
@@ -54,7 +54,7 @@ namespace R3
 		m_imRender->WriteVertexData(*render->GetDevice(), *render->GetStagingBufferPool(), ctx.m_graphicsCmds);
 	}
 
-	void ImmediateRenderSystem::OnMainPassDraw(RenderPassContext& ctx)
+	void ImmediateRenderSystem::OnForwardPassDraw(RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
 		auto cameras = GetSystem<CameraSystem>();

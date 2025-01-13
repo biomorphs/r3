@@ -61,7 +61,7 @@ namespace R3
 		virtual void RegisterTickFns();
 		virtual bool Init();
 		virtual void Shutdown();
-		void OnMainPassBegin(class RenderPassContext& ctx);
+		void PrepareForRendering(class RenderPassContext& ctx);		// call from frame graph before drawing anything
 		VkDeviceAddress GetVertexDataDeviceAddress();
 		VkDeviceAddress GetMaterialsDeviceAddress();
 		VkBuffer GetIndexBuffer();
@@ -78,7 +78,6 @@ namespace R3
 	private:
 		void OnModelDataLoaded(const ModelDataHandle& handle, bool loaded);
 		bool PrepareForUpload(const ModelDataHandle& handle);	// returns true if already uploaded or ready to go 
-		void OnMainPassBegin(class Device& d, VkCommandBuffer cmds);	// Render hooks
 		bool ShowGui();
 		
 		bool m_showGui = false;

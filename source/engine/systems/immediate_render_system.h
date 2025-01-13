@@ -15,8 +15,8 @@ namespace R3
 		static std::string_view GetName() { return "ImmediateRender"; }
 		virtual bool Init();
 
-		void OnMainPassBegin(class RenderPassContext&);
-		void OnMainPassDraw(class RenderPassContext&);
+		void PrepareForRendering(class RenderPassContext&);
+		void OnForwardPassDraw(class RenderPassContext&);
 
 		std::unique_ptr<ImmediateRenderer> m_imRender;
 		bool m_initialised = false;

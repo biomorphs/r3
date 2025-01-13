@@ -31,9 +31,9 @@ namespace R3
 		static std::string_view GetName() { return "StaticMeshSimpleRenderer"; }
 		virtual void RegisterTickFns();
 		virtual bool Init();
-		void OnMainPassBegin(class RenderPassContext& ctx);
-		void OnMainPassDraw(class RenderPassContext& ctx);
-		void OnMainPassEnd(class RenderPassContext& ctx);
+		void PrepareForRendering(class RenderPassContext& ctx);		// call from frame graph before drawing anything
+		void OnForwardPassDraw(class RenderPassContext& ctx);
+		void OnDrawEnd(class RenderPassContext& ctx);
 		inline glm::vec4 GetMainColourClearValue() { return m_mainPassColourClearValue; }
 
 	private:
@@ -43,11 +43,8 @@ namespace R3
 		bool ShowGui();
 		bool CollectInstances();
 		void Cleanup(Device&);
-		void MainPassBegin(Device&, VkCommandBuffer, VkFormat mainColourFormat, VkFormat mainDepthFormat);
-		void MainPassDraw(Device&, VkCommandBuffer, glm::vec2 extents);
 		bool CreatePipelineData(Device&, VkFormat mainColourFormat, VkFormat mainDepthFormat);
 		bool CreateGlobalDescriptorSet();
-		bool InitialiseGpuData(Device&, VkFormat mainColourFormat, VkFormat mainDepthFormat);
 		struct StaticMeshInstanceGpu {				// needs to match PerInstanceData in shaders
 			glm::mat4 m_transform;
 			uint32_t m_materialIndex;
@@ -94,7 +91,7 @@ namespace R3
 		const uint32_t c_maxInstanceBuffers = 3;
 
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
-		VkPipeline m_simpleTriPipeline = VK_NULL_HANDLE;
+		VkPipeline m_forwardPipeline = VK_NULL_HANDLE;
 		bool m_showGui = false;
 	};
 }
