@@ -44,10 +44,10 @@ void main() {
 		mat.m_albedo = myMaterial.m_albedoOpacity.xyz;
 	}
 	
-	// if(finalAlpha < 0.25)	// punch-through alpha, may want a material param for this?
-	// {
-	// 	discard;
-	// }
+	if(finalAlpha < 0.25)	// punch-through alpha, may want a material param for this?
+	{
+		discard;
+	}
 	
 	mat.m_roughness = (myMaterial.m_roughnessTexture!=-1) ? texture(allTextures[myMaterial.m_roughnessTexture],inUV).r : myMaterial.m_roughness;
 	mat.m_metallic = (myMaterial.m_metalnessTexture != -1) ? texture(allTextures[myMaterial.m_metalnessTexture],inUV).r : myMaterial.m_metallic;
