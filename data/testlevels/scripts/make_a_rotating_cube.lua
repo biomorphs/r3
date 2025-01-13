@@ -1,4 +1,24 @@
 
+function RotatingCubes_PopulateInputs(scriptCmp)
+	scriptCmp.m_inputParams:AddInt("Cube Count", 1000)
+	scriptCmp.m_inputParams:AddFloat("X Min", -32.0)
+	scriptCmp.m_inputParams:AddFloat("X Max", 32.0)
+	scriptCmp.m_inputParams:AddFloat("Y Min", 0.0)
+	scriptCmp.m_inputParams:AddFloat("Y Max", 16.0)
+	scriptCmp.m_inputParams:AddFloat("Z Min", -32.0)
+	scriptCmp.m_inputParams:AddFloat("Z Max", 32.0)
+end
+
+function RotatingCubes_GetSpawnPosition(blackboard)
+	local minX = blackboard:GetFloat("X Min", -16.0)
+	local maxX = blackboard:GetFloat("X Max", 16.0)
+	local minY = blackboard:GetFloat("Y Min", -16.0)
+	local maxY = blackboard:GetFloat("Y Max", 16.0)
+	local minZ = blackboard:GetFloat("Z Min", -16.0)
+	local maxZ = blackboard:GetFloat("Z Max", 16.0)
+	return vec3.new(R3.RandomFloat(minX, maxX), R3.RandomFloat(minY, maxY), R3.RandomFloat(minZ, maxZ))
+end
+
 function RotateCubePls(e)
 	local world = R3.ActiveWorld()
 	if(world == nil) then 
@@ -15,20 +35,14 @@ function RotateCubePls(e)
 	myTransform:SetOrientation(myRotation)
 end
 
-function MakeARotatingCube_FixedUpdate(world)
+function MakeACube(world, blackboard)
 	local newCube = world:AddEntity()
 	
 	local newTransform = world.AddComponent_Transform(newCube)
-	newTransform:SetPositionNoInterpolation(vec3.new(-32.0 + math.random() * 64.0,1.0 + math.random() * 32.0,-32.0 + math.random() * 64.0))
+	newTransform:SetPositionNoInterpolation(RotatingCubes_GetSpawnPosition(blackboard))
 	
 	local newMesh = world.AddComponent_StaticMesh(newCube)
 	newMesh:SetModelFromPath("common/models/cube.fbx")
-	
-	-- local newScript = world.AddComponent_LuaScript(newCube)
-	-- newScript:SetFixedUpdateSource("testlevels/scripts/make_a_rotating_cube.lua")
-	-- newScript:SetFixedUpdateEntrypoint("RotateCubePls")
-	-- newScript.m_needsRecompile = true
-	-- newScript.m_isActive = true
 end
 
 function MakeManyRotatingCubes_FixedUpdate(e)
@@ -37,10 +51,12 @@ function MakeManyRotatingCubes_FixedUpdate(e)
 		print('No active world?')
 		return;
 	end
-	for i=1,40000 do
-		MakeARotatingCube_FixedUpdate(world)
-	end
 	local myScriptCmp = world.GetComponent_LuaScript(e)
+	local count = myScriptCmp.m_inputParams:GetInt("Cube Count", 1000)
+	for i=1,count do
+		MakeACube(world, myScriptCmp.m_inputParams)
+	end
+	
 	if(myScriptCmp == nil) then 
 	 	print('No script cmp?!')
 	 	return

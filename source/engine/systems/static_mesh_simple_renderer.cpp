@@ -101,7 +101,11 @@ namespace R3
 			ImGui::Begin("Static Mesh Renderer");
 			std::string txt = std::format("{} Model Instances Submitted", m_frameStats.m_totalModelInstances);
 			ImGui::Text(txt.c_str());
-			txt = std::format("    {} Part Instances", m_frameStats.m_totalPartInstances);
+			txt = std::format("    {} Total Part Instances", m_frameStats.m_totalPartInstances);
+			ImGui::Text(txt.c_str());
+			txt = std::format("    {} Opaque Part Instances", m_frameStats.m_totalOpaqueInstances);
+			ImGui::Text(txt.c_str());
+			txt = std::format("    {} Transparent Part Instances", m_frameStats.m_totalTransparentInstances);
 			ImGui::Text(txt.c_str());
 			txt = std::format("    {:L} Triangles", m_frameStats.m_totalTriangles);
 			ImGui::Text(txt.c_str());
@@ -265,6 +269,7 @@ namespace R3
 		auto staticMeshes = GetSystem<StaticMeshSystem>();
 		auto activeWorld = Systems::GetSystem<Entities::EntitySystem>()->GetActiveWorld();
 		m_allOpaques.m_partInstances.clear();
+		m_allTransparents.m_partInstances.clear();
 		if (activeWorld)
 		{
 			ModelDataHandle currentMeshDataHandle;			// the current cached mesh data
@@ -374,6 +379,8 @@ namespace R3
 		m_frameStats.m_totalTriangles = m_frameStats.m_totalModelInstances = m_frameStats.m_totalPartInstances = 0;
 		m_frameStats.m_collectInstancesStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		CollectAllPartInstances();
+		m_frameStats.m_totalOpaqueInstances = (uint32_t)m_allOpaques.m_partInstances.size();
+		m_frameStats.m_totalTransparentInstances = (uint32_t)m_allTransparents.m_partInstances.size();
 		m_frameStats.m_collectInstancesEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 
 		m_frameStats.m_prepareBucketsStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();

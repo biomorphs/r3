@@ -55,6 +55,8 @@ namespace R3
 		struct FrameStats {
 			uint32_t m_totalModelInstances = 0;
 			uint32_t m_totalPartInstances = 0;
+			uint32_t m_totalOpaqueInstances = 0;
+			uint32_t m_totalTransparentInstances = 0;
 			uint32_t m_totalTriangles = 0;
 			double m_writeCmdsStartTime = 0.0;
 			double m_writeCmdsEndTime = 0.0;

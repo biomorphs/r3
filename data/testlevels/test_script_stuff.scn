@@ -2,7 +2,7 @@
  "AllEntities": [
   {
    "ID": 0,
-   "Name": "",
+   "Name": "Floor",
    "Parent": 4294967295,
    "StaticMesh": {
     "Draw": true,
@@ -35,7 +35,7 @@
   },
   {
    "ID": 1,
-   "Name": "",
+   "Name": "Main Light",
    "Parent": 4294967295,
    "PointLight": {
     "Brightness": 32.0,
@@ -71,9 +71,39 @@
    "ID": 2,
    "LuaScript": {
     "InputParams": {
-     "Floats": [],
+     "Floats": [
+      {
+       "Key": "X Min",
+       "Value": -32.0
+      },
+      {
+       "Key": "Z Max",
+       "Value": 32.0
+      },
+      {
+       "Key": "X Max",
+       "Value": 32.0
+      },
+      {
+       "Key": "Z Min",
+       "Value": -32.0
+      },
+      {
+       "Key": "Y Min",
+       "Value": 0.0
+      },
+      {
+       "Key": "Y Max",
+       "Value": 32.0
+      }
+     ],
      "IntVec2s": [],
-     "Ints": []
+     "Ints": [
+      {
+       "Key": "Cube Count",
+       "Value": 25000
+      }
+     ]
     },
     "IsActive": true,
     "OnFixedUpdate": {
@@ -85,11 +115,94 @@
      "SourcePath": ""
     },
     "PopulateInputs": {
-     "EntryPoint": "",
-     "SourcePath": ""
+     "EntryPoint": "RotatingCubes_PopulateInputs",
+     "SourcePath": "testlevels\\scripts\\make_a_rotating_cube.lua"
     }
    },
-   "Name": "",
+   "Name": "Object Spawner",
+   "Parent": 4294967295
+  },
+  {
+   "ID": 3,
+   "LuaScript": {
+    "InputParams": {
+     "Floats": [
+      {
+       "Key": "Z Max",
+       "Value": 32.0
+      },
+      {
+       "Key": "X Min",
+       "Value": -32.0
+      },
+      {
+       "Key": "Z Min",
+       "Value": -32.0
+      },
+      {
+       "Key": "X Max",
+       "Value": 32.0
+      },
+      {
+       "Key": "Max Brightness",
+       "Value": 16.0
+      },
+      {
+       "Key": "Y Min",
+       "Value": 0.0
+      },
+      {
+       "Key": "Min Brightness",
+       "Value": 1.0
+      },
+      {
+       "Key": "Y Max",
+       "Value": 32.0
+      },
+      {
+       "Key": "Min Radius",
+       "Value": 8.0
+      },
+      {
+       "Key": "Max Radius",
+       "Value": 32.0
+      },
+      {
+       "Key": "Min Spawn Velocity",
+       "Value": -16.0
+      },
+      {
+       "Key": "Max Spawn Velocity",
+       "Value": 16.0
+      },
+      {
+       "Key": "Gravity",
+       "Value": -10.0
+      }
+     ],
+     "IntVec2s": [],
+     "Ints": [
+      {
+       "Key": "Light Count",
+       "Value": 128
+      }
+     ]
+    },
+    "IsActive": true,
+    "OnFixedUpdate": {
+     "EntryPoint": "BouncyLights_FixedUpdate",
+     "SourcePath": "testlevels\\scripts\\bouncy_lights.lua"
+    },
+    "OnVariableUpdate": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    },
+    "PopulateInputs": {
+     "EntryPoint": "BouncyLights_PopulateInputs",
+     "SourcePath": "testlevels\\scripts\\bouncy_lights.lua"
+    }
+   },
+   "Name": "Bouncy Lights",
    "Parent": 4294967295
   }
  ],

@@ -5,6 +5,7 @@
    "Name": "",
    "Parent": 4294967295,
    "StaticMesh": {
+    "Draw": true,
     "MaterialsOverride": {
      "ID": 4294967295
     },
@@ -24,38 +25,7 @@
      "Y": 0.0,
      "Z": 0.0
     },
-    "Scale": {
-     "X": 1.0,
-     "Y": 1.0,
-     "Z": 1.0
-    }
-   }
-  },
-  {
-   "ID": 1,
-   "Name": "",
-   "Parent": 4294967295,
-   "PointLight": {
-    "Brightness": 64.0,
-    "Colour": {
-     "X": 1.0,
-     "Y": 1.0,
-     "Z": 1.0
-    },
-    "Distance": 32.0
-   },
-   "Transform": {
-    "Orientation": {
-     "W": 1.0,
-     "X": 0.0,
-     "Y": 0.0,
-     "Z": 0.0
-    },
-    "Position": {
-     "X": 0.0,
-     "Y": 5.896274566650391,
-     "Z": 0.0
-    },
+    "Relative": false,
     "Scale": {
      "X": 1.0,
      "Y": 1.0,
@@ -68,6 +38,7 @@
    "Name": "",
    "Parent": 4294967295,
    "StaticMesh": {
+    "Draw": true,
     "MaterialsOverride": {
      "ID": 4294967295
     },
@@ -87,6 +58,7 @@
      "Y": 0.0,
      "Z": 0.0
     },
+    "Relative": false,
     "Scale": {
      "X": 1.0,
      "Y": 1.0,
@@ -99,6 +71,7 @@
    "Name": "",
    "Parent": 4294967295,
    "StaticMesh": {
+    "Draw": true,
     "MaterialsOverride": {
      "ID": 4294967295
     },
@@ -118,6 +91,7 @@
      "Y": 0.0,
      "Z": 0.0
     },
+    "Relative": false,
     "Scale": {
      "X": 1.0,
      "Y": 1.0,
@@ -130,13 +104,14 @@
    "Name": "",
    "Parent": 4294967295,
    "PointLight": {
-    "Brightness": 40.0,
+    "Brightness": 32.0,
     "Colour": {
      "X": 1.0,
-     "Y": 0.3818938136100769,
-     "Z": 0.12903225421905518
+     "Y": 0.4305410385131836,
+     "Z": 0.19758063554763794
     },
-    "Distance": 32.0
+    "Distance": 24.0,
+    "Enabled": true
    },
    "Transform": {
     "Orientation": {
@@ -150,6 +125,7 @@
      "Y": 2.4611330032348633,
      "Z": -0.9091448783874512
     },
+    "Relative": false,
     "Scale": {
      "X": 1.0,
      "Y": 1.0,
@@ -168,7 +144,8 @@
      "Y": 0.5707595944404602,
      "Z": 0.3951612710952759
     },
-    "Distance": 32.0
+    "Distance": 8.0,
+    "Enabled": true
    },
    "Transform": {
     "Orientation": {
@@ -182,6 +159,7 @@
      "Y": 8.487878799438477,
      "Z": -4.478121280670166
     },
+    "Relative": false,
     "Scale": {
      "X": 1.0,
      "Y": 1.0,
@@ -200,7 +178,8 @@
      "Y": 0.5707595944404602,
      "Z": 0.3951612710952759
     },
-    "Distance": 32.0
+    "Distance": 8.0,
+    "Enabled": true
    },
    "Transform": {
     "Orientation": {
@@ -214,6 +193,7 @@
      "Y": 8.487878799438477,
      "Z": -4.7334489822387695
     },
+    "Relative": false,
     "Scale": {
      "X": 1.0,
      "Y": 1.0,
@@ -232,7 +212,8 @@
      "Y": 0.5707595944404602,
      "Z": 0.3951612710952759
     },
-    "Distance": 32.0
+    "Distance": 8.0,
+    "Enabled": true
    },
    "Transform": {
     "Orientation": {
@@ -246,6 +227,7 @@
      "Y": 8.487878799438477,
      "Z": -4.7334489822387695
     },
+    "Relative": false,
     "Scale": {
      "X": 1.0,
      "Y": 1.0,
@@ -264,7 +246,8 @@
      "Y": 0.5707595944404602,
      "Z": 0.3951612710952759
     },
-    "Distance": 32.0
+    "Distance": 8.0,
+    "Enabled": true
    },
    "Transform": {
     "Orientation": {
@@ -278,6 +261,7 @@
      "Y": 8.487878799438477,
      "Z": -4.7334489822387695
     },
+    "Relative": false,
     "Scale": {
      "X": 1.0,
      "Y": 1.0,
@@ -296,7 +280,8 @@
      "Y": 0.5707595944404602,
      "Z": 0.3951612710952759
     },
-    "Distance": 32.0
+    "Distance": 8.0,
+    "Enabled": true
    },
    "Transform": {
     "Orientation": {
@@ -310,6 +295,7 @@
      "Y": 8.487878799438477,
      "Z": 4.890572547912598
     },
+    "Relative": false,
     "Scale": {
      "X": 1.0,
      "Y": 1.0,
@@ -328,7 +314,8 @@
      "Y": 0.5707595944404602,
      "Z": 0.3951612710952759
     },
-    "Distance": 32.0
+    "Distance": 8.0,
+    "Enabled": true
    },
    "Transform": {
     "Orientation": {
@@ -342,6 +329,7 @@
      "Y": 8.487878799438477,
      "Z": 4.635244846343994
     },
+    "Relative": false,
     "Scale": {
      "X": 1.0,
      "Y": 1.0,
@@ -360,7 +348,8 @@
      "Y": 0.5707595944404602,
      "Z": 0.3951612710952759
     },
-    "Distance": 32.0
+    "Distance": 8.0,
+    "Enabled": true
    },
    "Transform": {
     "Orientation": {
@@ -374,6 +363,7 @@
      "Y": 8.487878799438477,
      "Z": 4.635244846343994
     },
+    "Relative": false,
     "Scale": {
      "X": 1.0,
      "Y": 1.0,
@@ -392,7 +382,8 @@
      "Y": 0.5707595944404602,
      "Z": 0.3951612710952759
     },
-    "Distance": 32.0
+    "Distance": 8.0,
+    "Enabled": true
    },
    "Transform": {
     "Orientation": {
@@ -406,6 +397,7 @@
      "Y": 8.487878799438477,
      "Z": 4.635244846343994
     },
+    "Relative": false,
     "Scale": {
      "X": 1.0,
      "Y": 1.0,
@@ -418,45 +410,14 @@
    "Name": "",
    "Parent": 4294967295,
    "PointLight": {
-    "Brightness": 256.0,
-    "Colour": {
-     "X": 1.0,
-     "Y": 1.0,
-     "Z": 1.0
-    },
-    "Distance": 256.0
-   },
-   "Transform": {
-    "Orientation": {
-     "W": 1.0,
-     "X": 0.0,
-     "Y": 0.0,
-     "Z": 0.0
-    },
-    "Position": {
-     "X": 0.0,
-     "Y": 19.20392608642578,
-     "Z": 0.0
-    },
-    "Scale": {
-     "X": 1.0,
-     "Y": 1.0,
-     "Z": 1.0
-    }
-   }
-  },
-  {
-   "ID": 14,
-   "Name": "",
-   "Parent": 4294967295,
-   "PointLight": {
     "Brightness": 64.0,
     "Colour": {
      "X": 1.0,
      "Y": 0.565036416053772,
      "Z": 0.3870967626571655
     },
-    "Distance": 32.0
+    "Distance": 16.0,
+    "Enabled": true
    },
    "Transform": {
     "Orientation": {
@@ -470,12 +431,96 @@
      "Y": 3.0883617401123047,
      "Z": 0.05377104878425598
     },
+    "Relative": false,
     "Scale": {
      "X": 1.0,
      "Y": 1.0,
      "Z": 1.0
     }
    }
+  },
+  {
+   "ID": 14,
+   "LuaScript": {
+    "InputParams": {
+     "Floats": [
+      {
+       "Key": "X Min",
+       "Value": -11.0
+      },
+      {
+       "Key": "Z Max",
+       "Value": 6.0
+      },
+      {
+       "Key": "X Max",
+       "Value": 11.0
+      },
+      {
+       "Key": "Z Min",
+       "Value": -6.0
+      },
+      {
+       "Key": "Max Radius",
+       "Value": 6.0
+      },
+      {
+       "Key": "Max Brightness",
+       "Value": 16.0
+      },
+      {
+       "Key": "Y Min",
+       "Value": 1.0
+      },
+      {
+       "Key": "Y Max",
+       "Value": 12.0
+      },
+      {
+       "Key": "Min Brightness",
+       "Value": 1.0
+      },
+      {
+       "Key": "Min Radius",
+       "Value": 2.0
+      },
+      {
+       "Key": "Min Spawn Velocity",
+       "Value": -4.0
+      },
+      {
+       "Key": "Max Spawn Velocity",
+       "Value": -4.0
+      },
+      {
+       "Key": "Gravity",
+       "Value": -10.0
+      }
+     ],
+     "IntVec2s": [],
+     "Ints": [
+      {
+       "Key": "Light Count",
+       "Value": 32
+      }
+     ]
+    },
+    "IsActive": true,
+    "OnFixedUpdate": {
+     "EntryPoint": "BouncyLights_FixedUpdate",
+     "SourcePath": "testlevels\\scripts\\bouncy_lights.lua"
+    },
+    "OnVariableUpdate": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    },
+    "PopulateInputs": {
+     "EntryPoint": "BouncyLights_PopulateInputs",
+     "SourcePath": "testlevels\\scripts\\bouncy_lights.lua"
+    }
+   },
+   "Name": "BouncyLights",
+   "Parent": 4294967295
   }
  ],
  "WorldName": "New World"
