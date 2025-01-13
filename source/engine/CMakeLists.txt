@@ -1,6 +1,8 @@
 set(EngineLib_SourceFiles
 	tonemap_compute.h
 	tonemap_compute.cpp
+	deferred_lighting_compute.h
+	deferred_lighting_compute.cpp
 	tag.h
 	tag.cpp
 	tag_set.h

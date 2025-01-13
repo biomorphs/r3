@@ -41,36 +41,62 @@ namespace R3
 		return true;
 	}
 
-	std::unique_ptr<DrawPass> FrameScheduler::MakeForwardPass(const RenderTargetInfo& mainColour, const RenderTargetInfo& mainDepth)
+	std::unique_ptr<DrawPass> FrameScheduler::MakeGBufferPass(const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainDepth)
 	{
 		R3_PROF_EVENT();
-		auto mainPass = std::make_unique<DrawPass>();	
-		mainPass->m_name = "Forward Pass";
-		mainPass->m_colourAttachments.push_back({ mainColour, DrawPass::AttachmentLoadOp::Clear });
-		mainPass->m_depthAttachment = { mainDepth, DrawPass::AttachmentLoadOp::Clear };
-		mainPass->m_getExtentsFn = []() -> glm::vec2 {
+		auto gbufferPass = std::make_unique<DrawPass>();
+		gbufferPass->m_name = "GBuffer Pass";
+		gbufferPass->m_colourAttachments.push_back({ positionBuffer, DrawPass::AttachmentLoadOp::Clear });
+		gbufferPass->m_colourAttachments.push_back({ normalBuffer, DrawPass::AttachmentLoadOp::Clear });
+		gbufferPass->m_colourAttachments.push_back({ albedoBuffer, DrawPass::AttachmentLoadOp::Clear });
+		gbufferPass->m_depthAttachment = { mainDepth, DrawPass::AttachmentLoadOp::Clear };
+		gbufferPass->m_getExtentsFn = []() -> glm::vec2 {
 			return GetSystem<RenderSystem>()->GetWindowExtents();
 		};
-		mainPass->m_getClearColourFn = []() -> glm::vec4 {
-			return glm::vec4(GetSystem<LightsSystem>()->GetSkyColour(), 1.0f);
+		gbufferPass->m_getClearColourFn = []() -> glm::vec4 {
+			return glm::vec4(0.0f);
 		};
-		mainPass->m_onBegin.AddCallback([](RenderPassContext& ctx) {
-			R3_PROF_GPU_EVENT("Forward Pass Begin");
+		gbufferPass->m_onBegin.AddCallback([](RenderPassContext& ctx) {
+			R3_PROF_GPU_EVENT("GBuffer Pass Begin");
 			GetSystem<LightsSystem>()->CollectLightsForDrawing(ctx);
 			GetSystem<TextureSystem>()->ProcessLoadedTextures(ctx);
 			GetSystem<StaticMeshSystem>()->PrepareForRendering(ctx);
 			GetSystem<StaticMeshSimpleRenderer>()->PrepareForRendering(ctx);
+		});
+		gbufferPass->m_onDraw.AddCallback([](RenderPassContext& ctx) {
+			R3_PROF_GPU_EVENT("GBuffer Pass");
+			GetSystem<StaticMeshSimpleRenderer>()->OnGBufferPassDraw(ctx);
+		});
+		
+		return gbufferPass;
+	}
+
+	std::unique_ptr<DrawPass> FrameScheduler::MakeForwardPass(const RenderTargetInfo& mainColour, const RenderTargetInfo& mainDepth)
+	{
+		R3_PROF_EVENT();
+		auto forwardPass = std::make_unique<DrawPass>();
+		forwardPass->m_name = "Forward Pass";
+		forwardPass->m_colourAttachments.push_back({ mainColour, DrawPass::AttachmentLoadOp::Load });	// reuse previous depth + colour data
+		forwardPass->m_depthAttachment = { mainDepth, DrawPass::AttachmentLoadOp::Load };
+		forwardPass->m_getExtentsFn = []() -> glm::vec2 {
+			return GetSystem<RenderSystem>()->GetWindowExtents();
+		};
+		forwardPass->m_getClearColourFn = []() -> glm::vec4 {
+			return glm::vec4(GetSystem<LightsSystem>()->GetSkyColour(), 1.0f);
+		};
+		forwardPass->m_onBegin.AddCallback([](RenderPassContext& ctx) {
+			R3_PROF_GPU_EVENT("Forward Pass Begin");
 			GetSystem<ImmediateRenderSystem>()->PrepareForRendering(ctx);
 		});
-		mainPass->m_onDraw.AddCallback([](RenderPassContext& ctx) {
+		forwardPass->m_onDraw.AddCallback([](RenderPassContext& ctx) {
 			R3_PROF_GPU_EVENT("Forward Pass");
 			GetSystem<StaticMeshSimpleRenderer>()->OnForwardPassDraw(ctx);
 			GetSystem<ImmediateRenderSystem>()->OnForwardPassDraw(ctx);
 		});
-		mainPass->m_onEnd.AddCallback([](RenderPassContext& ctx) {
+		forwardPass->m_onEnd.AddCallback([](RenderPassContext& ctx) {
 			GetSystem<StaticMeshSimpleRenderer>()->OnDrawEnd(ctx);
 		});
-		return mainPass;
+		return forwardPass;
 	}
 
 	std::unique_ptr<TransferPass> FrameScheduler::MakeColourBlitToPass(std::string_view name, const RenderTargetInfo& srcTarget, const RenderTargetInfo& destTarget)
@@ -147,6 +173,21 @@ namespace R3
 		mainDepth.m_aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
 		m_allCurrentTargets.push_back(mainDepth);
 
+		RenderTargetInfo gBufferPosition("GBuffer_PositionMetallic");		// World space positions + metallic
+		gBufferPosition.m_format = VK_FORMAT_R16G16B16A16_SFLOAT;
+		gBufferPosition.m_usageFlags = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+		m_allCurrentTargets.push_back(gBufferPosition);
+
+		RenderTargetInfo gBufferNormal("GBuffer_NormalsRoughness");		// World space normal + roughness
+		gBufferNormal.m_format = VK_FORMAT_R16G16B16A16_SFLOAT;
+		gBufferNormal.m_usageFlags = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+		m_allCurrentTargets.push_back(gBufferNormal);
+
+		RenderTargetInfo gBufferAlbedo("GBuffer_AlbedoAO");		// linear albedo + AO
+		gBufferAlbedo.m_format = VK_FORMAT_R8G8B8A8_UNORM;
+		gBufferAlbedo.m_usageFlags = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+		m_allCurrentTargets.push_back(gBufferAlbedo);
+
 		RenderTargetInfo mainColourLDR("MainColourLDR");		// LDR colour buffer after tonemapping
 		mainColourLDR.m_format = VK_FORMAT_R16G16B16A16_SFLOAT;	// still using floating point storage
 		mainColourLDR.m_usageFlags = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
@@ -154,7 +195,8 @@ namespace R3
 
 		auto& graph = render->GetRenderGraph();
 		graph.m_allPasses.clear();
-		graph.m_allPasses.push_back(MakeForwardPass(mainColour, mainDepth));	// main render (HDR)
+		graph.m_allPasses.push_back(MakeGBufferPass(gBufferPosition, gBufferNormal, gBufferAlbedo, mainDepth));	// write gbuffer
+		graph.m_allPasses.push_back(MakeForwardPass(mainColour, mainDepth));	// forward render to main colour
 		graph.m_allPasses.push_back(MakeTonemapToLDRPass(mainColour, mainColourLDR));	// HDR -> LDR
 		graph.m_allPasses.push_back(MakeColourBlitToPass("LDR to swap", mainColourLDR, swapchainImage));	// blit LDR -> swap
 		if (m_colourTargetDebuggerEnabled && m_colourDebugTargetName.length() > 0)

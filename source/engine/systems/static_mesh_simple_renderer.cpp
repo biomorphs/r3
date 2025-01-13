@@ -73,6 +73,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		vkDestroyPipeline(d.GetVkDevice(), m_forwardPipeline, nullptr);
+		vkDestroyPipeline(d.GetVkDevice(), m_gBufferPipeline, nullptr);
 		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayout, nullptr);
 		if (m_globalInstancesHostVisible.m_allocation)
 		{
@@ -120,7 +121,7 @@ namespace R3
 		return true;
 	}
 
-	bool StaticMeshSimpleRenderer::CreatePipelineData(Device& d, VkFormat mainColourFormat, VkFormat mainDepthFormat)
+	bool StaticMeshSimpleRenderer::CreatePipelineLayout(Device& d)
 	{
 		R3_PROF_EVENT();
 		auto textures = GetSystem<TextureSystem>();
@@ -140,6 +141,69 @@ namespace R3
 			LogError("Failed to create pipeline layout");
 			return false;
 		}
+		return true;
+	}
+
+	bool StaticMeshSimpleRenderer::CreateGBufferPipelineData(Device& d, VkFormat positionMetalFormat, VkFormat normalRoughnessFormat, VkFormat albedoAOFormat, VkFormat mainDepthFormat)
+	{
+		R3_PROF_EVENT();
+		std::string basePath = "shaders_spirv\\common\\";	// Load the shaders
+		auto vertexShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), basePath + "static_mesh.vert.spv");
+		auto fragShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), basePath + "static_mesh_gbuffer.frag.spv");
+		if (vertexShader == VK_NULL_HANDLE || fragShader == VK_NULL_HANDLE)
+		{
+			LogError("Failed to create shader modules");
+			return false;
+		}
+		PipelineBuilder pb;	// Make the pipeline
+		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_VERTEX_BIT, vertexShader));
+		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_FRAGMENT_BIT, fragShader));
+		std::vector<VkDynamicState> dynamicStates = {
+			VK_DYNAMIC_STATE_VIEWPORT,
+			VK_DYNAMIC_STATE_SCISSOR
+		};
+		pb.m_dynamicState = VulkanHelpers::CreatePipelineDynamicState(dynamicStates);
+		pb.m_vertexInputState = VulkanHelpers::CreatePipelineEmptyVertexInputState();
+		pb.m_inputAssemblyState = VulkanHelpers::CreatePipelineInputAssemblyState(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+		pb.m_viewportState = VulkanHelpers::CreatePipelineDynamicViewportState();
+		pb.m_rasterState = VulkanHelpers::CreatePipelineRasterState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
+		pb.m_multisamplingState = VulkanHelpers::CreatePipelineMultiSampleState_SingleSample();
+		VkPipelineDepthStencilStateCreateInfo depthStencilState = { 0 };	// Enable depth read/write
+		depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		depthStencilState.depthTestEnable = VK_TRUE;
+		depthStencilState.depthWriteEnable = VK_TRUE;
+		depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
+		depthStencilState.depthBoundsTestEnable = VK_FALSE;
+		depthStencilState.stencilTestEnable = VK_FALSE;
+		pb.m_depthStencilState = depthStencilState;
+
+		// set up gbuffer attachments
+		VkFormat colourAttachFormats[] =
+		{
+			positionMetalFormat,
+			normalRoughnessFormat,
+			albedoAOFormat
+		};
+		std::vector<VkPipelineColorBlendAttachmentState> allAttachments = {	// No colour attachment blending
+			VulkanHelpers::CreatePipelineColourBlendAttachment_NoBlending(),
+			VulkanHelpers::CreatePipelineColourBlendAttachment_NoBlending(),
+			VulkanHelpers::CreatePipelineColourBlendAttachment_NoBlending()
+		};
+		pb.m_colourBlendState = VulkanHelpers::CreatePipelineColourBlendState(allAttachments);
+		m_gBufferPipeline = pb.Build(d.GetVkDevice(), m_pipelineLayout, (int)std::size(colourAttachFormats), colourAttachFormats, mainDepthFormat);
+		if (m_gBufferPipeline == VK_NULL_HANDLE)
+		{
+			LogError("Failed to create pipeline!");
+			return false;
+		}
+		vkDestroyShaderModule(d.GetVkDevice(), vertexShader, nullptr);
+		vkDestroyShaderModule(d.GetVkDevice(), fragShader, nullptr);
+		return true;
+	}
+
+	bool StaticMeshSimpleRenderer::CreateForwardPipelineData(Device& d, VkFormat mainColourFormat, VkFormat mainDepthFormat)
+	{
+		R3_PROF_EVENT();
 		std::string basePath = "shaders_spirv\\common\\";	// Load the shaders
 		auto vertexShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), basePath + "static_mesh.vert.spv");
 		auto fragShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), basePath + "static_mesh_forward.frag.spv");
@@ -257,6 +321,14 @@ namespace R3
 				return;
 			}
 		}
+		if (m_pipelineLayout == VK_NULL_HANDLE)
+		{
+			if (!CreatePipelineLayout(*ctx.m_device))
+			{
+				LogError("Failed to create static mesh pipeline layout");
+				return;
+			}
+		}
 
 		// write + flush the global constants each frame
 		auto cameras = GetSystem<CameraSystem>();
@@ -272,6 +344,62 @@ namespace R3
 		m_globalConstantsBuffer.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 	}
 
+	void StaticMeshSimpleRenderer::OnGBufferPassDraw(class RenderPassContext& ctx)
+	{
+		R3_PROF_EVENT();
+
+		if (m_gBufferPipeline == VK_NULL_HANDLE)
+		{
+			auto positionMetalTarget = ctx.GetResolvedTarget("GBuffer_PositionMetallic");
+			auto normalRoughnessTarget = ctx.GetResolvedTarget("GBuffer_NormalsRoughness");
+			auto albedoAOTarget = ctx.GetResolvedTarget("GBuffer_AlbedoAO");
+			auto mainDepthTarget = ctx.GetResolvedTarget("MainDepth");
+			if (!CreateGBufferPipelineData(*ctx.m_device, positionMetalTarget->m_info.m_format, normalRoughnessTarget->m_info.m_format, albedoAOTarget->m_info.m_format, mainDepthTarget->m_info.m_format))
+			{
+				LogError("Failed to create pipeline data for gbuffer");
+			}
+		}
+
+		auto staticMeshes = GetSystem<StaticMeshSystem>();
+		auto textures = GetSystem<TextureSystem>();
+		auto time = GetSystem<TimeSystem>();
+		if (m_allOpaques.m_drawCount == 0)
+		{
+			return;
+		}
+
+		m_frameStats.m_writeCmdsStartTime = time->GetElapsedTimeReal();
+
+		VkViewport viewport = { 0 };
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = ctx.m_renderExtents.x;
+		viewport.height = ctx.m_renderExtents.y;
+		viewport.minDepth = 0.0f;	// normalised! must be between 0 and 1
+		viewport.maxDepth = 1.0f;	// ^^
+		VkRect2D scissor = { 0 };
+		scissor.offset = { 0, 0 };
+		scissor.extent = { (uint32_t)viewport.width, (uint32_t)viewport.height };	// draw the full image
+		vkCmdBindPipeline(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_gBufferPipeline);
+		vkCmdSetViewport(ctx.m_graphicsCmds, 0, 1, &viewport);
+		vkCmdSetScissor(ctx.m_graphicsCmds, 0, 1, &scissor);
+		vkCmdBindIndexBuffer(ctx.m_graphicsCmds, staticMeshes->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+		vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_globalDescriptorSet, 0, nullptr);
+		VkDescriptorSet allTextures = textures->GetAllTexturesSet();
+		if (allTextures != VK_NULL_HANDLE)
+		{
+			vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 1, 1, &allTextures, 0, nullptr);
+		}
+		PushConstants pc;
+		pc.m_globalsBufferAddress = m_globalConstantsBuffer.GetDataDeviceAddress() + (m_currentGlobalConstantsBuffer * sizeof(GlobalConstants));
+		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
+
+		// Draw opaques
+		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_allOpaques.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_allOpaques.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
+
+		m_frameStats.m_writeCmdsEndTime = time->GetElapsedTimeReal();
+	}
+
 	void StaticMeshSimpleRenderer::OnForwardPassDraw(class RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
@@ -280,17 +408,16 @@ namespace R3
 		{
 			auto mainColourTarget = ctx.GetResolvedTarget("MainColour");
 			auto mainDepthTarget = ctx.GetResolvedTarget("MainDepth");
-			if (!CreatePipelineData(*ctx.m_device, mainColourTarget->m_info.m_format, mainDepthTarget->m_info.m_format))
+			if (!CreateForwardPipelineData(*ctx.m_device, mainColourTarget->m_info.m_format, mainDepthTarget->m_info.m_format))
 			{
 				LogError("Failed to create pipeline data for forward pass");
 			}
 		}
 
-		auto entities = Systems::GetSystem<Entities::EntitySystem>();
 		auto staticMeshes = GetSystem<StaticMeshSystem>();
 		auto textures = GetSystem<TextureSystem>();
 		auto time = GetSystem<TimeSystem>();
-		if (entities->GetActiveWorld() == nullptr)
+		if (m_allTransparents.m_drawCount == 0)
 		{
 			return;
 		}
@@ -322,7 +449,7 @@ namespace R3
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 
 		// Draw opaques
-		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_allOpaques.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_allOpaques.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
+		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_allTransparents.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_allTransparents.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 
 		m_frameStats.m_writeCmdsEndTime = time->GetElapsedTimeReal();
 	}

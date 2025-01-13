@@ -33,6 +33,7 @@ namespace R3
 		virtual bool Init();
 		void PrepareForRendering(class RenderPassContext& ctx);		// call from frame graph before drawing anything
 		void OnForwardPassDraw(class RenderPassContext& ctx);
+		void OnGBufferPassDraw(class RenderPassContext& ctx);
 		void OnDrawEnd(class RenderPassContext& ctx);
 		inline glm::vec4 GetMainColourClearValue() { return m_mainPassColourClearValue; }
 
@@ -43,7 +44,9 @@ namespace R3
 		bool ShowGui();
 		bool CollectInstances();
 		void Cleanup(Device&);
-		bool CreatePipelineData(Device&, VkFormat mainColourFormat, VkFormat mainDepthFormat);
+		bool CreatePipelineLayout(Device&);
+		bool CreateForwardPipelineData(Device&, VkFormat mainColourFormat, VkFormat mainDepthFormat);
+		bool CreateGBufferPipelineData(Device&, VkFormat positionMetalFormat, VkFormat normalRoughnessFormat, VkFormat albedoAOFormat, VkFormat mainDepthFormat);
 		bool CreateGlobalDescriptorSet();
 		struct StaticMeshInstanceGpu {				// needs to match PerInstanceData in shaders
 			glm::mat4 m_transform;
@@ -92,6 +95,7 @@ namespace R3
 
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_forwardPipeline = VK_NULL_HANDLE;
+		VkPipeline m_gBufferPipeline = VK_NULL_HANDLE;
 		bool m_showGui = false;
 	};
 }

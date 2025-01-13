@@ -13,7 +13,7 @@ glslc immediate_render.vert -o ..\..\shaders_spirv\common\immediate_render.vert.
 glslc immediate_render.frag -o ..\..\shaders_spirv\common\immediate_render.frag.spv
 glslc static_mesh.vert -o ..\..\shaders_spirv\common\static_mesh.vert.spv
 glslc static_mesh_forward.frag -o ..\..\shaders_spirv\common\static_mesh_forward.frag.spv
-
+glslc static_mesh_gbuffer.frag -o ..\..\shaders_spirv\common\static_mesh_gbuffer.frag.spv
 glslc tonemap_compute.comp -o ..\..\shaders_spirv\common\tonemap_compute.comp.spv
 
 pause
