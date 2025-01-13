@@ -30,14 +30,11 @@ namespace R3
 		glm::vec4 m_uvOffsetScale = { 0,0,1,1 };		// uv offset/scale, useful for custom materials
 		float m_metallic = 0.0f;						// 0.0 = dielectric, 1 = metallic
 		float m_roughness = 0.25f;						// 0 = perfectly smooth, 1 = max roughness
-		float m_paralaxAmount = 0.08f;					// controls 'height' when heightmap texture is available
-		uint32_t m_paralaxShadowsEnabled = 0;			// if > 0, enables soft self-shadows when heightmap texture is available
 		uint32_t m_albedoTexture = -1;					// index into global textures, -1 = no texture
 		uint32_t m_roughnessTexture = -1;
 		uint32_t m_metalnessTexture = -1;
 		uint32_t m_normalTexture = -1;
 		uint32_t m_aoTexture = -1;
-		uint32_t m_heightmapTexture = -1;
 	};
 	struct StaticMeshGpuData
 	{

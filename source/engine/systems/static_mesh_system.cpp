@@ -219,10 +219,6 @@ namespace R3
 					{
 						md.m_aoTexture = textures->LoadTexture(m->m_materials[mat].m_aoMaps[0]).m_index;
 					}
-					if (m->m_materials[mat].m_heightMaps.size() > 0)
-					{
-						md.m_heightmapTexture = textures->LoadTexture(m->m_materials[mat].m_heightMaps[0]).m_index;
-					}
 				}
 				if (gpuIndex != -1)
 				{
@@ -269,7 +265,7 @@ namespace R3
 		auto models = Systems::GetSystem<ModelDataSystem>();
 		if (!m_allVertices.IsCreated())
 		{
-			m_allMaterialsGpu.SetDebugName("Static mesh vertices");
+			m_allVertices.SetDebugName("Static mesh vertices");
 			if (!m_allVertices.Create(d, c_maxVerticesToStore, c_maxVerticesToStore, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT))
 			{
 				LogError("Failed to create vertex buffer");
@@ -277,7 +273,7 @@ namespace R3
 		}
 		if (!m_allIndices.IsCreated())
 		{
-			m_allMaterialsGpu.SetDebugName("Static mesh indices");
+			m_allIndices.SetDebugName("Static mesh indices");
 			if (!m_allIndices.Create(d, c_maxIndicesToStore, c_maxIndicesToStore / 2, VK_BUFFER_USAGE_INDEX_BUFFER_BIT))
 			{
 				LogError("Failed to create index buffer");
@@ -303,7 +299,7 @@ namespace R3
 				if(smc.m_gpuDataIndex != -1)	// update all instance mats each frame
 				{
 					m_allMaterialsGpu.Write(smc.m_gpuDataIndex, smc.m_materials.size(), smc.m_materials.data());
-					memcpy(&m_allMaterials[smc.m_gpuDataIndex], smc.m_materials.data(), smc.m_materials.size());
+					memcpy(&m_allMaterials[smc.m_gpuDataIndex], smc.m_materials.data(), smc.m_materials.size() * sizeof(StaticMeshMaterial));
 				}
 				return true;
 			};

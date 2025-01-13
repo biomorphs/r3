@@ -12,30 +12,30 @@ layout(location = 3) in flat uint inMaterialIndex;
 layout(location = 4) in mat3 inTBN;
 layout(location = 0) out vec4 outColour;
 
+// Applies normal map if the material has one
+vec3 GetWorldspaceNormal(StaticMeshMaterial material, vec2 texCoords)
+{
+	vec3 normal = normalize(inWorldspaceNormal);
+	if(material.m_normalTexture != -1)	// normal mapping
+	{
+		normal = texture(allTextures[material.m_normalTexture],texCoords).xyz;
+		normal = normalize(normal * 2.0 - 1.0);
+		normal = normalize(inTBN * normal);
+	}
+	return normal;
+}
+
 void main() {
 	GlobalConstants globals = PushConstants.m_globals.AllGlobals[0];
-	vec3 worldPos = inWorldSpacePos;
-	vec3 normal = normalize(inWorldspaceNormal);
-	vec3 viewDir = normalize(globals.m_cameraWorldSpacePos.xyz - worldPos);
+	vec3 viewDir = normalize(globals.m_cameraWorldSpacePos.xyz - inWorldSpacePos);
 	StaticMeshMaterial myMaterial = globals.m_materialBuffer.materials[inMaterialIndex];
-	vec2 texCoords = inUV;	// may be modified by paralax mapping
-	vec3 fragPosTbn;		// only set is paralax enabled
-	bool paralaxEnabled = myMaterial.m_heightmapTexture != -1 && myMaterial.m_paralaxAmount > 0.0;
-	if(paralaxEnabled)
-	{
-		vec3 viewPosTbn = inTBN * globals.m_cameraWorldSpacePos.xyz;
-		fragPosTbn = inTBN * inWorldSpacePos;	// may be used later 
-		texCoords = ParallaxOcclusionMapping(myMaterial.m_heightmapTexture, inUV, normalize(viewPosTbn - fragPosTbn), myMaterial.m_paralaxAmount);
-		if(texCoords.x > myMaterial.m_uvOffsetScale.z || texCoords.y > myMaterial.m_uvOffsetScale.w || texCoords.x < 0.0 || texCoords.y < 0.0)
-		{
-			discard;
-		}
-	}
+	vec3 normal = GetWorldspaceNormal(myMaterial, inUV);
+	
 	PBRMaterial mat;
 	float finalAlpha = myMaterial.m_albedoOpacity.a;
 	if(myMaterial.m_albedoTexture != -1)
 	{
-		vec4 albedoTex = texture(allTextures[myMaterial.m_albedoTexture],texCoords);
+		vec4 albedoTex = texture(allTextures[myMaterial.m_albedoTexture],inUV);
 		mat.m_albedo = myMaterial.m_albedoOpacity.xyz * SRGBToLinear(albedoTex).xyz;
 		finalAlpha = finalAlpha * albedoTex.a;
 	}
@@ -43,33 +43,22 @@ void main() {
 	{
 		mat.m_albedo = myMaterial.m_albedoOpacity.xyz;
 	}
-	if(finalAlpha < 0.25)	// punchthrough alpha, may want a material param for this?
-	{
-		discard;
-	}
-	mat.m_roughness = (myMaterial.m_roughnessTexture!=-1) ? texture(allTextures[myMaterial.m_roughnessTexture],texCoords).r : myMaterial.m_roughness;
-	mat.m_metallic = (myMaterial.m_metalnessTexture != -1) ? texture(allTextures[myMaterial.m_metalnessTexture],texCoords).r : myMaterial.m_metallic;
-	mat.m_ao = (myMaterial.m_aoTexture != -1) ? texture(allTextures[myMaterial.m_aoTexture],texCoords).x : 1.0;
-	if(myMaterial.m_normalTexture != -1)	// normal mapping
-	{
-		normal = texture(allTextures[myMaterial.m_normalTexture],texCoords).xyz;
-		normal = normalize(normal * 2.0 - 1.0);
-		normal = normalize(inTBN * normal);
-	}
+	
+	// if(finalAlpha < 0.25)	// punch-through alpha, may want a material param for this?
+	// {
+	// 	discard;
+	// }
+	
+	mat.m_roughness = (myMaterial.m_roughnessTexture!=-1) ? texture(allTextures[myMaterial.m_roughnessTexture],inUV).r : myMaterial.m_roughness;
+	mat.m_metallic = (myMaterial.m_metalnessTexture != -1) ? texture(allTextures[myMaterial.m_metalnessTexture],inUV).r : myMaterial.m_metallic;
+	mat.m_ao = (myMaterial.m_aoTexture != -1) ? texture(allTextures[myMaterial.m_aoTexture],inUV).x : 1.0;
 	
 	AllLightsData lightsData = globals.m_lightsBuffer.data[0];
 	
 	// Apply sun direct light
 	vec4 sunDirectionBrightness = lightsData.m_sunDirectionBrightness;
 	vec3 sunRadiance = lightsData.m_sunColourAmbient.xyz * sunDirectionBrightness.w;
-	float sunShadowMul = 1.0;
-	if(paralaxEnabled && myMaterial.m_paralaxShadowsEnabled > 0)
-	{
-		vec3 lightToPixelTangentSpace = normalize(inTBN * sunDirectionBrightness.xyz);	// may need negating
-		float initialHeight = 1.0 - texture(allTextures[myMaterial.m_heightmapTexture],texCoords).r;
-		sunShadowMul = ParallaxSoftShadowMultiplier(myMaterial.m_heightmapTexture, lightToPixelTangentSpace, inUV, initialHeight, myMaterial.m_paralaxAmount);
-	}
-	vec3 directLight = sunShadowMul * PBRDirectLighting(mat, viewDir, -sunDirectionBrightness.xyz, normal, sunRadiance, 1.0);
+	vec3 directLight = PBRDirectLighting(mat, viewDir, -sunDirectionBrightness.xyz, normal, sunRadiance, 1.0);
 	
 	// Apply point lights (direct)
 	uint pointLightCount = lightsData.m_pointlightCount;
@@ -77,17 +66,9 @@ void main() {
 	{
 		Pointlight pl = lightsData.m_allPointlights.lights[p];
 		vec3 lightRadiance = pl.m_colourBrightness.xyz * pl.m_colourBrightness.w;
-		float attenuation = GetPointlightAttenuation(pl, worldPos);
-		vec3 lightToPixel = normalize(pl.m_positionDistance.xyz - worldPos);
-		
-		float shadowMul = 1.0;
-		if(paralaxEnabled && myMaterial.m_paralaxShadowsEnabled > 0)
-		{
-			vec3 lightToPixelTangentSpace = normalize((inTBN * pl.m_positionDistance.xyz) - fragPosTbn);
-			float initialHeight = 1.0 - texture(allTextures[myMaterial.m_heightmapTexture],texCoords).r;
-			shadowMul = ParallaxSoftShadowMultiplier(myMaterial.m_heightmapTexture, lightToPixelTangentSpace, inUV, initialHeight, myMaterial.m_paralaxAmount);
-		}
-		directLight += shadowMul * PBRDirectLighting(mat, viewDir, lightToPixel, normal, lightRadiance, attenuation);
+		float attenuation = GetPointlightAttenuation(pl, inWorldSpacePos);
+		vec3 lightToPixel = normalize(pl.m_positionDistance.xyz - inWorldSpacePos);
+		directLight += PBRDirectLighting(mat, viewDir, lightToPixel, normal, lightRadiance, attenuation);
 	}
 	
 	// Ambient is a hack, tries to combine sky + sun colour somehow

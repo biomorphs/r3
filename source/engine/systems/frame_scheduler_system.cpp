@@ -192,8 +192,8 @@ namespace R3
 					}
 				}
 			}
+			ImGui::EndCombo();
 		}
-		ImGui::EndCombo();
 		ImGui::End();
 		return true;
 	}
