@@ -73,20 +73,20 @@
     "InputParams": {
      "Floats": [
       {
-       "Key": "X Min",
-       "Value": -32.0
-      },
-      {
        "Key": "Z Max",
        "Value": 32.0
       },
       {
-       "Key": "X Max",
-       "Value": 32.0
+       "Key": "X Min",
+       "Value": -32.0
       },
       {
        "Key": "Z Min",
        "Value": -32.0
+      },
+      {
+       "Key": "X Max",
+       "Value": 32.0
       },
       {
        "Key": "Y Min",
@@ -101,7 +101,7 @@
      "Ints": [
       {
        "Key": "Cube Count",
-       "Value": 25000
+       "Value": 1000
       }
      ]
     },
@@ -128,20 +128,20 @@
     "InputParams": {
      "Floats": [
       {
-       "Key": "Z Max",
-       "Value": 32.0
-      },
-      {
        "Key": "X Min",
        "Value": -32.0
       },
       {
-       "Key": "Z Min",
-       "Value": -32.0
+       "Key": "Z Max",
+       "Value": 32.0
       },
       {
        "Key": "X Max",
        "Value": 32.0
+      },
+      {
+       "Key": "Z Min",
+       "Value": -32.0
       },
       {
        "Key": "Max Brightness",
@@ -184,7 +184,7 @@
      "Ints": [
       {
        "Key": "Light Count",
-       "Value": 128
+       "Value": 1000
       }
      ]
     },

@@ -50,7 +50,7 @@ end
 function BouncyLights_GetSpawnVelocity(blackboard)
 	local minVelocity = blackboard:GetFloat("Min Spawn Velocity", -16.0)
 	local maxVelocity = blackboard:GetFloat("Max Spawn Velocity", 16.0)
-	return vec3.new(R3.RandomFloat(minVelocity,maxVelocity), R3.RandomFloat(minVelocity,maxVelocity), R3.RandomFloat(minVelocity,maxVelocity))
+	return { R3.RandomFloat(minVelocity,maxVelocity), R3.RandomFloat(minVelocity,maxVelocity), R3.RandomFloat(minVelocity,maxVelocity) }
 end
 
 function BouncyLights_SpawnLights(world, blackboard)
@@ -88,35 +88,36 @@ function BouncyLights_UpdateMovement(world, blackboard)
 		local lightTransform = world.GetComponent_Transform(BouncyLights[i].Entity)
 		local velocity = BouncyLights[i].Velocity
 		local position = lightTransform:GetPosition()
-		velocity.y = velocity.y + gravity * timeDelta
-		position.x = position.x + velocity.x * timeDelta
-		position.y = position.y + velocity.y * timeDelta
-		position.z = position.z + velocity.z * timeDelta
-		if(position.x < minX) then
-			position.x = minX
-			velocity.x = -velocity.x
+		local posTable = { position.x, position.y, position.z }
+		velocity[2] = velocity[2] + gravity * timeDelta
+		posTable[1] = posTable[1] + velocity[1] * timeDelta
+		posTable[2] = posTable[2] + velocity[2] * timeDelta
+		posTable[3] = posTable[3] + velocity[3] * timeDelta
+		if(posTable[1] < minX) then
+			posTable[1] = minX
+			velocity[1] = -velocity[1]
 		end
-		if(position.x > maxX) then
-			position.x = maxX
-			velocity.x = -velocity.x
+		if(posTable[1] > maxX) then
+			posTable[1] = maxX
+			velocity[1] = -velocity[1]
 		end
-		if(position.y < minY) then
-			position.y = minY
-			velocity.y = -velocity.y
+		if(posTable[2] < minY) then
+			posTable[2] = minY
+			velocity[2] = -velocity[2]
 		end
-		if(position.y > maxY) then
-			position.y = maxY
-			velocity.y = -velocity.y
+		if(posTable[2] > maxY) then
+			posTable[2] = maxY
+			velocity[2] = -velocity[2]
 		end
-		if(position.z < minZ) then
-			position.z = minZ
-			velocity.z = -velocity.z
+		if(posTable[3] < minZ) then
+			posTable[3] = minZ
+			velocity[3] = -velocity[3]
 		end
-		if(position.z > maxZ) then
-			position.z = maxZ
-			velocity.z = -velocity.z
+		if(posTable[3] > maxZ) then
+			posTable[3] = maxZ
+			velocity[3] = -velocity[3]
 		end
-		lightTransform:SetPosition(position)
+		lightTransform:SetPosition(vec3.new(posTable[1],posTable[2],posTable[3]))
 	end
 end
 
