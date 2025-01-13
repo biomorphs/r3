@@ -101,7 +101,7 @@
      "Ints": [
       {
        "Key": "Cube Count",
-       "Value": 1000
+       "Value": 25000
       }
      ]
     },
@@ -184,7 +184,7 @@
      "Ints": [
       {
        "Key": "Light Count",
-       "Value": 1000
+       "Value": 64
       }
      ]
     },

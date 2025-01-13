@@ -34,7 +34,7 @@
    }
   },
   {
-   "ID": 2,
+   "ID": 1,
    "Name": "",
    "Parent": 4294967295,
    "StaticMesh": {
@@ -67,7 +67,7 @@
    }
   },
   {
-   "ID": 3,
+   "ID": 2,
    "Name": "",
    "Parent": 4294967295,
    "StaticMesh": {
@@ -100,7 +100,7 @@
    }
   },
   {
-   "ID": 4,
+   "ID": 3,
    "Name": "",
    "Parent": 4294967295,
    "PointLight": {
@@ -134,7 +134,7 @@
    }
   },
   {
-   "ID": 5,
+   "ID": 4,
    "Name": "",
    "Parent": 4294967295,
    "PointLight": {
@@ -168,7 +168,7 @@
    }
   },
   {
-   "ID": 6,
+   "ID": 5,
    "Name": "",
    "Parent": 4294967295,
    "PointLight": {
@@ -190,6 +190,40 @@
     },
     "Position": {
      "X": -9.707231521606445,
+     "Y": 8.487878799438477,
+     "Z": -4.7334489822387695
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 6,
+   "Name": "",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 16.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 0.5707595944404602,
+     "Z": 0.3951612710952759
+    },
+    "Distance": 8.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -5.929903507232666,
      "Y": 8.487878799438477,
      "Z": -4.7334489822387695
     },
@@ -223,7 +257,7 @@
      "Z": 0.0
     },
     "Position": {
-     "X": -5.929903507232666,
+     "X": 2.194117307662964,
      "Y": 8.487878799438477,
      "Z": -4.7334489822387695
     },
@@ -257,40 +291,6 @@
      "Z": 0.0
     },
     "Position": {
-     "X": 2.194117307662964,
-     "Y": 8.487878799438477,
-     "Z": -4.7334489822387695
-    },
-    "Relative": false,
-    "Scale": {
-     "X": 1.0,
-     "Y": 1.0,
-     "Z": 1.0
-    }
-   }
-  },
-  {
-   "ID": 9,
-   "Name": "",
-   "Parent": 4294967295,
-   "PointLight": {
-    "Brightness": 16.0,
-    "Colour": {
-     "X": 1.0,
-     "Y": 0.5707595944404602,
-     "Z": 0.3951612710952759
-    },
-    "Distance": 8.0,
-    "Enabled": true
-   },
-   "Transform": {
-    "Orientation": {
-     "W": 1.0,
-     "X": 0.0,
-     "Y": 0.0,
-     "Z": 0.0
-    },
-    "Position": {
      "X": 9.96923828125,
      "Y": 8.487878799438477,
      "Z": 4.890572547912598
@@ -304,7 +304,7 @@
    }
   },
   {
-   "ID": 10,
+   "ID": 9,
    "Name": "",
    "Parent": 4294967295,
    "PointLight": {
@@ -338,7 +338,7 @@
    }
   },
   {
-   "ID": 11,
+   "ID": 10,
    "Name": "",
    "Parent": 4294967295,
    "PointLight": {
@@ -372,7 +372,7 @@
    }
   },
   {
-   "ID": 12,
+   "ID": 11,
    "Name": "",
    "Parent": 4294967295,
    "PointLight": {
@@ -406,7 +406,7 @@
    }
   },
   {
-   "ID": 13,
+   "ID": 12,
    "Name": "",
    "Parent": 4294967295,
    "PointLight": {
@@ -440,29 +440,29 @@
    }
   },
   {
-   "ID": 14,
+   "ID": 13,
    "LuaScript": {
     "InputParams": {
      "Floats": [
-      {
-       "Key": "X Min",
-       "Value": -11.0
-      },
       {
        "Key": "Z Max",
        "Value": 6.0
       },
       {
-       "Key": "X Max",
-       "Value": 11.0
+       "Key": "X Min",
+       "Value": -11.0
+      },
+      {
+       "Key": "Max Radius",
+       "Value": 6.0
       },
       {
        "Key": "Z Min",
        "Value": -6.0
       },
       {
-       "Key": "Max Radius",
-       "Value": 6.0
+       "Key": "X Max",
+       "Value": 11.0
       },
       {
        "Key": "Max Brightness",
@@ -473,12 +473,12 @@
        "Value": 1.0
       },
       {
-       "Key": "Y Max",
-       "Value": 12.0
-      },
-      {
        "Key": "Min Brightness",
        "Value": 1.0
+      },
+      {
+       "Key": "Y Max",
+       "Value": 12.0
       },
       {
        "Key": "Min Radius",
@@ -501,7 +501,7 @@
      "Ints": [
       {
        "Key": "Light Count",
-       "Value": 32
+       "Value": 64
       }
      ]
     },

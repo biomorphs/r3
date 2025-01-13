@@ -90,6 +90,7 @@ namespace R3
 				guiUpdate.AddFn("Textures::ShowGui");
 				guiUpdate.AddFn("LightsSystem::ShowGui");
 				guiUpdate.AddFn("LuaSystem::ShowGui");
+				guiUpdate.AddFn("FrameScheduler::ShowGui");
 			}
 			{
 				auto& renderUpdate = updateSequence.AddSequence("RenderUpdate");
