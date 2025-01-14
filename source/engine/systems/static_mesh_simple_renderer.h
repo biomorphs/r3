@@ -68,6 +68,7 @@ namespace R3
 
 		MeshPartDrawBucket m_allOpaques;
 		MeshPartDrawBucket m_allTransparents;
+		bool m_forwardRenderEverything = false;	// override to pass all instances to forward pass
 
 		glm::vec4 m_mainPassColourClearValue = { 0,0,0,1 };
 		FrameStats m_frameStats;

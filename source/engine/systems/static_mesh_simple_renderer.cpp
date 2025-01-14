@@ -100,6 +100,7 @@ namespace R3
 		if (m_showGui)
 		{
 			ImGui::Begin("Static Mesh Renderer");
+			ImGui::Checkbox("Forward render everything", &m_forwardRenderEverything);
 			std::string txt = std::format("{} Model Instances Submitted", m_frameStats.m_totalModelInstances);
 			ImGui::Text(txt.c_str());
 			txt = std::format("    {} Total Part Instances", m_frameStats.m_totalPartInstances);
@@ -537,7 +538,7 @@ namespace R3
 							bucketInstance.m_partInstanceIndex = m_currentInstanceBufferStart + m_currentInstanceBufferOffset;
 
 							const StaticMeshMaterial* meshMaterial = staticMeshes->GetMeshMaterial(materialBaseIndex + relativePartMatIndex);
-							if (meshMaterial->m_albedoOpacity.w >= 1.0f)
+							if (!m_forwardRenderEverything && meshMaterial->m_albedoOpacity.w >= 1.0f)
 							{
 								m_allOpaques.m_partInstances.emplace_back(bucketInstance);
 							}
