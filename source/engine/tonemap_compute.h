@@ -16,11 +16,23 @@ namespace R3
 		void Run(Device& d, VkCommandBuffer cmds, RenderTarget& hdrTarget, glm::vec2 hdrDimensions, RenderTarget& outputTarget, glm::vec2 outputDimensions);
 		bool Initialise(Device& d);
 		void Cleanup(Device& d);
+		void ShowGui();
 
 	private:
 
 		// track if we need to initialise internal state
 		bool m_resourcesInitialised = false;
+
+		enum TonemapType {
+			ReinhardColour,
+			ReinhardLuminance,
+			AGX,
+			AGXGolden,
+			AGXPunchy,
+			Uncharted,
+			ACESApprox
+		};
+		TonemapType m_type = ReinhardColour;
 
 		// descriptor set for tonemap shader
 		std::unique_ptr<DescriptorSetSimpleAllocator> m_descriptorAllocator;
@@ -29,8 +41,14 @@ namespace R3
 		VkDescriptorSet_T* m_descriptorSets[c_maxSets] = { nullptr };
 		uint32_t m_currentSet = 0;
 
-		// pipeline for the pass
+		// pipelines for the pass
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
-		VkPipeline m_pipeline = VK_NULL_HANDLE;
+		VkPipeline m_pipelineReinhardColour = VK_NULL_HANDLE;
+		VkPipeline m_pipelineReinhardLum = VK_NULL_HANDLE;
+		VkPipeline m_pipelineAGX = VK_NULL_HANDLE;
+		VkPipeline m_pipelineAGXGolden = VK_NULL_HANDLE;
+		VkPipeline m_pipelineAGXPunchy = VK_NULL_HANDLE;
+		VkPipeline m_pipelineUncharted = VK_NULL_HANDLE;
+		VkPipeline m_pipelineACESApprox = VK_NULL_HANDLE;
 	};
 }

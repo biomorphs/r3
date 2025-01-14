@@ -262,6 +262,9 @@ namespace R3
 			ImGui::EndCombo();
 		}
 		ImGui::End();
+
+		m_tonemapComputeRenderer->ShowGui();
+
 		return true;
 	}
 }

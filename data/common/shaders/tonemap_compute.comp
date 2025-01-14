@@ -1,10 +1,57 @@
 #version 460
 
+#include "agx_tonemap.h"
+
 layout (local_size_x = 16, local_size_y = 16) in;
 
 // output image to LDR
 layout(rgba16f,set = 0, binding = 0) uniform readonly image2D hdrInput;
 layout(set = 0, binding = 1) uniform writeonly image2D ldrOutput;
+
+// convert colour to luminance
+float GetLuminance(vec3 v)
+{
+    return dot(v, vec3(0.2126f, 0.7152f, 0.0722f));
+}
+
+// apply luminance to colour (inverse of above)
+vec3 ApplyLuminance(vec3 colour, float luminance)
+{
+    float l_in = GetLuminance(colour);
+    return colour * (luminance / l_in);
+}
+
+vec3 UnchartedTonemapPartial(vec3 x)
+{
+    float A = 0.15f;
+    float B = 0.50f;
+    float C = 0.10f;
+    float D = 0.20f;
+    float E = 0.02f;
+    float F = 0.30f;
+    return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F;
+}
+
+vec3 UnchartedFilmic(vec3 v)
+{
+    float exposure_bias = 2.0f;
+    vec3 curr = UnchartedTonemapPartial(v * exposure_bias);
+
+    vec3 W = vec3(11.2f);
+    vec3 white_scale = vec3(1.0f) / UnchartedTonemapPartial(W);
+    return curr * white_scale;
+}
+
+vec3 AcesApprox(vec3 v)
+{
+    v *= 0.6f;
+    float a = 2.51f;
+    float b = 0.03f;
+    float c = 2.43f;
+    float d = 0.59f;
+    float e = 0.14f;
+    return clamp((v*(a*v+b))/(v*(c*v+d)+e), 0.0f, 1.0f);
+}
 
 void main() 
 {
@@ -13,11 +60,27 @@ void main()
 
 	if(texelCoord.x < size.x && texelCoord.y < size.y)
 	{
-		vec4 color = imageLoad(hdrInput, texelCoord);
+		vec4 colour = imageLoad(hdrInput, texelCoord);
 		
-		// tonemap using reinhard operator for now 
-		color.xyz = color.xyz / (color.xyz + vec3(1.0));
+		#ifdef USE_AGX
+			colour.xyz = agx(colour.xyz);
+			#ifdef AGX_LOOK
+				colour.xyz = agxLook(colour.xyz); // Optional transform
+			#endif
+			colour.xyz = agxEotf(colour.xyz);
+		#elif defined(USE_REINHARD_COLOUR)
+			// bog standard reinhard applied to colour
+			colour.xyz = colour.xyz / (colour.xyz + vec3(1.0));
+		#elif defined(USE_REINHARD_LUMINANCE)
+			float originalLuminance = GetLuminance(colour.xyz);
+			float newLuminance =  originalLuminance / (originalLuminance + 1.0);
+			colour.xyz = ApplyLuminance(colour.xyz, newLuminance);
+		#elif defined(USE_UNCHARTED_FILMIC)
+			colour.xyz = UnchartedFilmic(colour.xyz);
+		#elif defined(USE_ACES_APPROX)
+			colour.xyz = AcesApprox(colour.xyz);
+		#endif
 
-		imageStore(ldrOutput, texelCoord, color);
+		imageStore(ldrOutput, texelCoord, colour);
 	}
 }

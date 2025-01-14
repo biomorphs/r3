@@ -229,13 +229,13 @@ namespace R3
 		VkPipelineDepthStencilStateCreateInfo depthStencilState = { 0 };	// Enable depth read/write
 		depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 		depthStencilState.depthTestEnable = VK_TRUE;
-		depthStencilState.depthWriteEnable = VK_TRUE;
+		depthStencilState.depthWriteEnable = VK_FALSE;						// don't write to depth in forward pass
 		depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
 		depthStencilState.depthBoundsTestEnable = VK_FALSE;
 		depthStencilState.stencilTestEnable = VK_FALSE;
 		pb.m_depthStencilState = depthStencilState;
-		std::vector<VkPipelineColorBlendAttachmentState> allAttachments = {	// No colour attachment blending
-			VulkanHelpers::CreatePipelineColourBlendAttachment_NoBlending()
+		std::vector<VkPipelineColorBlendAttachmentState> allAttachments = {	
+			VulkanHelpers::CreatePipelineColourBlendAttachment_AlphaBlending()	//alpha blending
 		};
 		pb.m_colourBlendState = VulkanHelpers::CreatePipelineColourBlendState(allAttachments);
 		m_forwardPipeline = pb.Build(d.GetVkDevice(), m_pipelineLayout, 1, &mainColourFormat, mainDepthFormat);
