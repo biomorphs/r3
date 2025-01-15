@@ -41,11 +41,6 @@ void main() {
 		finalAlpha = finalAlpha * albedoTex.a;
 	}
 	
-	if(finalAlpha < 0.25)	// punch-through alpha, may want a material param for this?
-	{
-		discard;
-	}
-	
 	float roughness = (myMaterial.m_roughnessTexture!=-1) ? texture(allTextures[myMaterial.m_roughnessTexture],inUV).r : myMaterial.m_roughness;
 	float metallic = (myMaterial.m_metalnessTexture != -1) ? texture(allTextures[myMaterial.m_metalnessTexture],inUV).r : myMaterial.m_metallic;
 	float ao = (myMaterial.m_aoTexture != -1) ? texture(allTextures[myMaterial.m_aoTexture],inUV).x : 1.0;
