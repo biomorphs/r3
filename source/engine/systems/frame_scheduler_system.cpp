@@ -7,6 +7,10 @@
 #include "texture_system.h"
 #include "engine/tonemap_compute.h"
 #include "engine/deferred_lighting_compute.h"
+#include "engine/components/environment_settings.h"
+#include "engine/imgui_menubar_helper.h"
+#include "entities/systems/entity_system.h"
+#include "entities/queries.h"
 #include "render/render_graph.h"
 #include "render/render_system.h"
 #include "core/profiler.h"
@@ -25,6 +29,9 @@ namespace R3
 
 	void FrameScheduler::RegisterTickFns()
 	{
+		Systems::GetInstance().RegisterTick("FrameScheduler::UpdateTonemapper", [this]() {
+			return UpdateTonemapper();
+		});
 		Systems::GetInstance().RegisterTick("FrameScheduler::BuildRenderGraph", [this]() {
 			return BuildRenderGraph();
 		});
@@ -240,31 +247,54 @@ namespace R3
 
 	bool FrameScheduler::ShowGui()
 	{
-		ImGui::Begin("Render target visualiser");
-		ImGui::Checkbox("Enable Visualisation", &m_colourTargetDebuggerEnabled);
-		if (ImGui::BeginCombo("Colour Target", m_colourDebugTargetName.c_str()))
+		auto& debugMenu = MenuBar::MainMenu().GetSubmenu("Debug");
+		debugMenu.AddItem("Render target visualiser", [&]() {
+			m_colourTargetDebuggerEnabled = true;
+		});
+
+		if (m_colourTargetDebuggerEnabled)
 		{
-			for (int target = 0; target < m_allCurrentTargets.size(); ++target)
+			ImGui::Begin("Render target visualiser", &m_colourTargetDebuggerEnabled);
+			if (ImGui::BeginCombo("Colour Target", m_colourDebugTargetName.c_str()))
 			{
-				if (m_allCurrentTargets[target].m_aspectFlags == VK_IMAGE_ASPECT_COLOR_BIT)
+				for (int target = 0; target < m_allCurrentTargets.size(); ++target)
 				{
-					bool selected = (m_colourDebugTargetName == m_allCurrentTargets[target].m_name);
-					if (ImGui::Selectable(m_allCurrentTargets[target].m_name.c_str(), selected))
+					if (m_allCurrentTargets[target].m_aspectFlags == VK_IMAGE_ASPECT_COLOR_BIT)
 					{
-						m_colourDebugTargetName = m_allCurrentTargets[target].m_name;
-					}
-					if (selected)
-					{
-						ImGui::SetItemDefaultFocus();	// ensure keyboard/controller navigation works
+						bool selected = (m_colourDebugTargetName == m_allCurrentTargets[target].m_name);
+						if (ImGui::Selectable(m_allCurrentTargets[target].m_name.c_str(), selected))
+						{
+							m_colourDebugTargetName = m_allCurrentTargets[target].m_name;
+						}
+						if (selected)
+						{
+							ImGui::SetItemDefaultFocus();	// ensure keyboard/controller navigation works
+						}
 					}
 				}
+				ImGui::EndCombo();
 			}
-			ImGui::EndCombo();
+			ImGui::End();
 		}
-		ImGui::End();
+		
+		return true;
+	}
 
-		m_tonemapComputeRenderer->ShowGui();
-
+	bool FrameScheduler::UpdateTonemapper()
+	{
+		R3_PROF_EVENT();
+		auto entities = Systems::GetSystem<Entities::EntitySystem>();
+		if (auto activeWorld = entities->GetActiveWorld())
+		{
+			auto collectTonemapSettings = [&](const Entities::EntityHandle& e, EnvironmentSettingsComponent& cmp) {
+				if (cmp.m_tonemapType >= 0 && cmp.m_tonemapType < (int)TonemapCompute::TonemapType::MaxTonemapTypes)
+				{
+					m_tonemapComputeRenderer->SetTonemapType((TonemapCompute::TonemapType)cmp.m_tonemapType);
+				}
+				return true;
+			};
+			Entities::Queries::ForEach<EnvironmentSettingsComponent>(activeWorld, collectTonemapSettings);
+		}
 		return true;
 	}
 }

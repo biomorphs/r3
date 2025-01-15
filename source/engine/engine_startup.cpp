@@ -98,6 +98,7 @@ namespace R3
 					auto& renderASyncUpdate = renderUpdate.AddAsync("UpdateAsync");
 					renderASyncUpdate.AddFn("StaticMeshSimpleRenderer::CollectInstances");
 					renderASyncUpdate.AddFn("LightsSystem::CollectAllLights");
+					renderASyncUpdate.AddFn("FrameScheduler::UpdateTonemapper");
 				}
 				renderUpdate.AddFn("FrameScheduler::BuildRenderGraph");
 			}

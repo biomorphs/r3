@@ -1,6 +1,7 @@
 #pragma once
 
 #include "entities/component_helpers.h"
+#include "engine/tonemap_compute.h"
 #include "core/glm_headers.h"
 
 namespace R3
@@ -20,5 +21,6 @@ namespace R3
 		float m_sunBrightness = 1.0f;
 		float m_skyAmbientFactor = 0.005f;		// ambient from the sky 
 		float m_sunAmbientFactor = 0.008f;		// ambient from the sun
+		int m_tonemapType = 0;					// MUST map to a value of TonemapCompute::TonemapType
 	};
 }

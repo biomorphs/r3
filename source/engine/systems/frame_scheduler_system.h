@@ -22,6 +22,7 @@ namespace R3
 	private:
 		bool ShowGui();
 		bool BuildRenderGraph();
+		bool UpdateTonemapper();
 
 		std::unique_ptr<DrawPass> MakeForwardPass(const RenderTargetInfo& mainColour, const RenderTargetInfo& mainDepth);
 		std::unique_ptr<DrawPass> MakeGBufferPass(const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainDepth);

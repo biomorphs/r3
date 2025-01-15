@@ -8,15 +8,15 @@
 
 namespace R3
 {
-	static const std::string_view c_toneMapTypeNames[] = {
-			"Reinhard (Colour)",
-			"Reinhard (Luminance)",
-			"AGX",
-			"AGX Golden",
-			"AGX Punchy",
-			"Uncharted 2 Filmic",
-			"ACES Approx",
-			"ACES Fitted"
+	const std::string_view TonemapCompute::c_toneMapTypeNames[] = {
+		"Reinhard (Colour)",
+		"Reinhard (Luminance)",
+		"AGX",
+		"AGX Golden",
+		"AGX Punchy",
+		"Uncharted 2 Filmic",
+		"ACES Approx",
+		"ACES Fitted"
 	};
 
 	static const std::string_view c_toneMapShaders[] = {
@@ -30,35 +30,11 @@ namespace R3
 		"shaders_spirv/common/tonemap_aces_fitted_compute.comp.spv"
 	};
 
-	void TonemapCompute::ShowGui()
-	{
-		static_assert(std::size(c_toneMapTypeNames) == MaxTonemapTypes);
-		assert(m_type < std::size(c_toneMapTypeNames));
-		ImGui::Begin("Tonemapper");
-		if (ImGui::BeginCombo("Type", c_toneMapTypeNames[m_type].data()))
-		{
-			for (int type = 0; type < std::size(c_toneMapTypeNames); ++type)
-			{
-				bool selected = (type == m_type);
-				if (ImGui::Selectable(c_toneMapTypeNames[type].data(), selected))
-				{
-					m_type = (TonemapType)type;
-				}
-				if (selected)
-				{
-					ImGui::SetItemDefaultFocus();	// ensure keyboard/controller navigation works
-				}
-			}
-			ImGui::EndCombo();
-		}
-		ImGui::End();
-	}
-
 	bool TonemapCompute::Initialise(Device& d)
 	{
 		R3_PROF_EVENT();
 
-		static_assert(std::size(c_toneMapShaders) == MaxTonemapTypes);
+		static_assert(std::size(c_toneMapShaders) == (uint32_t)TonemapType::MaxTonemapTypes);
 
 		m_descriptorAllocator = std::make_unique<DescriptorSetSimpleAllocator>();
 		std::vector<VkDescriptorPoolSize> poolSizes = {							
@@ -145,8 +121,7 @@ namespace R3
 		writer.WriteStorageImage(1, outputTarget.m_view, outputTarget.m_lastLayout);
 		writer.FlushWrites();
 
-		assert(m_type < MaxTonemapTypes);
-		vkCmdBindPipeline(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[m_type]);
+		vkCmdBindPipeline(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[(uint32_t)m_type]);
 		vkCmdBindDescriptorSets(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelineLayout, 0, 1, &m_descriptorSets[m_currentSet], 0, nullptr);
 		auto dimensions = glm::min(hdrDimensions, outputDimensions);
 

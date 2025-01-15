@@ -24,6 +24,7 @@ namespace R3
 		s("Sun Brightness", m_sunBrightness);
 		s("Sky Ambient", m_skyAmbientFactor);
 		s("Sun Ambient", m_sunAmbientFactor);
+		s("Tonemap Type", m_tonemapType);
 	}
 
 	void EnvironmentSettingsComponent::Inspect(const Entities::EntityHandle& e, Entities::World* w, ValueInspector& i)
@@ -34,5 +35,6 @@ namespace R3
 		i.Inspect("Sun Direction", m_sunDirection, InspectProperty(&EnvironmentSettingsComponent::m_sunDirection, e, w), glm::vec3(-1.0f), glm::vec3(1.0f));
 		i.Inspect("Sky Ambient Factor", m_skyAmbientFactor, InspectProperty(&EnvironmentSettingsComponent::m_skyAmbientFactor, e, w), 0.0025f, 0.0f, 1.0f);
 		i.Inspect("Sun Ambient Factor", m_sunAmbientFactor, InspectProperty(&EnvironmentSettingsComponent::m_sunAmbientFactor, e, w), 0.0025f, 0.0f, 1.0f);
+		i.InspectEnum("Tonemapper", (int)m_tonemapType, InspectProperty(&EnvironmentSettingsComponent::m_tonemapType, e, w), TonemapCompute::c_toneMapTypeNames, (int)TonemapCompute::TonemapType::MaxTonemapTypes);
 	}
 }

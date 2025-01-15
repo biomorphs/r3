@@ -14,6 +14,29 @@ namespace R3
 {
 	constexpr float c_floatEpsilon = 0.00001f;		// smallest change to a float value we register as a modification
 
+	bool UndoRedoInspector::InspectEnum(std::string_view label, int currentValue, std::function<void(int)> setFn, const std::string_view options[], int optionCount)
+	{
+		bool result = false;
+		if (ImGui::BeginCombo(label.data(), options[currentValue].data()))
+		{
+			for (int type = 0; type < optionCount; ++type)
+			{
+				bool selected = (type == currentValue);
+				if (ImGui::Selectable(options[type].data(), selected))
+				{
+					m_cmds.Push(std::make_unique<SetValueCommand<int>>(label, currentValue, type, setFn));
+					result = true;
+				}
+				if (selected)
+				{
+					ImGui::SetItemDefaultFocus();	// ensure keyboard/controller navigation works
+				}
+			}
+			ImGui::EndCombo();
+		}
+		return result;
+	}
+
 	bool UndoRedoInspector::Inspect(std::string label, Tag currentValue, std::function<void(Tag)> setFn)
 	{
 		char textBuffer[1024 * 16] = { '\0' };
