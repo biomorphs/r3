@@ -132,5 +132,11 @@ namespace R3
         return newAsset;
     }
 
-    
+    const AssetFile::Blob* AssetFile::GetBlob(std::string_view name)
+    {
+        auto found = std::find_if(m_blobs.begin(), m_blobs.end(), [name](const AssetFile::Blob& b) {
+            return b.m_name == name;
+        });
+        return found == m_blobs.end() ? nullptr : &(*found);
+    }
 }

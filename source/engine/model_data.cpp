@@ -1,4 +1,5 @@
 #include "model_data.h"
+#include "asset_file.h"
 #include "core/profiler.h"
 #include "core/mutex.h"
 #include "core/file_io.h"
@@ -12,6 +13,107 @@
 
 namespace R3
 {
+	const uint32_t c_bakedModelVersion = 1;		// change this to force rebake
+	const uint32_t c_bakedMaterialTexturePathLength = 128;	// avoid std::string in materials
+	const std::string c_bakedModelExtension = ".bmdl";
+
+	struct BakeSettings 
+	{
+		bool m_flattenMeshes = false;			// pass aiProcess_PreTransformVertices to assimp, squashes scene graph down by transforming all verts in nodes by node transform
+	};
+
+	struct BakedMaterial						// avoid std::string in binary data, only store 1 path per texture type
+	{
+		char m_diffuseTexture[c_bakedMaterialTexturePathLength] = { '\0' };
+		char m_normalTexture[c_bakedMaterialTexturePathLength] = { '\0' };
+		char m_metalTexture[c_bakedMaterialTexturePathLength] = { '\0' };
+		char m_roughnessTexture[c_bakedMaterialTexturePathLength] = { '\0' };
+		char m_aoTexture[c_bakedMaterialTexturePathLength] = { '\0' };
+		char m_heightTexture[c_bakedMaterialTexturePathLength] = { '\0' };
+		glm::vec3 m_albedo;
+		float m_opacity;
+		float m_metallic;
+		float m_roughness;
+	};
+
+	void ParseBakedMaterial(const BakedMaterial& baked, MeshMaterial& result)
+	{
+		if (strnlen(baked.m_diffuseTexture, c_bakedMaterialTexturePathLength) != 0)
+		{
+			result.m_diffuseMaps.push_back(baked.m_diffuseTexture);
+		}
+		if (strnlen(baked.m_normalTexture, c_bakedMaterialTexturePathLength) != 0)
+		{
+			result.m_normalMaps.push_back(baked.m_normalTexture);
+		}
+		if (strnlen(baked.m_metalTexture, c_bakedMaterialTexturePathLength) != 0)
+		{
+			result.m_metalnessMaps.push_back(baked.m_metalTexture);
+		}
+		if (strnlen(baked.m_roughnessTexture, c_bakedMaterialTexturePathLength) != 0)
+		{
+			result.m_roughnessMaps.push_back(baked.m_roughnessTexture);
+		}
+		if (strnlen(baked.m_aoTexture, c_bakedMaterialTexturePathLength) != 0)
+		{
+			result.m_aoMaps.push_back(baked.m_aoTexture);
+		}
+		if (strnlen(baked.m_heightTexture, c_bakedMaterialTexturePathLength) != 0)
+		{
+			result.m_heightMaps.push_back(baked.m_heightTexture);
+		}
+		result.m_albedo = baked.m_albedo;
+		result.m_metallic = baked.m_metallic;
+		result.m_opacity = baked.m_opacity;
+		result.m_roughness = baked.m_roughness;
+	}
+
+	bool MakeBakedMaterial(const MeshMaterial& src, BakedMaterial& target)
+	{
+		auto bakePath = [](const std::vector<std::string>& srcPaths, char* targetPath)
+		{
+			if (srcPaths.size() > 0)
+			{
+				if (srcPaths[0].size() > c_bakedMaterialTexturePathLength)
+				{
+					LogError("Texture path {} in material too long for baking!", srcPaths[0]);
+					return false;
+				}
+				strncpy_s(targetPath, c_bakedMaterialTexturePathLength, srcPaths[0].data(), srcPaths[0].size());
+			}
+			return true;
+		};
+		if (!bakePath(src.m_diffuseMaps, target.m_diffuseTexture))
+		{
+			return false;
+		}
+		if (!bakePath(src.m_normalMaps, target.m_normalTexture))
+		{
+			return false;
+		}
+		if (!bakePath(src.m_metalnessMaps, target.m_metalTexture))
+		{
+			return false;
+		}
+		if (!bakePath(src.m_roughnessMaps, target.m_roughnessTexture))
+		{
+			return false;
+		}
+		if (!bakePath(src.m_aoMaps, target.m_aoTexture))
+		{
+			return false;
+		}
+		if (!bakePath(src.m_heightMaps, target.m_heightTexture))
+		{
+			return false;
+		}
+		target.m_albedo = src.m_albedo;
+		target.m_metallic = src.m_metallic;
+		target.m_opacity = src.m_opacity;
+		target.m_roughness = src.m_roughness;
+		return true;
+	}
+
 	// no idea if this is correct
 	glm::mat4 ToGlmMatrix(const aiMatrix4x4& m)
 	{
@@ -240,11 +342,231 @@ namespace R3
 		return true;
 	}
 
-	bool LoadModelData(std::string_view filePath, ModelData& result, bool flattenMeshes, ProgressCb progCb)
+	std::string GetBakedModelPath(std::string_view pathName)
+	{
+		R3_PROF_EVENT();
+		// get the source path relative to data base directory
+		std::string relPath = FileIO::SanitisePath(pathName);
+		if (relPath.size() == 0)
+		{
+			LogWarn("Model file {} is outside data root", pathName);
+			return {};
+		}
+
+		// replace any directory separators with '_'
+		std::replace(relPath.begin(), relPath.end(), '/', '_');
+		std::replace(relPath.begin(), relPath.end(), '\\', '_');
+
+		// add our own baked version + extension (so we dont need to check the version in the file)
+		relPath += c_bakedModelExtension;
+
+		// use the temp directory for baked data
+		std::string bakedPath = std::string(FileIO::GetBasePath()) + "\\baked\\" + relPath;
+		return std::filesystem::absolute(bakedPath).string();
+	}
+
+	bool LoadBakedModel(std::string_view filePath, ModelData& result, ProgressCb progCb)
+	{
+		R3_PROF_EVENT();
+
+		auto loadedFile = LoadAssetFile(filePath);
+		if (!loadedFile.has_value())
+		{
+			LogError("Failed to load baked model file {}", filePath);
+			return false;
+		}
+		uint32_t fileVersion = loadedFile->m_header["Version"];
+		if (fileVersion != c_bakedModelVersion)
+		{
+			LogError("Baked model is an older version {}. Current version = {}", fileVersion, c_bakedModelVersion);
+			return false;
+		}
+		result.m_boundsMin = {
+			loadedFile->m_header["BoundsMin"]["X"],
+			loadedFile->m_header["BoundsMin"]["Y"],
+			loadedFile->m_header["BoundsMin"]["Z"]
+		};
+		result.m_boundsMax = {
+			loadedFile->m_header["BoundsMax"]["X"],
+			loadedFile->m_header["BoundsMax"]["Y"],
+			loadedFile->m_header["BoundsMax"]["Z"]
+		};
+		progCb(5);
+		uint32_t vertexCount = loadedFile->m_header["VertexCount"];
+		auto vertexBlob = loadedFile->GetBlob("Vertices");
+		if ((vertexCount * sizeof(MeshVertex)) == vertexBlob->m_data.size())
+		{
+			result.m_vertices.resize(vertexCount);
+			memcpy(result.m_vertices.data(), vertexBlob->m_data.data(), vertexCount * sizeof(MeshVertex));
+		}
+		else
+		{
+			LogError("Unexpected vertex data size");
+			return false;
+		}
+		progCb(40);
+
+		uint32_t indexCount = loadedFile->m_header["IndexCount"];
+		auto indexBlob = loadedFile->GetBlob("Indices");
+		if ((indexCount * sizeof(uint32_t)) == indexBlob->m_data.size())
+		{
+			result.m_indices.resize(indexCount);
+			memcpy(result.m_indices.data(), indexBlob->m_data.data(), indexCount * sizeof(uint32_t));
+		}
+		else
+		{
+			LogError("Unexpected index data size");
+			return false;
+		}
+		progCb(70);
+
+		uint32_t meshCount = loadedFile->m_header["MeshCount"];
+		auto meshBlob = loadedFile->GetBlob("Meshes");
+		if ((meshCount * sizeof(Mesh)) == meshBlob->m_data.size())
+		{
+			result.m_meshes.resize(meshCount);
+			memcpy(result.m_meshes.data(), meshBlob->m_data.data(), meshCount * sizeof(Mesh));
+		}
+		else
+		{
+			LogError("Unexpected mesh data size");
+			return false;
+		}
+		progCb(90);
+
+		uint32_t materialCount = loadedFile->m_header["MaterialCount"];
+		auto materialBlob = loadedFile->GetBlob("Materials");
+		if ((materialCount * sizeof(BakedMaterial)) == materialBlob->m_data.size())
+		{
+			std::vector<BakedMaterial> bakedMaterials;
+			bakedMaterials.resize(materialCount);
+			memcpy(bakedMaterials.data(), materialBlob->m_data.data(), materialCount * sizeof(BakedMaterial));
+			result.m_materials.resize(materialCount);
+			for (uint32_t i = 0; i < materialCount; ++i)
+			{
+				ParseBakedMaterial(bakedMaterials[i], result.m_materials[i]);
+			}
+		}
+		else
+		{
+			LogError("Unexpected material data size");
+			return false;
+		}
+		progCb(100);
+
+		return true;
+	}
+
+	bool SaveBakedModel(std::string_view srcPath, std::string_view bakedPath, const ModelData& modelData)
+	{
+		R3_PROF_EVENT();
+
+		AssetFile bakedFile;
+		bakedFile.m_header["Version"] = c_bakedModelVersion;
+		bakedFile.m_header["SourceFile"] = srcPath;
+		bakedFile.m_header["VertexCount"] = modelData.m_vertices.size();
+		bakedFile.m_header["IndexCount"] = modelData.m_indices.size();
+		bakedFile.m_header["MaterialCount"] = modelData.m_materials.size();
+		bakedFile.m_header["MeshCount"] = modelData.m_meshes.size();
+		auto& boundsMinJson = bakedFile.m_header["BoundsMin"];
+		boundsMinJson["X"] = modelData.m_boundsMin.x;
+		boundsMinJson["Y"] = modelData.m_boundsMin.y;
+		boundsMinJson["Z"] = modelData.m_boundsMin.z;
+		auto& boundsMaxJson = bakedFile.m_header["BoundsMax"];
+		boundsMaxJson["X"] = modelData.m_boundsMax.x;
+		boundsMaxJson["Y"] = modelData.m_boundsMax.y;
+		boundsMaxJson["Z"] = modelData.m_boundsMax.z;
+
+		AssetFile::Blob& vertexBlob = bakedFile.m_blobs.emplace_back();
+		vertexBlob.m_name = "Vertices";
+		vertexBlob.m_data.resize(sizeof(MeshVertex) * modelData.m_vertices.size());
+		memcpy(vertexBlob.m_data.data(), modelData.m_vertices.data(), sizeof(MeshVertex) * modelData.m_vertices.size());
+
+		AssetFile::Blob& indexBlob = bakedFile.m_blobs.emplace_back();
+		indexBlob.m_name = "Indices";
+		indexBlob.m_data.resize(sizeof(uint32_t) * modelData.m_indices.size());
+		memcpy(indexBlob.m_data.data(), modelData.m_indices.data(), sizeof(uint32_t) * modelData.m_indices.size());
+
+		AssetFile::Blob& meshesBlob = bakedFile.m_blobs.emplace_back();
+		meshesBlob.m_name = "Meshes";
+		meshesBlob.m_data.resize(sizeof(Mesh) * modelData.m_meshes.size());
+		memcpy(meshesBlob.m_data.data(), modelData.m_meshes.data(), sizeof(Mesh) * modelData.m_meshes.size());
+
+		std::vector<BakedMaterial> bakedMaterials;
+		bakedMaterials.resize(modelData.m_materials.size());
+		for (int m = 0; m < modelData.m_materials.size(); ++m)
+		{
+			if (!MakeBakedMaterial(modelData.m_materials[m], bakedMaterials[m]))
+			{
+				return false;
+			}
+		}
+		AssetFile::Blob& materialsBlob = bakedFile.m_blobs.emplace_back();
+		materialsBlob.m_name = "Materials";
+		materialsBlob.m_data.resize(sizeof(BakedMaterial) * bakedMaterials.size());
+		memcpy(materialsBlob.m_data.data(), bakedMaterials.data(), sizeof(BakedMaterial) * bakedMaterials.size());
+
+		if (!SaveAssetFile(bakedFile, bakedPath))
+		{
+			LogError("Failed to save baked asset {}", bakedPath);
+			return false;
+		}
+
+		return true;
+	}
+
+	bool BakeModel(std::string_view filePath, ProgressCb progCb)
+	{
+		R3_PROF_EVENT();
+		std::string bakedPath = GetBakedModelPath(filePath);
+		if (bakedPath.empty())
+		{
+			LogInfo("Invalid path for model baking - {}", filePath);
+			return false;
+		}
+		if (std::filesystem::exists(bakedPath))
+		{
+			return true;	// already baked!
+		}
+
+		BakeSettings modelBakeSettings;	// load from a file eventually
+
+		auto loadProgressCb = [&](int p)	// first 50% of progress = loading the file
+		{
+			progCb(p / 2);
+		};
+
+		ModelData sourceModel;
+		if (!LoadModelDataAssimp(filePath, sourceModel, modelBakeSettings.m_flattenMeshes, loadProgressCb))
+		{
+			LogError("Failed to load source model {}", filePath);
+			return false;
+		}
+
+		if (!SaveBakedModel(filePath, bakedPath, sourceModel))
+		{
+			LogError("Failed to save baked model {} to file {}", filePath, bakedPath);
+			return false;
+		}
+		progCb(100);
+
+		return true;
+	}
+
+	bool LoadModelData(std::string_view filePath, ModelData& result, ProgressCb progCb)
 	{
 		char debugName[1024] = { '\0' };
 		sprintf_s(debugName, "LoadModelData %s", filePath.data());
 		R3_PROF_EVENT_DYN(debugName);
-		return LoadModelDataAssimp(filePath, result, flattenMeshes, progCb);
+
+		auto fileExtension = std::filesystem::path(filePath).extension().string();
+		if (fileExtension == c_bakedModelExtension)
+		{
+			return LoadBakedModel(filePath, result, progCb);
+		}
+		else
+		{
+			return LoadModelDataAssimp(filePath, result, false, progCb);
+		}
 	}
 }

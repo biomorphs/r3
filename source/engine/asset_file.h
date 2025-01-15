@@ -17,6 +17,8 @@ namespace R3
 		};
 		nlohmann::json m_header;
 		std::vector<Blob> m_blobs;
+
+		const Blob* GetBlob(std::string_view name);
 	};
 
 	std::optional<AssetFile> LoadAssetFile(std::string_view path);

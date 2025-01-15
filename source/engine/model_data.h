@@ -64,7 +64,11 @@ namespace R3
 		glm::vec3 m_boundsMax = glm::vec3{ 1.0f };
 	};
 
-	// flattenMeshes - flattens mesh heirarchy into an array of meshes
-	using ProgressCb = std::function<void(int)>;
-	bool LoadModelData(std::string_view filePath, ModelData& result, bool flattenMeshes = true, ProgressCb progCb = {});
+	std::string GetBakedModelPath(std::string_view pathName);
+
+	using ProgressCb = std::function<void(int)>;	// load/bake progress callback (0-100%)
+
+	bool BakeModel(std::string_view filePath, ProgressCb progCb);
+	
+	bool LoadModelData(std::string_view filePath, ModelData& result, ProgressCb progCb = {});
 }

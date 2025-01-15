@@ -40,6 +40,7 @@ namespace R3
 
 	private:
 		bool ShowGui();
+		bool LoadModelInternal(std::string_view path, ModelData& result, ProgressCb progCb);
 		ModelDataHandle FindModel(std::string_view name);	// does not load any new ones
 		bool FindOrCreate(std::string_view name, ModelDataHandle& h);	// returns true if an existing handle was found
 		struct StoredModel
@@ -56,6 +57,7 @@ namespace R3
 			uint8_t m_loadProgress = 0;
 		};
 		bool m_showGui = false;
+		bool m_loadBakedModels = true;
 		Mutex m_allModelsMutex;
 		std::vector<StoredModel> m_allModels;
 		std::atomic<int> m_pendingModels = 0;

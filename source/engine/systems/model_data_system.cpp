@@ -107,6 +107,28 @@ namespace R3
 		return m_modelLoadedCbs.RemoveCallback(token);
 	}
 
+	bool ModelDataSystem::LoadModelInternal(std::string_view path, ModelData& result, ProgressCb progCb)
+	{
+		R3_PROF_EVENT();
+
+		if (m_loadBakedModels)
+		{
+			auto bakeProgress = [&](int p)
+			{
+				progCb(p / 2);	// treat 50% load time as bake, 50% as actual load
+			};
+			bool didBake = BakeModel(path, bakeProgress);
+			auto bakedPath = GetBakedModelPath(path);
+			LoadModelData(bakedPath, result, didBake ? bakeProgress : progCb);
+		}
+		if (result.m_meshes.size() == 0)	// failed to load baked model, load the src model instead
+		{
+			LoadModelData(path, result, progCb);
+		}
+		
+		return true;
+	}
+
 	ModelDataHandle ModelDataSystem::LoadModel(const char* path)
 	{
 		R3_PROF_EVENT();
@@ -127,7 +149,7 @@ namespace R3
 			assert(m_allModels[modelHandle.m_index].m_loadState == StoredModel::LoadedState::Loading);
 			assert(m_allModels[modelHandle.m_index].m_modelData == nullptr);
 			auto newData = std::make_unique<ModelData>();
-			bool modelLoaded = LoadModelData(pathCopy, *newData, false, updateProgress);
+			bool modelLoaded = LoadModelInternal(pathCopy, *newData, updateProgress);
 			{
 				ScopedLock lock(m_allModelsMutex);
 				if (modelLoaded)
