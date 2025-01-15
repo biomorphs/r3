@@ -21,6 +21,7 @@ glslc tonemap_compute.comp -DUSE_AGX -DAGX_LOOK=1 -g -o ..\..\shaders_spirv\comm
 glslc tonemap_compute.comp -DUSE_AGX -DAGX_LOOK=2 -g -o ..\..\shaders_spirv\common\tonemap_agx_punchy_look_compute.comp.spv
 glslc tonemap_compute.comp -DUSE_UNCHARTED_FILMIC -g -o ..\..\shaders_spirv\common\tonemap_uncharted_compute.comp.spv
 glslc tonemap_compute.comp -DUSE_ACES_APPROX -g -o ..\..\shaders_spirv\common\tonemap_aces_approx_compute.comp.spv
+glslc tonemap_compute.comp -DUSE_ACES_FITTED -g -o ..\..\shaders_spirv\common\tonemap_aces_fitted_compute.comp.spv
 glslc deferred_lighting_compute.comp -g -o ..\..\shaders_spirv\common\deferred_lighting_compute.comp.spv
 pause
 

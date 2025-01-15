@@ -30,7 +30,9 @@ namespace R3
 			AGXGolden,
 			AGXPunchy,
 			Uncharted,
-			ACESApprox
+			ACESApprox,
+			ACESFitted,
+			MaxTonemapTypes
 		};
 		TonemapType m_type = ReinhardColour;
 
@@ -43,12 +45,6 @@ namespace R3
 
 		// pipelines for the pass
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
-		VkPipeline m_pipelineReinhardColour = VK_NULL_HANDLE;
-		VkPipeline m_pipelineReinhardLum = VK_NULL_HANDLE;
-		VkPipeline m_pipelineAGX = VK_NULL_HANDLE;
-		VkPipeline m_pipelineAGXGolden = VK_NULL_HANDLE;
-		VkPipeline m_pipelineAGXPunchy = VK_NULL_HANDLE;
-		VkPipeline m_pipelineUncharted = VK_NULL_HANDLE;
-		VkPipeline m_pipelineACESApprox = VK_NULL_HANDLE;
+		VkPipeline m_pipelines[MaxTonemapTypes] = { VK_NULL_HANDLE };
 	};
 }
