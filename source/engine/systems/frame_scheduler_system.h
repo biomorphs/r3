@@ -35,7 +35,7 @@ namespace R3
 		std::vector<RenderTargetInfo> m_allCurrentTargets;	// keep the list of all render targets around for debugging
 
 		// Colour target visualiser (blits a target to swap chain)
-		bool m_colourTargetDebuggerEnabled = true;
+		bool m_colourTargetDebuggerEnabled = false;
 		std::string m_colourDebugTargetName;
 	};
 }

@@ -190,6 +190,8 @@ namespace R3
 		sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 		sampler.maxLod = VK_LOD_CLAMP_NONE;
 		sampler.minLod = 0;
+		sampler.anisotropyEnable = VK_TRUE;
+		sampler.maxAnisotropy = 16;
 		if (!VulkanHelpers::CheckResult(vkCreateSampler(render->GetDevice()->GetVkDevice(), &sampler, nullptr, &m_defaultSampler)))
 		{
 			LogError("Failed to create sampler");
