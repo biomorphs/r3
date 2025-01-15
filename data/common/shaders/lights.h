@@ -25,8 +25,8 @@ layout(buffer_reference, std430) readonly buffer AllLightsBuffer {
 // inv. square falloff with radius to force taper to 0
 float GetPointlightAttenuation(Pointlight pl, vec3 worldPos)
 {
-	float distance = length(pl.m_positionDistance.xyz - worldPos);			
-	float sqDistance = max(0.01, distance * distance);	// avoid divide by zero, also can set a size for the light? (min radius at full brightness)
+	vec3 worldToLight = pl.m_positionDistance.xyz - worldPos;
+	float sqDistance = dot(worldToLight,worldToLight);
 	float invSqFalloff = 1.0 / sqDistance;
 	float invSqRadius = 1.0 / (pl.m_positionDistance.w * pl.m_positionDistance.w);
 	

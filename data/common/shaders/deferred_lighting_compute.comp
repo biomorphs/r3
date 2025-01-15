@@ -18,11 +18,27 @@ layout(push_constant) uniform constants
 	AllLightsBuffer m_lightData;
 } PushConstants;
 
+// Copy all pointlights to shared memory for this work group
+#define MAX_SHARED_LIGHTS 1024
+shared Pointlight sharedLights[MAX_SHARED_LIGHTS];
+
 void main() 
 {
+	// Copy lights list to shared memory
+	AllLightsData lightsData = PushConstants.m_lightData.data[0];
+	uint pointLightCount = min(lightsData.m_pointlightCount, MAX_SHARED_LIGHTS);
+	if(gl_LocalInvocationIndex == 0)
+	{
+		for(uint p=0;p<pointLightCount;++p)
+		{
+			sharedLights[p] = lightsData.m_allPointlights.lights[p];
+		}
+	}
+	memoryBarrierShared();		// ensure all writes to shared memory complete
+	groupMemoryBarrier();		// synchronise memory between all invocations in this work group
+
 	ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
 	ivec2 size = imageSize(hdrOutput);
-	AllLightsData lightsData = PushConstants.m_lightData.data[0];
 	if(texelCoord.x < size.x && texelCoord.y < size.y)
 	{
 		vec4 positionMetallic = imageLoad(inWorldSpacePositionMetallic, texelCoord);
@@ -42,13 +58,11 @@ void main()
 		vec3 directLight = PBRDirectLighting(mat, viewDir, -sunDirectionBrightness.xyz, normalRoughness.xyz, sunRadiance, 1.0);
 		
 		// Apply point lights (direct)
-		uint pointLightCount = lightsData.m_pointlightCount;
 		for(uint p=0;p<pointLightCount;++p)
 		{
-			Pointlight pl = lightsData.m_allPointlights.lights[p];
-			vec3 lightRadiance = pl.m_colourBrightness.xyz * pl.m_colourBrightness.w;
-			float attenuation = GetPointlightAttenuation(pl, positionMetallic.xyz);
-			vec3 lightToPixel = normalize(pl.m_positionDistance.xyz - positionMetallic.xyz);
+			vec3 lightRadiance = sharedLights[p].m_colourBrightness.xyz * sharedLights[p].m_colourBrightness.w;
+			float attenuation = GetPointlightAttenuation(sharedLights[p], positionMetallic.xyz);
+			vec3 lightToPixel = normalize(sharedLights[p].m_positionDistance.xyz - positionMetallic.xyz);
 			directLight += PBRDirectLighting(mat, viewDir, lightToPixel, normalRoughness.xyz, lightRadiance, attenuation);
 		}
 		
