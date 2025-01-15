@@ -16,10 +16,25 @@ namespace R3
 	const uint32_t c_bakedModelVersion = 1;		// change this to force rebake
 	const uint32_t c_bakedMaterialTexturePathLength = 128;	// avoid std::string in materials
 	const std::string c_bakedModelExtension = ".bmdl";
+	const std::string c_bakeSettingsExtension = ".bakesettings.json";
 
 	struct BakeSettings 
 	{
-		bool m_flattenMeshes = false;			// pass aiProcess_PreTransformVertices to assimp, squashes scene graph down by transforming all verts in nodes by node transform
+		// assimp settings
+		bool m_flattenMeshes = false;
+		bool m_splitLargeMeshes = false;
+		bool m_improveCacheLocality = true;
+		bool m_fixInFacingNormals = true;
+		bool m_optimizeSceneGraph = false;
+	};
+
+	struct AssimpLoadSettings
+	{
+		bool m_preTransformVertices = false;		// aiProcess_PreTransformVertices
+		bool m_splitLargeMeshes = false;				// aiProcess_SplitLargeMeshes
+		bool m_improveCacheLocality = false;			// aiProcess_ImproveCacheLocality
+		bool m_fixInFacingNormals = false;			// aiProcess_FixInfacingNormals
+		bool m_optimizeSceneGraph = false;			// aiProcess_OptimizeGraph
 	};
 
 	struct BakedMaterial						// avoid std::string in binary data, only store 1 path per texture type
@@ -35,6 +50,34 @@ namespace R3
 		float m_metallic;
 		float m_roughness;
 	};
+
+	bool LoadBakeSettings(std::string_view modelPath, BakeSettings& target)
+	{
+		R3_PROF_EVENT();
+
+		std::string bakeSettingsPath(modelPath);
+		bakeSettingsPath += c_bakeSettingsExtension;
+
+		std::string jsonText;
+		if (!std::filesystem::exists(bakeSettingsPath) || !FileIO::LoadTextFromFile(bakeSettingsPath, jsonText))
+		{
+			return false;
+		}
+
+		auto parsedSettings = nlohmann::json::parse(jsonText);
+		if(parsedSettings.contains("FlattenMeshes"))
+			target.m_flattenMeshes = parsedSettings["FlattenMeshes"];
+		if (parsedSettings.contains("SplitLargeMeshes"))
+			target.m_splitLargeMeshes = parsedSettings["SplitLargeMeshes"];
+		if (parsedSettings.contains("ImproveCacheLocality"))
+			target.m_improveCacheLocality = parsedSettings["ImproveCacheLocality"];
+		if (parsedSettings.contains("FixInFacingNormals"))
+			target.m_fixInFacingNormals = parsedSettings["FixInFacingNormals"];
+		if (parsedSettings.contains("OptimiseSceneGraph"))
+			target.m_optimizeSceneGraph = parsedSettings["OptimiseSceneGraph"];
+
+		return true;
+	}
 
 	void ParseBakedMaterial(const BakedMaterial& baked, MeshMaterial& result)
 	{
@@ -303,7 +346,7 @@ namespace R3
 		ProgressCb m_cb;
 	};
 
-	bool LoadModelDataAssimp(std::string_view filePath, ModelData& result, bool flattenMeshes, ProgressCb progCb)
+	bool LoadModelDataAssimp(std::string_view filePath, ModelData& result, const AssimpLoadSettings& settings, ProgressCb progCb)
 	{
 		R3_PROF_EVENT();
 		// We push the root directory of the file path to assimp IO so any child files are loaded relative to the root
@@ -325,7 +368,11 @@ namespace R3
 			aiProcess_OptimizeMeshes |
 			aiProcess_FlipUVs |
 			aiProcess_RemoveRedundantMaterials |
-			(flattenMeshes ? aiProcess_PreTransformVertices : 0)
+			(settings.m_preTransformVertices ? aiProcess_PreTransformVertices : 0) |
+			(settings.m_splitLargeMeshes ? aiProcess_SplitLargeMeshes : 0) |
+			(settings.m_improveCacheLocality ? aiProcess_ImproveCacheLocality : 0) |
+			(settings.m_fixInFacingNormals ? aiProcess_FixInfacingNormals : 0) |
+			(settings.m_optimizeSceneGraph ? aiProcess_OptimizeGraph : 0)
 		);
 		if (!scene)
 		{
@@ -359,6 +406,7 @@ namespace R3
 
 		// add our own baked version + extension (so we dont need to check the version in the file)
 		relPath += c_bakedModelExtension;
+		relPath += std::to_string(c_bakedModelVersion);
 
 		// use the temp directory for baked data
 		std::string bakedPath = std::string(FileIO::GetBasePath()) + "\\baked\\" + relPath;
@@ -529,15 +577,23 @@ namespace R3
 			return true;	// already baked!
 		}
 
-		BakeSettings modelBakeSettings;	// load from a file eventually
+		BakeSettings modelBakeSettings;
+		LoadBakeSettings(filePath, modelBakeSettings);
 
 		auto loadProgressCb = [&](int p)	// first 50% of progress = loading the file
 		{
 			progCb(p / 2);
 		};
 
+		AssimpLoadSettings assimpSettings;	// fill in assimp settings from bake options
+		assimpSettings.m_preTransformVertices = modelBakeSettings.m_flattenMeshes;
+		assimpSettings.m_fixInFacingNormals = modelBakeSettings.m_fixInFacingNormals;
+		assimpSettings.m_improveCacheLocality = modelBakeSettings.m_improveCacheLocality;
+		assimpSettings.m_optimizeSceneGraph = modelBakeSettings.m_optimizeSceneGraph;
+		assimpSettings.m_splitLargeMeshes = modelBakeSettings.m_splitLargeMeshes;
+
 		ModelData sourceModel;
-		if (!LoadModelDataAssimp(filePath, sourceModel, modelBakeSettings.m_flattenMeshes, loadProgressCb))
+		if (!LoadModelDataAssimp(filePath, sourceModel, assimpSettings, loadProgressCb))
 		{
 			LogError("Failed to load source model {}", filePath);
 			return false;
@@ -560,13 +616,14 @@ namespace R3
 		R3_PROF_EVENT_DYN(debugName);
 
 		auto fileExtension = std::filesystem::path(filePath).extension().string();
-		if (fileExtension == c_bakedModelExtension)
+		if (fileExtension == c_bakedModelExtension + std::to_string(c_bakedModelVersion))
 		{
 			return LoadBakedModel(filePath, result, progCb);
 		}
 		else
 		{
-			return LoadModelDataAssimp(filePath, result, false, progCb);
+			AssimpLoadSettings assimpSettings;
+			return LoadModelDataAssimp(filePath, result, assimpSettings, progCb);
 		}
 	}
 }
