@@ -9,6 +9,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <assimp/ProgressHandler.hpp>
+#include <meshoptimizer.h>
 #include <filesystem>
 
 namespace R3
@@ -24,17 +25,16 @@ namespace R3
 		bool m_flattenMeshes = false;
 		bool m_splitLargeMeshes = false;
 		bool m_improveCacheLocality = true;
-		bool m_fixInFacingNormals = true;
-		bool m_optimizeSceneGraph = false;
+		bool m_fixInFacingNormals = false;
+		bool m_runMeshOptimizer = true;
 	};
 
 	struct AssimpLoadSettings
 	{
 		bool m_preTransformVertices = false;		// aiProcess_PreTransformVertices
-		bool m_splitLargeMeshes = false;				// aiProcess_SplitLargeMeshes
-		bool m_improveCacheLocality = false;			// aiProcess_ImproveCacheLocality
+		bool m_splitLargeMeshes = false;			// aiProcess_SplitLargeMeshes
+		bool m_improveCacheLocality = true;			// aiProcess_ImproveCacheLocality
 		bool m_fixInFacingNormals = false;			// aiProcess_FixInfacingNormals
-		bool m_optimizeSceneGraph = false;			// aiProcess_OptimizeGraph
 	};
 
 	struct BakedMaterial						// avoid std::string in binary data, only store 1 path per texture type
@@ -73,8 +73,8 @@ namespace R3
 			target.m_improveCacheLocality = parsedSettings["ImproveCacheLocality"];
 		if (parsedSettings.contains("FixInFacingNormals"))
 			target.m_fixInFacingNormals = parsedSettings["FixInFacingNormals"];
-		if (parsedSettings.contains("OptimiseSceneGraph"))
-			target.m_optimizeSceneGraph = parsedSettings["OptimiseSceneGraph"];
+		if (parsedSettings.contains("RunMeshOptimizer"))
+			target.m_runMeshOptimizer = parsedSettings["RunMeshOptimizer"];
 
 		return true;
 	}
@@ -371,8 +371,7 @@ namespace R3
 			(settings.m_preTransformVertices ? aiProcess_PreTransformVertices : 0) |
 			(settings.m_splitLargeMeshes ? aiProcess_SplitLargeMeshes : 0) |
 			(settings.m_improveCacheLocality ? aiProcess_ImproveCacheLocality : 0) |
-			(settings.m_fixInFacingNormals ? aiProcess_FixInfacingNormals : 0) |
-			(settings.m_optimizeSceneGraph ? aiProcess_OptimizeGraph : 0)
+			(settings.m_fixInFacingNormals ? aiProcess_FixInfacingNormals : 0)
 		);
 		if (!scene)
 		{
@@ -589,7 +588,6 @@ namespace R3
 		assimpSettings.m_preTransformVertices = modelBakeSettings.m_flattenMeshes;
 		assimpSettings.m_fixInFacingNormals = modelBakeSettings.m_fixInFacingNormals;
 		assimpSettings.m_improveCacheLocality = modelBakeSettings.m_improveCacheLocality;
-		assimpSettings.m_optimizeSceneGraph = modelBakeSettings.m_optimizeSceneGraph;
 		assimpSettings.m_splitLargeMeshes = modelBakeSettings.m_splitLargeMeshes;
 
 		ModelData sourceModel;
@@ -597,6 +595,68 @@ namespace R3
 		{
 			LogError("Failed to load source model {}", filePath);
 			return false;
+		}
+
+		if (modelBakeSettings.m_runMeshOptimizer)
+		{
+			// run meshoptimizer on each model part, rebuild the vb/ib for the entire model
+			std::vector<uint32_t> allMeshIndices;		// vb/ib for the entire model (with re-patched indices to reference one giant buffer)
+			std::vector<MeshVertex> allMeshVertices;
+			float progress = 50.0f;
+			for (int part = 0; part < sourceModel.m_meshes.size(); ++part)
+			{
+				std::vector<uint32_t> remapTable;
+				std::vector<uint32_t> newPartIndices;		// vb/ib for each part
+				std::vector<MeshVertex> newPartVertices;
+				auto sourceIndexCount = sourceModel.m_meshes[part].m_indexCount;
+				auto sourceVerticesCount = sourceModel.m_meshes[part].m_vertexCount;
+				auto sourceIndicesPtr = sourceModel.m_indices.data() + sourceModel.m_meshes[part].m_indexDataOffset;
+				auto sourceVerticesPtr = sourceModel.m_vertices.data() + sourceModel.m_meshes[part].m_vertexDataOffset;
+
+				// Part indices are relative to the entire vertex buffer. Remap them back to the 'local' vertex buffer
+				for (uint32_t i = 0; i < sourceIndexCount; ++i)
+				{
+					sourceModel.m_indices[i + sourceModel.m_meshes[part].m_indexDataOffset] -= sourceModel.m_meshes[part].m_vertexDataOffset;
+					assert(sourceModel.m_indices[i + sourceModel.m_meshes[part].m_indexDataOffset] < sourceVerticesCount);
+				}
+
+				// First build a remap table
+				remapTable.resize(sourceVerticesCount);
+				size_t newVertexCount = meshopt_generateVertexRemap(remapTable.data(), sourceIndicesPtr, sourceIndexCount, sourceVerticesPtr, sourceVerticesCount, sizeof(MeshVertex));
+
+				// Generate a new set of indices + vertices based on remap table
+				newPartIndices.resize(sourceIndexCount);
+				newPartVertices.resize(newVertexCount);
+				meshopt_remapIndexBuffer(newPartIndices.data(), sourceIndicesPtr, sourceIndexCount, remapTable.data());
+				meshopt_remapVertexBuffer(newPartVertices.data(), sourceVerticesPtr, sourceVerticesCount, sizeof(MeshVertex), remapTable.data());
+
+				// Optimise indices for vertex cache
+				meshopt_optimizeVertexCache(newPartIndices.data(), newPartIndices.data(), newPartIndices.size(), newPartVertices.size());
+
+				// Patch the part data with the new vb/ib, append the data to the new mesh vb/ib
+				auto newMeshVbOffset = static_cast<uint32_t>(allMeshVertices.size());
+				auto newMeshIbOffset = static_cast<uint32_t>(allMeshIndices.size());
+				for (auto i = 0; i < newPartIndices.size(); ++i)
+				{
+					newPartIndices[i] += newMeshVbOffset;	// offset indices into final vertex buffer
+				}
+				allMeshVertices.insert(allMeshVertices.end(), newPartVertices.begin(), newPartVertices.end());
+				allMeshIndices.insert(allMeshIndices.end(), newPartIndices.begin(), newPartIndices.end());
+
+				sourceModel.m_meshes[part].m_indexDataOffset = newMeshIbOffset;
+				sourceModel.m_meshes[part].m_vertexDataOffset = newMeshVbOffset;
+				sourceModel.m_meshes[part].m_indexCount = (uint32_t)newPartIndices.size();
+				sourceModel.m_meshes[part].m_vertexCount = (uint32_t)newVertexCount;
+
+				progress += 45.0f / (float)sourceModel.m_meshes.size();		// up to 95% progress
+				progCb((int)progress);
+			}
+
+			// copy the final vb/ib for the entire model
+			sourceModel.m_vertices.clear();
+			sourceModel.m_vertices.insert(sourceModel.m_vertices.end(), allMeshVertices.begin(), allMeshVertices.end());
+			sourceModel.m_indices.clear();
+			sourceModel.m_indices.insert(sourceModel.m_indices.end(), allMeshIndices.begin(), allMeshIndices.end());
 		}
 
 		if (!SaveBakedModel(filePath, bakedPath, sourceModel))

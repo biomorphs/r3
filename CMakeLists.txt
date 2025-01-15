@@ -31,6 +31,7 @@ find_package(nlohmann_json REQUIRED)
 find_package(unofficial-nativefiledialog REQUIRED)
 find_package(unofficial-concurrentqueue REQUIRED)
 find_package(Lua REQUIRED)
+find_package(meshoptimizer REQUIRED)
 
 # external libs not from vcpkg
 find_package(Optick REQUIRED)
