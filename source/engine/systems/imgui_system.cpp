@@ -158,8 +158,12 @@ namespace R3
 		init_info.ImageCount = static_cast<uint32_t>(swapChain->GetImages().size());
 		init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 		init_info.UseDynamicRendering = true;
-		init_info.ColorAttachmentFormat = swapChain->GetFormat().format;
-		if (!ImGui_ImplVulkan_Init(&init_info, nullptr))
+		init_info.PipelineRenderingCreateInfo = {};
+		init_info.PipelineRenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
+		init_info.PipelineRenderingCreateInfo.colorAttachmentCount = 1;
+		init_info.PipelineRenderingCreateInfo.pColorAttachmentFormats = &swapChain->GetFormat().format;
+
+		if (!ImGui_ImplVulkan_Init(&init_info))
 		{
 			LogError("Failed to init imgui for Vulkan");
 			return false;
@@ -169,9 +173,9 @@ namespace R3
 
 		// upload the font texture straight away
 		r->RunGraphicsCommandsImmediate([&](VkCommandBuffer cmd) {
-			ImGui_ImplVulkan_CreateFontsTexture(cmd);
+			ImGui_ImplVulkan_CreateFontsTexture();
 		});
-		ImGui_ImplVulkan_DestroyFontUploadObjects();	// destroy the font data once it is uploaded
+		ImGui_ImplVulkan_DestroyFontsTexture();	// destroy the font data once it is uploaded
 
 		r->m_onShutdownCbs.AddCallback([this](Device& d) {
 			OnShutdown(d);
@@ -273,7 +277,7 @@ namespace R3
 		auto r = GetSystem<RenderSystem>();
 
 		ImGui_ImplVulkan_NewFrame();
-		ImGui_ImplSDL2_NewFrame(r->GetMainWindow()->GetHandle());
+		ImGui_ImplSDL2_NewFrame();
 		ImGui::NewFrame();
 
 		// display the main menu singleton + reset state for next frame
@@ -287,7 +291,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 
-		vkDestroyDescriptorPool(d.GetVkDevice(), m_descriptorPool, nullptr);
 		ImGui_ImplVulkan_Shutdown();
+		vkDestroyDescriptorPool(d.GetVkDevice(), m_descriptorPool, nullptr);
 	}
 }

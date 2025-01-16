@@ -473,7 +473,7 @@ namespace R3
 						if (t.m_imGuiDescSet != VK_NULL_HANDLE)
 						{
 							ImVec2 size((float)t.m_width * 0.25f, (float)t.m_height * 0.25f);
-							ImGui::Image(t.m_imGuiDescSet, size);
+							ImGui::Image((ImTextureID)t.m_imGuiDescSet, size);
 						}
 					}
 				}

@@ -3,22 +3,29 @@
   "version-string": "0.0.1",
   "license": "MIT",
   "dependencies": [
-	  {
-		  "name": "sdl2",
-		  "features": [ "vulkan" ]
-	  },
-	  {
-		  "name": "imgui",
-		  "features": [ "vulkan-binding", "sdl2-binding" ]
-	  },
+    {
+      "name": "sdl2",
+      "features": [
+        "vulkan"
+      ]
+    },
+    {
+      "name": "imgui",
+      "features": [
+        "vulkan-binding",
+        "sdl2-binding"
+      ]
+    },
     "sol2",
-	"lua",
+    "lua",
     "glm",
-	"assimp",
-	"vulkan-memory-allocator",
-	"nlohmann-json",
-	"nativefiledialog",
-	"concurrentqueue",
-	"meshoptimizer"
+    "assimp",
+    "vulkan-memory-allocator",
+    "nlohmann-json",
+    "nativefiledialog-extended",
+    "concurrentqueue",
+    {
+		"name": "meshoptimizer"
+    }
   ]
 }

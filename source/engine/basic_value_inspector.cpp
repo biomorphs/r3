@@ -243,7 +243,7 @@ namespace R3
 		if (texImguiSet != nullptr)
 		{
 			ImVec2 size((float)dims.x, (float)dims.y);
-			changeTex = ImGui::ImageButton(texImguiSet, size);
+			changeTex = ImGui::ImageButton(label.data(), (ImTextureID)texImguiSet, size);
 			ImGui::Text(texName.data());
 		}
 		else

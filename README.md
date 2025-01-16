@@ -22,3 +22,10 @@
 	add the installation directory to the system PATH environment variable
 		e.g.
 			set PATH=%PATH%;C:\Compressonator_4.5.52\bin\CLI
+			
+# To Update vcpkg dependencies to the latest version
+1.  Run git pull in vcpkg directory
+2. 	Run vcpkg\bootstrap-vcpkg.bat
+3.	Nuke r3/build 
+4. 	Run setup-msvc.bat
+5.	Fix compilation issues (API changes in libraries, etc)

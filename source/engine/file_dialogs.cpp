@@ -12,7 +12,7 @@ namespace R3
         R3_PROF_EVENT();
         std::string realInitialPath = initialPath.empty() ? std::string(FileIO::GetBasePath()) : FileIO::FindAbsolutePath(initialPath);
         nfdchar_t* newPath = NULL;
-        nfdresult_t result = NFD_OpenDialog(filter.data(), realInitialPath.data(), &newPath);
+        nfdresult_t result = NFD_OpenDialog(&newPath, nullptr, 0, initialPath.data());  // todo, filters
         if (result == NFD_OKAY)
         {
             return newPath;
@@ -29,7 +29,7 @@ namespace R3
         R3_PROF_EVENT();
         std::string realInitialPath = initialPath.empty() ? std::string(FileIO::GetBasePath()) : FileIO::FindAbsolutePath(initialPath);
         nfdchar_t* savePath = NULL;
-        nfdresult_t result = NFD_SaveDialog(filter.data(), realInitialPath.data(), &savePath);
+        nfdresult_t result = NFD_SaveDialog(&savePath, nullptr, 0, realInitialPath.data(), initialPath.data());     // todo 
         if (result == NFD_OKAY)
         {
             return savePath;
