@@ -26,6 +26,8 @@ namespace R3
 		bool m_splitLargeMeshes = false;
 		bool m_improveCacheLocality = true;
 		bool m_fixInFacingNormals = false;
+
+		// meshoptimizer settings
 		bool m_runMeshOptimizer = true;
 		bool m_simplifyModel = false;				// run mesh simplification on the entire model
 		float m_simplifyIndexThreshold = 0.5f;		// the desired reduction in index count (0-1.0)

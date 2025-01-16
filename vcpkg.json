@@ -24,8 +24,7 @@
     "nlohmann-json",
     "nativefiledialog-extended",
     "concurrentqueue",
-    {
-		"name": "meshoptimizer"
-    }
+    "meshoptimizer",
+	"vulkan-utility-libraries"
   ]
 }

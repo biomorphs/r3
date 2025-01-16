@@ -32,6 +32,7 @@ find_package(nfd REQUIRED)
 find_package(unofficial-concurrentqueue REQUIRED)
 find_package(Lua REQUIRED)
 find_package(meshoptimizer REQUIRED)
+find_package(VulkanUtilityLibraries REQUIRED)
 
 # external libs not from vcpkg
 find_package(Optick REQUIRED)
