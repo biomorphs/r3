@@ -12,6 +12,7 @@ namespace R3
 		class World;
 	}
 	struct TextureHandle;
+	struct FileDialogFilter;
 	class Tag;
 
 	// Base interface used for inspecting/modifying values in the ui
@@ -32,7 +33,7 @@ namespace R3
 		virtual bool Inspect(std::string_view label, glm::vec4 currentValue, std::function<void(glm::vec4)> setFn, glm::vec4 minv, glm::vec4 maxv) = 0;
 		virtual bool InspectColour(std::string_view label, glm::vec4 currentValue, std::function<void(glm::vec4)> setFn) = 0;
 		virtual bool InspectColour(std::string_view label, glm::vec3 currentValue, std::function<void(glm::vec3)> setFn) = 0;
-		virtual bool InspectFile(std::string_view label, std::string_view path, std::string_view filter, std::function<void(std::string_view)> setFn) = 0;
+		virtual bool InspectFile(std::string_view label, std::string_view path, std::function<void(std::string_view)> setFn, const FileDialogFilter* filters = nullptr, size_t filterCount = 0) = 0;
 		virtual bool InspectEntity(std::string_view label, Entities::EntityHandle current, Entities::World* w, std::function<void(Entities::EntityHandle)> setFn) = 0;
 		virtual bool InspectTexture(std::string_view label, TextureHandle current, std::function<void(TextureHandle)> setFn, glm::ivec2 dims = glm::ivec2(128,128)) = 0;
 		virtual bool InspectEnum(std::string_view label, int currentValue, std::function<void(int)> setFn, const std::string_view options[], int optionCount) = 0;

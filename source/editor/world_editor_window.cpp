@@ -123,7 +123,10 @@ namespace R3
 			m_cmds->Push(std::make_unique<WorldEditorAddEmptyEntityCommand>(this));
 		});
 		addEntityMenu.AddItem("From Mesh", [this, world]() {
-			std::string meshPath = FileLoadDialog("", "gltf,glb,fbx,obj");
+			FileDialogFilter filters[] = {
+				{ "Mesh Source File", "gltf,glb,fbx,obj" }
+			};
+			std::string meshPath = FileLoadDialog("", filters, std::size(filters));
 			meshPath = FileIO::SanitisePath(meshPath);
 			if (meshPath.length() > 0)
 			{
@@ -140,7 +143,10 @@ namespace R3
 			m_cmds->Push(std::move(addCmd));
 		});
 		contextMenu.AddItem("Import Scene", [this]() {
-			std::string scnPath = FileLoadDialog("", "scn");
+			FileDialogFilter filters[] = {
+				{ "Scene File", "scn" }
+			};
+			std::string scnPath = FileLoadDialog("", filters, std::size(filters));
 			scnPath = FileIO::SanitisePath(scnPath);
 			if (scnPath.length() > 0)
 			{

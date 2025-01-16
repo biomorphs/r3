@@ -14,7 +14,10 @@ namespace R3
 	EditorCommand::Result WorldEditorSaveCmd::Execute()
 	{
 		R3_PROF_EVENT();
-		std::string savePath = m_targetPath.empty() ? FileSaveDialog(m_targetPath, "scn") : m_targetPath;
+		FileDialogFilter filters[] = {
+			{ "Scene File", "scn" }
+		};
+		std::string savePath = m_targetPath.empty() ? FileSaveDialog(m_targetPath, filters, std::size(filters)) : m_targetPath;
 		if (savePath != "")
 		{
 			m_window->SaveWorld(savePath);

@@ -1,5 +1,6 @@
 #include "lua_script.h"
 #include "engine/systems/lua_system.h"
+#include "engine/file_dialogs.h"
 #include <imgui.h>
 #include <sol/sol.hpp>
 
@@ -38,19 +39,22 @@ namespace R3
 		ImGui::Text("Input Params");
 		m_inputParams.Inspect(i);
 		ImGui::Separator();
+		FileDialogFilter filters[] = {
+			{ "Lua Script", "lua" }
+		};
 		if (ImGui::CollapsingHeader("On Fixed Update"))
 		{
-			i.InspectFile(std::format("Source {}##fixed", m_onFixedUpdate.m_sourcePath), m_onFixedUpdate.m_sourcePath, "lua", InspectProperty(&LuaScriptComponent::SetFixedUpdateSource, e, w));
+			i.InspectFile(std::format("Source {}##fixed", m_onFixedUpdate.m_sourcePath), m_onFixedUpdate.m_sourcePath, InspectProperty(&LuaScriptComponent::SetFixedUpdateSource, e, w), filters, std::size(filters));
 			i.Inspect("Entry point##fixed", m_onFixedUpdate.m_entryPointName, InspectProperty(&LuaScriptComponent::SetFixedUpdateEntrypoint, e, w));
 		}
 		if (ImGui::CollapsingHeader("On Variable Update"))
 		{
-			i.InspectFile(std::format("Source {}##variable", m_onVariableUpdate.m_sourcePath), m_onVariableUpdate.m_sourcePath, "lua", InspectProperty(&LuaScriptComponent::SetVariableUpdateSource, e, w));
+			i.InspectFile(std::format("Source {}##variable", m_onVariableUpdate.m_sourcePath), m_onVariableUpdate.m_sourcePath, InspectProperty(&LuaScriptComponent::SetVariableUpdateSource, e, w), filters, std::size(filters));
 			i.Inspect("Entry point##variable", m_onVariableUpdate.m_entryPointName, InspectProperty(&LuaScriptComponent::SetVariableUpdateEntrypoint, e, w));
 		}
 		if (ImGui::CollapsingHeader("Populate Inputs"))
 		{
-			i.InspectFile(std::format("Source {}##inputs", m_populateInputs.m_sourcePath), m_populateInputs.m_sourcePath, "lua", InspectProperty(&LuaScriptComponent::SetPopulateInputsSource, e, w));
+			i.InspectFile(std::format("Source {}##inputs", m_populateInputs.m_sourcePath), m_populateInputs.m_sourcePath, InspectProperty(&LuaScriptComponent::SetPopulateInputsSource, e, w), filters, std::size(filters));
 			i.Inspect("Entry point##inputs", m_populateInputs.m_entryPointName, InspectProperty(&LuaScriptComponent::SetPopulateInputsEntrypoint, e, w));
 		}
 		ImGui::Separator();

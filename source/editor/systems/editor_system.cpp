@@ -106,7 +106,10 @@ namespace R3
 	void EditorSystem::OnRunWorld()
 	{
 		R3_PROF_EVENT();
-		std::string fileToOpen = FileLoadDialog("", "scn");
+		FileDialogFilter filters[] = {
+			{ "Scene File", "scn" }
+		};
+		std::string fileToOpen = FileLoadDialog("", filters, std::size(filters));
 		if (!fileToOpen.empty())
 		{
 			RunWorld(fileToOpen);
@@ -116,7 +119,10 @@ namespace R3
 	void EditorSystem::OnOpenWorld()
 	{
 		R3_PROF_EVENT();
-		std::string fileToOpen = FileLoadDialog("", "scn");
+		FileDialogFilter filters[] = {
+			{ "Scene File", "scn" }
+		};
+		std::string fileToOpen = FileLoadDialog("", filters, std::size(filters));
 		if (!fileToOpen.empty())
 		{
 			auto entities = GetSystem<Entities::EntitySystem>();

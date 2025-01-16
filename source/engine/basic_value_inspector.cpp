@@ -175,12 +175,12 @@ namespace R3
 		return false;
 	}
 
-	bool BasicValueInspector::InspectFile(std::string_view label, std::string_view path, std::string_view filter, std::function<void(std::string_view)> setFn)
+	bool BasicValueInspector::InspectFile(std::string_view label, std::string_view path, std::function<void(std::string_view)> setFn, const FileDialogFilter* filters, size_t filterCount)
 	{
 		std::string txt = std::format("{} - {}", label, path);
 		if (ImGui::Button(txt.c_str()))
 		{
-			std::string newPath = FileLoadDialog(path, filter);
+			std::string newPath = FileLoadDialog(path, filters, filterCount);
 			if (newPath.length() > 0)
 			{
 				// sanitise path, only files relative to data root are allowed
@@ -260,8 +260,10 @@ namespace R3
 
 		if (changeTex)
 		{
-			const char* textureFilter = "";
-			std::string newPath = FileLoadDialog(texName, textureFilter);
+			FileDialogFilter filters[] = {
+				{ "Texture File", "jpg,jpeg,png,tga,bmp,tiff,dds," }
+			};
+			std::string newPath = FileLoadDialog(texName, filters, std::size(filters));
 			if (newPath.length() > 0)
 			{
 				// sanitise path, only files relative to data root are allowed

@@ -1,6 +1,7 @@
 #include "static_mesh.h"
 #include "engine/systems/model_data_system.h"
 #include "engine/systems/lua_system.h"
+#include "engine/file_dialogs.h"
 
 namespace R3
 {
@@ -24,7 +25,11 @@ namespace R3
 	{
 		auto modelSys = Systems::GetSystem<ModelDataSystem>();
 		std::string currentPath = modelSys->GetModelName(m_modelHandle);
-		i.InspectFile("Model Path", currentPath, "gltf,glb,fbx,obj", InspectProperty(&StaticMeshComponent::SetModelFromPath, e, w));
+
+		FileDialogFilter filters[] = {
+			{ "Mesh Source File", "gltf,glb,fbx,obj" }
+		};
+		i.InspectFile("Model Path", currentPath, InspectProperty(&StaticMeshComponent::SetModelFromPath, e, w), filters, std::size(filters));
 		i.InspectEntity("Material Override", m_materialOverride, w, InspectProperty(&StaticMeshComponent::m_materialOverride, e, w));
 		i.Inspect("Should Draw", m_shouldDraw, InspectProperty(&StaticMeshComponent::m_shouldDraw, e, w));
 	}
