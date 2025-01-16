@@ -15,6 +15,7 @@ namespace R3
             nfdu8filteritem_t filter;
             filter.name = filters[f].m_name.c_str();
             filter.spec = filters[f].m_extensions.c_str();
+            nfdFilters.push_back(filter);
         }
         return nfdFilters;
     }
