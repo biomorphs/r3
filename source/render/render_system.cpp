@@ -18,14 +18,6 @@
 #include <SDL_events.h>
 #include <imgui.h>
 
-// TODO - 
-// pipeline creation can't happen until pass runs
-//	add a bindPipeline type interface to pass context with no explicit pipeline creation?
-//		can add simplier api for graphics pipelines
-// add pipeline cache
-//	takes in the required settings + a DrawPass (so pipelines can be created with the right attachments)
-// remove last remnants of formats for early pipeline creation
-
 namespace R3
 {
 	static constexpr int c_maxFramesInFlight = 3;	// let the cpu get ahead of the gpu by this many frames. should always be > num swap images

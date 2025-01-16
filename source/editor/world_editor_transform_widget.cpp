@@ -203,7 +203,7 @@ namespace R3
 							if (transformCmp)
 							{
 								glm::vec3 newPos = it.m_originalPosition + translation;
-								transformCmp->SetPositionWorldSpace(it.m_entity, *world, newPos);	// todo - needs to be set worldspace position
+								transformCmp->SetPositionWorldSpace(it.m_entity, *world, newPos);
 							}
 						}
 					}

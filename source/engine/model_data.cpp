@@ -623,22 +623,34 @@ namespace R3
 				std::vector<uint32_t> simplifiedIndices(newPartIndices.size());	// reserve enough memory for new indices
 				uint32_t targetIndexCount = (uint32_t)((float)newPartIndices.size() * settings.m_simplifyIndexThreshold);
 				float resultError = 0.0f;
-				size_t newIndexCount = meshopt_simplify(simplifiedIndices.data(), 
+
+				const float attribWeights[] = { 1.0f,1.0f,1.0f,1.0f,1.0f };
+				size_t newIndexCount = meshopt_simplifyWithAttributes(simplifiedIndices.data(),
 					newPartIndices.data(),
-					newPartIndices.size(), 
-					(const float*)newPartVertices.data(), 
-					newPartVertices.size(), 
-					sizeof(MeshVertex), 
+					newPartIndices.size(),
+					(const float*)newPartVertices.data(),
+					newPartVertices.size(),
+					sizeof(MeshVertex),
+					&newPartVertices[0].m_positionU0[3],	// start at uv0
+					sizeof(MeshVertex),
+					attribWeights,
+					5,										// uv0 + normal + uv1
+					nullptr,
 					targetIndexCount,
 					settings.m_simplifyTargetError,
-					0, 
-					&resultError);
+					0,
+					&resultError
+				);
+
+				LogInfo("Simplified mesh from {} to {} triangles, final error = {} (target error = {})", newPartIndices.size() / 2, targetIndexCount / 3,resultError, settings.m_simplifyTargetError);
 
 				newPartIndices.clear();
 				newPartIndices.insert(newPartIndices.end(), simplifiedIndices.begin(), simplifiedIndices.begin() + newIndexCount);
 
-				// Optimise simplified for vertex cache
+				// re-optimise indices
 				meshopt_optimizeVertexCache(newPartIndices.data(), newPartIndices.data(), newPartIndices.size(), newPartVertices.size());
+				meshopt_optimizeOverdraw(newPartIndices.data(), newPartIndices.data(), newPartIndices.size(), (const float*)newPartVertices.data(), newPartVertices.size(), sizeof(MeshVertex), settings.m_optimiseOverdrawThreshold);
+				meshopt_optimizeVertexFetch(newPartVertices.data(), newPartIndices.data(), newPartIndices.size(), newPartVertices.data(), newPartVertices.size(), sizeof(MeshVertex));
 			}
 
 			// Patch the part data with the new vb/ib, append the data to the new mesh vb/ib
