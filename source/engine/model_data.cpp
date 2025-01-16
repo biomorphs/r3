@@ -27,6 +27,10 @@ namespace R3
 		bool m_improveCacheLocality = true;
 		bool m_fixInFacingNormals = false;
 		bool m_runMeshOptimizer = true;
+		bool m_simplifyModel = false;				// run mesh simplification on the entire model
+		float m_simplifyIndexThreshold = 0.5f;		// the desired reduction in index count (0-1.0)
+		float m_simplifyTargetError = 0.005f;		// acceptable % error when simplifying the model
+		float m_optimiseOverdrawThreshold = 1.05f;	// How much cache efficiency can be sacrificed to optimise for overdraw instead 
 	};
 
 	struct AssimpLoadSettings
@@ -75,6 +79,14 @@ namespace R3
 			target.m_fixInFacingNormals = parsedSettings["FixInFacingNormals"];
 		if (parsedSettings.contains("RunMeshOptimizer"))
 			target.m_runMeshOptimizer = parsedSettings["RunMeshOptimizer"];
+		if (parsedSettings.contains("SimplifyModel"))
+			target.m_simplifyModel = parsedSettings["SimplifyModel"];
+		if (parsedSettings.contains("SimplifyIndexThreshold"))
+			target.m_simplifyIndexThreshold = parsedSettings["SimplifyIndexThreshold"];
+		if (parsedSettings.contains("SimplifyTargetError"))
+			target.m_simplifyTargetError = parsedSettings["SimplifyTargetError"];
+		if (parsedSettings.contains("OverdrawCacheThreshold"))
+			target.m_simplifyTargetError = parsedSettings["OverdrawCacheThreshold"];
 
 		return true;
 	}
@@ -562,6 +574,99 @@ namespace R3
 		return true;
 	}
 
+	void OptimiseModel(ModelData& sourceModel, const BakeSettings& settings, ProgressCb progCb)
+	{
+		R3_PROF_EVENT();
+
+		// run meshoptimizer on each model part, rebuild the vb/ib for the entire model
+		std::vector<uint32_t> allMeshIndices;		// vb/ib for the entire model (with re-patched indices to reference one giant buffer)
+		std::vector<MeshVertex> allMeshVertices;
+		float progress = 50.0f;
+		for (int part = 0; part < sourceModel.m_meshes.size(); ++part)
+		{
+			std::vector<uint32_t> remapTable;
+			std::vector<uint32_t> newPartIndices;		// vb/ib for each part
+			std::vector<MeshVertex> newPartVertices;
+			auto sourceIndexCount = sourceModel.m_meshes[part].m_indexCount;
+			auto sourceVerticesCount = sourceModel.m_meshes[part].m_vertexCount;
+			auto sourceIndicesPtr = sourceModel.m_indices.data() + sourceModel.m_meshes[part].m_indexDataOffset;
+			auto sourceVerticesPtr = sourceModel.m_vertices.data() + sourceModel.m_meshes[part].m_vertexDataOffset;
+
+			// Part indices are relative to the entire vertex buffer. Remap them back to the 'local' vertex buffer
+			for (uint32_t i = 0; i < sourceIndexCount; ++i)
+			{
+				sourceModel.m_indices[i + sourceModel.m_meshes[part].m_indexDataOffset] -= sourceModel.m_meshes[part].m_vertexDataOffset;
+				assert(sourceModel.m_indices[i + sourceModel.m_meshes[part].m_indexDataOffset] < sourceVerticesCount);
+			}
+
+			// First build a remap table
+			remapTable.resize(sourceVerticesCount);
+			size_t newVertexCount = meshopt_generateVertexRemap(remapTable.data(), sourceIndicesPtr, sourceIndexCount, sourceVerticesPtr, sourceVerticesCount, sizeof(MeshVertex));
+
+			// Generate a new set of indices + vertices based on remap table
+			newPartIndices.resize(sourceIndexCount);
+			newPartVertices.resize(newVertexCount);
+			meshopt_remapIndexBuffer(newPartIndices.data(), sourceIndicesPtr, sourceIndexCount, remapTable.data());
+			meshopt_remapVertexBuffer(newPartVertices.data(), sourceVerticesPtr, sourceVerticesCount, sizeof(MeshVertex), remapTable.data());
+
+			// Optimise indices for vertex cache
+			meshopt_optimizeVertexCache(newPartIndices.data(), newPartIndices.data(), newPartIndices.size(), newPartVertices.size());
+
+			// Optimise indices for overdraw, sacrificing some amount of cache efficiency
+			meshopt_optimizeOverdraw(newPartIndices.data(), newPartIndices.data(), newPartIndices.size(), (const float*)newPartVertices.data(), newPartVertices.size(), sizeof(MeshVertex), settings.m_optimiseOverdrawThreshold);
+
+			// Re-order the vertices and indices for optimal vertex fetch
+			meshopt_optimizeVertexFetch(newPartVertices.data(), newPartIndices.data(), newPartIndices.size(), newPartVertices.data(), newPartVertices.size(), sizeof(MeshVertex));
+
+			if (settings.m_simplifyModel)
+			{
+				std::vector<uint32_t> simplifiedIndices(newPartIndices.size());	// reserve enough memory for new indices
+				uint32_t targetIndexCount = (uint32_t)((float)newPartIndices.size() * settings.m_simplifyIndexThreshold);
+				float resultError = 0.0f;
+				size_t newIndexCount = meshopt_simplify(simplifiedIndices.data(), 
+					newPartIndices.data(),
+					newPartIndices.size(), 
+					(const float*)newPartVertices.data(), 
+					newPartVertices.size(), 
+					sizeof(MeshVertex), 
+					targetIndexCount,
+					settings.m_simplifyTargetError,
+					0, 
+					&resultError);
+
+				newPartIndices.clear();
+				newPartIndices.insert(newPartIndices.end(), simplifiedIndices.begin(), simplifiedIndices.begin() + newIndexCount);
+
+				// Optimise simplified for vertex cache
+				meshopt_optimizeVertexCache(newPartIndices.data(), newPartIndices.data(), newPartIndices.size(), newPartVertices.size());
+			}
+
+			// Patch the part data with the new vb/ib, append the data to the new mesh vb/ib
+			auto newMeshVbOffset = static_cast<uint32_t>(allMeshVertices.size());
+			auto newMeshIbOffset = static_cast<uint32_t>(allMeshIndices.size());
+			for (auto i = 0; i < newPartIndices.size(); ++i)
+			{
+				newPartIndices[i] += newMeshVbOffset;	// offset indices into final vertex buffer
+			}
+			allMeshVertices.insert(allMeshVertices.end(), newPartVertices.begin(), newPartVertices.end());
+			allMeshIndices.insert(allMeshIndices.end(), newPartIndices.begin(), newPartIndices.end());
+
+			sourceModel.m_meshes[part].m_indexDataOffset = newMeshIbOffset;
+			sourceModel.m_meshes[part].m_vertexDataOffset = newMeshVbOffset;
+			sourceModel.m_meshes[part].m_indexCount = (uint32_t)newPartIndices.size();
+			sourceModel.m_meshes[part].m_vertexCount = (uint32_t)newVertexCount;
+
+			progress += 45.0f / (float)sourceModel.m_meshes.size();		// up to 95% progress
+			progCb((int)progress);
+		}
+
+		// copy the final vb/ib for the entire model
+		sourceModel.m_vertices.clear();
+		sourceModel.m_vertices.insert(sourceModel.m_vertices.end(), allMeshVertices.begin(), allMeshVertices.end());
+		sourceModel.m_indices.clear();
+		sourceModel.m_indices.insert(sourceModel.m_indices.end(), allMeshIndices.begin(), allMeshIndices.end());
+	}
+
 	bool BakeModel(std::string_view filePath, ProgressCb progCb)
 	{
 		R3_PROF_EVENT();
@@ -599,64 +704,7 @@ namespace R3
 
 		if (modelBakeSettings.m_runMeshOptimizer)
 		{
-			// run meshoptimizer on each model part, rebuild the vb/ib for the entire model
-			std::vector<uint32_t> allMeshIndices;		// vb/ib for the entire model (with re-patched indices to reference one giant buffer)
-			std::vector<MeshVertex> allMeshVertices;
-			float progress = 50.0f;
-			for (int part = 0; part < sourceModel.m_meshes.size(); ++part)
-			{
-				std::vector<uint32_t> remapTable;
-				std::vector<uint32_t> newPartIndices;		// vb/ib for each part
-				std::vector<MeshVertex> newPartVertices;
-				auto sourceIndexCount = sourceModel.m_meshes[part].m_indexCount;
-				auto sourceVerticesCount = sourceModel.m_meshes[part].m_vertexCount;
-				auto sourceIndicesPtr = sourceModel.m_indices.data() + sourceModel.m_meshes[part].m_indexDataOffset;
-				auto sourceVerticesPtr = sourceModel.m_vertices.data() + sourceModel.m_meshes[part].m_vertexDataOffset;
-
-				// Part indices are relative to the entire vertex buffer. Remap them back to the 'local' vertex buffer
-				for (uint32_t i = 0; i < sourceIndexCount; ++i)
-				{
-					sourceModel.m_indices[i + sourceModel.m_meshes[part].m_indexDataOffset] -= sourceModel.m_meshes[part].m_vertexDataOffset;
-					assert(sourceModel.m_indices[i + sourceModel.m_meshes[part].m_indexDataOffset] < sourceVerticesCount);
-				}
-
-				// First build a remap table
-				remapTable.resize(sourceVerticesCount);
-				size_t newVertexCount = meshopt_generateVertexRemap(remapTable.data(), sourceIndicesPtr, sourceIndexCount, sourceVerticesPtr, sourceVerticesCount, sizeof(MeshVertex));
-
-				// Generate a new set of indices + vertices based on remap table
-				newPartIndices.resize(sourceIndexCount);
-				newPartVertices.resize(newVertexCount);
-				meshopt_remapIndexBuffer(newPartIndices.data(), sourceIndicesPtr, sourceIndexCount, remapTable.data());
-				meshopt_remapVertexBuffer(newPartVertices.data(), sourceVerticesPtr, sourceVerticesCount, sizeof(MeshVertex), remapTable.data());
-
-				// Optimise indices for vertex cache
-				meshopt_optimizeVertexCache(newPartIndices.data(), newPartIndices.data(), newPartIndices.size(), newPartVertices.size());
-
-				// Patch the part data with the new vb/ib, append the data to the new mesh vb/ib
-				auto newMeshVbOffset = static_cast<uint32_t>(allMeshVertices.size());
-				auto newMeshIbOffset = static_cast<uint32_t>(allMeshIndices.size());
-				for (auto i = 0; i < newPartIndices.size(); ++i)
-				{
-					newPartIndices[i] += newMeshVbOffset;	// offset indices into final vertex buffer
-				}
-				allMeshVertices.insert(allMeshVertices.end(), newPartVertices.begin(), newPartVertices.end());
-				allMeshIndices.insert(allMeshIndices.end(), newPartIndices.begin(), newPartIndices.end());
-
-				sourceModel.m_meshes[part].m_indexDataOffset = newMeshIbOffset;
-				sourceModel.m_meshes[part].m_vertexDataOffset = newMeshVbOffset;
-				sourceModel.m_meshes[part].m_indexCount = (uint32_t)newPartIndices.size();
-				sourceModel.m_meshes[part].m_vertexCount = (uint32_t)newVertexCount;
-
-				progress += 45.0f / (float)sourceModel.m_meshes.size();		// up to 95% progress
-				progCb((int)progress);
-			}
-
-			// copy the final vb/ib for the entire model
-			sourceModel.m_vertices.clear();
-			sourceModel.m_vertices.insert(sourceModel.m_vertices.end(), allMeshVertices.begin(), allMeshVertices.end());
-			sourceModel.m_indices.clear();
-			sourceModel.m_indices.insert(sourceModel.m_indices.end(), allMeshIndices.begin(), allMeshIndices.end());
+			OptimiseModel(sourceModel, modelBakeSettings, progCb);
 		}
 
 		if (!SaveBakedModel(filePath, bakedPath, sourceModel))
