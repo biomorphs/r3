@@ -48,7 +48,6 @@ namespace R3
 	private:
 		void RunGraph(RenderGraph& r, VkCommandBuffer_T* cmdBuffer, VkImage_T* swapImage, VkImageView_T* swapImageView);
 		bool AcquireSwapImage();
-		void ProcessEnvironmentSettings();
 		bool ShowGui();
 		bool DrawFrame();
 		bool CreateWindow();
