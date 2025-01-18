@@ -2,25 +2,25 @@
  "AllEntities": [
   {
    "EnvironmentSettings": {
-    "Sky Ambient": 0.004999999888241291,
+    "Sky Ambient": 0.05000000074505806,
     "Sky Colour": {
      "X": 0.013169873505830765,
      "Y": 0.04709765687584877,
      "Z": 0.18145161867141724
     },
-    "Sun Ambient": 0.00800000037997961,
-    "Sun Brightness": 4.0,
+    "Sun Ambient": 0.05000000074505806,
+    "Sun Brightness": 0.20000000298023224,
     "Sun Colour": {
-     "X": 0.0,
-     "Y": 0.0,
-     "Z": 0.0
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
     },
     "Sun Direction": {
      "X": 0.4000000059604645,
      "Y": -0.800000011920929,
      "Z": 1.0
     },
-    "Tonemap Type": 2
+    "Tonemap Type": 7
    },
    "ID": 0,
    "Name": "Globals",
@@ -1725,7 +1725,7 @@
        "PathName": "invalid"
       },
       "AlbedoOpacity": {
-       "W": 1.0,
+       "W": 0.5254902243614197,
        "X": 1.0,
        "Y": 1.0,
        "Z": 1.0
@@ -1740,7 +1740,7 @@
       "NormalTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_01_Glass_Wine_Normal.dds"
       },
-      "Roughness": 0.5527864098548889,
+      "Roughness": 0.10000000149011612,
       "RoughnessTex": {
        "PathName": "invalid"
       },
@@ -1756,7 +1756,7 @@
        "PathName": "invalid"
       },
       "AlbedoOpacity": {
-       "W": 1.0,
+       "W": 0.9921568632125854,
        "X": 1.0,
        "Y": 1.0,
        "Z": 1.0
@@ -2593,7 +2593,7 @@
        "PathName": "invalid"
       },
       "AlbedoOpacity": {
-       "W": 1.0,
+       "W": 0.3803921639919281,
        "X": 1.0,
        "Y": 1.0,
        "Z": 1.0
@@ -2872,7 +2872,7 @@
        "PathName": "invalid"
       },
       "AlbedoOpacity": {
-       "W": 1.0,
+       "W": 0.27843138575553894,
        "X": 1.0,
        "Y": 1.0,
        "Z": 1.0
@@ -3213,7 +3213,7 @@
        "PathName": "invalid"
       },
       "AlbedoOpacity": {
-       "W": 1.0,
+       "W": 0.3529411852359772,
        "X": 1.0,
        "Y": 1.0,
        "Z": 1.0
@@ -3228,7 +3228,7 @@
       "NormalTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Glass_Exterior_Normal.dds"
       },
-      "Roughness": 0.5527864098548889,
+      "Roughness": 0.05000000074505806,
       "RoughnessTex": {
        "PathName": "invalid"
       },
@@ -6361,9 +6361,9 @@
     },
     "Relative": false,
     "Scale": {
-     "X": 1.0,
-     "Y": 1.0,
-     "Z": 1.0
+     "X": 1.600000023841858,
+     "Y": 1.600000023841858,
+     "Z": 1.600000023841858
     }
    }
   },
@@ -6372,7 +6372,7 @@
    "Name": "Point Light",
    "Parent": 4294967295,
    "PointLight": {
-    "Brightness": 64.0,
+    "Brightness": 128.0,
     "Colour": {
      "X": 1.0,
      "Y": 1.0,
@@ -6406,7 +6406,7 @@
    "Name": "Point Light",
    "Parent": 4294967295,
    "PointLight": {
-    "Brightness": 64.0,
+    "Brightness": 128.0,
     "Colour": {
      "X": 1.0,
      "Y": 1.0,
@@ -6440,7 +6440,7 @@
    "Name": "Point Light",
    "Parent": 4294967295,
    "PointLight": {
-    "Brightness": 64.0,
+    "Brightness": 128.0,
     "Colour": {
      "X": 1.0,
      "Y": 1.0,
@@ -6474,7 +6474,7 @@
    "Name": "Point Light",
    "Parent": 4294967295,
    "PointLight": {
-    "Brightness": 64.0,
+    "Brightness": 128.0,
     "Colour": {
      "X": 1.0,
      "Y": 1.0,
@@ -6508,7 +6508,7 @@
    "Name": "Point Light",
    "Parent": 4294967295,
    "PointLight": {
-    "Brightness": 64.0,
+    "Brightness": 128.0,
     "Colour": {
      "X": 1.0,
      "Y": 1.0,
@@ -6542,7 +6542,7 @@
    "Name": "Point Light",
    "Parent": 4294967295,
    "PointLight": {
-    "Brightness": 64.0,
+    "Brightness": 128.0,
     "Colour": {
      "X": 1.0,
      "Y": 1.0,
@@ -6576,7 +6576,7 @@
    "Name": "Point Light",
    "Parent": 4294967295,
    "PointLight": {
-    "Brightness": 64.0,
+    "Brightness": 128.0,
     "Colour": {
      "X": 1.0,
      "Y": 1.0,
@@ -6610,7 +6610,7 @@
    "Name": "Point Light",
    "Parent": 4294967295,
    "PointLight": {
-    "Brightness": 64.0,
+    "Brightness": 128.0,
     "Colour": {
      "X": 1.0,
      "Y": 1.0,
@@ -6644,7 +6644,7 @@
    "Name": "Point Light",
    "Parent": 4294967295,
    "PointLight": {
-    "Brightness": 64.0,
+    "Brightness": 128.0,
     "Colour": {
      "X": 1.0,
      "Y": 1.0,
@@ -6678,7 +6678,7 @@
    "Name": "Point Light",
    "Parent": 4294967295,
    "PointLight": {
-    "Brightness": 64.0,
+    "Brightness": 128.0,
     "Colour": {
      "X": 1.0,
      "Y": 1.0,
@@ -6712,7 +6712,7 @@
    "Name": "Point Light",
    "Parent": 4294967295,
    "PointLight": {
-    "Brightness": 64.0,
+    "Brightness": 128.0,
     "Colour": {
      "X": 1.0,
      "Y": 1.0,
@@ -6797,9 +6797,9 @@
      "Z": 0.0
     },
     "Position": {
-     "X": 0.4223310351371765,
-     "Y": 2.583462953567505,
-     "Z": 0.5059760212898254
+     "X": 0.76020348072052,
+     "Y": 4.2663116455078125,
+     "Z": 0.8186815977096558
     },
     "Relative": false,
     "Scale": {
@@ -6831,9 +6831,9 @@
      "Z": 0.0
     },
     "Position": {
-     "X": -0.936687171459198,
-     "Y": 2.583462953567505,
-     "Z": -2.82763671875
+     "X": -1.4321765899658203,
+     "Y": 4.2663116455078125,
+     "Z": -4.5240797996521
     },
     "Relative": false,
     "Scale": {
@@ -6865,9 +6865,9 @@
      "Z": 0.0
     },
     "Position": {
-     "X": 0.5620583295822144,
-     "Y": 2.583462953567505,
-     "Z": -5.463656902313232
+     "X": 0.823275089263916,
+     "Y": 4.2663116455078125,
+     "Z": -8.775433540344238
     },
     "Relative": false,
     "Scale": {
@@ -6899,9 +6899,9 @@
      "Z": 0.0
     },
     "Position": {
-     "X": 1.9873872995376587,
-     "Y": 2.583462953567505,
-     "Z": -8.064438819885254
+     "X": 3.0935771465301514,
+     "Y": 4.2663116455078125,
+     "Z": -12.953577995300293
     },
     "Relative": false,
     "Scale": {
@@ -6933,9 +6933,9 @@
      "Z": 0.0
     },
     "Position": {
-     "X": 3.3618950843811035,
-     "Y": 2.583462953567505,
-     "Z": 1.846710205078125
+     "X": 5.380120277404785,
+     "Y": 4.2663116455078125,
+     "Z": 3.146554708480835
     },
     "Relative": false,
     "Scale": {
@@ -6967,9 +6967,9 @@
      "Z": 0.0
     },
     "Position": {
-     "X": 6.174665927886963,
-     "Y": 2.583462953567505,
-     "Z": 2.9689791202545166
+     "X": 9.905021667480469,
+     "Y": 4.2663116455078125,
+     "Z": 4.905151844024658
     },
     "Relative": false,
     "Scale": {
@@ -6984,13 +6984,13 @@
    "Name": "Point Light",
    "Parent": 4294967295,
    "PointLight": {
-    "Brightness": 4.0,
+    "Brightness": 32.0,
     "Colour": {
      "X": 1.0,
      "Y": 0.5525494813919067,
      "Z": 0.13306450843811035
     },
-    "Distance": 8.0,
+    "Distance": 10.0,
     "Enabled": true
    },
    "Transform": {
@@ -7002,8 +7002,8 @@
     },
     "Position": {
      "X": 8.032479286193848,
-     "Y": 2.981987953186035,
-     "Z": 1.0560238361358643
+     "Y": 4.664836883544922,
+     "Z": -0.8156833648681641
     },
     "Relative": false,
     "Scale": {
@@ -7018,13 +7018,13 @@
    "Name": "Point Light",
    "Parent": 4294967295,
    "PointLight": {
-    "Brightness": 4.0,
+    "Brightness": 32.0,
     "Colour": {
      "X": 1.0,
      "Y": 0.5525494813919067,
      "Z": 0.13306450843811035
     },
-    "Distance": 8.0,
+    "Distance": 10.0,
     "Enabled": true
    },
    "Transform": {
@@ -7035,9 +7035,9 @@
      "Z": 0.0
     },
     "Position": {
-     "X": 5.148226261138916,
-     "Y": 2.981987953186035,
-     "Z": -0.4796864986419678
+     "X": 12.759076118469238,
+     "Y": 4.664836883544922,
+     "Z": 1.553544282913208
     },
     "Relative": false,
     "Scale": {
@@ -7052,13 +7052,13 @@
    "Name": "Point Light",
    "Parent": 4294967295,
    "PointLight": {
-    "Brightness": 4.0,
+    "Brightness": 32.0,
     "Colour": {
      "X": 1.0,
      "Y": 0.5525494813919067,
      "Z": 0.13306450843811035
     },
-    "Distance": 8.0,
+    "Distance": 10.0,
     "Enabled": true
    },
    "Transform": {
@@ -7069,38 +7069,9 @@
      "Z": 0.0
     },
     "Position": {
-     "X": 4.284615516662598,
-     "Y": 2.981987953186035,
-     "Z": -4.999916076660156
-    },
-    "Relative": false,
-    "Scale": {
-     "X": 1.0,
-     "Y": 1.0,
-     "Z": 1.0
-    }
-   }
-  },
-  {
-   "Camera": {
-    "FOV": 70.0,
-    "Far Plane": 5000.0,
-    "Near Plane": 0.10000000149011612
-   },
-   "ID": 25,
-   "Name": "",
-   "Parent": 4294967295,
-   "Transform": {
-    "Orientation": {
-     "W": -4.371138473402425e-08,
-     "X": 4.371139183945161e-08,
-     "Y": 1.0,
-     "Z": 4.371139183945161e-08
-    },
-    "Position": {
-     "X": 9.12021541595459,
-     "Y": 2.020419120788574,
-     "Z": -0.07848882675170898
+     "X": 6.8717780113220215,
+     "Y": 4.664836883544922,
+     "Z": -7.855832576751709
     },
     "Relative": false,
     "Scale": {

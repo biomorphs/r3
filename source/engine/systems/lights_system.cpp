@@ -147,7 +147,7 @@ namespace R3
 		if (!m_allLightsData.IsCreated())
 		{
 			m_allLightsData.SetDebugName("All Light Data");
-			if (!m_allLightsData.Create(*ctx.m_device, c_framesInFlight, c_framesInFlight, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+			if (!m_allLightsData.Create(*ctx.m_device, c_framesInFlight, 1, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 			{
 				LogError("Failed to create all light buffer");
 			}

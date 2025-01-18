@@ -287,7 +287,7 @@ namespace R3
 		if (!m_globalConstantsBuffer.IsCreated())
 		{
 			m_globalConstantsBuffer.SetDebugName("Static mesh global constants");
-			if (!m_globalConstantsBuffer.Create(*ctx.m_device, c_maxGlobalConstantBuffers, c_maxGlobalConstantBuffers, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+			if (!m_globalConstantsBuffer.Create(*ctx.m_device, c_maxGlobalConstantBuffers, 1, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 			{
 				LogError("Failed to create constant buffer");
 				return;
