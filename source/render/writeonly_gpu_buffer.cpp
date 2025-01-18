@@ -1,10 +1,39 @@
 #include "writeonly_gpu_buffer.h"
 #include "device.h"
+#include "render_system.h"	// for staging buffer pool
 #include "core/profiler.h"
 #include "core/log.h"
 
 namespace R3
 {
+	bool WriteOnlyGpuBuffer::AcquireNewStagingBuffer(Device& d)
+	{
+		R3_PROF_EVENT();
+
+		m_stagingEndOffset.store(0);
+
+		auto stagingPool = Systems::GetSystem<RenderSystem>()->GetStagingBufferPool();
+		if (m_stagingBuffer.m_buffer.m_buffer != VK_NULL_HANDLE)	// release the old buffer
+		{
+			stagingPool->Release(m_stagingBuffer);
+			m_stagingBuffer = {};
+		}
+
+		auto newStagingBuffer = stagingPool->GetBuffer(m_stagingMaxSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO);
+		if (!newStagingBuffer.has_value())
+		{
+			LogError("Failed to aquire new staging buffer");
+			return false;
+		}
+		else
+		{
+			m_stagingBuffer = *newStagingBuffer;
+			VulkanHelpers::SetBufferName(d.GetVkDevice(), m_stagingBuffer.m_buffer, m_debugName + " (Staging)");	// can we rename existing buffers?!
+		}
+
+		return true;
+	}
+
 	bool WriteOnlyGpuBuffer::Create(Device& d, uint64_t dataMaxSize, uint64_t stagingMaxSize, VkBufferUsageFlags usageFlags)
 	{
 		R3_PROF_EVENT();
@@ -12,19 +41,15 @@ namespace R3
 		VulkanHelpers::SetBufferName(d.GetVkDevice(), m_allData, m_debugName);
 		m_allDataAddress = VulkanHelpers::GetBufferDeviceAddress(d.GetVkDevice(), m_allData);
 		m_allDataMaxSize = dataMaxSize;
-		m_stagingBuffer = VulkanHelpers::CreateBuffer(d.GetVMA(), stagingMaxSize,
-			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			VMA_MEMORY_USAGE_AUTO,
-			VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);	// host coherant, write combined)
-		VulkanHelpers::SetBufferName(d.GetVkDevice(), m_stagingBuffer, m_debugName + " (Staging)");
+		
 		m_stagingMaxSize = stagingMaxSize;
-		if (!VulkanHelpers::CheckResult(vmaMapMemory(d.GetVMA(), m_stagingBuffer.m_allocation, &m_stagingMappedPtr)))
+		if (!AcquireNewStagingBuffer(d))
 		{
-			LogError("Failed to map staging buffer memory");
+			LogError("Failed to acquire staging buffer");
 			return false;
 		}
 
-		return m_allData.m_allocation != VK_NULL_HANDLE && m_stagingBuffer.m_allocation != VK_NULL_HANDLE && m_stagingMappedPtr != nullptr;
+		return m_allData.m_allocation != VK_NULL_HANDLE;
 	}
 
 	uint64_t WriteOnlyGpuBuffer::Allocate(uint64_t sizeBytes)
@@ -45,6 +70,11 @@ namespace R3
 	bool WriteOnlyGpuBuffer::Write(uint64_t writeStartOffset, uint64_t sizeBytes, const void* data)
 	{
 		R3_PROF_EVENT();
+		if (m_stagingBuffer.m_buffer.m_buffer == VK_NULL_HANDLE || m_stagingBuffer.m_mappedBuffer == nullptr)
+		{
+			LogError("Gpu buffer has no staging buffer!");
+			return false;
+		}
 		if (sizeBytes == 0 || writeStartOffset == -1 || (writeStartOffset + sizeBytes) > m_allDataCurrentSizeBytes.load())
 		{
 			LogWarn("Invalid gpu buffer write cmd");
@@ -57,22 +87,14 @@ namespace R3
 		}
 
 		uint64_t stagingOffset = m_stagingEndOffset.fetch_add(sizeBytes);
-		// if staging buffer is full, reset it
-		// this is NOT safe, we need multiple staging buffers to do it properly
-		if (stagingOffset == m_stagingMaxSize)
+		if (stagingOffset + sizeBytes > m_stagingMaxSize)	// staging buffer too small
 		{
-			m_stagingEndOffset.store(0);
-			stagingOffset = 0;
-		}
-		else if (stagingOffset + sizeBytes > m_stagingMaxSize)	// write over end of buffer, dangerous wraparound
-		{
-			m_stagingEndOffset.store(0);
-			stagingOffset = 0;	
-			LogWarn("Dangerous staging buffer wraparound");
+			LogError("Write-only gpu buffer staging size too small!");
+			return false;
 		}
 		if (stagingOffset + sizeBytes <= m_stagingMaxSize)
 		{
-			uint8_t* stagingPtr = static_cast<uint8_t*>(m_stagingMappedPtr) + stagingOffset;
+			uint8_t* stagingPtr = static_cast<uint8_t*>(m_stagingBuffer.m_mappedBuffer) + stagingOffset;
 			memcpy(stagingPtr, data, sizeBytes);
 
 			ScheduledWrite newWrite;
@@ -122,7 +144,7 @@ namespace R3
 		}
 		if (copyRegions.size() > 0)
 		{
-			vkCmdCopyBuffer(cmds, m_stagingBuffer.m_buffer, m_allData.m_buffer, static_cast<uint32_t>(copyRegions.size()), copyRegions.data());
+			vkCmdCopyBuffer(cmds, m_stagingBuffer.m_buffer.m_buffer, m_allData.m_buffer, static_cast<uint32_t>(copyRegions.size()), copyRegions.data());
 
 			// use a memory barrier to ensure the transfer finishes before any vertex reads
 			// dst stage probably needs to be customisable 
@@ -138,12 +160,17 @@ namespace R3
 				&writeBarrier,
 				0, nullptr, 0, nullptr
 			);
+
+			if (!AcquireNewStagingBuffer(d))
+			{
+				LogError("Failed to acquire new staging buffer! All writes will fail");
+			}
 		}
 	}
 
 	bool WriteOnlyGpuBuffer::IsCreated()
 	{
-		return m_allData.m_allocation != VK_NULL_HANDLE && m_stagingBuffer.m_allocation != VK_NULL_HANDLE && m_stagingMappedPtr != nullptr;
+		return m_allData.m_allocation != VK_NULL_HANDLE;
 	}
 
 	void WriteOnlyGpuBuffer::Destroy(Device& d)
@@ -153,10 +180,11 @@ namespace R3
 		{
 			vmaDestroyBuffer(d.GetVMA(), m_allData.m_buffer, m_allData.m_allocation);
 		}
-		if (m_stagingBuffer.m_allocation)
+		if (m_stagingBuffer.m_buffer.m_buffer != VK_NULL_HANDLE)
 		{
-			vmaUnmapMemory(d.GetVMA(), m_stagingBuffer.m_allocation);
-			vmaDestroyBuffer(d.GetVMA(), m_stagingBuffer.m_buffer, m_stagingBuffer.m_allocation);
+			auto stagingPool = Systems::GetSystem<RenderSystem>()->GetStagingBufferPool();
+			stagingPool->Release(m_stagingBuffer);
+			m_stagingBuffer = {};
 		}
 	}
 

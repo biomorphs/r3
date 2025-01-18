@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vulkan_helpers.h"
+#include "buffer_pool.h"
 #include <atomic>
 #include <concurrentqueue/concurrentqueue.h>
 
@@ -8,9 +9,9 @@ namespace R3
 {
 	// a gpu buffer with deferred writes
 	// has a fixed max size, set via Create()
-	// has a fixed max size staging buffer
-	// writes are copied to a staging buffer and scheduled for flush (lock free, thread-safe)
-	// flush will call vkCopyBuffer to push from staging -> the actual buffer
+	// fixed-sized staging buffers provided by render system buffer pool (acquired on create + flush)
+	// writes are copied to staging buffer and scheduled for flush (lock free, thread-safe)
+	// flush will call vkCopyBuffer to push from staging -> the actual buffer, release the old staging buffer + acquire a new one
 	class Device;
 	class WriteOnlyGpuBuffer
 	{
@@ -30,13 +31,13 @@ namespace R3
 		VkDeviceAddress GetDataDeviceAddress();
 		VkBuffer GetBuffer();
 	private:
+		bool AcquireNewStagingBuffer(Device& d);
 		AllocatedBuffer m_allData;
 		VkDeviceAddress m_allDataAddress;
 		uint64_t m_allDataMaxSize = 0;		// bytes
 		std::atomic<uint64_t> m_allDataCurrentSizeBytes;
-		AllocatedBuffer m_stagingBuffer;
+		PooledBuffer m_stagingBuffer;
 		uint64_t m_stagingMaxSize = 0;		// bytes
-		void* m_stagingMappedPtr = nullptr;
 		std::atomic<uint64_t> m_stagingEndOffset = 0;	// bytes
 		struct ScheduledWrite
 		{
