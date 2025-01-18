@@ -3,7 +3,7 @@
   {
    "ID": 0,
    "Name": "",
-   "Parent": 4294967295,
+   "Parent": 15,
    "StaticMesh": {
     "Draw": true,
     "MaterialsOverride": {
@@ -36,7 +36,7 @@
   {
    "ID": 1,
    "Name": "",
-   "Parent": 4294967295,
+   "Parent": 15,
    "StaticMesh": {
     "Draw": true,
     "MaterialsOverride": {
@@ -69,7 +69,7 @@
   {
    "ID": 2,
    "Name": "",
-   "Parent": 4294967295,
+   "Parent": 15,
    "StaticMesh": {
     "Draw": true,
     "MaterialsOverride": {
@@ -102,7 +102,7 @@
   {
    "ID": 3,
    "Name": "",
-   "Parent": 4294967295,
+   "Parent": 16,
    "PointLight": {
     "Brightness": 32.0,
     "Colour": {
@@ -136,7 +136,7 @@
   {
    "ID": 4,
    "Name": "",
-   "Parent": 4294967295,
+   "Parent": 16,
    "PointLight": {
     "Brightness": 16.0,
     "Colour": {
@@ -170,7 +170,7 @@
   {
    "ID": 5,
    "Name": "",
-   "Parent": 4294967295,
+   "Parent": 16,
    "PointLight": {
     "Brightness": 16.0,
     "Colour": {
@@ -204,7 +204,7 @@
   {
    "ID": 6,
    "Name": "",
-   "Parent": 4294967295,
+   "Parent": 16,
    "PointLight": {
     "Brightness": 16.0,
     "Colour": {
@@ -238,7 +238,7 @@
   {
    "ID": 7,
    "Name": "",
-   "Parent": 4294967295,
+   "Parent": 16,
    "PointLight": {
     "Brightness": 16.0,
     "Colour": {
@@ -272,7 +272,7 @@
   {
    "ID": 8,
    "Name": "",
-   "Parent": 4294967295,
+   "Parent": 16,
    "PointLight": {
     "Brightness": 16.0,
     "Colour": {
@@ -306,7 +306,7 @@
   {
    "ID": 9,
    "Name": "",
-   "Parent": 4294967295,
+   "Parent": 16,
    "PointLight": {
     "Brightness": 16.0,
     "Colour": {
@@ -340,7 +340,7 @@
   {
    "ID": 10,
    "Name": "",
-   "Parent": 4294967295,
+   "Parent": 16,
    "PointLight": {
     "Brightness": 16.0,
     "Colour": {
@@ -374,7 +374,7 @@
   {
    "ID": 11,
    "Name": "",
-   "Parent": 4294967295,
+   "Parent": 16,
    "PointLight": {
     "Brightness": 16.0,
     "Colour": {
@@ -408,7 +408,7 @@
   {
    "ID": 12,
    "Name": "",
-   "Parent": 4294967295,
+   "Parent": 16,
    "PointLight": {
     "Brightness": 64.0,
     "Colour": {
@@ -445,24 +445,24 @@
     "InputParams": {
      "Floats": [
       {
-       "Key": "Z Max",
-       "Value": 6.0
-      },
-      {
        "Key": "X Min",
        "Value": -11.0
       },
       {
-       "Key": "Max Radius",
+       "Key": "Z Max",
        "Value": 6.0
+      },
+      {
+       "Key": "X Max",
+       "Value": 11.0
       },
       {
        "Key": "Z Min",
        "Value": -6.0
       },
       {
-       "Key": "X Max",
-       "Value": 11.0
+       "Key": "Max Radius",
+       "Value": 6.0
       },
       {
        "Key": "Max Brightness",
@@ -473,12 +473,12 @@
        "Value": 1.0
       },
       {
-       "Key": "Min Brightness",
-       "Value": 1.0
-      },
-      {
        "Key": "Y Max",
        "Value": 12.0
+      },
+      {
+       "Key": "Min Brightness",
+       "Value": 1.0
       },
       {
        "Key": "Min Radius",
@@ -501,7 +501,7 @@
      "Ints": [
       {
        "Key": "Light Count",
-       "Value": 256
+       "Value": 64
       }
      ]
     },
@@ -519,7 +519,43 @@
      "SourcePath": "testlevels\\scripts\\bouncy_lights.lua"
     }
    },
-   "Name": "BouncyLights",
+   "Name": "BouncyLights Script",
+   "Parent": 4294967295
+  },
+  {
+   "EnvironmentSettings": {
+    "Sky Ambient": 0.06750000268220901,
+    "Sky Colour": {
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Sun Ambient": 0.08499998599290848,
+    "Sun Brightness": 1.7000001668930054,
+    "Sun Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Sun Direction": {
+     "X": -0.10000000149011612,
+     "Y": -1.0,
+     "Z": -0.10000000149011612
+    },
+    "Tonemap Type": 7
+   },
+   "ID": 14,
+   "Name": "Globals",
+   "Parent": 4294967295
+  },
+  {
+   "ID": 15,
+   "Name": "Sponza",
+   "Parent": 4294967295
+  },
+  {
+   "ID": 16,
+   "Name": "Lights",
    "Parent": 4294967295
   }
  ],

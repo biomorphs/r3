@@ -1,0 +1,7115 @@
+{
+ "AllEntities": [
+  {
+   "EnvironmentSettings": {
+    "Sky Ambient": 0.004999999888241291,
+    "Sky Colour": {
+     "X": 0.013169873505830765,
+     "Y": 0.04709765687584877,
+     "Z": 0.18145161867141724
+    },
+    "Sun Ambient": 0.00800000037997961,
+    "Sun Brightness": 4.0,
+    "Sun Colour": {
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Sun Direction": {
+     "X": 0.4000000059604645,
+     "Y": -0.800000011920929,
+     "Z": 1.0
+    },
+    "Tonemap Type": 2
+   },
+   "ID": 0,
+   "Name": "Globals",
+   "Parent": 1
+  },
+  {
+   "ID": 1,
+   "Name": "New World",
+   "Parent": 4294967295
+  },
+  {
+   "ID": 2,
+   "Name": "BistroExterior.fbx",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 2
+    },
+    "Model": {
+     "Path": "downloaded\\Bistro_v5_2\\BistroExterior.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Stringlights_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Stringlights_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StringLights_01_Orange_Color_Emissive_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StringLights_01_Orange_Color_Emissive_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StringLights_01_Blue_Color_Emissive_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StringLights_01_Blue_Color_Emissive_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StringLights_01_White_Color_Emissive_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StringLights_01_White_Color_Emissive_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StringLights_01_Pink_Color_Emissive_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StringLights_01_Pink_Color_Emissive_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StringLights_01_Red_Color_Emissive_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StringLights_01_Red_Color_Emissive_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StringLights_01_Green_Color_Emissive_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StringLights_01_Green_Color_Emissive_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Bistro_Main_Door_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Bistro_Main_Door_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Curbstones_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Curbstones_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Manhole_Cover_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Manhole_Cover_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Cobblestone_Wet_BLENDSHADER_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Cobblestone_Wet_BLENDSHADER_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Focus_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Focus_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Emissive_StreetLight_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Emissive_StreetLight_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Spotlight_Glass_Emissive_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Spotlight_Glass_Emissive_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\LanternEmissive_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\LanternEmissive_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Trashcan_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Trashcan_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Banner_Metal_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Banner_Metal_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Spotlight_Main_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Spotlight_Main_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Spotlight_Emissive_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Spotlight_Emissive_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_TrafficSign_A_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_TrafficSign_A_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Table_Terrace_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Table_Terrace_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StreetSign_01_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StreetSign_01_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StreetPivot_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StreetPivot_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Streetlight_Metal_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Streetlight_Metal_Normal.dds"
+      },
+      "Roughness": 0.25,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StringLights_01_White_Color_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StringLights_01_White_Color_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Streetlight_Support_Bulb_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Streetlight_Support_Bulb_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Streetlight_Chains_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Streetlight_Chains_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Concrete3_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Concrete3_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Brick_Small_Red_BLENDSHADER_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Brick_Small_Red_BLENDSHADER_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Ground_Wet_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Ground_Wet_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Cobble_Leaves_BLENDSHADER_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Cobble_Leaves_BLENDSHADER_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Cobblestone_01_BLENDSHADER_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Cobblestone_01_BLENDSHADER_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Cobblestone_Wet_Leaves_BLENDSHADER_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Cobblestone_Wet_Leaves_BLENDSHADER_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Cobblestone_Small_BLENDSHADER_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Cobblestone_Small_BLENDSHADER_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Cobblestone_Big_BLENDSHADER_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Cobblestone_Big_BLENDSHADER_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Brick_BLENDSHADER_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Brick_BLENDSHADER_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Cobblestone_02_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Cobblestone_02_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Sidewalkbarrier_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Sidewalkbarrier_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Shopsign_Pharmacy_Emissive_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Shopsign_Pharmacy_Emissive_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Shopsign_Book_Store_Emissive_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Shopsign_Book_Store_Emissive_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Antenna_Metal_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Antenna_Metal_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Shopsign_Bakery_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Shopsign_Bakery_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Metal_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Metal_Normal.dds"
+      },
+      "Roughness": 0.30000001192092896,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Shopsign_Ties_Shop_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Shopsign_Ties_Shop_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Plantpots_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Plantpots_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\NapkinHolder_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\NapkinHolder_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MenuSign_02_Mesh_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MenuSign_02_Mesh_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MenuSign_02_Glass_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MenuSign_02_Glass_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MenuSign_01_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MenuSign_01_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Balcony_Concrete_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Balcony_Concrete_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Balcony_Trims_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Balcony_Trims_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Balcony_Ornaments_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Balcony_Ornaments_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Balcony_Green_Wood_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Balcony_Green_Wood_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Glass_Dirty_MASKED_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Glass_Dirty_MASKED_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_01_Glass_Wine_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_01_Glass_Wine_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_01_Caps_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_01_Caps_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_01_Labels_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_01_Labels_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Paris_Flowers_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Paris_Flowers_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Flowers_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Flowers_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\ElectricBox_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\ElectricBox_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Concrete_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Concrete_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Concrete_Striped_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Concrete_Striped_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Concrete2_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Concrete2_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Black_Metal_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Black_Metal_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Chimneys_Metal_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Chimneys_Metal_Normal.dds"
+      },
+      "Roughness": 0.30000001192092896,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Plaster_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Plaster_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Chair_01_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Chair_01_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Grain_Metal_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Grain_Metal_Normal.dds"
+      },
+      "Roughness": 0.4000000059604645,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Curtains_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Curtains_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Plaster_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Plaster_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Roofing_Shingle_Grey_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Roofing_Shingle_Grey_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Wood_Painted_Green_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Wood_Painted_Green_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Room_Interior_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Room_Interior_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Brick_Large_Beige_BLENDSHADER_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Brick_Large_Beige_BLENDSHADER_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Doors_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Doors_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Forge_Metal_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Forge_Metal_Normal.dds"
+      },
+      "Roughness": 0.30000001192092896,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Wood_Brown_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Wood_Brown_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Grooved_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Grooved_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Smooth_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Smooth_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Plaster1_BLENDSHADER_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Plaster1_BLENDSHADER_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Plastic_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Plastic_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Frosted_Glass_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Frosted_Glass_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Awning_Fabric_Red_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Awning_Fabric_Red_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Boulangerie_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Boulangerie_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Awning_Beams_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Awning_Beams_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Roofing_Metal_01_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Roofing_Metal_01_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Details_Dark_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Details_Dark_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Rollup_Door_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Rollup_Door_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Building_Details_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Building_Details_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Wood_Painted_Cyan_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Wood_Painted_Cyan_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Glass_Dirty_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Glass_Dirty_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Awning_Fabric_Cyan_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Awning_Fabric_Cyan_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Wood_Painted3_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Wood_Painted3_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Bronze_BLENDSHADER_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Bronze_BLENDSHADER_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Wood_Painted_Green_BLENDSHADER_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Wood_Painted_Green_BLENDSHADER_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Smooth_BLENDSHADER_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Smooth_BLENDSHADER_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Book_Covers_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Book_Covers_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_White_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_White_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Brick_Small_Red_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Brick_Small_Red_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Brick_Large_White_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Brick_Large_White_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Light_Bulb_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Light_Bulb_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Glass_Exterior_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Glass_Exterior_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Side_Letters_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Side_Letters_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete1_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete1_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Focus_Ornament_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Focus_Ornament_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Metal_Pipe_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Metal_Pipe_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Wood_Polished_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Wood_Polished_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Yellow_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Yellow_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Roofing_Shingle_Green_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Roofing_Shingle_Green_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Trim_Cornice_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Trim_Cornice_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Bollards_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Bollards_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Bistro_Sign_Main_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Bistro_Sign_Main_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Bistro_Sign_Letters_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Bistro_Sign_Letters_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Awnings_Hotel_Fabric_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Awnings_Hotel_Fabric_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Awnings_Fabric_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Awnings_Fabric_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Awnings_Beams_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Awnings_Beams_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Ashtray_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Ashtray_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Antenna_Plastic_Blue_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Antenna_Plastic_Blue_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Antenna_Plastic_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Antenna_Plastic_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Linde_Tree_Large_Trunk_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Linde_Tree_Large_Trunk_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Linde_Tree_Large_Orange_Leaves_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Linde_Tree_Large_Orange_Leaves_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Linde_Tree_Large_Green_Leaves_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Linde_Tree_Large_Green_Leaves_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Ivy_branches_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Ivy_branches_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Ivy_leaf_a_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Ivy_leaf_a_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Bux_Hedges46_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Bux_Hedges46_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Vespa_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Vespa_Normal.dds"
+      },
+      "Roughness": 0.23000000417232513,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Vespa_Odometer_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Vespa_Odometer_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Vespa_Odometer_Glass_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Vespa_Odometer_Glass_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Leaves_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Leaves_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Trunk_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Trunk_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Vespa_Headlight_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Vespa_Headlight_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 3,
+   "Name": "BistroInterior.fbx",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 3
+    },
+    "Model": {
+     "Path": "downloaded\\Bistro_v5_2\\BistroInterior.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Cashregister_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Cashregister_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Cashregister_Buttons_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Cashregister_Buttons_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Cashregister_Glass_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Cashregister_Glass_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Coasters_01_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Coasters_01_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\ToffeeJar_Metal_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\ToffeeJar_Metal_Normal.dds"
+      },
+      "Roughness": 0.30000001192092896,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\ToffeeJar_Label_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\ToffeeJar_Label_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\CookieJar_Cookies_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\CookieJar_Cookies_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 0.19999998807907104,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\TransparentGlass_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\TransparentGlass_Normal.dds"
+      },
+      "Roughness": -2.200000047683716,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_01_Glass_Wine_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_01_Glass_Wine_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_01_Caps_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_01_Caps_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Metal_Chrome1_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Metal_Chrome1_Normal.dds"
+      },
+      "Roughness": 0.10000000149011612,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Cloth_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Cloth_Normal.dds"
+      },
+      "Roughness": 0.4000000059604645,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Table_cloth_01_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Table_cloth_01_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\curtainA_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\curtainA_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\curtainB1_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\curtainB1_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Cutlery_chrome_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Cutlery_chrome_Normal.dds"
+      },
+      "Roughness": 0.20000000298023224,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Cutlery_details_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Cutlery_details_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Doormat_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Doormat_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\NapkinHolder_01_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\NapkinHolder_01_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Trolley_Plastic_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Trolley_Plastic_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Trolley_Wheels_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Trolley_Wheels_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Trolley_Wood_Painted_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Trolley_Wood_Painted_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_BarStool_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_BarStool_Normal.dds"
+      },
+      "Roughness": 0.20000000298023224,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Beertap_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Beertap_Normal.dds"
+      },
+      "Roughness": 0.30000001192092896,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Plaster_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Plaster_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Wood_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Wood_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Wooden_stuco_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Wooden_stuco_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Plaster_Red_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Plaster_Red_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Wood_Painted3_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Wood_Painted3_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Grid_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Grid_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Brushed_Metal_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Brushed_Metal_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Plaster2_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Plaster2_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Frozen_Glass_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Frozen_Glass_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Floor_Tile_Hexagonal_BLENDSHADER_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Floor_Tile_Hexagonal_BLENDSHADER_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Paris_Bartrim_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Paris_Bartrim_Normal.dds"
+      },
+      "Roughness": 0.30000001192092896,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_White_Plastic_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_White_Plastic_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Grid1_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Grid1_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Material_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Material_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Paris_Lantern_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Paris_Lantern_Normal.dds"
+      },
+      "Roughness": 0.4000000059604645,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Ceiling_Lamp_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Ceiling_Lamp_Normal.dds"
+      },
+      "Roughness": 0.4000000059604645,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_CeilingFan_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_CeilingFan_Normal.dds"
+      },
+      "Roughness": 0.20000000298023224,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Table_03_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Table_03_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Metal_Worn_01_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Metal_Worn_01_Normal.dds"
+      },
+      "Roughness": 0.4000000059604645,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Wood_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Wood_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Plastic_02_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Plastic_02_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Plants_Metal_Base_01_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Plants_Metal_Base_01_Normal.dds"
+      },
+      "Roughness": 0.4000000059604645,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Plants_plants_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Plants_plants_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_02_Glass_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_02_Glass_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_01_Glass_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_01_Glass_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_03_Glass_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_03_Glass_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Painting_Metal_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Painting_Metal_Normal.dds"
+      },
+      "Roughness": 0.30000001192092896,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Paintings_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Paintings_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Paintings_Glass_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Paintings_Glass_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Plates_Details_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Plates_Details_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Plates_Ceramic_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Plates_Ceramic_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Radiator_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Radiator_Normal.dds"
+      },
+      "Roughness": 0.6000000238418579,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Rubber_Bar_Mat_01_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Rubber_Bar_Mat_01_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Plastic_01_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Plastic_01_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\ToffeeJar_Toffee_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\ToffeeJar_Toffee_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Wall_Light_Interior_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Wall_Light_Interior_Normal.dds"
+      },
+      "Roughness": 0.4000000059604645,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Wall_Bulb_Light_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Wall_Bulb_Light_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Wall_Lamp_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Wall_Lamp_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Metal_Bronze_01_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\Metal_Bronze_01_Normal.dds"
+      },
+      "Roughness": 0.30000001192092896,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\WickerBasket_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\WickerBasket_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Glass_Exterior_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Glass_Exterior_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Bistro_Main_Door_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Bistro_Main_Door_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Yellow_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Yellow_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Grooved_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Grooved_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete1_BaseColor.dds"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete1_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 4,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 64.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 64.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -7.053685188293457,
+     "Y": 7.007452011108398,
+     "Z": -6.642682075500488
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 5,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 64.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 64.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -3.401461124420166,
+     "Y": 7.007452011108398,
+     "Z": 7.3183746337890625
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 6,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 64.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 64.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -2.706653594970703,
+     "Y": 7.007452011108398,
+     "Z": 15.671536445617676
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 7,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 64.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 64.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -15.506111145019531,
+     "Y": 7.007452011108398,
+     "Z": 3.470365047454834
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 8,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 64.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 64.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 12.389758110046387,
+     "Y": 7.007452011108398,
+     "Z": 13.65331745147705
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 9,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 64.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 64.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 34.56504440307617,
+     "Y": 7.007452011108398,
+     "Z": 30.072837829589844
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 10,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 64.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 64.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 33.2098388671875,
+     "Y": 7.154353141784668,
+     "Z": 20.31939125061035
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 11,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 64.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 64.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 56.20989990234375,
+     "Y": 7.154353141784668,
+     "Z": 29.300830841064453
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 12,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 64.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 64.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 53.14634323120117,
+     "Y": 7.154353141784668,
+     "Z": 38.66606903076172
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 13,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 64.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 64.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 62.16433334350586,
+     "Y": 7.154353141784668,
+     "Z": 54.236568450927734
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 14,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 64.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 64.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 79.20508575439453,
+     "Y": 7.154353141784668,
+     "Z": 54.995750427246094
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 15,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 64.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 64.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 6.207468032836914,
+     "Y": 7.007452011108398,
+     "Z": -33.789817810058594
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 16,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 8.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 0.5525494813919067,
+     "Z": 0.13306450843811035
+    },
+    "Distance": 8.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.4223310351371765,
+     "Y": 2.583462953567505,
+     "Z": 0.5059760212898254
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 17,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 8.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 0.5525494813919067,
+     "Z": 0.13306450843811035
+    },
+    "Distance": 8.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -0.936687171459198,
+     "Y": 2.583462953567505,
+     "Z": -2.82763671875
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 18,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 8.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 0.5525494813919067,
+     "Z": 0.13306450843811035
+    },
+    "Distance": 8.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.5620583295822144,
+     "Y": 2.583462953567505,
+     "Z": -5.463656902313232
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 19,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 8.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 0.5525494813919067,
+     "Z": 0.13306450843811035
+    },
+    "Distance": 8.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 1.9873872995376587,
+     "Y": 2.583462953567505,
+     "Z": -8.064438819885254
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 20,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 8.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 0.5525494813919067,
+     "Z": 0.13306450843811035
+    },
+    "Distance": 8.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 3.3618950843811035,
+     "Y": 2.583462953567505,
+     "Z": 1.846710205078125
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 21,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 8.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 0.5525494813919067,
+     "Z": 0.13306450843811035
+    },
+    "Distance": 8.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 6.174665927886963,
+     "Y": 2.583462953567505,
+     "Z": 2.9689791202545166
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 22,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 4.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 0.5525494813919067,
+     "Z": 0.13306450843811035
+    },
+    "Distance": 8.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 8.032479286193848,
+     "Y": 2.981987953186035,
+     "Z": 1.0560238361358643
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 23,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 4.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 0.5525494813919067,
+     "Z": 0.13306450843811035
+    },
+    "Distance": 8.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 5.148226261138916,
+     "Y": 2.981987953186035,
+     "Z": -0.4796864986419678
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 24,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 4.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 0.5525494813919067,
+     "Z": 0.13306450843811035
+    },
+    "Distance": 8.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 4.284615516662598,
+     "Y": 2.981987953186035,
+     "Z": -4.999916076660156
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "Camera": {
+    "FOV": 70.0,
+    "Far Plane": 5000.0,
+    "Near Plane": 0.10000000149011612
+   },
+   "ID": 25,
+   "Name": "",
+   "Parent": 4294967295,
+   "Transform": {
+    "Orientation": {
+     "W": -4.371138473402425e-08,
+     "X": 4.371139183945161e-08,
+     "Y": 1.0,
+     "Z": 4.371139183945161e-08
+    },
+    "Position": {
+     "X": 9.12021541595459,
+     "Y": 2.020419120788574,
+     "Z": -0.07848882675170898
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  }
+ ],
+ "WorldName": "New World"
+}
