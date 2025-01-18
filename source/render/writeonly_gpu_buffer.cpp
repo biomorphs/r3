@@ -38,6 +38,7 @@ namespace R3
 				return newDataOffset;
 			}
 		}
+		LogWarn("Failed to allocate space in gpu buffer");
 		return -1;
 	}
 
@@ -46,22 +47,30 @@ namespace R3
 		R3_PROF_EVENT();
 		if (sizeBytes == 0 || writeStartOffset == -1 || (writeStartOffset + sizeBytes) > m_allDataCurrentSizeBytes.load())
 		{
+			LogWarn("Invalid gpu buffer write cmd");
 			return false;
 		}
 		if (sizeBytes > m_stagingMaxSize)
 		{
+			LogWarn("Gpu buffer write too big for staging buffer");
 			return false;
 		}
 
 		uint64_t stagingOffset = m_stagingEndOffset.fetch_add(sizeBytes);
 		// if staging buffer is full, reset it
 		// this is NOT safe, we need multiple staging buffers to do it properly
-		if (stagingOffset + sizeBytes >= m_stagingMaxSize)
+		if (stagingOffset == m_stagingMaxSize)
 		{
 			m_stagingEndOffset.store(0);
 			stagingOffset = 0;
 		}
-		if (stagingOffset + sizeBytes < m_stagingMaxSize)
+		else if (stagingOffset + sizeBytes > m_stagingMaxSize)	// write over end of buffer, dangerous wraparound
+		{
+			m_stagingEndOffset.store(0);
+			stagingOffset = 0;	
+			LogWarn("Dangerous staging buffer wraparound");
+		}
+		if (stagingOffset + sizeBytes <= m_stagingMaxSize)
 		{
 			uint8_t* stagingPtr = static_cast<uint8_t*>(m_stagingMappedPtr) + stagingOffset;
 			memcpy(stagingPtr, data, sizeBytes);
@@ -72,6 +81,10 @@ namespace R3
 			newWrite.m_targetOffset = writeStartOffset;
 			m_stagingWrites.enqueue(newWrite);
 			return true;
+		}
+		else
+		{
+			LogError("Write too big for gpu data buffer");
 		}
 
 		return false;
