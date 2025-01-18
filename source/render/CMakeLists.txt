@@ -1,4 +1,6 @@
 set(RenderLib_SourceFiles
+	timestamp_queries_handler.h
+	timestamp_queries_handler.cpp
 	render_target_cache.h
 	render_target_cache.cpp
 	render_graph.h

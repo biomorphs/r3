@@ -9,10 +9,12 @@
 #include "core/platform.h"
 #include "engine/systems/event_system.h"
 #include "engine/systems/time_system.h"
+#include "engine/imgui_menubar_helper.h"
 #include "vulkan_helpers.h"
 #include "buffer_pool.h"
 #include "pipeline_builder.h"
 #include "command_buffer_allocator.h"
+#include "timestamp_queries_handler.h"
 #include <vulkan/vk_enum_string_helper.h>
 #include <SDL.h>
 #include <SDL_events.h>
@@ -30,6 +32,7 @@ namespace R3
 		VkSemaphore m_renderFinishedSemaphore = VK_NULL_HANDLE;	// signalled when m_graphicsCmdBuffer has been fully submitted to a queue
 		VkFence m_inFlightFence = VK_NULL_HANDLE;				// signalled when previous cmd buffer finished executing (initialised as signalled)
 		DeletionQueue m_deleters;								// queue of objects to be deleted this frame
+		TimestampQueriesHandler m_timestamps;					// per-frame timestamp handler for profiling
 	};
 
 	struct AllocatedImage
@@ -73,7 +76,6 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 
-		// start writing
 		VkCommandBufferBeginInfo beginInfo = { 0 };
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		if (!CheckResult(vkBeginCommandBuffer(cmdBuffer, &beginInfo)))	// resets the cmd buffer
@@ -82,8 +84,12 @@ namespace R3
 			return;
 		}
 		{
+			auto& timestamps = m_vk->ThisFrameData().m_timestamps;
+			timestamps.Reset(cmdBuffer);	// reset timestamp query pool for this frame
 			R3_PROF_GPU_COMMANDS(cmdBuffer);
 			R3_PROF_GPU_EVENT("RunGraph");
+
+			auto thisFrameTime = timestamps.MakeScopedQuery("Total Render Time");
 
 			// Pass the current swap chain info to the target cache (so it can be accessed from the graph)
 			RenderTargetInfo swapInfo("Swapchain");
@@ -97,6 +103,7 @@ namespace R3
 			ctx.m_device = m_device.get();
 			ctx.m_graphicsCmds = cmdBuffer;
 			ctx.m_targets = m_renderTargets.get();
+			ctx.m_timestampHandler = &timestamps;
 			m_renderGraph->Run(ctx);
 
 			// Transition swap chain image to format optimal for present
@@ -163,11 +170,27 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 
+		auto& debugMenu = MenuBar::MainMenu().GetSubmenu("Debug");
+		debugMenu.AddItem("Show GPU Profiler", [this]() {
+			m_showGpuProfiler = true;
+		});
+
 		auto timeSys = GetSystem<TimeSystem>();
 		auto str = std::format("FPS/Frame Time: {:.1f} / {:.4f}ms", 1.0 / timeSys->GetVariableDeltaTime(), timeSys->GetVariableDeltaTime());
 		auto strSizePixels = ImGui::CalcTextSize(str.data());
 		ImGui::GetForegroundDrawList()->AddText({ GetWindowExtents().x - strSizePixels.x - 2,2}, 0xffffffff, str.c_str());
 
+		if (m_showGpuProfiler)
+		{
+			ImGui::Begin("GPU Profiler", &m_showGpuProfiler);
+			auto scopedTimestampValues = m_vk->ThisFrameData().m_timestamps.GetScopedResults();
+			for (const auto& result : scopedTimestampValues)
+			{
+				std::string txt = std::format("{} - {:.3f}ms", result.m_name, result.m_endTime - result.m_startTime);
+				ImGui::Text(txt.c_str());
+			}
+			ImGui::End();
+		}
 		return true;
 	}
 
@@ -277,6 +300,9 @@ namespace R3
 			return false;
 		}
 
+		auto& fd = m_vk->ThisFrameData();
+
+		fd.m_timestamps.CollectResults(*m_device);	// cache results for the previous frame queries
 		RunGraph(*m_renderGraph, graphicsCmds->m_cmdBuffer, m_swapChain->GetImages()[m_currentSwapImage], m_swapChain->GetViews()[m_currentSwapImage]);
 
 		// submit the cmd buffer to the graphics queue
@@ -287,7 +313,6 @@ namespace R3
 
 		// we describe which sync objects to wait on before execution can begin
 		// and at which stage in the pipeline we should wait for them
-		auto& fd = m_vk->ThisFrameData();
 		VkSemaphore waitSemaphores[] = { fd.m_imageAvailableSemaphore };	// wait on the newly aquired image to be available 
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };	// wait before we try to write to its colour attachments
 		submitInfo.waitSemaphoreCount = 1;
@@ -407,6 +432,11 @@ namespace R3
 			LogError("Failed to create sync objects");
 			return false;
 		}
+		if (!CreateTimestampHandlers())
+		{
+			LogError("Failed to create timestamp handlers");
+			return false;
+		}
 
 		m_renderTargets = std::make_unique<RenderTargetCache>();
 		m_mainDeleters.PushDeleter([&]() {
@@ -520,6 +550,24 @@ namespace R3
 			vkDestroyFence(m_device->GetVkDevice(), m_vk->m_immediateSubmitFence, nullptr);
 		});
 		
+		return true;
+	}
+
+	bool RenderSystem::CreateTimestampHandlers()
+	{
+		R3_PROF_EVENT();
+
+		for (int f = 0; f < c_maxFramesInFlight; ++f)
+		{
+			FrameData& fd = m_vk->m_perFrameData[f];
+			fd.m_timestamps.Initialise(*m_device, 128);
+
+			m_mainDeleters.PushDeleter([&, f]() 
+			{
+				m_vk->m_perFrameData[f].m_timestamps.Cleanup(*m_device);
+			});
+		}
+
 		return true;
 	}
 	

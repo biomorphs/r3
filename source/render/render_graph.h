@@ -12,6 +12,7 @@
 namespace R3
 {
 	class Device;
+	class TimestampQueriesHandler;
 
 	// base render graph pass node
 	class RenderGraphPass
@@ -84,6 +85,7 @@ namespace R3
 			Device* m_device = nullptr;
 			RenderTargetCache* m_targets = nullptr;
 			VkCommandBuffer m_graphicsCmds;	// main cmd buffer
+			TimestampQueriesHandler* m_timestampHandler = nullptr;
 		};
 		void Run(GraphContext& context);
 

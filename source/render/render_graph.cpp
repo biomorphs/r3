@@ -1,5 +1,6 @@
 #include "render_graph.h"
 #include "device.h"
+#include "timestamp_queries_handler.h"
 #include "core/profiler.h"
 #include "core/log.h"
 
@@ -237,6 +238,8 @@ namespace R3
 		R3_PROF_EVENT();
 		for (uint32_t p = 0; p < m_allPasses.size(); ++p)
 		{
+			auto passTimestamp = context.m_timestampHandler->MakeScopedQuery(m_allPasses[p]->m_name);
+
 			RenderPassContext rpc;
 			rpc.m_device = context.m_device;
 			rpc.m_pass = m_allPasses[p].get();

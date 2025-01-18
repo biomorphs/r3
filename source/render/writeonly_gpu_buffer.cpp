@@ -72,24 +72,24 @@ namespace R3
 		R3_PROF_EVENT();
 		if (m_stagingBuffer.m_buffer.m_buffer == VK_NULL_HANDLE || m_stagingBuffer.m_mappedBuffer == nullptr)
 		{
-			LogError("Gpu buffer has no staging buffer!");
+			LogError("Gpu buffer {} has no staging buffer!", m_debugName);
 			return false;
 		}
 		if (sizeBytes == 0 || writeStartOffset == -1 || (writeStartOffset + sizeBytes) > m_allDataCurrentSizeBytes.load())
 		{
-			LogWarn("Invalid gpu buffer write cmd");
+			LogWarn("Invalid gpu buffer write cmd for {}", m_debugName);
 			return false;
 		}
 		if (sizeBytes > m_stagingMaxSize)
 		{
-			LogWarn("Gpu buffer write too big for staging buffer");
+			LogWarn("Gpu buffer {} write too big for staging buffer", m_debugName);
 			return false;
 		}
 
 		uint64_t stagingOffset = m_stagingEndOffset.fetch_add(sizeBytes);
 		if (stagingOffset + sizeBytes > m_stagingMaxSize)	// staging buffer too small
 		{
-			LogError("Write-only gpu buffer staging size too small!");
+			LogError("Write-only gpu buffer {} staging size too small!", m_debugName);
 			return false;
 		}
 		if (stagingOffset + sizeBytes <= m_stagingMaxSize)
@@ -106,7 +106,7 @@ namespace R3
 		}
 		else
 		{
-			LogError("Write too big for gpu data buffer");
+			LogError("Write too big for gpu data buffer {}", m_debugName);
 		}
 
 		return false;

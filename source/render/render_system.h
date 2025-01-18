@@ -52,6 +52,7 @@ namespace R3
 		bool DrawFrame();
 		bool CreateWindow();
 		bool CreateSyncObjects();
+		bool CreateTimestampHandlers();
 		bool RecreateSwapchain();
 		bool PrepareSwapchain();
 		void OnSystemEvent(void* ev);
@@ -60,6 +61,7 @@ namespace R3
 		bool ShouldEnableVsync();
 		bool m_isWindowMinimised = false;
 		bool m_recreateSwapchain = false;
+		bool m_showGpuProfiler = false;
 		std::unique_ptr<RenderTargetCache> m_renderTargets;
 		std::unique_ptr<RenderGraph> m_renderGraph;
 		std::unique_ptr<Window> m_mainWindow;

@@ -681,7 +681,11 @@ namespace R3
 						SwapchainDescriptor swapChainSupport = GetMatchingSwapchains(devices[i].m_device, surface);
 						if (swapChainSupport.m_formats.size() > 0 && swapChainSupport.m_presentModes.size() > 0)
 						{
-							return i;
+							// does it support graphics + compute timestamp queries?
+							if (devices[i].m_properties.limits.timestampPeriod > 0 && devices[i].m_properties.limits.timestampComputeAndGraphics)
+							{
+								return i;
+							}
 						}
 					}
 				}
