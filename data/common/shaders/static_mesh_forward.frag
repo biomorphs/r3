@@ -12,24 +12,11 @@ layout(location = 3) in flat uint inMaterialIndex;
 layout(location = 4) in mat3 inTBN;
 layout(location = 0) out vec4 outColour;
 
-// Applies normal map if the material has one
-vec3 GetWorldspaceNormal(StaticMeshMaterial material, vec2 texCoords)
-{
-	vec3 normal = normalize(inWorldspaceNormal);
-	if(material.m_normalTexture != -1)	// normal mapping
-	{
-		normal = texture(allTextures[material.m_normalTexture],texCoords).xyz;
-		normal = normalize(normal * 2.0 - 1.0);
-		normal = normalize(inTBN * normal);
-	}
-	return normal;
-}
-
 void main() {
 	GlobalConstants globals = PushConstants.m_globals.AllGlobals[0];
 	vec3 viewDir = normalize(globals.m_cameraWorldSpacePos.xyz - inWorldSpacePos);
 	StaticMeshMaterial myMaterial = globals.m_materialBuffer.materials[inMaterialIndex];
-	vec3 normal = GetWorldspaceNormal(myMaterial, inUV);
+	vec3 normal = GetWorldspaceNormal(inWorldspaceNormal, myMaterial.m_normalTexture, inTBN, inUV);
 	
 	PBRMaterial mat;
 	float finalAlpha = myMaterial.m_albedoOpacity.a;

@@ -25,6 +25,20 @@ mat3 CalculateTBN(mat4 modelMat, vec3 tangent, vec3 normal)
 	return mat3(T, B, N); 
 }
 
+// performs normal mapping using a 2 channel view-space normal map
+vec3 GetWorldspaceNormal(vec3 worldSpaceNormal, uint normalMapTexture, mat3 tbn, vec2 texCoords)
+{
+	vec3 normal = normalize(worldSpaceNormal);
+	if(normalMapTexture != -1)	// normal mapping
+	{
+		normal.xy = texture(allTextures[normalMapTexture],texCoords).xy;
+		normal.xy = normal.xy * 2.0 - 1.0;		// convert to -1,1
+		normal.z = sqrt(1.0 - (normal.x*normal.x) - (normal.y*normal.y));	// infer 3rd channel from x,y
+		normal = normalize(tbn * normal);
+	}
+	return normal;
+}
+
 vec2 ParallaxMappingBasic(uint heightTexId, vec2 texCoords, vec3 viewDir, float paralaxAmount)
 { 
     float height =  1.0 - texture(allTextures[heightTexId],texCoords).r;

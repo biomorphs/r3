@@ -14,23 +14,10 @@ layout(location = 0) out vec4 outWorldSpacePositionMetal;	// world space positio
 layout(location = 1) out vec4 outWorldNormalRoughness;	// world space normal + roughness
 layout(location = 2) out vec4 outAlbedoAO;	// albedo + AO
 
-// Applies normal map if the material has one
-vec3 GetWorldspaceNormal(StaticMeshMaterial material, vec2 texCoords)
-{
-	vec3 normal = normalize(inWorldspaceNormal);
-	if(material.m_normalTexture != -1)	// normal mapping
-	{
-		normal = texture(allTextures[material.m_normalTexture],texCoords).xyz;
-		normal = normalize(normal * 2.0 - 1.0);
-		normal = normalize(inTBN * normal);
-	}
-	return normal;
-}
-
 void main() {
 	GlobalConstants globals = PushConstants.m_globals.AllGlobals[0];
 	StaticMeshMaterial myMaterial = globals.m_materialBuffer.materials[inMaterialIndex];
-	vec3 normal = GetWorldspaceNormal(myMaterial, inUV);
+	vec3 normal = GetWorldspaceNormal(inWorldspaceNormal, myMaterial.m_normalTexture, inTBN, inUV);
 	
 	vec3 albedo = myMaterial.m_albedoOpacity.xyz;
 	float finalAlpha = myMaterial.m_albedoOpacity.a;
