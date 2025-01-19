@@ -1,0 +1,188 @@
+{
+ "AllEntities": [
+  {
+   "EnvironmentSettings": {
+    "Sky Ambient": 0.004999999888241291,
+    "Sky Colour": {
+     "X": 0.013169873505830765,
+     "Y": 0.04709765687584877,
+     "Z": 0.18145161867141724
+    },
+    "Sun Ambient": 0.00800000037997961,
+    "Sun Brightness": 4.0,
+    "Sun Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Sun Direction": {
+     "X": 0.4000000059604645,
+     "Y": -0.800000011920929,
+     "Z": 1.0
+    },
+    "Tonemap Type": 0
+   },
+   "ID": 0,
+   "Name": "Globals",
+   "Parent": 2
+  },
+  {
+   "ID": 1,
+   "Name": "Cube",
+   "Parent": 2,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 1
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.20000000298023224,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 128.0,
+     "Y": 1.0,
+     "Z": 128.0
+    }
+   }
+  },
+  {
+   "ID": 2,
+   "Name": "New World",
+   "Parent": 4294967295
+  },
+  {
+   "ID": 4,
+   "LuaScript": {
+    "InputParams": {
+     "Floats": [
+      {
+       "Key": "Z Max",
+       "Value": 64.0
+      },
+      {
+       "Key": "X Min",
+       "Value": -64.0
+      },
+      {
+       "Key": "Z Min",
+       "Value": -64.0
+      },
+      {
+       "Key": "X Max",
+       "Value": 64.0
+      },
+      {
+       "Key": "Y",
+       "Value": 4.0
+      }
+     ],
+     "IntVec2s": [],
+     "Ints": [
+      {
+       "Key": "Light X Count",
+       "Value": 16
+      },
+      {
+       "Key": "Light Z Count",
+       "Value": 16
+      }
+     ]
+    },
+    "IsActive": true,
+    "OnFixedUpdate": {
+     "EntryPoint": "LightsGridTest_FixedUpdate",
+     "SourcePath": "testlevels\\scripts\\lights_grid_test.lua"
+    },
+    "OnVariableUpdate": {
+     "EntryPoint": "",
+     "SourcePath": ""
+    },
+    "PopulateInputs": {
+     "EntryPoint": "LightsGridTest_PopulateInputs",
+     "SourcePath": "testlevels\\scripts\\lights_grid_test.lua"
+    }
+   },
+   "Name": "Script",
+   "Parent": 4294967295
+  },
+  {
+   "Camera": {
+    "FOV": 70.0,
+    "Far Plane": 5000.0,
+    "Near Plane": 0.10000000149011612
+   },
+   "ID": 5,
+   "Name": "Camera",
+   "Parent": 4294967295,
+   "Transform": {
+    "Orientation": {
+     "W": 0.7071068286895752,
+     "X": 0.7071068286895752,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 140.0,
+     "Z": 0.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  }
+ ],
+ "WorldName": "New World"
+}
