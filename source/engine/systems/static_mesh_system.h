@@ -1,6 +1,5 @@
 #pragma once 
 #include "engine/systems.h"
-#include "engine/model_data_handle.h"
 #include "render/vulkan_helpers.h"
 #include "render/writeonly_gpu_buffer.h"
 #include "core/glm_headers.h"
@@ -52,6 +51,7 @@ namespace R3
 	};
 
 	struct MeshVertex;
+	struct ModelDataHandle;
 	class StaticMeshSystem : public System
 	{
 	public:

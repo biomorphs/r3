@@ -1,12 +1,32 @@
 #include "model_data_system.h"
-#include "engine/async.h"
-#include "engine/imgui_menubar_helper.h"
+#include "engine/utils/async.h"
+#include "engine/ui/imgui_menubar_helper.h"
+#include "engine/serialiser.h"
 #include "core/profiler.h"
 #include <imgui.h>
 #include <format>
 
 namespace R3
 {
+	void ModelDataHandle::SerialiseJson(JsonSerialiser& s)
+	{
+		auto mm = Systems::GetSystem<ModelDataSystem>();
+		if (s.GetMode() == JsonSerialiser::Read)
+		{
+			std::string path = "";
+			s("Path", path);
+			if (!path.empty())
+			{
+				*this = mm->LoadModel(path.c_str());
+			}
+		}
+		else
+		{
+			std::string modelPath = mm->GetModelName(*this);
+			s("Path", modelPath);
+		}
+	}
+
 	void ModelDataSystem::RegisterTickFns()
 	{
 		R3_PROF_EVENT();

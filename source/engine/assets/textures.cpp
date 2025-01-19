@@ -1,5 +1,5 @@
 #include "textures.h"
-#include "engine/dds_loader.h"
+#include "dds_loader.h"
 #include "core/file_io.h"
 #include "core/log.h"
 #include "core/profiler.h"

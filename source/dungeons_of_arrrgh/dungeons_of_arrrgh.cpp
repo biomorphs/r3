@@ -18,7 +18,7 @@
 #include "engine/systems/camera_system.h"
 #include "engine/components/transform.h"
 #include "engine/components/static_mesh.h"
-#include "engine/intersection_tests.h"
+#include "engine/utils/intersection_tests.h"
 #include "render/render_system.h"
 #include "entities/systems/entity_system.h"
 #include "entities/queries.h"

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "engine/systems.h"
-#include "engine/texture_handle.h"
 #include "core/mutex.h"
 #include "core/glm_headers.h"
 #include <concurrentqueue/concurrentqueue.h>
@@ -21,6 +20,15 @@ namespace R3
 	class DescriptorSetSimpleAllocator;
 	class Device;
 	class AssetFile;
+
+	// Handle to a texture
+	struct TextureHandle
+	{
+		uint32_t m_index = -1;
+		static TextureHandle Invalid() { return { (uint32_t)-1 }; };
+		void SerialiseJson(class JsonSerialiser& s);
+	};
+
 	class TextureSystem : public System
 	{
 	public:

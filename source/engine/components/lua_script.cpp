@@ -1,6 +1,6 @@
 #include "lua_script.h"
 #include "engine/systems/lua_system.h"
-#include "engine/file_dialogs.h"
+#include "engine/ui/file_dialogs.h"
 #include <imgui.h>
 #include <sol/sol.hpp>
 

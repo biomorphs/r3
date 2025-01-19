@@ -1,7 +1,7 @@
 #pragma once
 
 #include "entities/component_helpers.h"
-#include "engine/tag.h"
+#include "engine/utils/tag.h"
 
 // contains all the stats/values associated with an item
 class DungeonsItemStatsComponent

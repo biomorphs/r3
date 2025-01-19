@@ -1,6 +1,6 @@
 #include "basic_value_inspector.h"
-#include "engine/file_dialogs.h"
-#include "engine/tag.h"
+#include "engine/ui/file_dialogs.h"
+#include "engine/utils/tag.h"
 #include "entities/entity_handle.h"
 #include "entities/systems/entity_system.h"
 #include "engine/systems/texture_system.h"

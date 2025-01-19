@@ -6,7 +6,7 @@
 #include "engine/systems/camera_system.h"
 #include "engine/components/transform.h"
 #include "engine/systems/input_system.h"
-#include "engine/intersection_tests.h"
+#include "engine/utils/intersection_tests.h"
 #include "engine/systems/immediate_render_system.h"
 
 namespace R3

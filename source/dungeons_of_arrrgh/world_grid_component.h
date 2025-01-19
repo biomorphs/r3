@@ -1,6 +1,6 @@
 #pragma once
 #include "entities/component_helpers.h"
-#include "engine/tag_set.h"
+#include "engine/utils/tag_set.h"
 #include <unordered_set>
 
 class DungeonsWorldGridComponent

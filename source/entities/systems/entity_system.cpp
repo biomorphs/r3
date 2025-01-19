@@ -1,6 +1,6 @@
 #include "entity_system.h"
 #include "entities/world.h"
-#include "engine/imgui_menubar_helper.h"
+#include "engine/ui/imgui_menubar_helper.h"
 #include "core/profiler.h"
 #include <cassert>
 #include <imgui.h>

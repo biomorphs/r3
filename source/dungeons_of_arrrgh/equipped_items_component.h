@@ -1,7 +1,7 @@
 #pragma once
 
 #include "entities/component_helpers.h"
-#include "engine/tag.h"
+#include "engine/utils/tag.h"
 #include <unordered_map>
 
 class DungeonsEquippedItemsComponent

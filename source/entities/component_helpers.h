@@ -4,7 +4,7 @@
 #include "entities/world.h"
 #include "entities/component_storage.h"
 #include "engine/serialiser.h"
-#include "engine/value_inspector.h"
+#include "engine/ui/value_inspector.h"
 
 // Some useful utilities for implementing components
 // These are all optional, but handy!

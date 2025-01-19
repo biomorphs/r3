@@ -1,7 +1,7 @@
 #pragma once
 
 #include "entities/component_helpers.h"
-#include "engine/tag.h"
+#include "engine/utils/tag.h"
 
 // A wearable item that can be equipped in a named slot
 // All callbacks should have the signature fn(actor entity, item entity)

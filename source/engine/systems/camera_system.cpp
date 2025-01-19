@@ -7,9 +7,9 @@
 #include "engine/systems/immediate_render_system.h"
 #include "engine/components/camera.h"
 #include "engine/components/transform.h"
-#include "engine/imgui_menubar_helper.h"
-#include "engine/frustum.h"
-#include "engine/flycam.h"
+#include "engine/ui/imgui_menubar_helper.h"
+#include "engine/utils/frustum.h"
+#include "engine/graphics/flycam.h"
 #include "entities/queries.h"
 #include "render/render_system.h"
 

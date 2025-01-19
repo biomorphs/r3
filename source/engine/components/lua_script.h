@@ -1,7 +1,7 @@
 #pragma once
 
 #include "entities/component_helpers.h"
-#include "engine/blackboard.h"
+#include "engine/utils/blackboard.h"
 #include <sol/sol.hpp>
 
 namespace R3

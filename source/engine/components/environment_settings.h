@@ -1,7 +1,7 @@
 #pragma once
 
 #include "entities/component_helpers.h"
-#include "engine/tonemap_compute.h"
+#include "engine/graphics/tonemap_compute.h"
 #include "core/glm_headers.h"
 
 namespace R3

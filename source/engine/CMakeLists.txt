@@ -1,56 +1,52 @@
 set(EngineLib_SourceFiles
-	tonemap_compute.h
-	tonemap_compute.cpp
-	deferred_lighting_compute.h
-	deferred_lighting_compute.cpp
-	tag.h
-	tag.cpp
-	tag_set.h
-	console_log_widget.h
-	console_log_widget.cpp
-	dda.h
-	dda.inl
-	blackboard.h
-	blackboard.cpp
-	dds_loader.h
-	dds_loader.cpp
-	asset_file.h
-	asset_file.cpp
-	intersection_tests.h
-	intersection_tests.cpp
-	async.h
-	async.cpp
-	model_data.h
-	model_data.cpp
-	texture_handle.h
-	texture_handle.cpp
-	model_data_handle.h
-	model_data_handle.cpp
+	assets/asset_file.h
+	assets/asset_file.cpp
+	assets/textures.h
+	assets/textures.cpp
+	assets/model_data.h
+	assets/model_data.cpp
+	assets/dds_loader.h
+	assets/dds_loader.cpp
+	graphics/tonemap_compute.h
+	graphics/tonemap_compute.cpp
+	graphics/deferred_lighting_compute.h
+	graphics/deferred_lighting_compute.cpp
+	graphics/flycam.h
+	graphics/flycam.cpp
+	ui/console_log_widget.h
+	ui/console_log_widget.cpp
+	ui/entity_list_widget.h
+	ui/entity_list_widget.cpp
+	ui/imgui_menubar_helper.h
+	ui/imgui_menubar_helper.cpp
+	ui/value_inspector.h
+	ui/entity_inspector_widget.h
+	ui/entity_inspector_widget.cpp
+	ui/basic_value_inspector.h
+	ui/basic_value_inspector.cpp
+	ui/file_dialogs.h
+	ui/file_dialogs.cpp
+	utils/tag.h
+	utils/tag.cpp
+	utils/tag_set.h
+	utils/dda.h
+	utils/dda.inl
+	utils/blackboard.h
+	utils/blackboard.cpp
+	utils/intersection_tests.h
+	utils/intersection_tests.cpp
+	utils/async.h
+	utils/async.cpp
+	utils/frustum.h
+	utils/frustum.cpp
+	frame_graph.h
+	frame_graph.cpp
 	engine_startup.h
 	engine_startup.cpp
 	systems.h
 	systems.cpp
-	frame_graph.h
-	frame_graph.cpp
 	serialiser.h
 	serialiser.cpp
-	entity_list_widget.h
-	entity_list_widget.cpp
-	imgui_menubar_helper.h
-	imgui_menubar_helper.cpp
-	value_inspector.h
-	entity_inspector_widget.h
-	entity_inspector_widget.cpp
-	basic_value_inspector.h
-	basic_value_inspector.cpp
-	file_dialogs.h
-	file_dialogs.cpp
-	frustum.h
-	frustum.cpp
-	flycam.h
-	flycam.cpp
-	textures.h
-	textures.cpp
 	register_engine_components.h
 	register_engine_components.cpp
 	systems/immediate_render_system.h

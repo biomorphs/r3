@@ -1,13 +1,20 @@
 #pragma once 
 
 #include "engine/systems.h"
-#include "engine/model_data.h"
-#include "engine/model_data_handle.h"
+#include "engine/assets/model_data.h"
 #include "core/callback_array.h"
 #include "core/mutex.h"
 
 namespace R3
 {
+	// Handle to model data
+	struct ModelDataHandle
+	{
+		uint32_t m_index = -1;
+		static ModelDataHandle Invalid() { return { (uint32_t)-1 }; };
+		void SerialiseJson(class JsonSerialiser& s);
+	};
+
 	// Use this to access the actual model data
 	class ModelDataValues
 	{

@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/value_inspector.h"
+#include "engine/ui/value_inspector.h"
 
 namespace R3
 {

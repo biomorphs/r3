@@ -3,7 +3,7 @@
 #include "engine/systems/texture_system.h"
 #include "engine/systems/model_data_system.h"
 #include "engine/systems/static_mesh_system.h"
-#include "engine/model_data.h"
+#include "engine/assets/model_data.h"
 #include <imgui.h>
 
 namespace R3

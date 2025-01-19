@@ -1,6 +1,6 @@
 #include "entity_inspector_widget.h"
-#include "engine/value_inspector.h"
-#include "engine/imgui_menubar_helper.h"
+#include "engine/ui/value_inspector.h"
+#include "engine/ui/imgui_menubar_helper.h"
 #include "engine/systems/imgui_system.h"	// for fonts
 #include "core/profiler.h"
 #include "entities/world.h"
