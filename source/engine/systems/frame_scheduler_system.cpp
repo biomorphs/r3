@@ -81,7 +81,7 @@ namespace R3
 		return gbufferPass;
 	}
 
-	std::unique_ptr<ComputeDrawPass> FrameScheduler::MakeDeferredLightingPass(const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainColour)
+	std::unique_ptr<ComputeDrawPass> FrameScheduler::MakeDeferredLightingPass(const RenderTargetInfo& mainDepth, const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainColour)
 	{
 		R3_PROF_EVENT();
 		auto lightingPass = std::make_unique<ComputeDrawPass>();
@@ -89,14 +89,16 @@ namespace R3
 		lightingPass->m_inputColourAttachments.push_back(positionBuffer);
 		lightingPass->m_inputColourAttachments.push_back(normalBuffer);
 		lightingPass->m_inputColourAttachments.push_back(albedoBuffer);
+		lightingPass->m_inputColourAttachments.push_back(mainDepth);
 		lightingPass->m_outputColourAttachments.push_back(mainColour);	// output to HDR colour
-		lightingPass->m_onRun.AddCallback([this, mainColour, positionBuffer, normalBuffer, albedoBuffer](RenderPassContext& ctx) {
+		lightingPass->m_onRun.AddCallback([this, mainDepth, mainColour, positionBuffer, normalBuffer, albedoBuffer](RenderPassContext& ctx) {
+			auto inDepth = ctx.GetResolvedTarget(mainDepth);
 			auto inPosMetal = ctx.GetResolvedTarget(positionBuffer);
 			auto inNormalRoughness = ctx.GetResolvedTarget(normalBuffer);
 			auto inAlbedoAO = ctx.GetResolvedTarget(albedoBuffer);
 			auto outTarget = ctx.GetResolvedTarget(mainColour);
 			auto outSize = ctx.m_targets->GetTargetSize(outTarget->m_info);
-			m_deferredLightingCompute->Run(*ctx.m_device, ctx.m_graphicsCmds, *inPosMetal, *inNormalRoughness, *inAlbedoAO, *outTarget, outSize);
+			m_deferredLightingCompute->Run(*ctx.m_device, ctx.m_graphicsCmds, *inDepth, *inPosMetal, *inNormalRoughness, *inAlbedoAO, *outTarget, outSize);
 		});
 		return lightingPass;
 	}
@@ -187,7 +189,7 @@ namespace R3
 	// This describes the entire renderer as a series of passes that run in series
 	bool FrameScheduler::BuildRenderGraph()
 	{
-		R3_PROF_EVENT();		
+		R3_PROF_EVENT();
 		auto render = GetSystem<RenderSystem>();
 		m_allCurrentTargets.clear();
 
@@ -199,7 +201,7 @@ namespace R3
 
 		RenderTargetInfo mainDepth("MainDepth");		// Main depth buffer
 		mainDepth.m_format = VK_FORMAT_D32_SFLOAT;		// may be overkill
-		mainDepth.m_usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+		mainDepth.m_usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 		mainDepth.m_aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
 		m_allCurrentTargets.push_back(mainDepth);
 
@@ -226,7 +228,7 @@ namespace R3
 		auto& graph = render->GetRenderGraph();
 		graph.m_allPasses.clear();
 		graph.m_allPasses.push_back(MakeGBufferPass(gBufferPosition, gBufferNormal, gBufferAlbedo, mainDepth));	// write gbuffer
-		graph.m_allPasses.push_back(MakeDeferredLightingPass(gBufferPosition, gBufferNormal, gBufferAlbedo, mainColour));	// deferred lighting
+		graph.m_allPasses.push_back(MakeDeferredLightingPass(mainDepth, gBufferPosition, gBufferNormal, gBufferAlbedo, mainColour));	// deferred lighting
 		graph.m_allPasses.push_back(MakeForwardPass(mainColour, mainDepth));	// forward render to main colour
 		graph.m_allPasses.push_back(MakeTonemapToLDRPass(mainColour, mainColourLDR));	// HDR -> LDR
 		graph.m_allPasses.push_back(MakeColourBlitToPass("LDR to swap", mainColourLDR, swapchainImage));	// blit LDR -> swap

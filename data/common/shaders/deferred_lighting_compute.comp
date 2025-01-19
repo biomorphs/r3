@@ -9,7 +9,8 @@ layout (local_size_x = 16, local_size_y = 16) in;
 layout(rgba16f,set = 0, binding = 0) uniform readonly image2D inWorldSpacePositionMetallic;
 layout(rgba16f,set = 0, binding = 1) uniform readonly image2D inWorldSpaceNormalRoughness;
 layout(rgba8,set = 0, binding = 2) uniform readonly image2D inAlbedoAO;
-layout(set = 0, binding = 3) uniform writeonly image2D hdrOutput;
+layout (set = 0, binding = 3) uniform sampler2D inDepthBuffer;
+layout(set = 0, binding = 4) uniform writeonly image2D hdrOutput;
 
 // send lighting buffer address via push constat
 layout(push_constant) uniform constants
@@ -39,48 +40,53 @@ void main()
 
 	ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
 	ivec2 size = imageSize(hdrOutput);
+	float depthValue = texelFetch(inDepthBuffer, texelCoord, 0).r;
 	if(texelCoord.x < size.x && texelCoord.y < size.y)
 	{
-		vec4 positionMetallic = imageLoad(inWorldSpacePositionMetallic, texelCoord);
-		vec4 normalRoughness = imageLoad(inWorldSpaceNormalRoughness, texelCoord);
-		vec4 albedoAO = imageLoad(inAlbedoAO, texelCoord);
-		vec3 viewDir = normalize(PushConstants.m_cameraWorldSpacePos.xyz - positionMetallic.xyz);
-		
-		PBRMaterial mat;	// set up PBR material params from gbuffer
-		mat.m_albedo = albedoAO.xyz;
-		mat.m_roughness = normalRoughness.w;
-		mat.m_metallic = positionMetallic.w;
-		mat.m_ao = albedoAO.w;
-
-		// Apply sun direct light
-		vec4 sunDirectionBrightness = lightsData.m_sunDirectionBrightness;
-		vec3 sunRadiance = lightsData.m_sunColourAmbient.xyz * sunDirectionBrightness.w;
-		vec3 directLight = PBRDirectLighting(mat, viewDir, -sunDirectionBrightness.xyz, normalRoughness.xyz, sunRadiance, 1.0);
-		
-		// Apply point lights (direct)
-		for(uint p=0;p<pointLightCount;++p)
+		vec3 finalLight = lightsData.m_skyColourAmbient.xyz;	// apply sky colour if no depth was written (probably should be a separate sky/skybox pass later)
+		if(depthValue != 1.0)
 		{
-			vec3 lightToPixel = sharedLights[p].m_positionDistance.xyz - positionMetallic.xyz;
-			float lightDistanceSq = dot(lightToPixel,lightToPixel);
-			float radiusSq = sharedLights[p].m_positionDistance.w * sharedLights[p].m_positionDistance.w;
-			if(lightDistanceSq < radiusSq)
+			vec4 positionMetallic = imageLoad(inWorldSpacePositionMetallic, texelCoord);
+			vec4 normalRoughness = imageLoad(inWorldSpaceNormalRoughness, texelCoord);
+			vec4 albedoAO = imageLoad(inAlbedoAO, texelCoord);
+			vec3 viewDir = normalize(PushConstants.m_cameraWorldSpacePos.xyz - positionMetallic.xyz);
+			
+			PBRMaterial mat;	// set up PBR material params from gbuffer
+			mat.m_albedo = albedoAO.xyz;
+			mat.m_roughness = normalRoughness.w;
+			mat.m_metallic = positionMetallic.w;
+			mat.m_ao = albedoAO.w;
+
+			// Apply sun direct light
+			vec4 sunDirectionBrightness = lightsData.m_sunDirectionBrightness;
+			vec3 sunRadiance = lightsData.m_sunColourAmbient.xyz * sunDirectionBrightness.w;
+			vec3 directLight = PBRDirectLighting(mat, viewDir, -sunDirectionBrightness.xyz, normalRoughness.xyz, sunRadiance, 1.0);
+			
+			// Apply point lights (direct)
+			for(uint p=0;p<pointLightCount;++p)
 			{
-				vec3 lightRadiance = sharedLights[p].m_colourBrightness.xyz * sharedLights[p].m_colourBrightness.w;
-				float attenuation = GetPointlightAttenuation(sharedLights[p], positionMetallic.xyz);
-				vec3 lightToPixel = normalize(sharedLights[p].m_positionDistance.xyz - positionMetallic.xyz);
-				directLight += PBRDirectLighting(mat, viewDir, lightToPixel, normalRoughness.xyz, lightRadiance, attenuation);
+				vec3 lightToPixel = sharedLights[p].m_positionDistance.xyz - positionMetallic.xyz;
+				float lightDistanceSq = dot(lightToPixel,lightToPixel);
+				float radiusSq = sharedLights[p].m_positionDistance.w * sharedLights[p].m_positionDistance.w;
+				if(lightDistanceSq < radiusSq)
+				{
+					vec3 lightRadiance = sharedLights[p].m_colourBrightness.xyz * sharedLights[p].m_colourBrightness.w;
+					float attenuation = GetPointlightAttenuation(sharedLights[p], positionMetallic.xyz);
+					vec3 lightToPixel = normalize(sharedLights[p].m_positionDistance.xyz - positionMetallic.xyz);
+					directLight += PBRDirectLighting(mat, viewDir, lightToPixel, normalRoughness.xyz, lightRadiance, attenuation);
+				}
 			}
+			
+			// Ambient is a hack, tries to combine sky + sun colour somehow
+			vec3 ambient = PBRGetAmbientLighting(mat, 
+				lightsData.m_sunColourAmbient.xyz, 
+				lightsData.m_sunColourAmbient.w,
+				lightsData.m_skyColourAmbient.xyz,
+				lightsData.m_skyColourAmbient.w
+			);
+			
+			finalLight = ambient + directLight;
 		}
-		
-		// Ambient is a hack, tries to combine sky + sun colour somehow
-		vec3 ambient = PBRGetAmbientLighting(mat, 
-			lightsData.m_sunColourAmbient.xyz, 
-			lightsData.m_sunColourAmbient.w,
-			lightsData.m_skyColourAmbient.xyz,
-			lightsData.m_skyColourAmbient.w
-		);
-		
-		vec3 finalLight = ambient + directLight;
 		imageStore(hdrOutput, texelCoord, vec4(finalLight,1.0));
 	}
 }

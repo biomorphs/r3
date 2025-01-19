@@ -12,6 +12,7 @@ namespace R3
 	{
 	public:
 		void Run(Device& d, VkCommandBuffer cmds, 
+			RenderTarget& depthBuffer,
 			RenderTarget& positionMetalTarget,
 			RenderTarget& normalRoughnessTarget,
 			RenderTarget& albedoAOTarget,
@@ -29,6 +30,9 @@ namespace R3
 		static const uint32_t c_maxSets = 3;
 		VkDescriptorSet_T* m_descriptorSets[c_maxSets] = { nullptr };
 		uint32_t m_currentSet = 0;
+
+		// Can't use depth buffer as storage image, sample it as a texture instead
+		VkSampler m_depthSampler = VK_NULL_HANDLE;
 
 		// pipeline for the pass
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
