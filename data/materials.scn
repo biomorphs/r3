@@ -505,6 +505,346 @@
      "Z": 1.0
     }
    }
+  },
+  {
+   "ID": 11,
+   "Name": "Cube",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 11
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "downloaded\\textures\\antique_veneer1_bl\\antique_veneer1_ao.png"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\textures\\antique_veneer1_bl\\antique_veneer1_albedo.png"
+      },
+      "MetalTex": {
+       "PathName": "downloaded\\textures\\antique_veneer1_bl\\antique_veneer1_Metallic.png"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\textures\\antique_veneer1_bl\\antique_veneer1_Normal-ogl.png"
+      },
+      "Roughness": 0.3999999761581421,
+      "RoughnessTex": {
+       "PathName": "downloaded\\textures\\antique_veneer1_bl\\antique_veneer1_Roughness.png"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -5.790592193603516,
+     "Y": 0.0,
+     "Z": -2.329702854156494
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 12,
+   "Name": "Cube",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 12
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "downloaded\\textures\\broken_down_concrete2_bl\\broken_down_concrete2_ao.png"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\textures\\broken_down_concrete2_bl\\broken_down_concrete2_albedo.png"
+      },
+      "MetalTex": {
+       "PathName": "downloaded\\textures\\broken_down_concrete2_bl\\broken_down_concrete2_Metallic.png"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\textures\\broken_down_concrete2_bl\\broken_down_concrete2_Normal-ogl.png"
+      },
+      "Roughness": 0.3999999761581421,
+      "RoughnessTex": {
+       "PathName": "downloaded\\textures\\broken_down_concrete2_bl\\broken_down_concrete2_Roughness.png"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -3.8874521255493164,
+     "Y": 0.0,
+     "Z": -2.329702854156494
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 13,
+   "Name": "Cube",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 13
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "downloaded\\textures\\carbon-fiber-bl\\carbon-fiber_ao.png"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\textures\\carbon-fiber-bl\\carbon-fiber_albedo.png"
+      },
+      "MetalTex": {
+       "PathName": "downloaded\\textures\\carbon-fiber-bl\\carbon-fiber_metallic.png"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\textures\\carbon-fiber-bl\\carbon-fiber_normal-ogl.png"
+      },
+      "Roughness": 0.3999999761581421,
+      "RoughnessTex": {
+       "PathName": "downloaded\\textures\\carbon-fiber-bl\\carbon-fiber_roughness.png"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -1.980340838432312,
+     "Y": 0.0,
+     "Z": -2.329702854156494
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 14,
+   "Name": "Cube",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 14
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "downloaded\\textures\\cavern-deposits-bl\\cavern-deposits_ao.png"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\textures\\cavern-deposits-bl\\cavern-deposits_albedo.png"
+      },
+      "MetalTex": {
+       "PathName": "downloaded\\textures\\cavern-deposits-bl\\cavern-deposits_metallic.png"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\textures\\cavern-deposits-bl\\cavern-deposits_normal-ogl.png"
+      },
+      "Roughness": 0.3999999761581421,
+      "RoughnessTex": {
+       "PathName": "downloaded\\textures\\cavern-deposits-bl\\cavern-deposits_roughness.png"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0025451332330703735,
+     "Y": 0.0,
+     "Z": -2.329702854156494
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 15,
+   "Name": "Cube",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 15
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "downloaded\\textures\\dented-metal-bl\\dented-metal_ao.png"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\textures\\dented-metal-bl\\dented-metal_albedo.png"
+      },
+      "MetalTex": {
+       "PathName": "downloaded\\textures\\dented-metal-bl\\dented-metal_height.png"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\textures\\dented-metal-bl\\dented-metal_normal-ogl.png"
+      },
+      "Roughness": 0.3999999761581421,
+      "RoughnessTex": {
+       "PathName": "downloaded\\textures\\dented-metal-bl\\dented-metal_roughness.png"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 2.0181095600128174,
+     "Y": 0.0,
+     "Z": -2.329702854156494
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
   }
  ],
  "WorldName": "New World"
