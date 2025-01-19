@@ -1,9 +1,11 @@
 #include "lights_system.h"
 #include "engine/imgui_menubar_helper.h"
 #include "engine/systems/immediate_render_system.h"
+#include "engine/systems/camera_system.h"
 #include "engine/components/point_light.h"
 #include "engine/components/environment_settings.h"
 #include "engine/components/transform.h"
+#include "engine/frustum.h"
 #include "entities/world.h"
 #include "entities/queries.h"
 #include "entities/systems/entity_system.h"
@@ -71,16 +73,22 @@ namespace R3
 		Entities::Queries::ForEach<EnvironmentSettingsComponent>(activeWorld, collectSunSkySettings);
 		m_skyColour = glm::vec3(thisFrameLightData.m_skyColourAmbient);	
 
+		auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
+		Frustum viewFrustum(mainCamera.ProjectionMatrix() * mainCamera.ViewMatrix());
 		const uint32_t pointLightBaseOffset = m_currentFrame * c_maxLights;
 		thisFrameLightData.m_pointLightsBufferAddress = m_allPointlights.GetDataDeviceAddress() + pointLightBaseOffset * sizeof(Pointlight);
 		auto collectPointLights = [&](const Entities::EntityHandle& e, PointLightComponent& pl, TransformComponent& t) {
 			if (pl.m_enabled)
 			{
-				Pointlight newlight;
-				newlight.m_colourBrightness = { pl.m_colour, pl.m_brightness };
-				newlight.m_positionDistance = { glm::vec3(t.GetWorldspaceInterpolated(e, *activeWorld)[3]), pl.m_distance };
-				m_allPointlights.Write(pointLightBaseOffset + thisFrameLightData.m_pointlightCount, 1, &newlight);
-				thisFrameLightData.m_pointlightCount++;
+				glm::vec3 lightCenter = glm::vec3(t.GetWorldspaceInterpolated(e, *activeWorld)[3]);
+				if (viewFrustum.IsSphereVisible(lightCenter, pl.m_distance))
+				{
+					Pointlight newlight;
+					newlight.m_colourBrightness = { pl.m_colour, pl.m_brightness };
+					newlight.m_positionDistance = { lightCenter, pl.m_distance };
+					m_allPointlights.Write(pointLightBaseOffset + thisFrameLightData.m_pointlightCount, 1, &newlight);
+					thisFrameLightData.m_pointlightCount++;
+				}
 			}
 			return true;
 		};
