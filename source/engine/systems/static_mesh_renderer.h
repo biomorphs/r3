@@ -41,6 +41,7 @@ namespace R3
 		struct GlobalConstants;
 		void CollectAllPartInstances();
 		void PrepareDrawBucket(MeshPartDrawBucket& bucket);
+		void PrepareAndCullDrawBucket(MeshPartDrawBucket& bucket);
 		bool ShowGui();
 		bool CollectInstances();
 		void Cleanup(Device&);
@@ -69,6 +70,7 @@ namespace R3
 		MeshPartDrawBucket m_allOpaques;
 		MeshPartDrawBucket m_allTransparents;
 		bool m_forwardRenderEverything = false;	// override to pass all instances to forward pass
+		bool m_enableCpuCulling = false;
 
 		glm::vec4 m_mainPassColourClearValue = { 0,0,0,1 };
 		FrameStats m_frameStats;
@@ -85,6 +87,7 @@ namespace R3
 		StaticMeshInstanceGpu* m_globalInstancesMappedPtr = nullptr;
 		uint32_t m_currentInstanceBufferStart = 0;	// index into m_globalInstancesMappedPtr for this frame
 		uint32_t m_currentInstanceBufferOffset = 0;	// offset from m_currentInstanceBufferStart
+		std::vector<StaticMeshInstanceGpu> m_globalInstancesCPU;	// cpu-side copy of instance data, only used in cpu culling
 
 		AllocatedBuffer m_drawIndirectHostVisible;
 		void* m_drawIndirectMappedPtr = nullptr;
