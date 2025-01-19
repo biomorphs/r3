@@ -445,24 +445,24 @@
     "InputParams": {
      "Floats": [
       {
-       "Key": "X Min",
-       "Value": -11.0
-      },
-      {
        "Key": "Z Max",
        "Value": 6.0
       },
       {
-       "Key": "X Max",
-       "Value": 11.0
+       "Key": "X Min",
+       "Value": -11.0
+      },
+      {
+       "Key": "Max Radius",
+       "Value": 6.0
       },
       {
        "Key": "Z Min",
        "Value": -6.0
       },
       {
-       "Key": "Max Radius",
-       "Value": 6.0
+       "Key": "X Max",
+       "Value": 11.0
       },
       {
        "Key": "Max Brightness",
@@ -473,12 +473,12 @@
        "Value": 1.0
       },
       {
-       "Key": "Y Max",
-       "Value": 12.0
-      },
-      {
        "Key": "Min Brightness",
        "Value": 1.0
+      },
+      {
+       "Key": "Y Max",
+       "Value": 12.0
       },
       {
        "Key": "Min Radius",
@@ -501,7 +501,7 @@
      "Ints": [
       {
        "Key": "Light Count",
-       "Value": 64
+       "Value": 256
       }
      ]
     },

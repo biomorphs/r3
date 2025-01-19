@@ -100,7 +100,7 @@
    "Parent": 4294967295
   },
   {
-   "ID": 4,
+   "ID": 3,
    "LuaScript": {
     "InputParams": {
      "Floats": [
@@ -123,17 +123,25 @@
       {
        "Key": "Y",
        "Value": 4.0
+      },
+      {
+       "Key": "Brightness",
+       "Value": 6.0
+      },
+      {
+       "Key": "Radius",
+       "Value": 8.0
       }
      ],
      "IntVec2s": [],
      "Ints": [
       {
        "Key": "Light X Count",
-       "Value": 16
+       "Value": 32
       },
       {
        "Key": "Light Z Count",
-       "Value": 16
+       "Value": 32
       }
      ]
     },
@@ -160,7 +168,7 @@
     "Far Plane": 5000.0,
     "Near Plane": 0.10000000149011612
    },
-   "ID": 5,
+   "ID": 4,
    "Name": "Camera",
    "Parent": 4294967295,
    "Transform": {
