@@ -3,7 +3,7 @@
 #include "imgui_system.h"
 #include "lights_system.h"
 #include "static_mesh_system.h"
-#include "static_mesh_simple_renderer.h"
+#include "static_mesh_renderer.h"
 #include "texture_system.h"
 #include "engine/graphics/tonemap_compute.h"
 #include "engine/graphics/deferred_lighting_compute.h"
@@ -71,11 +71,11 @@ namespace R3
 			GetSystem<LightsSystem>()->CollectLightsForDrawing(ctx);
 			GetSystem<TextureSystem>()->ProcessLoadedTextures(ctx);
 			GetSystem<StaticMeshSystem>()->PrepareForRendering(ctx);
-			GetSystem<StaticMeshSimpleRenderer>()->PrepareForRendering(ctx);
+			GetSystem<StaticMeshRenderer>()->PrepareForRendering(ctx);
 		});
 		gbufferPass->m_onDraw.AddCallback([](RenderPassContext& ctx) {
 			R3_PROF_GPU_EVENT("GBuffer Pass");
-			GetSystem<StaticMeshSimpleRenderer>()->OnGBufferPassDraw(ctx);
+			GetSystem<StaticMeshRenderer>()->OnGBufferPassDraw(ctx);
 		});
 		
 		return gbufferPass;
@@ -122,11 +122,11 @@ namespace R3
 		});
 		forwardPass->m_onDraw.AddCallback([](RenderPassContext& ctx) {
 			R3_PROF_GPU_EVENT("Forward Pass");
-			GetSystem<StaticMeshSimpleRenderer>()->OnForwardPassDraw(ctx);
+			GetSystem<StaticMeshRenderer>()->OnForwardPassDraw(ctx);
 			GetSystem<ImmediateRenderSystem>()->OnForwardPassDraw(ctx);
 		});
 		forwardPass->m_onEnd.AddCallback([](RenderPassContext& ctx) {
-			GetSystem<StaticMeshSimpleRenderer>()->OnDrawEnd(ctx);
+			GetSystem<StaticMeshRenderer>()->OnDrawEnd(ctx);
 		});
 		return forwardPass;
 	}

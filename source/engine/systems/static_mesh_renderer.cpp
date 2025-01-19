@@ -1,4 +1,4 @@
-#include "static_mesh_simple_renderer.h"
+#include "static_mesh_renderer.h"
 #include "static_mesh_system.h"
 #include "camera_system.h"
 #include "lights_system.h"
@@ -25,7 +25,7 @@
 namespace R3
 {
 	// stored in a buffer
-	struct StaticMeshSimpleRenderer::GlobalConstants
+	struct StaticMeshRenderer::GlobalConstants
 	{
 		glm::mat4 m_projViewTransform;
 		glm::vec4 m_cameraWorldSpacePos;
@@ -40,26 +40,26 @@ namespace R3
 		VkDeviceAddress m_globalsBufferAddress;
 	};
 
-	StaticMeshSimpleRenderer::StaticMeshSimpleRenderer()
+	StaticMeshRenderer::StaticMeshRenderer()
 	{
 	}
 
-	StaticMeshSimpleRenderer::~StaticMeshSimpleRenderer()
+	StaticMeshRenderer::~StaticMeshRenderer()
 	{
 	}
 
-	void StaticMeshSimpleRenderer::RegisterTickFns()
+	void StaticMeshRenderer::RegisterTickFns()
 	{
 		R3_PROF_EVENT();
-		RegisterTick("StaticMeshSimpleRenderer::ShowGui", [this]() {
+		RegisterTick("StaticMeshRenderer::ShowGui", [this]() {
 			return ShowGui();
 		});
-		RegisterTick("StaticMeshSimpleRenderer::CollectInstances", [this]() {
+		RegisterTick("StaticMeshRenderer::CollectInstances", [this]() {
 			return CollectInstances();
 		});
 	}
 
-	bool StaticMeshSimpleRenderer::Init()
+	bool StaticMeshRenderer::Init()
 	{
 		R3_PROF_EVENT();
 		auto render = Systems::GetSystem<RenderSystem>();
@@ -69,7 +69,7 @@ namespace R3
 		return true;
 	}
 
-	void StaticMeshSimpleRenderer::Cleanup(Device& d)
+	void StaticMeshRenderer::Cleanup(Device& d)
 	{
 		R3_PROF_EVENT();
 		vkDestroyPipeline(d.GetVkDevice(), m_forwardPipeline, nullptr);
@@ -90,7 +90,7 @@ namespace R3
 		m_globalConstantsBuffer.Destroy(d);
 	}
 
-	bool StaticMeshSimpleRenderer::ShowGui()
+	bool StaticMeshRenderer::ShowGui()
 	{
 		R3_PROF_EVENT();
 		auto& debugMenu = MenuBar::MainMenu().GetSubmenu("Debug");
@@ -122,7 +122,7 @@ namespace R3
 		return true;
 	}
 
-	bool StaticMeshSimpleRenderer::CreatePipelineLayout(Device& d)
+	bool StaticMeshRenderer::CreatePipelineLayout(Device& d)
 	{
 		R3_PROF_EVENT();
 		auto textures = GetSystem<TextureSystem>();
@@ -145,7 +145,7 @@ namespace R3
 		return true;
 	}
 
-	bool StaticMeshSimpleRenderer::CreateGBufferPipelineData(Device& d, VkFormat positionMetalFormat, VkFormat normalRoughnessFormat, VkFormat albedoAOFormat, VkFormat mainDepthFormat)
+	bool StaticMeshRenderer::CreateGBufferPipelineData(Device& d, VkFormat positionMetalFormat, VkFormat normalRoughnessFormat, VkFormat albedoAOFormat, VkFormat mainDepthFormat)
 	{
 		R3_PROF_EVENT();
 		std::string basePath = "shaders_spirv\\common\\";	// Load the shaders
@@ -202,7 +202,7 @@ namespace R3
 		return true;
 	}
 
-	bool StaticMeshSimpleRenderer::CreateForwardPipelineData(Device& d, VkFormat mainColourFormat, VkFormat mainDepthFormat)
+	bool StaticMeshRenderer::CreateForwardPipelineData(Device& d, VkFormat mainColourFormat, VkFormat mainDepthFormat)
 	{
 		R3_PROF_EVENT();
 		std::string basePath = "shaders_spirv\\common\\";	// Load the shaders
@@ -249,7 +249,7 @@ namespace R3
 		return true;
 	}
 
-	bool StaticMeshSimpleRenderer::CreateGlobalDescriptorSet()
+	bool StaticMeshRenderer::CreateGlobalDescriptorSet()
 	{
 		R3_PROF_EVENT();
 		auto render = GetSystem<RenderSystem>();
@@ -281,7 +281,7 @@ namespace R3
 		return true;
 	}
 
-	void StaticMeshSimpleRenderer::PrepareForRendering(class RenderPassContext& ctx)
+	void StaticMeshRenderer::PrepareForRendering(class RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
 		if (!m_globalConstantsBuffer.IsCreated())
@@ -345,7 +345,7 @@ namespace R3
 		m_globalConstantsBuffer.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 	}
 
-	void StaticMeshSimpleRenderer::OnGBufferPassDraw(class RenderPassContext& ctx)
+	void StaticMeshRenderer::OnGBufferPassDraw(class RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
 
@@ -401,7 +401,7 @@ namespace R3
 		m_frameStats.m_writeCmdsEndTime = time->GetElapsedTimeReal();
 	}
 
-	void StaticMeshSimpleRenderer::OnForwardPassDraw(class RenderPassContext& ctx)
+	void StaticMeshRenderer::OnForwardPassDraw(class RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
 
@@ -455,7 +455,7 @@ namespace R3
 		m_frameStats.m_writeCmdsEndTime = time->GetElapsedTimeReal();
 	}
 
-	void StaticMeshSimpleRenderer::OnDrawEnd(class RenderPassContext& ctx)
+	void StaticMeshRenderer::OnDrawEnd(class RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
 
@@ -481,7 +481,7 @@ namespace R3
 		}
 	}
 
-	void StaticMeshSimpleRenderer::CollectAllPartInstances()
+	void StaticMeshRenderer::CollectAllPartInstances()
 	{
 		R3_PROF_EVENT();
 		auto staticMeshes = GetSystem<StaticMeshSystem>();
@@ -551,7 +551,7 @@ namespace R3
 						}
 						else
 						{
-							LogWarn("Max instances {} hit! Increase StaticMeshSimpleRenderer::c_maxInstances or simplify the scene!", c_maxInstances);
+							LogWarn("Max instances {} hit! Increase StaticMeshRenderer::c_maxInstances or simplify the scene!", c_maxInstances);
 							return false;
 						}
 					}
@@ -564,7 +564,7 @@ namespace R3
 		}
 	}
 
-	void StaticMeshSimpleRenderer::PrepareDrawBucket(MeshPartDrawBucket& bucket)
+	void StaticMeshRenderer::PrepareDrawBucket(MeshPartDrawBucket& bucket)
 	{
 		R3_PROF_EVENT();
 		auto staticMeshes = GetSystem<StaticMeshSystem>();
@@ -590,7 +590,7 @@ namespace R3
 		m_frameStats.m_totalTriangles += static_cast<uint32_t>(totalIndices / 3);
 	}
 
-	bool StaticMeshSimpleRenderer::CollectInstances()
+	bool StaticMeshRenderer::CollectInstances()
 	{
 		R3_PROF_EVENT();
 

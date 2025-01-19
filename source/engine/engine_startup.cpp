@@ -10,7 +10,7 @@
 #include "systems/model_data_system.h"
 #include "systems/texture_system.h"
 #include "systems/static_mesh_system.h"
-#include "systems/static_mesh_simple_renderer.h"
+#include "systems/static_mesh_renderer.h"
 #include "systems/lights_system.h"
 #include "systems/job_system.h"
 #include "systems/lua_system.h"
@@ -45,7 +45,7 @@ namespace R3
 		s.RegisterSystem<ModelDataSystem>();
 		s.RegisterSystem<TextureSystem>();
 		s.RegisterSystem<StaticMeshSystem>();
-		s.RegisterSystem<StaticMeshSimpleRenderer>();
+		s.RegisterSystem<StaticMeshRenderer>();
 		s.RegisterSystem<LightsSystem>();
 		s.RegisterSystem<LuaSystem>();
 		s.RegisterSystem<TransformSystem>();
@@ -86,7 +86,7 @@ namespace R3
 				guiUpdate.AddFn("Jobs::ShowGui");
 				guiUpdate.AddFn("StaticMeshes::ShowGui");
 				guiUpdate.AddFn("ModelData::ShowGui");
-				guiUpdate.AddFn("StaticMeshSimpleRenderer::ShowGui");
+				guiUpdate.AddFn("StaticMeshRenderer::ShowGui");
 				guiUpdate.AddFn("Textures::ShowGui");
 				guiUpdate.AddFn("LightsSystem::ShowGui");
 				guiUpdate.AddFn("LuaSystem::ShowGui");
@@ -96,7 +96,7 @@ namespace R3
 				auto& renderUpdate = updateSequence.AddSequence("RenderUpdate");
 				{
 					auto& renderASyncUpdate = renderUpdate.AddAsync("UpdateAsync");
-					renderASyncUpdate.AddFn("StaticMeshSimpleRenderer::CollectInstances");
+					renderASyncUpdate.AddFn("StaticMeshRenderer::CollectInstances");
 					renderASyncUpdate.AddFn("LightsSystem::CollectAllLights");
 					renderASyncUpdate.AddFn("FrameScheduler::UpdateTonemapper");
 				}

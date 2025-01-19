@@ -23,12 +23,12 @@ namespace R3
 
 	class Device;
 	class DescriptorSetSimpleAllocator;
-	class StaticMeshSimpleRenderer : public System
+	class StaticMeshRenderer : public System
 	{
 	public:
-		StaticMeshSimpleRenderer();
-		virtual ~StaticMeshSimpleRenderer();
-		static std::string_view GetName() { return "StaticMeshSimpleRenderer"; }
+		StaticMeshRenderer();
+		virtual ~StaticMeshRenderer();
+		static std::string_view GetName() { return "StaticMeshRenderer"; }
 		virtual void RegisterTickFns();
 		virtual bool Init();
 		void PrepareForRendering(class RenderPassContext& ctx);		// call from frame graph before drawing anything
