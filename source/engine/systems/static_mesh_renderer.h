@@ -26,6 +26,7 @@ namespace R3
 	class Device;
 	class DescriptorSetSimpleAllocator;
 	class StaticMeshInstanceCullingCompute;
+	class Frustum;
 	class StaticMeshRenderer : public System
 	{
 	public:
@@ -43,6 +44,7 @@ namespace R3
 		VkDeviceAddress GetPerDrawInstanceBufferAddress();
 	private:
 		struct GlobalConstants;
+		Frustum GetMainCameraFrustum();
 		void CollectAllPartInstances();
 		void PrepareDrawBucket(MeshPartDrawBucket& bucket);
 		void PrepareAndCullDrawBucket(MeshPartDrawBucket& bucket);
@@ -79,6 +81,7 @@ namespace R3
 		bool m_forwardRenderEverything = false;	// override to pass all instances to forward pass
 		bool m_enableCpuCulling = false;		// run instance frustum culling on CPU
 		bool m_enableComputeCulling = false;	// run instance culling in compute
+		bool m_lockMainFrustum = false;
 		bool m_showGui = false;
 
 		std::unique_ptr<StaticMeshInstanceCullingCompute> m_computeCulling;

@@ -66,6 +66,39 @@ layout(push_constant) uniform constants
 	AllCullingTaskInfoBuffer m_thisTaskInfo;
 } PushConstants;
 
+// same as CPU implementation
+bool IsBoxVisible(vec4 oobbMin, vec4 oobbMax, mat4 transform, Frustum frustum)
+{
+	vec4 v[] = {
+		transform * vec4(oobbMin.x,oobbMin.y,oobbMin.z,1.0f),
+		transform * vec4(oobbMax.x,oobbMin.y,oobbMin.z,1.0f),
+		transform * vec4(oobbMax.x,oobbMin.y,oobbMax.z,1.0f),
+		transform * vec4(oobbMin.x,oobbMin.y,oobbMax.z,1.0f),
+		transform * vec4(oobbMin.x,oobbMax.y,oobbMin.z,1.0f),
+		transform * vec4(oobbMax.x,oobbMax.y,oobbMin.z,1.0f),
+		transform * vec4(oobbMax.x,oobbMax.y,oobbMax.z,1.0f),
+		transform * vec4(oobbMin.x,oobbMax.y,oobbMax.z,1.0f),
+	};
+	// check box outside/inside of frustum
+	for (int i = 0; i < 6; i++)
+	{
+		if ((dot(frustum.m_planes[i], v[0]) < 0.0) &&
+			(dot(frustum.m_planes[i], v[1]) < 0.0) &&
+			(dot(frustum.m_planes[i], v[2]) < 0.0) &&
+			(dot(frustum.m_planes[i], v[3]) < 0.0) &&
+			(dot(frustum.m_planes[i], v[4]) < 0.0) &&
+			(dot(frustum.m_planes[i], v[5]) < 0.0) &&
+			(dot(frustum.m_planes[i], v[6]) < 0.0) &&
+			(dot(frustum.m_planes[i], v[7]) < 0.0))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+
 void main() 
 {
 	CullingTaskInfo taskInfo = PushConstants.m_thisTaskInfo.info[0];
@@ -73,10 +106,13 @@ void main()
 	{
 		BucketPartInstance thisBucketInstance = taskInfo.m_bucketInstances.allBucketInstances[gl_GlobalInvocationID.x];
 		StaticMeshPart thisMeshPart = taskInfo.m_allMeshParts.parts[thisBucketInstance.m_partGlobalIndex];
+		PerInstanceData thisInstance = taskInfo.m_allPerDrawInstances.AllInstances[thisBucketInstance.m_partInstanceIndex];
 		
 		// Populate the draw indirect from the mesh part data
+		bool isVisible = IsBoxVisible(thisMeshPart.m_boundsMin, thisMeshPart.m_boundsMax, thisInstance.m_transform, taskInfo.m_frustums.allFrustums[0]);
+		
 		taskInfo.m_drawIndirects.allDrawIndirects[gl_GlobalInvocationID.x].m_indexCount = thisMeshPart.m_indexCount;
-		taskInfo.m_drawIndirects.allDrawIndirects[gl_GlobalInvocationID.x].m_instanceCount = 1;
+		taskInfo.m_drawIndirects.allDrawIndirects[gl_GlobalInvocationID.x].m_instanceCount = isVisible ? 1 : 0;
 		taskInfo.m_drawIndirects.allDrawIndirects[gl_GlobalInvocationID.x].m_firstIndex = thisMeshPart.m_indexStartOffset;
 		taskInfo.m_drawIndirects.allDrawIndirects[gl_GlobalInvocationID.x].m_vertexOffset = thisMeshPart.m_vertexDataOffset;
 		taskInfo.m_drawIndirects.allDrawIndirects[gl_GlobalInvocationID.x].m_firstInstance = thisBucketInstance.m_partInstanceIndex;

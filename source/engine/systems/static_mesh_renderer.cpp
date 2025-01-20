@@ -120,6 +120,7 @@ namespace R3
 			ImGui::Checkbox("Forward render everything", &m_forwardRenderEverything);
 			ImGui::Checkbox("Enable Compute Culling", &m_enableComputeCulling);
 			ImGui::Checkbox("Enable CPU Culling", &m_enableCpuCulling);
+			ImGui::Checkbox("Lock main frustum", &m_lockMainFrustum);
 			std::string txt = std::format("{} Model Instances Submitted", m_frameStats.m_totalModelInstances);
 			ImGui::Text(txt.c_str());
 			txt = std::format("    {} Total Part Instances", m_frameStats.m_totalPartInstances);
@@ -593,8 +594,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		auto staticMeshes = GetSystem<StaticMeshSystem>();
-		auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
-		Frustum mainFrustum(mainCamera.ProjectionMatrix() * mainCamera.ViewMatrix());
+		Frustum mainFrustum = GetMainCameraFrustum();
 		bucket.m_firstDrawOffset = (m_currentDrawBufferStart + m_currentDrawBufferOffset);
 		bucket.m_drawCount = (uint32_t)bucket.m_partInstances.size();
 		uint64_t totalIndices = 0;
@@ -642,13 +642,23 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 
-		auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
-		Frustum mainFrustum(mainCamera.ProjectionMatrix() * mainCamera.ViewMatrix());
+		Frustum mainFrustum = GetMainCameraFrustum();
 		bucket.m_firstDrawOffset = (m_currentDrawBufferStart + m_currentDrawBufferOffset);	// record draw-indirect base offset for this bucket
 		bucket.m_drawCount = (uint32_t)bucket.m_partInstances.size();						// draw-indirects will be populated by compute shader
 		m_currentDrawBufferOffset += bucket.m_drawCount;
 
 		m_computeCulling->Run(d, cmds, bucket, mainFrustum);										// populate the draw-indirect data for this bucket of instances via compute
+	}
+
+	Frustum StaticMeshRenderer::GetMainCameraFrustum()
+	{
+		static Frustum mainFrustum;
+		if (!m_lockMainFrustum)
+		{
+			auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
+			mainFrustum = (mainCamera.ProjectionMatrix() * mainCamera.ViewMatrix());;
+		}
+		return mainFrustum; 
 	}
 
 	bool StaticMeshRenderer::CollectInstances()
