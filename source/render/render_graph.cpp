@@ -233,6 +233,13 @@ namespace R3
 		}
 	}
 
+	void GenericPass::Run(RenderPassContext& ctx)
+	{
+		R3_PROF_EVENT();
+		VulkanHelpers::CommandBufferRegionLabel passLabel(ctx.m_graphicsCmds, m_name, { 1.0f, 1.0f, 1.0f, 1.0f });
+		m_onRun.Run(ctx);
+	}
+
 	void RenderGraph::Run(GraphContext& context)
 	{
 		R3_PROF_EVENT();

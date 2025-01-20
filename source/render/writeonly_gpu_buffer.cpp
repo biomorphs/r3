@@ -73,6 +73,12 @@ namespace R3
 		if (m_stagingBuffer.m_buffer.m_buffer == VK_NULL_HANDLE || m_stagingBuffer.m_mappedBuffer == nullptr)
 		{
 			LogError("Gpu buffer {} has no staging buffer!", m_debugName);
+			LogError("{}, {}, {}, {}, {}", 
+				(uint64_t)m_stagingBuffer.m_buffer.m_buffer, 
+				(uint64_t)m_stagingBuffer.m_mappedBuffer,
+				m_stagingBuffer.sizeBytes,
+				(uint64_t)m_stagingBuffer.m_usage,
+				(uint64_t)m_stagingBuffer.m_memUsage);
 			return false;
 		}
 		if (sizeBytes == 0 || writeStartOffset == -1 || (writeStartOffset + sizeBytes) > m_allDataCurrentSizeBytes.load())

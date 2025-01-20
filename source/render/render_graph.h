@@ -23,6 +23,16 @@ namespace R3
 		std::string m_name;
 	};
 
+	// a generic render pass, useful for uploading + prepping data before drawing, etc
+	class GenericPass : public RenderGraphPass
+	{
+	public:
+		virtual ~GenericPass() = default;
+		virtual void Run(RenderPassContext& ctx);
+		using RunCallback = std::function<void(RenderPassContext&)>;
+		CallbackArray<RunCallback> m_onRun;	// do the work here
+	};
+
 	// used to move data between render targets using transfer operations
 	class TransferPass : public RenderGraphPass
 	{

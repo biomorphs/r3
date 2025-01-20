@@ -21,6 +21,8 @@ namespace R3
 		glm::vec3* GetPoints() { return m_points; }
 		const glm::vec3* GetPoints() const { return m_points; }
 
+		const glm::vec4 GetPlane(uint32_t index) const { return m_planes[index]; }
+
 	private:
 		enum Planes
 		{
