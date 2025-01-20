@@ -24,7 +24,7 @@ namespace R3
 		R3_PROF_EVENT();
 		m_allData.reserve(1024 * 4);
 		m_allMaterials.resize(c_maxMaterialsToStore);
-		m_allParts.reserve(1024 * 32);
+		m_allParts.reserve(c_maxMeshParts);
 	}
 
 	StaticMeshSystem::~StaticMeshSystem()
@@ -226,7 +226,7 @@ namespace R3
 				}
 				
 				newMesh.m_firstMeshPartOffset = static_cast<uint32_t>(m_allParts.size());
-				m_allParts.resize(m_allParts.size() + m->m_meshes.size());
+				m_allParts.resize(m_allParts.size() + newMesh.m_meshPartCount);
 				for (uint32_t part = 0; part < newMesh.m_meshPartCount; ++part)
 				{
 					auto& pt = m_allParts[part + newMesh.m_firstMeshPartOffset];
@@ -237,6 +237,14 @@ namespace R3
 					pt.m_indexStartOffset = newMesh.m_indexDataOffset + m->m_meshes[part].m_indexDataOffset;
 					pt.m_materialIndex = newMesh.m_materialGpuIndex + m->m_meshes[part].m_materialIndex;	// GPU index!
 					pt.m_vertexDataOffset = static_cast<uint32_t>(newMesh.m_vertexDataOffset);
+				}
+				if (m_allParts.size() < c_maxMeshParts)
+				{
+					m_allMeshPartsGpu.Write(newMesh.m_firstMeshPartOffset, newMesh.m_meshPartCount, &m_allParts[newMesh.m_firstMeshPartOffset]);
+				}
+				else
+				{
+					LogError("Max mesh parts reached! Increase StaticMeshRenderer::c_maxMeshParts");
 				}
 			}
 			// now copy the vertex + index data to staging
@@ -281,6 +289,15 @@ namespace R3
 				LogError("Failed to create material buffer");
 			}
 		}
+		if (!m_allMeshPartsGpu.IsCreated())
+		{
+			m_allMeshPartsGpu.SetDebugName("Static mesh parts");
+			if (!m_allMeshPartsGpu.Create(*ctx.m_device, c_maxMeshParts, c_maxMeshParts / 8, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+			{
+				LogError("Failed to create mesh parts buffer");
+			}
+			m_allMeshPartsGpu.Allocate(c_maxMeshParts);
+		}
 		{
 			R3_PROF_EVENT("UploadInstanceMaterials");
 			auto entities = Systems::GetSystem<Entities::EntitySystem>();
@@ -308,6 +325,7 @@ namespace R3
 			m_allVertices.Flush(*ctx.m_device, ctx.m_graphicsCmds);
 			m_allIndices.Flush(*ctx.m_device, ctx.m_graphicsCmds);
 			m_allMaterialsGpu.Flush(*ctx.m_device, ctx.m_graphicsCmds);
+			m_allMeshPartsGpu.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT);	// mesh parts used in compute culling/bucket prep before vertex shader
 		}
 	}
 
@@ -375,6 +393,7 @@ namespace R3
 		// Register render functions
 		auto render = Systems::GetSystem<RenderSystem>();
 		render->m_onShutdownCbs.AddCallback([this](Device& d) {
+			m_allMeshPartsGpu.Destroy(d);
 			m_allMaterialsGpu.Destroy(d);
 			m_allVertices.Destroy(d);
 			m_allIndices.Destroy(d);

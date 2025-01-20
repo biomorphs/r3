@@ -86,13 +86,15 @@ namespace R3
 		Mutex m_allDataMutex;	// protects stuff below
 		std::vector<StaticMeshGpuData> m_allData;
 		std::vector<StaticMeshMaterial> m_allMaterials;				// cpu-side copy of m_allMaterialsGpu
-		std::vector<StaticMeshPart> m_allParts;
+		std::vector<StaticMeshPart> m_allParts;						// cpu-side copy of m_allMeshPartsGpu
 
 		WriteOnlyGpuArray<StaticMeshMaterial> m_allMaterialsGpu;	// gpu buffer of materials
+		WriteOnlyGpuArray<StaticMeshPart> m_allMeshPartsGpu;		// gpu buffer of mesh parts
 		WriteOnlyGpuArray<MeshVertex> m_allVertices;
 		WriteOnlyGpuArray<uint32_t> m_allIndices;
 		const uint32_t c_maxVerticesToStore = 1024 * 1024 * 16;		// ~800mb
 		const uint32_t c_maxIndicesToStore = 1024 * 1024 * 64;		// ~256mb
 		const uint32_t c_maxMaterialsToStore = 1024 * 128;
+		const uint32_t c_maxMeshParts = 1024 * 32;
 	};
 }
