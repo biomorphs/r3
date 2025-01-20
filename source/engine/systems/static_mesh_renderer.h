@@ -65,7 +65,6 @@ namespace R3
 			uint32_t m_totalPartInstances = 0;
 			uint32_t m_totalOpaqueInstances = 0;
 			uint32_t m_totalTransparentInstances = 0;
-			uint32_t m_totalTriangles = 0;
 			double m_writeCmdsStartTime = 0.0;
 			double m_writeCmdsEndTime = 0.0;
 			double m_collectInstancesStartTime = 0.0;
@@ -80,7 +79,7 @@ namespace R3
 
 		bool m_forwardRenderEverything = false;	// override to pass all instances to forward pass
 		bool m_enableCpuCulling = false;		// run instance frustum culling on CPU
-		bool m_enableComputeCulling = false;	// run instance culling in compute
+		bool m_enableComputeCulling = true;		// run instance culling in compute
 		bool m_lockMainFrustum = false;
 		bool m_showGui = false;
 

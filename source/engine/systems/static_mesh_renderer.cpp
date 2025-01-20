@@ -129,8 +129,6 @@ namespace R3
 			ImGui::Text(txt.c_str());
 			txt = std::format("    {} Transparent Part Instances", m_frameStats.m_totalTransparentInstances);
 			ImGui::Text(txt.c_str());
-			txt = std::format("    {:L} Triangles", m_frameStats.m_totalTriangles);
-			ImGui::Text(txt.c_str());
 			txt = std::format("Part instances took {:.3f}ms to collect", 1000.0 * (m_frameStats.m_collectInstancesEndTime - m_frameStats.m_collectInstancesStartTime));
 			ImGui::Text(txt.c_str());
 			txt = std::format("Draw buckets took {:.3f}ms to prepare", 1000.0 * (m_frameStats.m_prepareBucketsEndTime - m_frameStats.m_prepareBucketsStartTime));
@@ -587,7 +585,6 @@ namespace R3
 			totalIndices += currentPartData->m_indexCount;
 		}
 		bucket.m_drawCount = m_currentDrawBufferStart + m_currentDrawBufferOffset - bucket.m_firstDrawOffset;
-		m_frameStats.m_totalTriangles += static_cast<uint32_t>(totalIndices / 3);
 	}
 
 	void StaticMeshRenderer::PrepareAndCullDrawBucket(MeshPartDrawBucket& bucket)
@@ -635,7 +632,6 @@ namespace R3
 			totalIndices += isVisible ? currentPartData->m_indexCount : 0;
 		}
 #endif
-		m_frameStats.m_totalTriangles += static_cast<uint32_t>(totalIndices / 3);
 	}
 
 	void StaticMeshRenderer::PrepareAndCullDrawBucketCompute(Device& d, VkCommandBuffer cmds, MeshPartDrawBucket& bucket)
@@ -665,7 +661,6 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 
-		m_frameStats.m_totalTriangles = m_frameStats.m_totalModelInstances = m_frameStats.m_totalPartInstances = 0;
 		m_frameStats.m_collectInstancesStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		CollectAllPartInstances();
 		m_frameStats.m_totalOpaqueInstances = (uint32_t)m_allOpaques.m_partInstances.size();
