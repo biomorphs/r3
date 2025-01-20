@@ -7,6 +7,7 @@ namespace R3
 	class DrawPass;
 	class ComputeDrawPass;
 	class TransferPass;
+	class GenericPass;
 	struct RenderTargetInfo;
 	class TonemapCompute;
 	class DeferredLightingCompute;
@@ -24,6 +25,8 @@ namespace R3
 		bool BuildRenderGraph();
 		bool UpdateTonemapper();
 
+		std::unique_ptr<GenericPass> MakeRenderPreparePass();	// sets stuff up before other render passes
+		std::unique_ptr<ComputeDrawPass> MakeCullingPass();
 		std::unique_ptr<DrawPass> MakeForwardPass(const RenderTargetInfo& mainColour, const RenderTargetInfo& mainDepth);
 		std::unique_ptr<DrawPass> MakeGBufferPass(const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainDepth);
 		std::unique_ptr<ComputeDrawPass> MakeDeferredLightingPass(const RenderTargetInfo& mainDepth, const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainColour);

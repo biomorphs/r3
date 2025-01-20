@@ -50,6 +50,29 @@ namespace R3
 		});
 		return true;
 	}
+	
+	std::unique_ptr<GenericPass> FrameScheduler::MakeRenderPreparePass()
+	{
+		auto preparePass = std::make_unique<GenericPass>();
+		preparePass->m_name = "Prepare for rendering";
+		preparePass->m_onRun.AddCallback([](RenderPassContext& ctx) {
+			GetSystem<TextureSystem>()->ProcessLoadedTextures(ctx);
+			GetSystem<StaticMeshSystem>()->PrepareForRendering(ctx);
+			GetSystem<StaticMeshRenderer>()->PrepareForRendering(ctx);
+			GetSystem<LightsSystem>()->PrepareForDrawing(ctx);
+		});
+		return preparePass;
+	}
+
+	std::unique_ptr<ComputeDrawPass> FrameScheduler::MakeCullingPass()
+	{
+		auto cullingPass = std::make_unique<ComputeDrawPass>();
+		cullingPass->m_name = "Instance Culling";
+		cullingPass->m_onRun.AddCallback([](RenderPassContext& ctx) {
+			GetSystem<StaticMeshRenderer>()->CullInstancesOnGpu(ctx);
+		});
+		return cullingPass;
+	}
 
 	std::unique_ptr<DrawPass> FrameScheduler::MakeGBufferPass(const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainDepth)
 	{
@@ -66,13 +89,6 @@ namespace R3
 		gbufferPass->m_getClearColourFn = []() -> glm::vec4 {
 			return glm::vec4(0.0f);
 		};
-		gbufferPass->m_onBegin.AddCallback([](RenderPassContext& ctx) {
-			R3_PROF_GPU_EVENT("GBuffer Pass Begin");
-			GetSystem<LightsSystem>()->CollectLightsForDrawing(ctx);
-			GetSystem<TextureSystem>()->ProcessLoadedTextures(ctx);
-			GetSystem<StaticMeshSystem>()->PrepareForRendering(ctx);
-			GetSystem<StaticMeshRenderer>()->PrepareForRendering(ctx);
-		});
 		gbufferPass->m_onDraw.AddCallback([](RenderPassContext& ctx) {
 			R3_PROF_GPU_EVENT("GBuffer Pass");
 			GetSystem<StaticMeshRenderer>()->OnGBufferPassDraw(ctx);
@@ -227,6 +243,8 @@ namespace R3
 
 		auto& graph = render->GetRenderGraph();
 		graph.m_allPasses.clear();
+		graph.m_allPasses.push_back(MakeRenderPreparePass());
+		graph.m_allPasses.push_back(MakeCullingPass());
 		graph.m_allPasses.push_back(MakeGBufferPass(gBufferPosition, gBufferNormal, gBufferAlbedo, mainDepth));	// write gbuffer
 		graph.m_allPasses.push_back(MakeDeferredLightingPass(mainDepth, gBufferPosition, gBufferNormal, gBufferAlbedo, mainColour));	// deferred lighting
 		graph.m_allPasses.push_back(MakeForwardPass(mainColour, mainDepth));	// forward render to main colour

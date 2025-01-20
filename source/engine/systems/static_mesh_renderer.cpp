@@ -6,6 +6,7 @@
 #include "time_system.h"
 #include "engine/utils/frustum.h"
 #include "engine/ui/imgui_menubar_helper.h"
+#include "engine/graphics/static_mesh_instance_culling_compute.h"
 #include "engine/components/transform.h"
 #include "engine/components/static_mesh.h"
 #include "engine/components/static_mesh_materials.h"
@@ -58,6 +59,7 @@ namespace R3
 #ifdef ENABLE_CPU_INSTANCE_CULLING
 		m_globalInstancesCPU.resize(c_maxInstances);
 #endif
+		m_computeCulling = std::make_unique<StaticMeshInstanceCullingCompute>();
 	}
 
 	StaticMeshRenderer::~StaticMeshRenderer()
@@ -88,6 +90,7 @@ namespace R3
 	void StaticMeshRenderer::Cleanup(Device& d)
 	{
 		R3_PROF_EVENT();
+		m_computeCulling->Cleanup(d);
 		vkDestroyPipeline(d.GetVkDevice(), m_forwardPipeline, nullptr);
 		vkDestroyPipeline(d.GetVkDevice(), m_gBufferPipeline, nullptr);
 		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayout, nullptr);
@@ -115,6 +118,7 @@ namespace R3
 		{
 			ImGui::Begin("Static Mesh Renderer");
 			ImGui::Checkbox("Forward render everything", &m_forwardRenderEverything);
+			ImGui::Checkbox("Enable Compute Culling", &m_enableComputeCulling);
 			ImGui::Checkbox("Enable CPU Culling", &m_enableCpuCulling);
 			std::string txt = std::format("{} Model Instances Submitted", m_frameStats.m_totalModelInstances);
 			ImGui::Text(txt.c_str());
@@ -264,6 +268,19 @@ namespace R3
 		return true;
 	}
 
+	void StaticMeshRenderer::CullInstancesOnGpu(RenderPassContext& ctx)
+	{
+		R3_PROF_EVENT();
+		// Run compute instance prep+culling here for now (may want a separate frame graph pass instead?)
+		if (m_enableComputeCulling)
+		{
+			m_frameStats.m_prepareBucketsStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
+			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_allOpaques);
+			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_allTransparents);
+			m_frameStats.m_prepareBucketsEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
+		}
+	}
+
 	void StaticMeshRenderer::PrepareForRendering(class RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
@@ -292,10 +309,11 @@ namespace R3
 		{
 			m_drawIndirectHostVisible = VulkanHelpers::CreateBuffer(ctx.m_device->GetVMA(),
 				c_maxInstances * c_maxInstanceBuffers * sizeof(VkDrawIndexedIndirectCommand),
-				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
 			VulkanHelpers::SetBufferName(ctx.m_device->GetVkDevice(), m_drawIndirectHostVisible, "Static mesh draw indirect");
 			void* mapped = nullptr;
 			vmaMapMemory(ctx.m_device->GetVMA(), m_drawIndirectHostVisible.m_allocation, &mapped);
+			m_drawIndirectBufferAddress = VulkanHelpers::GetBufferDeviceAddress(ctx.m_device->GetVkDevice(), m_drawIndirectHostVisible);
 			m_drawIndirectMappedPtr = static_cast<StaticMeshInstanceGpu*>(mapped);
 		}
 		if (m_pipelineLayout == VK_NULL_HANDLE)
@@ -338,7 +356,6 @@ namespace R3
 			}
 		}
 
-		auto staticMeshes = GetSystem<StaticMeshSystem>();
 		auto textures = GetSystem<TextureSystem>();
 		auto time = GetSystem<TimeSystem>();
 		if (m_allOpaques.m_drawCount == 0)
@@ -361,7 +378,7 @@ namespace R3
 		vkCmdBindPipeline(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_gBufferPipeline);
 		vkCmdSetViewport(ctx.m_graphicsCmds, 0, 1, &viewport);
 		vkCmdSetScissor(ctx.m_graphicsCmds, 0, 1, &scissor);
-		vkCmdBindIndexBuffer(ctx.m_graphicsCmds, staticMeshes->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+		vkCmdBindIndexBuffer(ctx.m_graphicsCmds, GetSystem<StaticMeshSystem>()->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 		VkDescriptorSet allTextures = textures->GetAllTexturesSet();
 		vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, nullptr);
 		PushConstants pc;
@@ -388,7 +405,6 @@ namespace R3
 			}
 		}
 
-		auto staticMeshes = GetSystem<StaticMeshSystem>();
 		auto textures = GetSystem<TextureSystem>();
 		auto time = GetSystem<TimeSystem>();
 		if (m_allTransparents.m_drawCount == 0)
@@ -411,7 +427,7 @@ namespace R3
 		vkCmdBindPipeline(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_forwardPipeline);
 		vkCmdSetViewport(ctx.m_graphicsCmds, 0, 1, &viewport);
 		vkCmdSetScissor(ctx.m_graphicsCmds, 0, 1, &scissor);
-		vkCmdBindIndexBuffer(ctx.m_graphicsCmds, staticMeshes->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+		vkCmdBindIndexBuffer(ctx.m_graphicsCmds, GetSystem<StaticMeshSystem>()->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 		VkDescriptorSet allTextures = textures->GetAllTexturesSet();
 		vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, nullptr);
 		PushConstants pc;
@@ -448,6 +464,18 @@ namespace R3
 		{
 			m_currentGlobalConstantsBuffer = 0;
 		}
+
+		m_computeCulling->Reset();
+	}
+
+	VkDeviceAddress StaticMeshRenderer::GetDrawIndirectBufferAddress()
+	{
+		return m_drawIndirectBufferAddress;
+	}
+
+	VkDeviceAddress StaticMeshRenderer::GetPerDrawInstanceBufferAddress()
+	{
+		return m_globalInstancesDeviceAddress;
 	}
 
 	void StaticMeshRenderer::CollectAllPartInstances()
@@ -507,7 +535,7 @@ namespace R3
 							instancesPtr->m_transform = partTransform;
 							instancesPtr->m_materialIndex = materialBaseIndex + relativePartMatIndex;
 
-							MeshPartDrawBucket::BucketPartInstance bucketInstance;
+							BucketPartInstance bucketInstance;
 							bucketInstance.m_partGlobalIndex = currentMeshFirstPartIndex + part;
 							bucketInstance.m_partInstanceIndex = m_currentInstanceBufferStart + m_currentInstanceBufferOffset;
 
@@ -534,7 +562,7 @@ namespace R3
 				}
 				return true;
 			};
-		Entities::Queries::ForEach<StaticMeshComponent, TransformComponent>(activeWorld, forEachEntity);
+			Entities::Queries::ForEach<StaticMeshComponent, TransformComponent>(activeWorld, forEachEntity);
 		}
 	}
 
@@ -610,6 +638,19 @@ namespace R3
 		m_frameStats.m_totalTriangles += static_cast<uint32_t>(totalIndices / 3);
 	}
 
+	void StaticMeshRenderer::PrepareAndCullDrawBucketCompute(Device& d, VkCommandBuffer cmds, MeshPartDrawBucket& bucket)
+	{
+		R3_PROF_EVENT();
+
+		auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
+		Frustum mainFrustum(mainCamera.ProjectionMatrix() * mainCamera.ViewMatrix());
+		bucket.m_firstDrawOffset = (m_currentDrawBufferStart + m_currentDrawBufferOffset);	// record draw-indirect base offset for this bucket
+		bucket.m_drawCount = (uint32_t)bucket.m_partInstances.size();						// draw-indirects will be populated by compute shader
+		m_currentDrawBufferOffset += bucket.m_drawCount;
+
+		m_computeCulling->Run(d, cmds, bucket, mainFrustum);										// populate the draw-indirect data for this bucket of instances via compute
+	}
+
 	bool StaticMeshRenderer::CollectInstances()
 	{
 		R3_PROF_EVENT();
@@ -621,22 +662,29 @@ namespace R3
 		m_frameStats.m_totalTransparentInstances = (uint32_t)m_allTransparents.m_partInstances.size();
 		m_frameStats.m_collectInstancesEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 
-		m_frameStats.m_prepareBucketsStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
-
-#ifdef ENABLE_CPU_INSTANCE_CULLING
-		if (m_enableCpuCulling)
+		if (m_enableComputeCulling)	// prepare buckets on cpu if no compute
 		{
-			PrepareAndCullDrawBucket(m_allOpaques);
-			PrepareAndCullDrawBucket(m_allTransparents);
-			
+			m_allOpaques.m_drawCount = 0;
+			m_allTransparents.m_drawCount = 0;
 		}
 		else
-#endif
 		{
-			PrepareDrawBucket(m_allOpaques);
-			PrepareDrawBucket(m_allTransparents);
+			m_frameStats.m_prepareBucketsStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
+#ifdef ENABLE_CPU_INSTANCE_CULLING
+			if (m_enableCpuCulling)
+			{
+				PrepareAndCullDrawBucket(m_allOpaques);
+				PrepareAndCullDrawBucket(m_allTransparents);
+
+			}
+			else
+#endif
+			{
+				PrepareDrawBucket(m_allOpaques);
+				PrepareDrawBucket(m_allTransparents);
+			}
+			m_frameStats.m_prepareBucketsEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		}
-		m_frameStats.m_prepareBucketsEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 
 		return true;
 	}

@@ -8,21 +8,24 @@
 
 namespace R3
 {
+	// an instance added to a bucket to be drawn (used to generate draw calls)
+	struct BucketPartInstance
+	{
+		uint32_t m_partInstanceIndex;		// index into instance data (gpu memory)
+		uint32_t m_partGlobalIndex;			// index into mesh parts aarray
+	};
+
 	// A bucket of draw calls
 	struct MeshPartDrawBucket
 	{
-		struct BucketPartInstance
-		{
-			uint32_t m_partInstanceIndex;		// index into instance data (gpu memory)
-			uint32_t m_partGlobalIndex;			// index into mesh parts aarray
-		};
 		std::vector<BucketPartInstance> m_partInstances;	// collected from entities
-		uint32_t m_firstDrawOffset;						// index into m_globalInstancesMappedPtr
-		uint32_t m_drawCount;							// num. draw indirects
+		uint32_t m_firstDrawOffset;							// index into m_globalInstancesMappedPtr
+		uint32_t m_drawCount;								// num. draw indirects
 	};
 
 	class Device;
 	class DescriptorSetSimpleAllocator;
+	class StaticMeshInstanceCullingCompute;
 	class StaticMeshRenderer : public System
 	{
 	public:
@@ -31,16 +34,19 @@ namespace R3
 		static std::string_view GetName() { return "StaticMeshRenderer"; }
 		virtual void RegisterTickFns();
 		virtual bool Init();
+		void CullInstancesOnGpu(class RenderPassContext& ctx);
 		void PrepareForRendering(class RenderPassContext& ctx);		// call from frame graph before drawing anything
 		void OnForwardPassDraw(class RenderPassContext& ctx);
 		void OnGBufferPassDraw(class RenderPassContext& ctx);
 		void OnDrawEnd(class RenderPassContext& ctx);
-
+		VkDeviceAddress GetDrawIndirectBufferAddress();
+		VkDeviceAddress GetPerDrawInstanceBufferAddress();
 	private:
 		struct GlobalConstants;
 		void CollectAllPartInstances();
 		void PrepareDrawBucket(MeshPartDrawBucket& bucket);
 		void PrepareAndCullDrawBucket(MeshPartDrawBucket& bucket);
+		void PrepareAndCullDrawBucketCompute(Device&, VkCommandBuffer cmds, MeshPartDrawBucket& bucket);
 		bool ShowGui();
 		bool CollectInstances();
 		void Cleanup(Device&);
@@ -72,7 +78,10 @@ namespace R3
 
 		bool m_forwardRenderEverything = false;	// override to pass all instances to forward pass
 		bool m_enableCpuCulling = false;		// run instance frustum culling on CPU
+		bool m_enableComputeCulling = false;	// run instance culling in compute
 		bool m_showGui = false;
+
+		std::unique_ptr<StaticMeshInstanceCullingCompute> m_computeCulling;
 
 		WriteOnlyGpuArray<GlobalConstants> m_globalConstantsBuffer;	// globals written here every frame
 		const int c_maxGlobalConstantBuffers = 3;	// ring buffer writes to avoid synchronisation
@@ -87,6 +96,7 @@ namespace R3
 
 		AllocatedBuffer m_drawIndirectHostVisible;	// draw indirect entries for each instance
 		void* m_drawIndirectMappedPtr = nullptr;
+		VkDeviceAddress m_drawIndirectBufferAddress;
 		uint32_t m_currentDrawBufferStart = 0;		// base index into m_drawIndirectHostVisible for this frame
 		uint32_t m_currentDrawBufferOffset = 0;		// offset from m_currentDrawBufferStart
 

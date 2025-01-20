@@ -139,7 +139,7 @@ namespace R3
 		return true;
 	}
 
-	void LightsSystem::CollectLightsForDrawing(RenderPassContext& ctx)
+	void LightsSystem::PrepareForDrawing(RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
 

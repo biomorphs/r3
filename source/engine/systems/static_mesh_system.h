@@ -63,6 +63,7 @@ namespace R3
 		virtual void Shutdown();
 		void PrepareForRendering(class RenderPassContext& ctx);		// call from frame graph before drawing anything
 		VkDeviceAddress GetVertexDataDeviceAddress();
+		VkDeviceAddress GetMeshPartsDeviceAddress();
 		VkDeviceAddress GetMaterialsDeviceAddress();
 		VkBuffer GetIndexBuffer();
 		bool GetMeshDataForModel(const ModelDataHandle& handle, StaticMeshGpuData& result);

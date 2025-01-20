@@ -103,6 +103,11 @@ namespace R3
 		return m_allVertices.GetDataDeviceAddress();
 	}
 
+	VkDeviceAddress StaticMeshSystem::GetMeshPartsDeviceAddress()
+	{
+		return m_allMeshPartsGpu.GetDataDeviceAddress();
+	}
+
 	VkDeviceAddress StaticMeshSystem::GetMaterialsDeviceAddress()
 	{
 		return m_allMaterialsGpu.GetDataDeviceAddress();
@@ -302,18 +307,18 @@ namespace R3
 			R3_PROF_EVENT("UploadInstanceMaterials");
 			auto entities = Systems::GetSystem<Entities::EntitySystem>();
 			auto forEachEntity = [&](const Entities::EntityHandle& e, StaticMeshMaterialsComponent& smc)
+			{
+				if (smc.m_gpuDataIndex == -1 && smc.m_materials.size() > 0)
 				{
-					if (smc.m_gpuDataIndex == -1 && smc.m_materials.size() > 0)
-					{
-						smc.m_gpuDataIndex = static_cast<uint32_t>(m_allMaterialsGpu.Allocate(smc.m_materials.size()));
-					}
-					if (smc.m_gpuDataIndex != -1)	// update all instance mats each frame
-					{
-						m_allMaterialsGpu.Write(smc.m_gpuDataIndex, smc.m_materials.size(), smc.m_materials.data());
-						memcpy(&m_allMaterials[smc.m_gpuDataIndex], smc.m_materials.data(), smc.m_materials.size() * sizeof(StaticMeshMaterial));
-					}
-					return true;
-				};
+					smc.m_gpuDataIndex = static_cast<uint32_t>(m_allMaterialsGpu.Allocate(smc.m_materials.size()));
+				}
+				if (smc.m_gpuDataIndex != -1)	// update all instance mats each frame
+				{
+					m_allMaterialsGpu.Write(smc.m_gpuDataIndex, smc.m_materials.size(), smc.m_materials.data());
+					memcpy(&m_allMaterials[smc.m_gpuDataIndex], smc.m_materials.data(), smc.m_materials.size() * sizeof(StaticMeshMaterial));
+				}
+				return true;
+			};
 
 			if (entities->GetActiveWorld())
 			{
@@ -324,7 +329,7 @@ namespace R3
 			R3_PROF_EVENT("FlushStagingWrites");
 			m_allVertices.Flush(*ctx.m_device, ctx.m_graphicsCmds);
 			m_allIndices.Flush(*ctx.m_device, ctx.m_graphicsCmds);
-			m_allMaterialsGpu.Flush(*ctx.m_device, ctx.m_graphicsCmds);
+			m_allMaterialsGpu.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 			m_allMeshPartsGpu.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT);	// mesh parts used in compute culling/bucket prep before vertex shader
 		}
 	}
