@@ -16,7 +16,6 @@
 #include "render/render_system.h"
 #include "render/device.h"
 #include "render/pipeline_builder.h"
-#include "render/descriptors.h"
 #include "render/render_pass_context.h"
 #include "render/render_target_cache.h"
 #include "core/profiler.h"
@@ -45,6 +44,7 @@ namespace R3
 		VkDeviceAddress m_vertexBufferAddress;
 		VkDeviceAddress m_materialBufferAddress;
 		VkDeviceAddress m_lightDataBufferAddress;
+		VkDeviceAddress m_instanceDataBufferAddress;
 	};
 
 	// pushed once per pipeline, provides global constants buffer address for this frame
@@ -101,8 +101,6 @@ namespace R3
 			vmaUnmapMemory(d.GetVMA(), m_drawIndirectHostVisible.m_allocation);
 			vmaDestroyBuffer(d.GetVMA(), m_drawIndirectHostVisible.m_buffer, m_drawIndirectHostVisible.m_allocation);
 		}
-		vkDestroyDescriptorSetLayout(d.GetVkDevice(), m_globalsDescriptorLayout, nullptr);
-		m_descriptorAllocator = {};
 		m_globalConstantsBuffer.Destroy(d);
 	}
 
@@ -151,9 +149,9 @@ namespace R3
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipelineLayoutInfo.pushConstantRangeCount = 1;
 		pipelineLayoutInfo.pPushConstantRanges = &constantRange;
-		VkDescriptorSetLayout setLayouts[] = { m_globalsDescriptorLayout, textures->GetDescriptorsLayout() };
+		VkDescriptorSetLayout setLayouts[] = { textures->GetDescriptorsLayout() };
 		pipelineLayoutInfo.pSetLayouts = setLayouts;
-		pipelineLayoutInfo.setLayoutCount = 2;
+		pipelineLayoutInfo.setLayoutCount = (uint32_t)std::size(setLayouts);
 		if (!VulkanHelpers::CheckResult(vkCreatePipelineLayout(d.GetVkDevice(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout)))
 		{
 			LogError("Failed to create pipeline layout");
@@ -266,38 +264,6 @@ namespace R3
 		return true;
 	}
 
-	bool StaticMeshRenderer::CreateGlobalDescriptorSet()
-	{
-		R3_PROF_EVENT();
-		auto render = GetSystem<RenderSystem>();
-		DescriptorLayoutBuilder layoutBuilder;
-		layoutBuilder.AddBinding(0, 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);		// uniform buffer for global constants
-		m_globalsDescriptorLayout = layoutBuilder.Create(*render->GetDevice(), false);	// dont need bindless here
-		if (m_globalsDescriptorLayout == nullptr)
-		{
-			LogError("Failed to create global descriptor set layout");
-			return false;
-		}
-
-		m_descriptorAllocator = std::make_unique<DescriptorSetSimpleAllocator>();
-		std::vector<VkDescriptorPoolSize> poolSizes = {
-			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1 }
-		};
-		if (!m_descriptorAllocator->Initialise(*render->GetDevice(), 1, poolSizes))
-		{
-			LogError("Failed to create descriptor allocator");
-			return false;
-		}
-
-		// Create the global set and write it now, it will never be updated again
-		m_globalDescriptorSet = m_descriptorAllocator->Allocate(*render->GetDevice(), m_globalsDescriptorLayout);
-		DescriptorSetWriter writer(m_globalDescriptorSet);
-		writer.WriteStorageBuffer(0, m_globalInstancesHostVisible.m_buffer);
-		writer.FlushWrites();
-
-		return true;
-	}
-
 	void StaticMeshRenderer::PrepareForRendering(class RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
@@ -315,11 +281,12 @@ namespace R3
 		{
 			m_globalInstancesHostVisible = VulkanHelpers::CreateBuffer(ctx.m_device->GetVMA(),
 				c_maxInstances * c_maxInstanceBuffers * sizeof(StaticMeshInstanceGpu),
-				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
 			VulkanHelpers::SetBufferName(ctx.m_device->GetVkDevice(), m_globalInstancesHostVisible, "Static mesh global instances");
 			void* mapped = nullptr;
 			vmaMapMemory(ctx.m_device->GetVMA(), m_globalInstancesHostVisible.m_allocation, &mapped);
 			m_globalInstancesMappedPtr = static_cast<StaticMeshInstanceGpu*>(mapped);
+			m_globalInstancesDeviceAddress = VulkanHelpers::GetBufferDeviceAddress(ctx.m_device->GetVkDevice(), m_globalInstancesHostVisible);
 		}
 		if (m_drawIndirectMappedPtr == nullptr)
 		{
@@ -330,14 +297,6 @@ namespace R3
 			void* mapped = nullptr;
 			vmaMapMemory(ctx.m_device->GetVMA(), m_drawIndirectHostVisible.m_allocation, &mapped);
 			m_drawIndirectMappedPtr = static_cast<StaticMeshInstanceGpu*>(mapped);
-		}
-		if (m_globalDescriptorSet == VK_NULL_HANDLE)
-		{
-			if (!CreateGlobalDescriptorSet())
-			{
-				LogError("Failed to create global descriptor set");
-				return;
-			}
 		}
 		if (m_pipelineLayout == VK_NULL_HANDLE)
 		{
@@ -358,6 +317,7 @@ namespace R3
 		globals.m_vertexBufferAddress = staticMeshes->GetVertexDataDeviceAddress();
 		globals.m_materialBufferAddress = staticMeshes->GetMaterialsDeviceAddress();
 		globals.m_lightDataBufferAddress = lights->GetAllLightsDeviceAddress();
+		globals.m_instanceDataBufferAddress = m_globalInstancesDeviceAddress;
 		m_globalConstantsBuffer.Write(m_currentGlobalConstantsBuffer, 1, &globals);
 		m_globalConstantsBuffer.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 	}
@@ -402,12 +362,8 @@ namespace R3
 		vkCmdSetViewport(ctx.m_graphicsCmds, 0, 1, &viewport);
 		vkCmdSetScissor(ctx.m_graphicsCmds, 0, 1, &scissor);
 		vkCmdBindIndexBuffer(ctx.m_graphicsCmds, staticMeshes->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-		vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_globalDescriptorSet, 0, nullptr);
 		VkDescriptorSet allTextures = textures->GetAllTexturesSet();
-		if (allTextures != VK_NULL_HANDLE)
-		{
-			vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 1, 1, &allTextures, 0, nullptr);
-		}
+		vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, nullptr);
 		PushConstants pc;
 		pc.m_globalsBufferAddress = m_globalConstantsBuffer.GetDataDeviceAddress() + (m_currentGlobalConstantsBuffer * sizeof(GlobalConstants));
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
@@ -456,12 +412,8 @@ namespace R3
 		vkCmdSetViewport(ctx.m_graphicsCmds, 0, 1, &viewport);
 		vkCmdSetScissor(ctx.m_graphicsCmds, 0, 1, &scissor);
 		vkCmdBindIndexBuffer(ctx.m_graphicsCmds, staticMeshes->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-		vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_globalDescriptorSet, 0, nullptr);
 		VkDescriptorSet allTextures = textures->GetAllTexturesSet();
-		if (allTextures != VK_NULL_HANDLE)
-		{
-			vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 1, 1, &allTextures, 0, nullptr);
-		}
+		vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, nullptr);
 		PushConstants pc;
 		pc.m_globalsBufferAddress = m_globalConstantsBuffer.GetDataDeviceAddress() + (m_currentGlobalConstantsBuffer * sizeof(GlobalConstants));
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
@@ -596,9 +548,6 @@ namespace R3
 		for (const auto& bucketInstance : bucket.m_partInstances)
 		{
 			const StaticMeshPart* currentPartData = staticMeshes->GetMeshPart(bucketInstance.m_partGlobalIndex);
-
-			// use currentPartData bounds to test visibility...
-
 			VkDrawIndexedIndirectCommand* drawPtr = static_cast<VkDrawIndexedIndirectCommand*>(m_drawIndirectMappedPtr) + m_currentDrawBufferStart + m_currentDrawBufferOffset;
 			drawPtr->indexCount = currentPartData->m_indexCount;
 			drawPtr->instanceCount = 1;

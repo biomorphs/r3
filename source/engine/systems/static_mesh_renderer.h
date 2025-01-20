@@ -35,7 +35,6 @@ namespace R3
 		void OnForwardPassDraw(class RenderPassContext& ctx);
 		void OnGBufferPassDraw(class RenderPassContext& ctx);
 		void OnDrawEnd(class RenderPassContext& ctx);
-		inline glm::vec4 GetMainColourClearValue() { return m_mainPassColourClearValue; }
 
 	private:
 		struct GlobalConstants;
@@ -48,7 +47,7 @@ namespace R3
 		bool CreatePipelineLayout(Device&);
 		bool CreateForwardPipelineData(Device&, VkFormat mainColourFormat, VkFormat mainDepthFormat);
 		bool CreateGBufferPipelineData(Device&, VkFormat positionMetalFormat, VkFormat normalRoughnessFormat, VkFormat albedoAOFormat, VkFormat mainDepthFormat);
-		bool CreateGlobalDescriptorSet();
+
 		struct StaticMeshInstanceGpu {				// needs to match PerInstanceData in shaders
 			glm::mat4 m_transform;
 			uint32_t m_materialIndex;
@@ -69,27 +68,24 @@ namespace R3
 
 		MeshPartDrawBucket m_allOpaques;
 		MeshPartDrawBucket m_allTransparents;
-		bool m_forwardRenderEverything = false;	// override to pass all instances to forward pass
-		bool m_enableCpuCulling = false;
-
-		glm::vec4 m_mainPassColourClearValue = { 0,0,0,1 };
 		FrameStats m_frameStats;
 
-		std::unique_ptr<DescriptorSetSimpleAllocator> m_descriptorAllocator;
-		VkDescriptorSetLayout_T* m_globalsDescriptorLayout = nullptr;
-		VkDescriptorSet_T* m_globalDescriptorSet = nullptr;	
+		bool m_forwardRenderEverything = false;	// override to pass all instances to forward pass
+		bool m_enableCpuCulling = false;		// run instance frustum culling on CPU
+		bool m_showGui = false;
 
-		WriteOnlyGpuArray<GlobalConstants> m_globalConstantsBuffer;
+		WriteOnlyGpuArray<GlobalConstants> m_globalConstantsBuffer;	// globals written here every frame
 		const int c_maxGlobalConstantBuffers = 3;	// ring buffer writes to avoid synchronisation
 		int m_currentGlobalConstantsBuffer = 0;
 
-		AllocatedBuffer m_globalInstancesHostVisible;
+		AllocatedBuffer m_globalInstancesHostVisible;	// one giant buffer for all instance data, updated per-frame
 		StaticMeshInstanceGpu* m_globalInstancesMappedPtr = nullptr;
+		VkDeviceAddress m_globalInstancesDeviceAddress;
 		uint32_t m_currentInstanceBufferStart = 0;	// index into m_globalInstancesMappedPtr for this frame
 		uint32_t m_currentInstanceBufferOffset = 0;	// offset from m_currentInstanceBufferStart
 		std::vector<StaticMeshInstanceGpu> m_globalInstancesCPU;	// cpu-side copy of instance data, only used in cpu culling
 
-		AllocatedBuffer m_drawIndirectHostVisible;
+		AllocatedBuffer m_drawIndirectHostVisible;	// draw indirect entries for each instance
 		void* m_drawIndirectMappedPtr = nullptr;
 		uint32_t m_currentDrawBufferStart = 0;		// base index into m_drawIndirectHostVisible for this frame
 		uint32_t m_currentDrawBufferOffset = 0;		// offset from m_currentDrawBufferStart
@@ -100,6 +96,5 @@ namespace R3
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_forwardPipeline = VK_NULL_HANDLE;
 		VkPipeline m_gBufferPipeline = VK_NULL_HANDLE;
-		bool m_showGui = false;
 	};
 }
