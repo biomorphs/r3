@@ -1,16 +1,7 @@
+// include this in any shaders that draw static meshes via StaticMeshRenderer!
+
 #include "mesh_data.h"
 #include "lights.h"
-
-struct PerInstanceData {
-	mat4 m_transform;
-	uint m_materialIndex;	// points into m_materialBuffer
-};
-
-//all instance data passed via storage buffer (use gl_InstanceIndex to get the current index)
-layout(buffer_reference, std430) readonly buffer AllInstancesBuffer
-{
-	PerInstanceData AllInstances[];
-};
 
 struct GlobalConstants { 
 	mat4 m_projViewTransform;
