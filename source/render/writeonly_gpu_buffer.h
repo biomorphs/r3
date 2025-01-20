@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/mutex.h"
 #include "vulkan_helpers.h"
 #include "buffer_pool.h"
 #include <atomic>
@@ -12,6 +13,7 @@ namespace R3
 	// fixed-sized staging buffers provided by render system buffer pool (acquired on create + flush)
 	// writes are copied to staging buffer and scheduled for flush (lock free, thread-safe)
 	// flush will call vkCopyBuffer to push from staging -> the actual buffer, release the old staging buffer + acquire a new one
+	// async write/flush guarded by a mutex
 	class Device;
 	class WriteOnlyGpuBuffer
 	{
@@ -31,6 +33,7 @@ namespace R3
 		VkDeviceAddress GetDataDeviceAddress();
 		VkBuffer GetBuffer();
 	private:
+		Mutex m_mutex;	// required since write and flush cannot overlap
 		bool AcquireNewStagingBuffer(Device& d);
 		AllocatedBuffer m_allData;
 		VkDeviceAddress m_allDataAddress;

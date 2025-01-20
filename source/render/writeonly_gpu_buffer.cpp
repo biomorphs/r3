@@ -37,6 +37,9 @@ namespace R3
 	bool WriteOnlyGpuBuffer::Create(Device& d, uint64_t dataMaxSize, uint64_t stagingMaxSize, VkBufferUsageFlags usageFlags)
 	{
 		R3_PROF_EVENT();
+
+		ScopedLock doLock(m_mutex);
+
 		m_allData = VulkanHelpers::CreateBuffer(d.GetVMA(), dataMaxSize, usageFlags | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
 		VulkanHelpers::SetBufferName(d.GetVkDevice(), m_allData, m_debugName);
 		m_allDataAddress = VulkanHelpers::GetBufferDeviceAddress(d.GetVkDevice(), m_allData);
@@ -70,6 +73,9 @@ namespace R3
 	bool WriteOnlyGpuBuffer::Write(uint64_t writeStartOffset, uint64_t sizeBytes, const void* data)
 	{
 		R3_PROF_EVENT();
+
+		ScopedLock doLock(m_mutex);
+
 		if (m_stagingBuffer.m_buffer.m_buffer == VK_NULL_HANDLE || m_stagingBuffer.m_mappedBuffer == nullptr)
 		{
 			LogError("Gpu buffer {} has no staging buffer!", m_debugName);
@@ -121,6 +127,7 @@ namespace R3
 	void WriteOnlyGpuBuffer::Flush(Device& d, VkCommandBuffer cmds, VkPipelineStageFlags barrierDst)
 	{
 		R3_PROF_EVENT();
+		ScopedLock doLock(m_mutex);
 		ScheduledWrite writeToFlush;
 		int copiesIssued = 0;
 		std::vector<VkBufferCopy> copyRegions;
@@ -182,6 +189,7 @@ namespace R3
 	void WriteOnlyGpuBuffer::Destroy(Device& d)
 	{
 		R3_PROF_EVENT();
+		ScopedLock doLock(m_mutex);
 		if (m_allData.m_allocation)
 		{
 			vmaDestroyBuffer(d.GetVMA(), m_allData.m_buffer, m_allData.m_allocation);
