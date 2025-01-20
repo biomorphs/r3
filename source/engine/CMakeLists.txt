@@ -7,6 +7,8 @@ set(EngineLib_SourceFiles
 	assets/model_data.cpp
 	assets/dds_loader.h
 	assets/dds_loader.cpp
+	graphics/static_mesh_instance_culling_compute.h
+	graphics/static_mesh_instance_culling_compute.cpp
 	graphics/tonemap_compute.h
 	graphics/tonemap_compute.cpp
 	graphics/deferred_lighting_compute.h

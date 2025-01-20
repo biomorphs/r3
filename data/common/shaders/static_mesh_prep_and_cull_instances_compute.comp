@@ -1,0 +1,84 @@
+#version 460
+#extension GL_EXT_buffer_reference : require
+
+#include "mesh_data.h"
+
+// 1 bucket part instance per draw call
+struct BucketPartInstance 
+{
+	uint m_partInstanceIndex;		// index into AllInstancesBuffer
+	uint m_partGlobalIndex;			// index into AllStaticMeshPartsBuffer
+};
+
+// frustums passed as 6 world-space planes
+struct Frustum 
+{
+	vec4 m_planes[6];
+};
+
+// 1 draw-indirect entry generated per bucket instance
+struct DrawIndirectEntry 
+{
+    uint m_indexCount;
+    uint m_instanceCount;
+    uint m_firstIndex;
+    uint m_vertexOffset;
+    uint m_firstInstance;
+};
+
+layout(buffer_reference, std430) readonly buffer AllBucketInstancesBuffer
+{
+	BucketPartInstance allBucketInstances[];
+};
+
+layout(buffer_reference, std430) readonly buffer AllFrustumsBuffer
+{
+	Frustum allFrustums[];
+};
+
+layout(buffer_reference, std430) writeonly buffer AllDrawIndirectsBuffer
+{
+	DrawIndirectEntry allDrawIndirects[];
+};
+
+// describes all buffers/data required to run a culling task
+struct CullingTaskInfo 
+{
+	AllDrawIndirectsBuffer m_drawIndirects;			// offset into allocated space already, write from index 0 to m_bucketPartInstanceCount
+	AllFrustumsBuffer m_frustums;					// offset into buffer already, only read allFrustums[0]
+	AllBucketInstancesBuffer m_bucketInstances;		// already offset into the bucket instances, read from index 0 to m_bucketPartInstanceCount
+	AllStaticMeshPartsBuffer m_allMeshParts;		// base address
+	AllInstancesBuffer m_allPerDrawInstances;		// base address
+	uint m_bucketPartInstanceCount;		// num draw indirects to generate
+};
+
+// address sent via push constant, only use info[0]
+layout(buffer_reference, std430) readonly buffer AllCullingTaskInfoBuffer
+{
+	CullingTaskInfo info[];
+};
+
+layout (local_size_x = 64) in;
+
+// frustum and instance buffers sent via push
+layout(push_constant) uniform constants
+{
+	AllCullingTaskInfoBuffer m_thisTaskInfo;
+} PushConstants;
+
+void main() 
+{
+	CullingTaskInfo taskInfo = PushConstants.m_thisTaskInfo.info[0];
+	if(gl_GlobalInvocationID.x < taskInfo.m_bucketPartInstanceCount)
+	{
+		BucketPartInstance thisBucketInstance = taskInfo.m_bucketInstances.allBucketInstances[gl_GlobalInvocationID.x];
+		//StaticMeshPart thisMeshPart = taskInfo.m_allMeshParts.parts[thisBucketInstance.m_partGlobalIndex];
+		
+		// Populate the draw indirect from the mesh part data
+		//taskInfo.m_drawIndirects.allDrawIndirects[gl_GlobalInvocationID.x].m_indexCount = thisMeshPart.m_indexCount;
+		taskInfo.m_drawIndirects.allDrawIndirects[gl_GlobalInvocationID.x].m_instanceCount = 0;
+		//taskInfo.m_drawIndirects.allDrawIndirects[gl_GlobalInvocationID.x].m_firstIndex = thisMeshPart.m_indexStartOffset;
+		//taskInfo.m_drawIndirects.allDrawIndirects[gl_GlobalInvocationID.x].m_vertexOffset = thisMeshPart.m_vertexDataOffset;
+		taskInfo.m_drawIndirects.allDrawIndirects[gl_GlobalInvocationID.x].m_firstInstance = thisBucketInstance.m_partInstanceIndex;
+	}
+}
