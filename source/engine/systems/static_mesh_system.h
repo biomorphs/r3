@@ -16,9 +16,9 @@ namespace R3
 	struct StaticMeshPart
 	{
 		glm::mat4 m_transform;					// relative to the model
-		glm::vec3 m_boundsMin;					// mesh space bounds
-		glm::vec3 m_boundsMax;
-		uint64_t m_indexStartOffset;			// offset into indices (index data is local to the mesh, verts must be offset by mesh vertex offset)
+		glm::vec4 m_boundsMin;					// mesh space bounds (w unused)
+		glm::vec4 m_boundsMax;
+		uint32_t m_indexStartOffset;			// offset into indices (index data is local to the mesh, verts must be offset by mesh vertex offset)
 		uint32_t m_indexCount;					//
 		uint32_t m_materialIndex;				// index into mesh data material array
 		uint32_t m_vertexDataOffset;			// used when generating draw calls
@@ -39,8 +39,8 @@ namespace R3
 	{
 		glm::vec3 m_boundsMin;					// mesh space bounds
 		glm::vec3 m_boundsMax;
-		uint64_t m_vertexDataOffset;			// one giant vertex buffer
-		uint64_t m_indexDataOffset;				// one giant index buffer
+		uint32_t m_vertexDataOffset;			// one giant vertex buffer
+		uint32_t m_indexDataOffset;				// one giant index buffer
 		uint32_t m_materialGpuIndex;			// index into the array of materials (cpu and gpu!)
 		uint32_t m_firstMeshPartOffset;			// one big buffer
 		uint32_t m_meshPartCount;

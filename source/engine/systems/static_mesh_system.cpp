@@ -179,8 +179,8 @@ namespace R3
 
 			// allocate the mesh data + fill in what we can while we have the lock
 			StaticMeshGpuData newMesh;
-			newMesh.m_vertexDataOffset = m_allVertices.Allocate(m->m_vertices.size());
-			newMesh.m_indexDataOffset = m_allIndices.Allocate(m->m_indices.size());
+			newMesh.m_vertexDataOffset = static_cast<uint32_t>(m_allVertices.Allocate(m->m_vertices.size()));
+			newMesh.m_indexDataOffset = static_cast<uint32_t>(m_allIndices.Allocate(m->m_indices.size()));
 			if (newMesh.m_vertexDataOffset == -1 || newMesh.m_indexDataOffset == -1)
 			{
 				LogError("Failed to create vertex or index buffer for mesh {}", Systems::GetSystem<ModelDataSystem>()->GetModelName(handle));
@@ -236,8 +236,8 @@ namespace R3
 				{
 					auto& pt = m_allParts[part + newMesh.m_firstMeshPartOffset];
 					pt.m_transform = m->m_meshes[part].m_transform;
-					pt.m_boundsMax = m->m_meshes[part].m_boundsMax;
-					pt.m_boundsMin = m->m_meshes[part].m_boundsMin;
+					pt.m_boundsMax = glm::vec4(m->m_meshes[part].m_boundsMax,0);
+					pt.m_boundsMin = glm::vec4(m->m_meshes[part].m_boundsMin,0);
 					pt.m_indexCount = m->m_meshes[part].m_indexCount;
 					pt.m_indexStartOffset = newMesh.m_indexDataOffset + m->m_meshes[part].m_indexDataOffset;
 					pt.m_materialIndex = newMesh.m_materialGpuIndex + m->m_meshes[part].m_materialIndex;	// GPU index!

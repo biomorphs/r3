@@ -29,8 +29,8 @@ layout(buffer_reference, std430) readonly buffer MaterialBuffer {
 struct StaticMeshPart					// Describes a single mesh part
 {
 	mat4 m_transform;					// relative to the model
-	vec3 m_boundsMin;					// mesh space bounds
-	vec3 m_boundsMax;
+	vec4 m_boundsMin;					// mesh space bounds
+	vec4 m_boundsMax;
 	uint m_indexStartOffset;			// offset into index data
 	uint m_indexCount;					//
 	uint m_materialIndex;				// index into materials array

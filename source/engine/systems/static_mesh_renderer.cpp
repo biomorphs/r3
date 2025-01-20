@@ -605,7 +605,7 @@ namespace R3
 			const StaticMeshPart* currentPartData = staticMeshes->GetMeshPart(bucketInstance.m_partGlobalIndex);
 			const StaticMeshInstanceGpu* currentInstance = m_globalInstancesCPU.data() + (bucketInstance.m_partInstanceIndex - m_currentInstanceBufferStart);
 
-			bool isVisible = mainFrustum.IsBoxVisible(currentPartData->m_boundsMin, currentPartData->m_boundsMax, currentInstance->m_transform);
+			bool isVisible = mainFrustum.IsBoxVisible(glm::vec3(currentPartData->m_boundsMin), glm::vec3(currentPartData->m_boundsMax), currentInstance->m_transform);
 
 			VkDrawIndexedIndirectCommand* drawPtr = static_cast<VkDrawIndexedIndirectCommand*>(m_drawIndirectMappedPtr) + m_currentDrawBufferStart + m_currentDrawBufferOffset + index;
 			drawPtr->indexCount = currentPartData->m_indexCount;
@@ -623,7 +623,7 @@ namespace R3
 			const StaticMeshPart* currentPartData = staticMeshes->GetMeshPart(bucketInstance.m_partGlobalIndex);
 			const StaticMeshInstanceGpu* currentInstance = m_globalInstancesCPU.data() + (bucketInstance.m_partInstanceIndex - m_currentInstanceBufferStart);
 
-			bool isVisible = mainFrustum.IsBoxVisible(currentPartData->m_boundsMin, currentPartData->m_boundsMax, currentInstance->m_transform);
+			bool isVisible = mainFrustum.IsBoxVisible(glm::vec3(currentPartData->m_boundsMin), glm::vec3(currentPartData->m_boundsMax), currentInstance->m_transform);
 
 			VkDrawIndexedIndirectCommand* drawPtr = static_cast<VkDrawIndexedIndirectCommand*>(m_drawIndirectMappedPtr) + m_currentDrawBufferStart + m_currentDrawBufferOffset;
 			drawPtr->indexCount = currentPartData->m_indexCount;

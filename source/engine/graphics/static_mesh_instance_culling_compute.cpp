@@ -125,7 +125,13 @@ namespace R3
 			LogError("Invalid buffer indexes for culling");
 			return;
 		}
+		if (m_currentCullingTaskOffset >= c_maxCullingTasks)
+		{
+			LogError("Max culling tasks hit! Increase c_maxCullingTasks");
+			return;
+		}
 
+		uint32_t currentCullingTaskOffset = (m_currentCullingTaskBuffer * c_maxCullingTasks) + m_currentCullingTaskOffset;
 		CullingTaskInfo thisJob;
 		thisJob.m_allBucketInstances = bucketInstancesAddress;
 		thisJob.m_drawIndirects = staticRender->GetDrawIndirectBufferAddress() + (instanceBucket.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand));
@@ -133,21 +139,14 @@ namespace R3
 		thisJob.m_allMeshParts = staticMeshes->GetMeshPartsDeviceAddress();
 		thisJob.m_allPerDrawInstances = staticRender->GetPerDrawInstanceBufferAddress();
 		thisJob.m_bucketPartInstanceCount = (uint32_t)instanceBucket.m_partInstances.size();
-		if (m_currentCullingTaskOffset < c_maxCullingTasks)
-		{
-			m_cullingTasksGpu.Write(m_currentCullingTaskOffset, 1, &thisJob);
-		}
-		else
-		{
-			LogError("Max culling tasks hit! Increase c_maxCullingTasks");
-			return;
-		}
+		m_cullingTasksGpu.Write(currentCullingTaskOffset, 1, &thisJob);
+
 		m_frustumsGpu.Flush(d, cmds, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 		m_bucketPartInstancesGpu.Flush(d, cmds, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 		m_cullingTasksGpu.Flush(d, cmds, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 
 		PushConstants pc;
-		pc.m_taskInfoDeviceAddress = m_cullingTasksGpu.GetDataDeviceAddress() + (m_currentCullingTaskOffset * sizeof(CullingTaskInfo));
+		pc.m_taskInfoDeviceAddress = m_cullingTasksGpu.GetDataDeviceAddress() + (currentCullingTaskOffset * sizeof(CullingTaskInfo));
 		vkCmdBindPipeline(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipeline);
 		vkCmdPushConstants(cmds, m_pipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(pc), &pc);
 		vkCmdDispatch(cmds, (uint32_t)glm::ceil(instanceBucket.m_partInstances.size() / 64.0f), 1, 1);
