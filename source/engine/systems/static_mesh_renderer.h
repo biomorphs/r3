@@ -85,22 +85,22 @@ namespace R3
 
 		std::unique_ptr<StaticMeshInstanceCullingCompute> m_computeCulling;
 
-		WriteOnlyGpuArray<GlobalConstants> m_globalConstantsBuffer;	// globals written here every frame
-		const int c_maxGlobalConstantBuffers = 3;	// ring buffer writes to avoid synchronisation
+		const uint32_t c_maxBuffers = 3;		// we reserve space per-frame in globals, draws + instance data. this determines how many frames to handle
+		uint32_t m_thisFrameBuffer = 0;			// determines where to write to globals, draw + instance data each frame
+
+		WriteOnlyGpuArray<GlobalConstants> m_globalConstantsBuffer;	// globals written here every frame, split into c_maxBuffers sub-buffers
 		int m_currentGlobalConstantsBuffer = 0;
 
-		AllocatedBuffer m_globalInstancesHostVisible;	// one giant buffer for all instance data, updated per-frame
+		AllocatedBuffer m_globalInstancesHostVisible;	// one giant buffer for all instance data, split into c_maxBuffers sub-buffers
 		StaticMeshInstanceGpu* m_globalInstancesMappedPtr = nullptr;
 		VkDeviceAddress m_globalInstancesDeviceAddress;
-		uint32_t m_currentInstanceBufferStart = 0;	// index into m_globalInstancesMappedPtr for this frame
-		uint32_t m_currentInstanceBufferOffset = 0;	// offset from m_currentInstanceBufferStart
 		std::vector<StaticMeshInstanceGpu> m_globalInstancesCPU;	// cpu-side copy of instance data, only used in cpu culling
+		uint32_t m_currentInstanceBufferOffset = 0;		// next write offset for instance data
 
-		AllocatedBuffer m_drawIndirectHostVisible;	// draw indirect entries for each instance
+		AllocatedBuffer m_drawIndirectHostVisible;	// draw indirect entries for each instance, split into c_maxBuffers sub-buffers
 		void* m_drawIndirectMappedPtr = nullptr;
 		VkDeviceAddress m_drawIndirectBufferAddress;
-		uint32_t m_currentDrawBufferStart = 0;		// base index into m_drawIndirectHostVisible for this frame
-		uint32_t m_currentDrawBufferOffset = 0;		// offset from m_currentDrawBufferStart
+		uint32_t m_currentDrawBufferOffset = 0;		// next write offset for draw data
 
 		const uint32_t c_maxInstances = 1024 * 256;
 		const uint32_t c_maxInstanceBuffers = 3;

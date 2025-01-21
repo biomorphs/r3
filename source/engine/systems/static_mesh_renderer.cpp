@@ -286,17 +286,17 @@ namespace R3
 		if (!m_globalConstantsBuffer.IsCreated())
 		{
 			m_globalConstantsBuffer.SetDebugName("Static mesh global constants");
-			if (!m_globalConstantsBuffer.Create(*ctx.m_device, c_maxGlobalConstantBuffers, 1, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+			if (!m_globalConstantsBuffer.Create(*ctx.m_device, c_maxBuffers, 1, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 			{
 				LogError("Failed to create constant buffer");
 				return;
 			}
-			m_globalConstantsBuffer.Allocate(c_maxGlobalConstantBuffers);
+			m_globalConstantsBuffer.Allocate(c_maxBuffers);
 		}
 		if (m_globalInstancesMappedPtr == nullptr)
 		{
 			m_globalInstancesHostVisible = VulkanHelpers::CreateBuffer(ctx.m_device->GetVMA(),
-				c_maxInstances * c_maxInstanceBuffers * sizeof(StaticMeshInstanceGpu),
+				c_maxInstances * c_maxBuffers * sizeof(StaticMeshInstanceGpu),
 				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
 			VulkanHelpers::SetBufferName(ctx.m_device->GetVkDevice(), m_globalInstancesHostVisible, "Static mesh global instances");
 			void* mapped = nullptr;
@@ -307,7 +307,7 @@ namespace R3
 		if (m_drawIndirectMappedPtr == nullptr)
 		{
 			m_drawIndirectHostVisible = VulkanHelpers::CreateBuffer(ctx.m_device->GetVMA(),
-				c_maxInstances * c_maxInstanceBuffers * sizeof(VkDrawIndexedIndirectCommand),
+				c_maxInstances * c_maxBuffers * sizeof(VkDrawIndexedIndirectCommand),
 				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
 			VulkanHelpers::SetBufferName(ctx.m_device->GetVkDevice(), m_drawIndirectHostVisible, "Static mesh draw indirect");
 			void* mapped = nullptr;
@@ -335,7 +335,7 @@ namespace R3
 		globals.m_materialBufferAddress = staticMeshes->GetMaterialsDeviceAddress();
 		globals.m_lightDataBufferAddress = lights->GetAllLightsDeviceAddress();
 		globals.m_instanceDataBufferAddress = m_globalInstancesDeviceAddress;
-		m_globalConstantsBuffer.Write(m_currentGlobalConstantsBuffer, 1, &globals);
+		m_globalConstantsBuffer.Write(m_thisFrameBuffer, 1, &globals);
 		m_globalConstantsBuffer.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 	}
 
@@ -381,7 +381,7 @@ namespace R3
 		VkDescriptorSet allTextures = textures->GetAllTexturesSet();
 		vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, nullptr);
 		PushConstants pc;
-		pc.m_globalsBufferAddress = m_globalConstantsBuffer.GetDataDeviceAddress() + (m_currentGlobalConstantsBuffer * sizeof(GlobalConstants));
+		pc.m_globalsBufferAddress = m_globalConstantsBuffer.GetDataDeviceAddress() + (m_thisFrameBuffer * sizeof(GlobalConstants));
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 
 		// Draw opaques
@@ -430,7 +430,7 @@ namespace R3
 		VkDescriptorSet allTextures = textures->GetAllTexturesSet();
 		vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, nullptr);
 		PushConstants pc;
-		pc.m_globalsBufferAddress = m_globalConstantsBuffer.GetDataDeviceAddress() + (m_currentGlobalConstantsBuffer * sizeof(GlobalConstants));
+		pc.m_globalsBufferAddress = m_globalConstantsBuffer.GetDataDeviceAddress() + (m_thisFrameBuffer * sizeof(GlobalConstants));
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 
 		// Draw opaques
@@ -444,25 +444,16 @@ namespace R3
 		R3_PROF_EVENT();
 
 		// Update draw buffers for next frame
-		m_currentInstanceBufferStart += c_maxInstances;
-		if (m_currentInstanceBufferStart >= (c_maxInstances * c_maxInstanceBuffers))
+		if (++m_thisFrameBuffer >= c_maxBuffers)
 		{
-			m_currentInstanceBufferStart = 0;
+			m_thisFrameBuffer = 0;
 		}
+
+		// reset instance offset for next frame
 		m_currentInstanceBufferOffset = 0;
 
-		m_currentDrawBufferStart += c_maxInstances;
-		if (m_currentDrawBufferStart >= (c_maxInstances * c_maxInstanceBuffers))
-		{
-			m_currentDrawBufferStart = 0;
-		}
+		// reset draw offset for next frame
 		m_currentDrawBufferOffset = 0;
-
-		m_currentGlobalConstantsBuffer++;
-		if (m_currentGlobalConstantsBuffer >= c_maxGlobalConstantBuffers)
-		{
-			m_currentGlobalConstantsBuffer = 0;
-		}
 
 		m_computeCulling->Reset();
 	}
@@ -492,6 +483,7 @@ namespace R3
 			uint32_t currentMeshPartCount = 0;				// num. parts in mesh
 			Entities::EntityHandle currentMaterialEntity;	// cache the current material override
 			uint32_t lastMatOverrideGpuIndex = -1;			// base index of the current material override
+			const uint32_t currentInstanceBufferStart = m_thisFrameBuffer * c_maxInstances;		// base index to write instances
 			auto forEachEntity = [&](const Entities::EntityHandle& e, StaticMeshComponent& s, TransformComponent& t)
 			{
 				if (s.m_modelHandle.m_index != -1 && s.m_shouldDraw)	// doesn't mean the model is actually ready to draw!
@@ -530,13 +522,13 @@ namespace R3
 							m_globalInstancesCPU[m_currentInstanceBufferOffset].m_materialIndex = materialBaseIndex + relativePartMatIndex;
 #endif
 
-							StaticMeshInstanceGpu* instancesPtr = static_cast<StaticMeshInstanceGpu*>(m_globalInstancesMappedPtr) + m_currentInstanceBufferStart + m_currentInstanceBufferOffset;
+							StaticMeshInstanceGpu* instancesPtr = static_cast<StaticMeshInstanceGpu*>(m_globalInstancesMappedPtr) + currentInstanceBufferStart + m_currentInstanceBufferOffset;
 							instancesPtr->m_transform = partTransform;
 							instancesPtr->m_materialIndex = materialBaseIndex + relativePartMatIndex;
 
 							BucketPartInstance bucketInstance;
 							bucketInstance.m_partGlobalIndex = currentMeshFirstPartIndex + part;
-							bucketInstance.m_partInstanceIndex = m_currentInstanceBufferStart + m_currentInstanceBufferOffset;
+							bucketInstance.m_partInstanceIndex = currentInstanceBufferStart + m_currentInstanceBufferOffset;
 
 							const StaticMeshMaterial* meshMaterial = staticMeshes->GetMeshMaterial(materialBaseIndex + relativePartMatIndex);
 							if (!m_forwardRenderEverything && meshMaterial->m_albedoOpacity.w >= 1.0f)
@@ -569,22 +561,20 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		auto staticMeshes = GetSystem<StaticMeshSystem>();
-		bucket.m_firstDrawOffset = (m_currentDrawBufferStart + m_currentDrawBufferOffset);
-		bucket.m_drawCount = 0;
-		uint64_t totalIndices = 0;
+		const uint32_t currentDrawBufferStart = m_thisFrameBuffer * c_maxInstances;
+		bucket.m_firstDrawOffset = (currentDrawBufferStart + m_currentDrawBufferOffset);
+		bucket.m_drawCount = (uint32_t)bucket.m_partInstances.size();
 		for (const auto& bucketInstance : bucket.m_partInstances)
 		{
 			const StaticMeshPart* currentPartData = staticMeshes->GetMeshPart(bucketInstance.m_partGlobalIndex);
-			VkDrawIndexedIndirectCommand* drawPtr = static_cast<VkDrawIndexedIndirectCommand*>(m_drawIndirectMappedPtr) + m_currentDrawBufferStart + m_currentDrawBufferOffset;
+			VkDrawIndexedIndirectCommand* drawPtr = static_cast<VkDrawIndexedIndirectCommand*>(m_drawIndirectMappedPtr) + currentDrawBufferStart + m_currentDrawBufferOffset;
 			drawPtr->indexCount = currentPartData->m_indexCount;
 			drawPtr->instanceCount = 1;
 			drawPtr->firstIndex = (uint32_t)currentPartData->m_indexStartOffset;
 			drawPtr->vertexOffset = currentPartData->m_vertexDataOffset;
 			drawPtr->firstInstance = bucketInstance.m_partInstanceIndex;
 			m_currentDrawBufferOffset++;
-			totalIndices += currentPartData->m_indexCount;
 		}
-		bucket.m_drawCount = m_currentDrawBufferStart + m_currentDrawBufferOffset - bucket.m_firstDrawOffset;
 	}
 
 	void StaticMeshRenderer::PrepareAndCullDrawBucket(MeshPartDrawBucket& bucket)
@@ -592,25 +582,25 @@ namespace R3
 		R3_PROF_EVENT();
 		auto staticMeshes = GetSystem<StaticMeshSystem>();
 		Frustum mainFrustum = GetMainCameraFrustum();
-		bucket.m_firstDrawOffset = (m_currentDrawBufferStart + m_currentDrawBufferOffset);
+		const uint32_t currentDrawBufferStart = m_thisFrameBuffer * c_maxInstances;
+		bucket.m_firstDrawOffset = (currentDrawBufferStart + m_currentDrawBufferOffset);
 		bucket.m_drawCount = (uint32_t)bucket.m_partInstances.size();
-		uint64_t totalIndices = 0;
+		const uint32_t currentInstanceBufferStart = m_thisFrameBuffer * c_maxInstances;		// base index to write instances
 #ifdef ENABLE_ASYNC_CPU_INSTANCE_CULLING
 		auto forEachInstance = [&](uint32_t index)
 		{
 			const auto& bucketInstance = bucket.m_partInstances[index];
 			const StaticMeshPart* currentPartData = staticMeshes->GetMeshPart(bucketInstance.m_partGlobalIndex);
-			const StaticMeshInstanceGpu* currentInstance = m_globalInstancesCPU.data() + (bucketInstance.m_partInstanceIndex - m_currentInstanceBufferStart);
+			const StaticMeshInstanceGpu* currentInstance = m_globalInstancesCPU.data() + (bucketInstance.m_partInstanceIndex - currentInstanceBufferStart);
 
 			bool isVisible = mainFrustum.IsBoxVisible(glm::vec3(currentPartData->m_boundsMin), glm::vec3(currentPartData->m_boundsMax), currentInstance->m_transform);
 
-			VkDrawIndexedIndirectCommand* drawPtr = static_cast<VkDrawIndexedIndirectCommand*>(m_drawIndirectMappedPtr) + m_currentDrawBufferStart + m_currentDrawBufferOffset + index;
+			VkDrawIndexedIndirectCommand* drawPtr = static_cast<VkDrawIndexedIndirectCommand*>(m_drawIndirectMappedPtr) + currentDrawBufferStart + m_currentDrawBufferOffset + index;
 			drawPtr->indexCount = currentPartData->m_indexCount;
 			drawPtr->instanceCount = isVisible ? 1 : 0;
 			drawPtr->firstIndex = (uint32_t)currentPartData->m_indexStartOffset;
 			drawPtr->vertexOffset = currentPartData->m_vertexDataOffset;
 			drawPtr->firstInstance = bucketInstance.m_partInstanceIndex;
-			totalIndices += isVisible ? currentPartData->m_indexCount : 0;
 		};
 		GetSystem<JobSystem>()->ForEachAsync(JobSystem::ThreadPool::FastJobs, 0, (uint32_t)bucket.m_partInstances.size(), 1, 1024, forEachInstance);
 		m_currentDrawBufferOffset += bucket.m_drawCount;
@@ -618,18 +608,17 @@ namespace R3
 		for (const auto& bucketInstance : bucket.m_partInstances)
 		{
 			const StaticMeshPart* currentPartData = staticMeshes->GetMeshPart(bucketInstance.m_partGlobalIndex);
-			const StaticMeshInstanceGpu* currentInstance = m_globalInstancesCPU.data() + (bucketInstance.m_partInstanceIndex - m_currentInstanceBufferStart);
+			const StaticMeshInstanceGpu* currentInstance = m_globalInstancesCPU.data() + (bucketInstance.m_partInstanceIndex - currentInstanceBufferStart);
 
 			bool isVisible = mainFrustum.IsBoxVisible(glm::vec3(currentPartData->m_boundsMin), glm::vec3(currentPartData->m_boundsMax), currentInstance->m_transform);
 
-			VkDrawIndexedIndirectCommand* drawPtr = static_cast<VkDrawIndexedIndirectCommand*>(m_drawIndirectMappedPtr) + m_currentDrawBufferStart + m_currentDrawBufferOffset;
+			VkDrawIndexedIndirectCommand* drawPtr = static_cast<VkDrawIndexedIndirectCommand*>(m_drawIndirectMappedPtr) + currentDrawBufferStart + m_currentDrawBufferOffset;
 			drawPtr->indexCount = currentPartData->m_indexCount;
 			drawPtr->instanceCount = isVisible ? 1 : 0;
 			drawPtr->firstIndex = (uint32_t)currentPartData->m_indexStartOffset;
 			drawPtr->vertexOffset = currentPartData->m_vertexDataOffset;
 			drawPtr->firstInstance = bucketInstance.m_partInstanceIndex;
 			m_currentDrawBufferOffset++;
-			totalIndices += isVisible ? currentPartData->m_indexCount : 0;
 		}
 #endif
 	}
@@ -639,7 +628,8 @@ namespace R3
 		R3_PROF_EVENT();
 
 		Frustum mainFrustum = GetMainCameraFrustum();
-		bucket.m_firstDrawOffset = (m_currentDrawBufferStart + m_currentDrawBufferOffset);	// record draw-indirect base offset for this bucket
+		const uint32_t currentDrawBufferStart = m_thisFrameBuffer * c_maxInstances;
+		bucket.m_firstDrawOffset = (currentDrawBufferStart + m_currentDrawBufferOffset);	// record draw-indirect base offset for this bucket
 		bucket.m_drawCount = (uint32_t)bucket.m_partInstances.size();						// draw-indirects will be populated by compute shader
 		m_currentDrawBufferOffset += bucket.m_drawCount;
 
@@ -661,6 +651,8 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 
+		m_frameStats.m_totalModelInstances = 0;
+		m_frameStats.m_totalPartInstances = 0;
 		m_frameStats.m_collectInstancesStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		CollectAllPartInstances();
 		m_frameStats.m_totalOpaqueInstances = (uint32_t)m_allOpaques.m_partInstances.size();
