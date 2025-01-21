@@ -19,6 +19,7 @@ namespace Entities
 	{
 	public:
 		static ComponentTypeRegistry& GetInstance();
+		static const uint32_t c_maxTypes = 64;
 
 		template<class ComponentType> uint32_t Register();	// returns new type index
 		uint32_t GetTypeIndex(std::string_view typeName) const;	// (slowpath) returns -1 if no type found

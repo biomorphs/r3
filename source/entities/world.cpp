@@ -7,7 +7,7 @@
 #include "component_type_registry.h"
 #include "entity_handle.h"
 #include <cassert>
-#include <bit>
+
 
 namespace R3
 {
@@ -67,12 +67,12 @@ namespace Entities
 			target("Name", m_allEntityNames[e.GetPrivateIndex()]);
 		}
 		const auto& ped = m_allEntities[e.GetPrivateIndex()];
-		for (int typeIndex = 0; typeIndex < ped.m_componentIndices.size(); ++typeIndex)
+		for (int typeIndex = 0; typeIndex < ComponentTypeRegistry::c_maxTypes; ++typeIndex)
 		{
-			auto typeMask = (PerEntityData::ComponentBitsetType)1 << typeIndex;
-			if ((ped.m_ownedComponentBits & typeMask) == typeMask && ped.m_componentIndices[typeIndex] != -1)
+			const uint32_t index = ped.m_componentLookup.GetComponentIndex(typeIndex);
+			if (index != -1)
 			{
-				m_allComponents[typeIndex]->Serialise(e, ped.m_componentIndices[typeIndex], target);
+				m_allComponents[typeIndex]->Serialise(e, index, target);
 			}
 		}
 	}
@@ -192,7 +192,7 @@ namespace Entities
 						{
 							uint32_t cmpTypeIndex = ComponentTypeRegistry::GetInstance().GetTypeIndex(childJson.key());	// we need the type index to lookup the storage
 							const auto& ped = m_allEntities[actualHandle.GetPrivateIndex()];	// we need the new component index from the entity data
-							m_allComponents[cmpTypeIndex]->Serialise(actualHandle, ped.m_componentIndices[cmpTypeIndex], childSerialiser);
+							m_allComponents[cmpTypeIndex]->Serialise(actualHandle, ped.m_componentLookup.GetComponentIndex(cmpTypeIndex), childSerialiser);
 						}
 					}
 				}
@@ -214,10 +214,10 @@ namespace Entities
 			const uint32_t componentTypeIndex = ComponentTypeRegistry::GetInstance().GetTypeIndex(componentType);
 			assert(componentTypeIndex != -1);
 			const auto& ped = m_allEntities[e.GetPrivateIndex()];
-			auto typeMask = (PerEntityData::ComponentBitsetType)1 << componentTypeIndex;
-			if ((ped.m_ownedComponentBits & typeMask) == typeMask && ped.m_componentIndices[componentTypeIndex] != -1)
+			const uint32_t cmpIndex = ped.m_componentLookup.GetComponentIndex(componentTypeIndex);
+			if (cmpIndex != -1)
 			{
-				m_allComponents[componentTypeIndex]->Serialise(e, ped.m_componentIndices[componentTypeIndex], json);
+				m_allComponents[componentTypeIndex]->Serialise(e, cmpIndex, json);
 			}
 		}
 	}
@@ -367,7 +367,7 @@ namespace Entities
 		results.reserve(128);	// good idea?
 		const uint32_t componentTypeIndex = ComponentTypeRegistry::GetInstance().GetTypeIndex(componentTypeName);
 		assert(componentTypeIndex != -1);
-		const auto typeMask = (PerEntityData::ComponentBitsetType)1 << componentTypeIndex;
+		const auto typeMask = 1ull << componentTypeIndex;
 		auto forEachEntity = [this,&results, typeMask](const EntityHandle& e)
 		{
 			if (HasAnyComponents(e, typeMask))
@@ -398,10 +398,7 @@ namespace Entities
 			newIndex = m_freeEntityIndices[0];
 			m_freeEntityIndices.pop_front();
 			assert(m_allEntities[newIndex].m_publicID == -1);
-			assert(m_allEntities[newIndex].m_ownedComponentBits == 0);
-#ifdef R3_ENTITY_INDICES_IN_VECTOR
-			assert(m_allEntities[newIndex].m_componentIndices.size() == 0);
-#endif
+			assert(m_allEntities[newIndex].m_componentLookup.IsEmpty());
 			m_allEntities[newIndex].m_publicID = newId;
 			m_allEntityNames[newIndex].clear();
 		}
@@ -437,10 +434,7 @@ namespace Entities
 			if (reservedIndex == handleToRestore.GetPrivateIndex())	// does the slot match?
 			{
 				assert(m_allEntities[reservedIndex].m_publicID == -1);
-				assert(m_allEntities[reservedIndex].m_ownedComponentBits == 0);
-#ifdef R3_ENTITY_INDICES_IN_VECTOR
-				assert(m_allEntities[reservedIndex].m_componentIndices.size() == 0);
-#endif
+				assert(m_allEntities[reservedIndex].m_componentLookup.IsEmpty());
 				m_allEntities[reservedIndex].m_publicID = handleToRestore.GetID();
 				m_allEntityNames[reservedIndex].clear();
 				m_reservedSlots.erase(reservation);
@@ -547,7 +541,7 @@ namespace Entities
 		if (IsHandleValid(h))
 		{
 			auto& theEntity = m_allEntities[h.GetPrivateIndex()];
-			theEntity.m_ownedComponentBits = 0;	// we keep the component indices for later, just reset the mask
+			theEntity.m_componentLookup.Invalidate();
 			m_pendingDelete.push_back({ h, reserveHandle });
 		}
 	}
@@ -581,15 +575,7 @@ namespace Entities
 		}
 
 		uint32_t newCmpIndex = m_allComponents[resolvedTypeIndex]->Create(e);
-		auto newBits = (PerEntityData::ComponentBitsetType)1 << resolvedTypeIndex;
-		m_allEntities[e.GetPrivateIndex()].m_ownedComponentBits |= newBits;
-#ifdef R3_ENTITY_INDICES_IN_VECTOR
-		if (m_allEntities[e.GetPrivateIndex()].m_componentIndices.size() < resolvedTypeIndex + 1)
-		{
-			m_allEntities[e.GetPrivateIndex()].m_componentIndices.resize(resolvedTypeIndex + 1, -1);
-		}
-#endif
-		m_allEntities[e.GetPrivateIndex()].m_componentIndices[resolvedTypeIndex] = newCmpIndex;
+		m_allEntities[e.GetPrivateIndex()].m_componentLookup.AddComponent(resolvedTypeIndex, newCmpIndex);
 	}
 
 	bool World::HasAnyComponents(const EntityHandle& e, uint64_t typeBits) const
@@ -597,7 +583,7 @@ namespace Entities
 		if (IsHandleValid(e))
 		{
 			const PerEntityData& ped = m_allEntities[e.GetPrivateIndex()];
-			return (ped.m_ownedComponentBits & typeBits) != 0;
+			return ped.m_componentLookup.ContainAny(typeBits);
 		}
 		return false;
 	}
@@ -607,7 +593,7 @@ namespace Entities
 		if (IsHandleValid(e))
 		{
 			const PerEntityData& ped = m_allEntities[e.GetPrivateIndex()];
-			return std::popcount(ped.m_ownedComponentBits);
+			return ped.m_componentLookup.GetValidComponentCount();
 		}
 		return 0;
 	}
@@ -617,7 +603,7 @@ namespace Entities
 		if (IsHandleValid(e))
 		{
 			const PerEntityData& ped = m_allEntities[e.GetPrivateIndex()];
-			return (ped.m_ownedComponentBits & typeBits) == typeBits;
+			return ped.m_componentLookup.ContainAll(typeBits);
 		}
 		return false;
 	}
@@ -628,12 +614,8 @@ namespace Entities
 		assert(componentTypeIndex != -1);
 		if (IsHandleValid(e) && componentTypeIndex != -1)
 		{
-			const auto testMask = (PerEntityData::ComponentBitsetType)1 << componentTypeIndex;
 			const PerEntityData& ped = m_allEntities[e.GetPrivateIndex()];
-			if ((ped.m_ownedComponentBits & testMask) == testMask && ped.m_componentIndices.size() > componentTypeIndex)
-			{
-				return ped.m_componentIndices[componentTypeIndex] != -1;
-			}
+			return ped.m_componentLookup.ContainsComponent(componentTypeIndex);
 		}
 		return false;
 	}
@@ -648,12 +630,9 @@ namespace Entities
 				return;	// no type registered or we dont have storage for it yet
 			}
 			PerEntityData& ped = m_allEntities[e.GetPrivateIndex()];
-			const auto testMask = (PerEntityData::ComponentBitsetType)1 << typeIndex;
-			if ((ped.m_ownedComponentBits & testMask) == testMask && ped.m_componentIndices.size() > typeIndex)
+			const uint32_t oldIndex = ped.m_componentLookup.RemoveComponent(typeIndex);
+			if (oldIndex != -1)
 			{
-				const auto oldIndex = ped.m_componentIndices[typeIndex];
-				ped.m_ownedComponentBits &= ~testMask;	// turn off the type bit
-				ped.m_componentIndices[typeIndex] = -1;	// reset before calling Destroy
 				m_allComponents[typeIndex]->Destroy(e, oldIndex);
 			}
 		}
@@ -688,21 +667,18 @@ namespace Entities
 				EntityHandle nullParent;	// reset the parent entity (removes entity from children)
 				SetParent(toDelete.m_handle, nullParent);
 				auto& theEntity = m_allEntities[toDelete.m_handle.GetPrivateIndex()];
-				// use the entity component indices to destroy the objects
-				for (int cmpType = 0; cmpType < theEntity.m_componentIndices.size(); ++cmpType)
+				for (int cmpType = 0; cmpType < ComponentTypeRegistry::c_maxTypes; ++cmpType)
 				{
-					if (theEntity.m_componentIndices[cmpType] != -1)
+					// note we get the invalidated component indices here
+					const uint32_t oldIndex = theEntity.m_componentLookup.GetInvalidatedIndex(cmpType);
+					if (oldIndex != -1)
 					{
-						m_allComponents[cmpType]->Destroy(toDelete.m_handle, theEntity.m_componentIndices[cmpType]);
+						m_allComponents[cmpType]->Destroy(toDelete.m_handle, oldIndex);
 					}
 				}
 				// reset + push the entity to the free or reserved list
+				theEntity.m_componentLookup.Reset();
 				theEntity.m_publicID = -1;
-#ifdef R3_ENTITY_INDICES_IN_VECTOR
-				theEntity.m_componentIndices.clear();	// clear out the old values but keep the memory around
-#else
-				theEntity.m_componentIndices.fill(-1);
-#endif
 				theEntity.m_children.clear();
 				if (toDelete.m_reserveHandle)
 				{
@@ -723,9 +699,7 @@ namespace Entities
 		R3_PROF_EVENT();
 		assert(IsHandleValid(owner));
 		auto& theEntity = m_allEntities[owner.GetPrivateIndex()];
-		assert(typeIndex < theEntity.m_componentIndices.size());
-		assert(theEntity.m_componentIndices[typeIndex] == oldIndex);
-		theEntity.m_componentIndices[typeIndex] = newIndex;
+		theEntity.m_componentLookup.UpdateIndex(typeIndex, oldIndex, newIndex);
 	}
 
 	ComponentStorage* World::GetStorage(std::string_view componentTypeName)

@@ -1,13 +1,11 @@
 #pragma once 
 #include "entity_handle.h"
 #include "component_type_registry.h"
+#include "entity_component_lookup.h"
 #include <string_view>
 #include <vector>
 #include <deque>
 #include <memory>
-#include <array>
-
-// #define R3_ENTITY_INDICES_IN_VECTOR
 
 namespace R3
 {
@@ -98,20 +96,8 @@ namespace Entities
 		void AddComponentInternal(const EntityHandle& e, uint32_t resolvedTypeIndex);
 		struct PerEntityData
 		{
-#ifndef R3_ENTITY_INDICES_IN_VECTOR
-			PerEntityData()
-			{
-				m_componentIndices.fill(-1);
-			}
-#endif
-			using ComponentBitsetType = uint64_t;
+			EntityComponentLookup m_componentLookup;		// move this to separate array
 			uint32_t m_publicID = -1;						// used to publicaly identify an entity in a world
-			ComponentBitsetType m_ownedComponentBits = 0;	// each bit represents a component type that this entity owns/contains
-#ifdef R3_ENTITY_INDICES_IN_VECTOR
-			std::vector<uint32_t> m_componentIndices;		// index into component storage per type. take care!
-#else
-			std::array<uint32_t, 64> m_componentIndices;	// testing
-#endif
 			EntityHandle m_parent;							// if a parent exists, it should have a EntityChildrenComponent!
 			std::vector<EntityHandle> m_children;
 		};
@@ -178,11 +164,11 @@ namespace Entities
 	ComponentType* World::GetComponentFast(const EntityHandle& e, uint32_t typeIndex)
 	{
 		const PerEntityData& ped = m_allEntities[e.GetPrivateIndex()];
-		const auto testMask = (PerEntityData::ComponentBitsetType)1 << typeIndex;
-		if ((ped.m_ownedComponentBits & testMask) == testMask && ped.m_componentIndices.size() > typeIndex)
+		const uint32_t cmpIndex = ped.m_componentLookup.GetComponentIndex(typeIndex);
+		if (cmpIndex != -1)
 		{
 			LinearComponentStorage<ComponentType>* storage = GetStorageFast<ComponentType>(typeIndex);
-			return storage->GetAtIndex(ped.m_componentIndices[typeIndex]);
+			return storage->GetAtIndex(cmpIndex);
 		}
 		return nullptr;
 	}
@@ -194,11 +180,11 @@ namespace Entities
 		{
 			const uint32_t typeIndex = ComponentTypeRegistry::GetTypeIndex<ComponentType>();
 			const PerEntityData& ped = m_allEntities[e.GetPrivateIndex()];
-			const auto testMask = (PerEntityData::ComponentBitsetType)1 << typeIndex;
-			if ((ped.m_ownedComponentBits & testMask) == testMask && ped.m_componentIndices.size() > typeIndex)
+			const uint32_t cmpIndex = ped.m_componentLookup.GetComponentIndex(typeIndex);
+			if (cmpIndex != -1)
 			{
 				LinearComponentStorage<ComponentType>* storage = GetStorage<ComponentType>();
-				return storage->GetAtIndex(ped.m_componentIndices[typeIndex]);
+				return storage->GetAtIndex(cmpIndex);
 			}
 		}
 		return nullptr;

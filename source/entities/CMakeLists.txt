@@ -12,6 +12,8 @@ set(EntitiesLib_SourceFiles
 	world.cpp
 	queries.h
 	queries.inl
+	entity_component_lookup.h
+	entity_component_lookup.inl
 )
 
 add_library(Entities ${EntitiesLib_SourceFiles})
