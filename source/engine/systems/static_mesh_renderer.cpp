@@ -10,7 +10,6 @@
 #include "engine/components/transform.h"
 #include "engine/components/static_mesh.h"
 #include "engine/components/static_mesh_materials.h"
-#include "engine/components/environment_settings.h"
 #include "entities/systems/entity_system.h"
 #include "entities/world.h"
 #include "entities/queries.h"
@@ -22,18 +21,6 @@
 #include "core/profiler.h"
 #include "core/log.h"
 #include <imgui.h>
-
-#define ENABLE_CPU_INSTANCE_CULLING
-#define ENABLE_ASYNC_CPU_INSTANCE_CULLING
-
-// CPU Culling notes
-// Cost of populating 20k cube instances
-// with ENABLE_CPU_INSTANCE_CULLING - 0.78ms to ~1.89ms
-// no ENABLE_CPU_INSTANCE_CULLING - 0.68ms to ~1.68ms
-// 0.1 to 0.2ms to populate instance data
-
-// Culling time for 20k instances
-//	ENABLE_ASYNC_CPU_INSTANCE_CULLING - ~0.5ms
 
 namespace R3
 {
@@ -56,9 +43,6 @@ namespace R3
 
 	StaticMeshRenderer::StaticMeshRenderer()
 	{
-#ifdef ENABLE_CPU_INSTANCE_CULLING
-		m_globalInstancesCPU.resize(c_maxInstances);
-#endif
 		m_computeCulling = std::make_unique<StaticMeshInstanceCullingCompute>();
 	}
 
@@ -117,9 +101,7 @@ namespace R3
 		if (m_showGui)
 		{
 			ImGui::Begin("Static Mesh Renderer");
-			ImGui::Checkbox("Forward render everything", &m_forwardRenderEverything);
 			ImGui::Checkbox("Enable Compute Culling", &m_enableComputeCulling);
-			ImGui::Checkbox("Enable CPU Culling", &m_enableCpuCulling);
 			ImGui::Checkbox("Lock main frustum", &m_lockMainFrustum);
 			std::string txt = std::format("{} Model Instances Submitted", m_frameStats.m_totalModelInstances);
 			ImGui::Text(txt.c_str());
@@ -517,11 +499,6 @@ namespace R3
 						// write instance data now even if it will not be used (faster than duplicating later)
 						if (m_currentInstanceBufferOffset < c_maxInstances)
 						{
-#ifdef ENABLE_CPU_INSTANCE_CULLING
-							m_globalInstancesCPU[m_currentInstanceBufferOffset].m_transform = partTransform;
-							m_globalInstancesCPU[m_currentInstanceBufferOffset].m_materialIndex = materialBaseIndex + relativePartMatIndex;
-#endif
-
 							StaticMeshInstanceGpu* instancesPtr = static_cast<StaticMeshInstanceGpu*>(m_globalInstancesMappedPtr) + currentInstanceBufferStart + m_currentInstanceBufferOffset;
 							instancesPtr->m_transform = partTransform;
 							instancesPtr->m_materialIndex = materialBaseIndex + relativePartMatIndex;
@@ -531,7 +508,7 @@ namespace R3
 							bucketInstance.m_partInstanceIndex = currentInstanceBufferStart + m_currentInstanceBufferOffset;
 
 							const StaticMeshMaterial* meshMaterial = staticMeshes->GetMeshMaterial(materialBaseIndex + relativePartMatIndex);
-							if (!m_forwardRenderEverything && meshMaterial->m_albedoOpacity.w >= 1.0f)
+							if (meshMaterial->m_albedoOpacity.w >= 1.0f)
 							{
 								m_allOpaques.m_partInstances.emplace_back(bucketInstance);
 							}
@@ -577,52 +554,6 @@ namespace R3
 		}
 	}
 
-	void StaticMeshRenderer::PrepareAndCullDrawBucket(MeshPartDrawBucket& bucket)
-	{
-		R3_PROF_EVENT();
-		auto staticMeshes = GetSystem<StaticMeshSystem>();
-		Frustum mainFrustum = GetMainCameraFrustum();
-		const uint32_t currentDrawBufferStart = m_thisFrameBuffer * c_maxInstances;
-		bucket.m_firstDrawOffset = (currentDrawBufferStart + m_currentDrawBufferOffset);
-		bucket.m_drawCount = (uint32_t)bucket.m_partInstances.size();
-		const uint32_t currentInstanceBufferStart = m_thisFrameBuffer * c_maxInstances;		// base index to write instances
-#ifdef ENABLE_ASYNC_CPU_INSTANCE_CULLING
-		auto forEachInstance = [&](uint32_t index)
-		{
-			const auto& bucketInstance = bucket.m_partInstances[index];
-			const StaticMeshPart* currentPartData = staticMeshes->GetMeshPart(bucketInstance.m_partGlobalIndex);
-			const StaticMeshInstanceGpu* currentInstance = m_globalInstancesCPU.data() + (bucketInstance.m_partInstanceIndex - currentInstanceBufferStart);
-
-			bool isVisible = mainFrustum.IsBoxVisible(glm::vec3(currentPartData->m_boundsMin), glm::vec3(currentPartData->m_boundsMax), currentInstance->m_transform);
-
-			VkDrawIndexedIndirectCommand* drawPtr = static_cast<VkDrawIndexedIndirectCommand*>(m_drawIndirectMappedPtr) + currentDrawBufferStart + m_currentDrawBufferOffset + index;
-			drawPtr->indexCount = currentPartData->m_indexCount;
-			drawPtr->instanceCount = isVisible ? 1 : 0;
-			drawPtr->firstIndex = (uint32_t)currentPartData->m_indexStartOffset;
-			drawPtr->vertexOffset = currentPartData->m_vertexDataOffset;
-			drawPtr->firstInstance = bucketInstance.m_partInstanceIndex;
-		};
-		GetSystem<JobSystem>()->ForEachAsync(JobSystem::ThreadPool::FastJobs, 0, (uint32_t)bucket.m_partInstances.size(), 1, 1024, forEachInstance);
-		m_currentDrawBufferOffset += bucket.m_drawCount;
-#else
-		for (const auto& bucketInstance : bucket.m_partInstances)
-		{
-			const StaticMeshPart* currentPartData = staticMeshes->GetMeshPart(bucketInstance.m_partGlobalIndex);
-			const StaticMeshInstanceGpu* currentInstance = m_globalInstancesCPU.data() + (bucketInstance.m_partInstanceIndex - currentInstanceBufferStart);
-
-			bool isVisible = mainFrustum.IsBoxVisible(glm::vec3(currentPartData->m_boundsMin), glm::vec3(currentPartData->m_boundsMax), currentInstance->m_transform);
-
-			VkDrawIndexedIndirectCommand* drawPtr = static_cast<VkDrawIndexedIndirectCommand*>(m_drawIndirectMappedPtr) + currentDrawBufferStart + m_currentDrawBufferOffset;
-			drawPtr->indexCount = currentPartData->m_indexCount;
-			drawPtr->instanceCount = isVisible ? 1 : 0;
-			drawPtr->firstIndex = (uint32_t)currentPartData->m_indexStartOffset;
-			drawPtr->vertexOffset = currentPartData->m_vertexDataOffset;
-			drawPtr->firstInstance = bucketInstance.m_partInstanceIndex;
-			m_currentDrawBufferOffset++;
-		}
-#endif
-	}
-
 	void StaticMeshRenderer::PrepareAndCullDrawBucketCompute(Device& d, VkCommandBuffer cmds, MeshPartDrawBucket& bucket)
 	{
 		R3_PROF_EVENT();
@@ -659,7 +590,7 @@ namespace R3
 		m_frameStats.m_totalTransparentInstances = (uint32_t)m_allTransparents.m_partInstances.size();
 		m_frameStats.m_collectInstancesEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 
-		if (m_enableComputeCulling)	// prepare buckets on cpu if no compute
+		if (m_enableComputeCulling)		// do nothing here, culling happens later
 		{
 			m_allOpaques.m_drawCount = 0;
 			m_allTransparents.m_drawCount = 0;
@@ -667,15 +598,6 @@ namespace R3
 		else
 		{
 			m_frameStats.m_prepareBucketsStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
-#ifdef ENABLE_CPU_INSTANCE_CULLING
-			if (m_enableCpuCulling)
-			{
-				PrepareAndCullDrawBucket(m_allOpaques);
-				PrepareAndCullDrawBucket(m_allTransparents);
-
-			}
-			else
-#endif
 			{
 				PrepareDrawBucket(m_allOpaques);
 				PrepareDrawBucket(m_allTransparents);

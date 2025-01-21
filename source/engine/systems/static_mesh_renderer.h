@@ -47,7 +47,6 @@ namespace R3
 		Frustum GetMainCameraFrustum();
 		void CollectAllPartInstances();
 		void PrepareDrawBucket(MeshPartDrawBucket& bucket);
-		void PrepareAndCullDrawBucket(MeshPartDrawBucket& bucket);
 		void PrepareAndCullDrawBucketCompute(Device&, VkCommandBuffer cmds, MeshPartDrawBucket& bucket);
 		bool ShowGui();
 		bool CollectInstances();
@@ -77,8 +76,6 @@ namespace R3
 		MeshPartDrawBucket m_allTransparents;
 		FrameStats m_frameStats;
 
-		bool m_forwardRenderEverything = false;	// override to pass all instances to forward pass
-		bool m_enableCpuCulling = false;		// run instance frustum culling on CPU
 		bool m_enableComputeCulling = true;		// run instance culling in compute
 		bool m_lockMainFrustum = false;
 		bool m_showGui = false;
@@ -94,7 +91,6 @@ namespace R3
 		AllocatedBuffer m_globalInstancesHostVisible;	// one giant buffer for all instance data, split into c_maxBuffers sub-buffers
 		StaticMeshInstanceGpu* m_globalInstancesMappedPtr = nullptr;
 		VkDeviceAddress m_globalInstancesDeviceAddress;
-		std::vector<StaticMeshInstanceGpu> m_globalInstancesCPU;	// cpu-side copy of instance data, only used in cpu culling
 		uint32_t m_currentInstanceBufferOffset = 0;		// next write offset for instance data
 
 		AllocatedBuffer m_drawIndirectHostVisible;	// draw indirect entries for each instance, split into c_maxBuffers sub-buffers
