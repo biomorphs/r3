@@ -14,6 +14,7 @@ namespace R3
 	// writes are copied to staging buffer and scheduled for flush (lock free, thread-safe)
 	// flush will call vkCopyBuffer to push from staging -> the actual buffer, release the old staging buffer + acquire a new one
 	// async write/flush guarded by a mutex
+	// use Write() to schedule individual buffer copies (with write combining)
 	class Device;
 	class WriteOnlyGpuBuffer
 	{
@@ -21,6 +22,7 @@ namespace R3
 		WriteOnlyGpuBuffer() = default;
 		WriteOnlyGpuBuffer(const WriteOnlyGpuBuffer&) = delete;
 		WriteOnlyGpuBuffer(WriteOnlyGpuBuffer&&) = delete;
+		void RetirePooledBuffer(Device&);		// old buffer is retired + a new one is created, pooled buffers only. call this before flushing writes
 		void SetDebugName(std::string_view);		// call this before create!
 		bool Create(Device& d, uint64_t dataMaxSize, uint64_t stagingMaxSize, VkBufferUsageFlags usageFlags, BufferPool* pool=nullptr);	// allocates memory, pool is optional
 		uint64_t Allocate(uint64_t sizeBytes);									// allocate from internal data
@@ -36,6 +38,9 @@ namespace R3
 		Mutex m_mutex;	// required since write and flush cannot overlap
 		bool AcquireNewStagingBuffer(Device& d);
 		
+		// keep track of flags used during creation
+		VkBufferUsageFlags m_usageFlags;
+
 		// non-pooled buffer data
 		AllocatedBuffer m_allData;
 		VkDeviceAddress m_allDataAddress;
@@ -74,6 +79,10 @@ namespace R3
 		bool Create(Device& d, uint64_t maxStored, uint64_t maxStaging, VkBufferUsageFlags usageFlags, BufferPool* pool = nullptr)
 		{
 			return m_buffer.Create(d, maxStored * sizeof(Type), maxStaging * sizeof(Type), usageFlags, pool);
+		}
+		void RetirePooledBuffer(Device& d)	// releases old target buffer, acquires a new one. pooled buffers only
+		{
+			m_buffer.RetirePooledBuffer(d);
 		}
 		uint64_t Allocate(uint64_t count)
 		{

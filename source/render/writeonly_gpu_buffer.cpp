@@ -6,6 +6,30 @@
 
 namespace R3
 {
+	void WriteOnlyGpuBuffer::RetirePooledBuffer(Device& d)
+	{
+		R3_PROF_EVENT();
+
+		if (m_bufferPool == nullptr)
+		{
+			LogWarn("RetirePooledBuffer called on a non-pooled buffer!");
+			return;
+		}
+
+		// retire the old buffer
+		m_bufferPool->Release(m_pooledBuffer);
+		m_pooledBuffer = {};
+
+		auto newBuffer = m_bufferPool->GetBuffer(m_allDataMaxSize, m_usageFlags, VMA_MEMORY_USAGE_AUTO, false);
+		if (!newBuffer)
+		{
+			LogError("Failed to get buffer from pool");
+			return;
+		}
+		VulkanHelpers::SetBufferName(d.GetVkDevice(), newBuffer->m_buffer, m_debugName);
+		m_pooledBuffer = *newBuffer;
+	}
+
 	bool WriteOnlyGpuBuffer::AcquireNewStagingBuffer(Device& d)
 	{
 		R3_PROF_EVENT();
@@ -41,17 +65,17 @@ namespace R3
 		ScopedLock doLock(m_mutex);
 
 		// we always want transfer dst (to copy staging -> buffer) and device address bit
-		VkBufferUsageFlags actualUsage = usageFlags | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+		m_usageFlags = usageFlags | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 		if (pool == nullptr)
 		{
-			m_allData = VulkanHelpers::CreateBuffer(d.GetVMA(), dataMaxSize, actualUsage);
+			m_allData = VulkanHelpers::CreateBuffer(d.GetVMA(), dataMaxSize, m_usageFlags);
 			VulkanHelpers::SetBufferName(d.GetVkDevice(), m_allData, m_debugName);
 			m_allDataAddress = VulkanHelpers::GetBufferDeviceAddress(d.GetVkDevice(), m_allData);
 		}
 		else
 		{
 			m_bufferPool = pool;
-			auto newBuffer = pool->GetBuffer(dataMaxSize, actualUsage, VMA_MEMORY_USAGE_AUTO, false);
+			auto newBuffer = pool->GetBuffer(dataMaxSize, m_usageFlags, VMA_MEMORY_USAGE_AUTO, false);
 			if (!newBuffer)
 			{
 				LogError("Failed to get buffer from pool");
