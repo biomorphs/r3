@@ -523,7 +523,7 @@ namespace R3
 		}
 		// upload the entire buffer to staging + use the mip offsets to do the appropriate copies later on
 		const size_t stagingSize = srcTexture->m_imgData.size();
-		auto stagingBuffer = render->GetStagingBufferPool()->GetBuffer(stagingSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO);
+		auto stagingBuffer = render->GetStagingBufferPool()->GetBuffer(stagingSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO, true);
 		if (!stagingBuffer.has_value())
 		{
 			LogError("Failed to get staging buffer of size {}", stagingSize);

@@ -12,6 +12,7 @@ namespace R3
 		VkBufferUsageFlags m_usage = 0;
 		VmaMemoryUsage m_memUsage = VMA_MEMORY_USAGE_UNKNOWN;
 		void* m_mappedBuffer = 0;
+		VkDeviceAddress m_deviceAddress;
 	};
 
 	// Works as an allocator of VkBuffer
@@ -23,7 +24,7 @@ namespace R3
 		BufferPool(std::string_view debugName, uint64_t totalBudget = 1024 * 1024 * 128);
 		~BufferPool();
 
-		std::optional<PooledBuffer> GetBuffer(uint64_t minSizeBytes,VkBufferUsageFlags usage,VmaMemoryUsage memUsage);
+		std::optional<PooledBuffer> GetBuffer(uint64_t minSizeBytes,VkBufferUsageFlags usage,VmaMemoryUsage memUsage, bool allowMapping);
 		void Release(const PooledBuffer& buf);
 
 	private:

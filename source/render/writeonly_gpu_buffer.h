@@ -22,7 +22,7 @@ namespace R3
 		WriteOnlyGpuBuffer(const WriteOnlyGpuBuffer&) = delete;
 		WriteOnlyGpuBuffer(WriteOnlyGpuBuffer&&) = delete;
 		void SetDebugName(std::string_view);		// call this before create!
-		bool Create(Device& d, uint64_t dataMaxSize, uint64_t stagingMaxSize, VkBufferUsageFlags usageFlags);	// allocates memory, needs the device
+		bool Create(Device& d, uint64_t dataMaxSize, uint64_t stagingMaxSize, VkBufferUsageFlags usageFlags, BufferPool* pool=nullptr);	// allocates memory, pool is optional
 		uint64_t Allocate(uint64_t sizeBytes);									// allocate from internal data
 		bool Write(uint64_t writeStartOffset, uint64_t sizeBytes, const void* data);	// writes to staging buffer + schedules copy
 		void Flush(Device& d, VkCommandBuffer cmds, VkPipelineStageFlags barrierDst = VK_PIPELINE_STAGE_VERTEX_INPUT_BIT);	// schedules all copies from staging->alldata, issues pipeline barrier
@@ -35,8 +35,15 @@ namespace R3
 	private:
 		Mutex m_mutex;	// required since write and flush cannot overlap
 		bool AcquireNewStagingBuffer(Device& d);
+		
+		// non-pooled buffer data
 		AllocatedBuffer m_allData;
 		VkDeviceAddress m_allDataAddress;
+
+		// pooled buffer data
+		PooledBuffer m_pooledBuffer;
+		BufferPool* m_bufferPool = nullptr;	// if set, this will acquire buffers from the pool
+
 		uint64_t m_allDataMaxSize = 0;		// bytes
 		std::atomic<uint64_t> m_allDataCurrentSizeBytes;
 		PooledBuffer m_stagingBuffer;
@@ -64,9 +71,9 @@ namespace R3
 		{
 			m_buffer.SetDebugName(n);
 		}
-		bool Create(Device& d, uint64_t maxStored, uint64_t maxStaging, VkBufferUsageFlags usageFlags)
+		bool Create(Device& d, uint64_t maxStored, uint64_t maxStaging, VkBufferUsageFlags usageFlags, BufferPool* pool = nullptr)
 		{
-			return m_buffer.Create(d, maxStored * sizeof(Type), maxStaging * sizeof(Type), usageFlags);
+			return m_buffer.Create(d, maxStored * sizeof(Type), maxStaging * sizeof(Type), usageFlags, pool);
 		}
 		uint64_t Allocate(uint64_t count)
 		{
