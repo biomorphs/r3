@@ -5,7 +5,9 @@
 #include "engine/systems/immediate_render_system.h"
 #include "engine/components/transform.h"
 #include "engine/components/static_mesh.h"
+#include "engine/utils/intersection_tests.h"
 #include "entities/world.h"
+#include "entities/queries.h"
 #include "render/immediate_renderer.h"
 #include "render/camera.h"
 #include "render/render_system.h"
@@ -13,6 +15,51 @@
 
 namespace R3
 {
+	Entities::EntityHandle FindClosestActiveEntityIntersectingRay(Entities::World& world, glm::vec3 rayStart, glm::vec3 rayEnd)
+	{
+		R3_PROF_EVENT();
+
+		struct HitEntityRecord {
+			Entities::EntityHandle m_entity;
+			float m_hitDistance;
+		};
+		std::vector<HitEntityRecord> hitEntities;
+		auto forEachEntity = [&](const Entities::EntityHandle& e, StaticMeshComponent& smc, TransformComponent& t)
+		{
+			if (smc.m_shouldDraw)
+			{
+				const auto modelData = Systems::GetSystem<ModelDataSystem>()->GetModelData(smc.m_modelHandle);
+				if (modelData.m_data)
+				{
+					// transform the ray into model space so we can do a simple AABB test
+					const glm::mat4 inverseTransform = glm::inverse(t.GetWorldspaceMatrix(e, world));
+					const auto rs = glm::vec3(inverseTransform * glm::vec4(rayStart, 1));
+					const auto re = glm::vec3(inverseTransform * glm::vec4(rayEnd, 1));
+					float hitT = 0.0f;
+					if (RayIntersectsAABB(rs, re, modelData.m_data->m_boundsMin, modelData.m_data->m_boundsMax, hitT))
+					{
+						hitEntities.push_back({ e, hitT });
+					}
+				}
+			}
+			return true;
+		};
+		Entities::Queries::ForEach<StaticMeshComponent, TransformComponent>(&world, forEachEntity);
+
+		// now find the closest hit entity that is in front of the ray
+		Entities::EntityHandle closestHit = {};
+		float closestHitDistance = FLT_MAX;
+		for (int i = 0; i < hitEntities.size(); ++i)
+		{
+			if (hitEntities[i].m_hitDistance >= 0.0f && hitEntities[i].m_hitDistance < closestHitDistance)
+			{
+				closestHit = hitEntities[i].m_entity;
+				closestHitDistance = hitEntities[i].m_hitDistance;
+			}
+		}
+		return closestHit;
+	}
+
 	void MouseCursorToWorldspaceRay(float rayDistance, glm::vec3& rayStart, glm::vec3& rayEnd)
 	{
 		R3_PROF_EVENT();

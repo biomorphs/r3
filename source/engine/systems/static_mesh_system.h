@@ -4,8 +4,10 @@
 #include "render/writeonly_gpu_buffer.h"
 #include "core/glm_headers.h"
 #include "core/mutex.h"
-#include <concurrentqueue/concurrentqueue.h>
 
+// This system handles only STATIC data associated with meshes
+// vertices/indices/materials/parts
+// cpu and gpu versions are kept for convenience
 namespace R3
 {
 	namespace Entities
@@ -13,7 +15,7 @@ namespace R3
 		class EntityHandle;
 	}
 
-	struct StaticMeshPart
+	struct StaticMeshPart						// uploaded to GPU in m_allParts
 	{
 		glm::mat4 m_transform;					// relative to the model
 		glm::vec4 m_boundsMin;					// mesh space bounds (w unused)
@@ -23,7 +25,8 @@ namespace R3
 		uint32_t m_materialIndex;				// index into mesh data material array
 		uint32_t m_vertexDataOffset;			// used when generating draw calls
 	};
-	struct StaticMeshMaterial
+
+	struct StaticMeshMaterial					// uploaded to GPU in m_allMaterialsGpu
 	{
 		glm::vec4 m_albedoOpacity;
 		glm::vec4 m_uvOffsetScale = { 0,0,1,1 };		// uv offset/scale, useful for custom materials
@@ -35,6 +38,7 @@ namespace R3
 		uint32_t m_normalTexture = -1;
 		uint32_t m_aoTexture = -1;
 	};
+
 	struct StaticMeshGpuData
 	{
 		glm::vec3 m_boundsMin;					// mesh space bounds
@@ -62,19 +66,17 @@ namespace R3
 		virtual bool Init();
 		virtual void Shutdown();
 		void PrepareForRendering(class RenderPassContext& ctx);		// call from frame graph before drawing anything
+
 		VkDeviceAddress GetVertexDataDeviceAddress();
 		VkDeviceAddress GetMeshPartsDeviceAddress();
 		VkDeviceAddress GetMaterialsDeviceAddress();
 		VkBuffer GetIndexBuffer();
+
 		bool GetMeshDataForModel(const ModelDataHandle& handle, StaticMeshGpuData& result);
 		bool GetMeshPart(uint32_t partIndex, StaticMeshPart& result);
 		bool GetMeshMaterial(uint32_t materialIndex, StaticMeshMaterial& result);
 		const StaticMeshMaterial* GetMeshMaterial(uint32_t materialIndex);
 		const StaticMeshPart* GetMeshPart(uint32_t partIndex);
-
-		// Searches the active world entities for any entities with static mesh components that intersect the ray
-		// returns the closest hit entity (nearest to rayStart)
-		Entities::EntityHandle FindClosestActiveEntityIntersectingRay(glm::vec3 rayStart, glm::vec3 rayEnd);
 
 	private:
 		void OnModelDataLoaded(const ModelDataHandle& handle, bool loaded);
@@ -93,9 +95,10 @@ namespace R3
 		WriteOnlyGpuArray<StaticMeshPart> m_allMeshPartsGpu;		// gpu buffer of mesh parts
 		WriteOnlyGpuArray<MeshVertex> m_allVertices;
 		WriteOnlyGpuArray<uint32_t> m_allIndices;
+
 		const uint32_t c_maxVerticesToStore = 1024 * 1024 * 16;		// ~800mb
-		const uint32_t c_maxIndicesToStore = 1024 * 1024 * 64;		// ~256mb
-		const uint32_t c_maxMaterialsToStore = 1024 * 128;
-		const uint32_t c_maxMeshParts = 1024 * 32;
+		const uint32_t c_maxIndicesToStore = 1024 * 1024 * 32;		// ~128mb
+		const uint32_t c_maxMaterialsToStore = 1024 * 32;			// ~2mb
+		const uint32_t c_maxMeshParts = 1024 * 32;					// ~3.5mb
 	};
 }

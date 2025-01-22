@@ -9,7 +9,6 @@
 #include "engine/graphics/static_mesh_instance_culling_compute.h"
 #include "engine/components/transform.h"
 #include "engine/components/static_mesh.h"
-#include "engine/components/static_mesh_materials.h"
 #include "entities/systems/entity_system.h"
 #include "entities/world.h"
 #include "entities/queries.h"
@@ -459,55 +458,43 @@ namespace R3
 		m_allTransparents.m_partInstances.clear();
 		if (activeWorld)
 		{
-			ModelDataHandle currentMeshDataHandle;			// the current cached mesh data
-			uint32_t currentMeshBaseMaterial = -1;			// mesh material base index
-			uint32_t currentMeshFirstPartIndex = 0;			// mesh part data base index
-			uint32_t currentMeshPartCount = 0;				// num. parts in mesh
-			Entities::EntityHandle currentMaterialEntity;	// cache the current material override
-			uint32_t lastMatOverrideGpuIndex = -1;			// base index of the current material override
+			ModelDataHandle currentMeshDataHandle;			// the current cached mesh
+			StaticMeshGpuData currentMeshData;				// ^^
 			const uint32_t currentInstanceBufferStart = m_thisFrameBuffer * c_maxInstances;		// base index to write instances
 			auto forEachEntity = [&](const Entities::EntityHandle& e, StaticMeshComponent& s, TransformComponent& t)
 			{
 				if (s.m_modelHandle.m_index != -1 && s.m_shouldDraw)	// doesn't mean the model is actually ready to draw!
 				{
-					if (s.m_modelHandle.m_index != currentMeshDataHandle.m_index)	// cache only the model data that we need
+					if (s.m_modelHandle.m_index != currentMeshDataHandle.m_index)	// avoid getting the data for every instance, only get it when it changes
 					{
-						StaticMeshGpuData currentMeshData;
 						if (!staticMeshes->GetMeshDataForModel(s.m_modelHandle, currentMeshData))
 						{
 							return true;
 						}
 						currentMeshDataHandle.m_index = s.m_modelHandle.m_index;
-						currentMeshBaseMaterial = currentMeshData.m_materialGpuIndex;
-						currentMeshFirstPartIndex = currentMeshData.m_firstMeshPartOffset;
-						currentMeshPartCount = currentMeshData.m_meshPartCount;
 					}
-					if (s.m_materialOverride != currentMaterialEntity)		// cache the material override
-					{
-						currentMaterialEntity = s.m_materialOverride;
-						const auto materialComponent = activeWorld->GetComponent<StaticMeshMaterialsComponent>(s.m_materialOverride);
-						lastMatOverrideGpuIndex = materialComponent ? static_cast<uint32_t>(materialComponent->m_gpuDataIndex) : -1;						
-					}
-					const uint32_t materialBaseIndex = lastMatOverrideGpuIndex != -1 ? lastMatOverrideGpuIndex : currentMeshBaseMaterial;
 					const glm::mat4 instanceTransform = t.GetWorldspaceInterpolated(e, *activeWorld);
-					for (uint32_t part = 0; part < currentMeshPartCount; ++part)
+					for (uint32_t part = 0; part < currentMeshData.m_meshPartCount; ++part)
 					{
-						const StaticMeshPart* currentPart = staticMeshes->GetMeshPart(currentMeshFirstPartIndex + part);
-						const uint32_t relativePartMatIndex = currentPart->m_materialIndex - currentMeshBaseMaterial;
+						const StaticMeshPart* currentPart = staticMeshes->GetMeshPart(currentMeshData.m_firstMeshPartOffset + part);
+						const uint32_t relativePartMatIndex = currentPart->m_materialIndex - currentMeshData.m_materialGpuIndex;
 						const glm::mat4 partTransform = instanceTransform * currentPart->m_transform;
 
 						// write instance data now even if it will not be used (faster than duplicating later)
 						if (m_currentInstanceBufferOffset < c_maxInstances)
 						{
+							// todo, we can most likely combine StaticMeshInstanceGpu and BucketPartInstance somehow + only write one entry per instance
 							StaticMeshInstanceGpu* instancesPtr = static_cast<StaticMeshInstanceGpu*>(m_globalInstancesMappedPtr) + currentInstanceBufferStart + m_currentInstanceBufferOffset;
 							instancesPtr->m_transform = partTransform;
-							instancesPtr->m_materialIndex = materialBaseIndex + relativePartMatIndex;
+							instancesPtr->m_materialIndex = currentMeshData.m_materialGpuIndex + relativePartMatIndex;
 
 							BucketPartInstance bucketInstance;
-							bucketInstance.m_partGlobalIndex = currentMeshFirstPartIndex + part;
+							bucketInstance.m_partGlobalIndex = currentMeshData.m_firstMeshPartOffset + part;
 							bucketInstance.m_partInstanceIndex = currentInstanceBufferStart + m_currentInstanceBufferOffset;
 
-							const StaticMeshMaterial* meshMaterial = staticMeshes->GetMeshMaterial(materialBaseIndex + relativePartMatIndex);
+							// todo, can we determine which buckets to use in a better way? material is flexible, but this extra indirection is annoying
+							// maybe we bake it into the mesh part?
+							const StaticMeshMaterial* meshMaterial = staticMeshes->GetMeshMaterial(currentMeshData.m_materialGpuIndex + relativePartMatIndex);
 							if (meshMaterial->m_albedoOpacity.w >= 1.0f)
 							{
 								m_allOpaques.m_partInstances.emplace_back(bucketInstance);
@@ -526,7 +513,7 @@ namespace R3
 						}
 					}
 					m_frameStats.m_totalModelInstances++;
-					m_frameStats.m_totalPartInstances += currentMeshPartCount;
+					m_frameStats.m_totalPartInstances += currentMeshData.m_meshPartCount;
 				}
 				return true;
 			};
@@ -534,6 +521,7 @@ namespace R3
 		}
 	}
 
+	// populates draw calls for all instances in this bucket with no culling
 	void StaticMeshRenderer::PrepareDrawBucket(MeshPartDrawBucket& bucket)
 	{
 		R3_PROF_EVENT();
@@ -554,6 +542,7 @@ namespace R3
 		}
 	}
 
+	// use compute to cull and prepare draw calls for instances in this bucket
 	void StaticMeshRenderer::PrepareAndCullDrawBucketCompute(Device& d, VkCommandBuffer cmds, MeshPartDrawBucket& bucket)
 	{
 		R3_PROF_EVENT();

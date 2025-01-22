@@ -4,15 +4,8 @@
 #include "render/device.h"
 #include "render/render_pass_context.h"
 #include "model_data_system.h"
-#include "engine/utils/intersection_tests.h"
 #include "engine/utils/async.h"
 #include "engine/ui/imgui_menubar_helper.h"
-#include "engine/components/static_mesh.h"
-#include "engine/components/static_mesh_materials.h"
-#include "engine/components/transform.h"
-#include "entities/systems/entity_system.h"
-#include "entities/world.h"
-#include "entities/queries.h"
 #include "core/log.h"
 #include "core/profiler.h"
 #include <imgui.h>
@@ -29,59 +22,6 @@ namespace R3
 
 	StaticMeshSystem::~StaticMeshSystem()
 	{
-	}
-
-	// Searches the active world for any entities with static mesh components that intersect the ray
-	// returns the closest hit entity (nearest to rayStart)
-	Entities::EntityHandle StaticMeshSystem::FindClosestActiveEntityIntersectingRay(glm::vec3 rayStart, glm::vec3 rayEnd)
-	{
-		R3_PROF_EVENT();
-		auto entities = Systems::GetSystem<Entities::EntitySystem>();
-		if (entities->GetActiveWorld() == nullptr)
-		{
-			return {};
-		}
-
-		struct HitEntityRecord {
-			Entities::EntityHandle m_entity;
-			float m_hitDistance;
-		};
-		std::vector<HitEntityRecord> hitEntities;
-		auto activeWorld = entities->GetActiveWorld();
-		auto forEachEntity = [&](const Entities::EntityHandle& e, StaticMeshComponent& smc, TransformComponent& t)
-		{
-			if (smc.m_shouldDraw)
-			{
-				const auto modelData = GetSystem<ModelDataSystem>()->GetModelData(smc.m_modelHandle);
-				if (modelData.m_data)
-				{
-					// transform the ray into model space so we can do a simple AABB test
-					const glm::mat4 inverseTransform = glm::inverse(t.GetWorldspaceMatrix(e, *activeWorld));
-					const auto rs = glm::vec3(inverseTransform * glm::vec4(rayStart, 1));
-					const auto re = glm::vec3(inverseTransform * glm::vec4(rayEnd, 1));
-					float hitT = 0.0f;
-					if (RayIntersectsAABB(rs, re, modelData.m_data->m_boundsMin, modelData.m_data->m_boundsMax, hitT))
-					{
-						hitEntities.push_back({ e, hitT });
-					}
-				}
-			}
-			return true;
-		};
-		Entities::Queries::ForEach<StaticMeshComponent, TransformComponent>(activeWorld, forEachEntity);
-
-		// now find the closest hit entity that is in front of the ray
-		Entities::EntityHandle closestHit = {};
-		float closestHitDistance = FLT_MAX;
-		for (int i = 0; i < hitEntities.size(); ++i)
-		{
-			if (hitEntities[i].m_hitDistance >= 0.0f && hitEntities[i].m_hitDistance < closestHitDistance)
-			{
-				closestHit = hitEntities[i].m_entity;
-				closestHitDistance = hitEntities[i].m_hitDistance;
-			}
-		}
-		return closestHit;
 	}
 
 	void StaticMeshSystem::RegisterTickFns()
@@ -198,9 +138,9 @@ namespace R3
 				ScopedLock lock(m_allDataMutex);
 				uint64_t gpuIndex = m_allMaterialsGpu.Allocate(newMesh.m_materialCount);
 				newMesh.m_materialGpuIndex = static_cast<uint32_t>(gpuIndex);
-				for (uint32_t mat = 0; mat < newMesh.m_materialCount; ++mat)	// write cpu materials offset from gpuIndex
+				for (uint32_t mat = 0; mat < newMesh.m_materialCount && gpuIndex != -1; ++mat)
 				{
-					auto& md = m_allMaterials[mat + gpuIndex];
+					auto& md = m_allMaterials[mat + gpuIndex];		// use same indices for cpu + gpu material data
 					md.m_albedoOpacity = { m->m_materials[mat].m_albedo, m->m_materials[mat].m_opacity };
 					md.m_metallic = m->m_materials[mat].m_metallic;
 					md.m_roughness = m->m_materials[mat].m_roughness;
@@ -243,14 +183,7 @@ namespace R3
 					pt.m_materialIndex = newMesh.m_materialGpuIndex + m->m_meshes[part].m_materialIndex;	// GPU index!
 					pt.m_vertexDataOffset = static_cast<uint32_t>(newMesh.m_vertexDataOffset);
 				}
-				if (m_allParts.size() < c_maxMeshParts)
-				{
-					m_allMeshPartsGpu.Write(newMesh.m_firstMeshPartOffset, newMesh.m_meshPartCount, &m_allParts[newMesh.m_firstMeshPartOffset]);
-				}
-				else
-				{
-					LogError("Max mesh parts reached! Increase StaticMeshRenderer::c_maxMeshParts");
-				}
+				m_allMeshPartsGpu.Write(newMesh.m_firstMeshPartOffset, newMesh.m_meshPartCount, &m_allParts[newMesh.m_firstMeshPartOffset]);
 			}
 			// now copy the vertex + index data to staging
 			{
@@ -259,7 +192,7 @@ namespace R3
 				m_allIndices.Write(newMesh.m_indexDataOffset, m->m_indices.size(), m->m_indices.data());
 			}
 			{
-				ScopedLock lock(m_allDataMutex);
+				ScopedLock lock(m_allDataMutex);			// todo, m_allMaterials and allParts probably need this lock too
 				m_allData.push_back(std::move(newMesh));	// push the new mesh to our array, it is ready to go!
 			}
 		};
@@ -273,7 +206,7 @@ namespace R3
 		if (!m_allVertices.IsCreated())
 		{
 			m_allVertices.SetDebugName("Static mesh vertices");
-			if (!m_allVertices.Create(*ctx.m_device, c_maxVerticesToStore, c_maxVerticesToStore / 4, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT))
+			if (!m_allVertices.Create(*ctx.m_device, c_maxVerticesToStore, c_maxVerticesToStore / 2, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT))
 			{
 				LogError("Failed to create vertex buffer");
 			}
@@ -281,7 +214,7 @@ namespace R3
 		if (!m_allIndices.IsCreated())
 		{
 			m_allIndices.SetDebugName("Static mesh indices");
-			if (!m_allIndices.Create(*ctx.m_device, c_maxIndicesToStore, c_maxIndicesToStore / 4, VK_BUFFER_USAGE_INDEX_BUFFER_BIT))
+			if (!m_allIndices.Create(*ctx.m_device, c_maxIndicesToStore, c_maxIndicesToStore / 2, VK_BUFFER_USAGE_INDEX_BUFFER_BIT))
 			{
 				LogError("Failed to create index buffer");
 			}
@@ -302,28 +235,6 @@ namespace R3
 				LogError("Failed to create mesh parts buffer");
 			}
 			m_allMeshPartsGpu.Allocate(c_maxMeshParts);
-		}
-		{
-			R3_PROF_EVENT("UploadInstanceMaterials");
-			auto entities = Systems::GetSystem<Entities::EntitySystem>();
-			auto forEachEntity = [&](const Entities::EntityHandle& e, StaticMeshMaterialsComponent& smc)
-			{
-				if (smc.m_gpuDataIndex == -1 && smc.m_materials.size() > 0)
-				{
-					smc.m_gpuDataIndex = static_cast<uint32_t>(m_allMaterialsGpu.Allocate(smc.m_materials.size()));
-				}
-				if (smc.m_gpuDataIndex != -1)	// update all instance mats each frame
-				{
-					m_allMaterialsGpu.Write(smc.m_gpuDataIndex, smc.m_materials.size(), smc.m_materials.data());
-					memcpy(&m_allMaterials[smc.m_gpuDataIndex], smc.m_materials.data(), smc.m_materials.size() * sizeof(StaticMeshMaterial));
-				}
-				return true;
-			};
-
-			if (entities->GetActiveWorld())
-			{
-				Entities::Queries::ForEach<StaticMeshMaterialsComponent>(entities->GetActiveWorld(), forEachEntity);
-			}
 		}
 		{
 			R3_PROF_EVENT("FlushStagingWrites");
@@ -391,13 +302,11 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		// Register as a listener for any new loaded models
-		auto models = Systems::GetSystem<ModelDataSystem>();
-		m_onModelDataLoadedCbToken = models->RegisterLoadedCallback([this](const ModelDataHandle& handle, bool loaded) {
+		m_onModelDataLoadedCbToken = GetSystem<ModelDataSystem>()->RegisterLoadedCallback([this](const ModelDataHandle& handle, bool loaded) {
 			OnModelDataLoaded(handle, loaded);
 		});
-		// Register render functions
-		auto render = Systems::GetSystem<RenderSystem>();
-		render->m_onShutdownCbs.AddCallback([this](Device& d) {
+		// Cleanup must happen during render shutdown
+		GetSystem<RenderSystem>()->m_onShutdownCbs.AddCallback([this](Device& d) {
 			m_allMeshPartsGpu.Destroy(d);
 			m_allMaterialsGpu.Destroy(d);
 			m_allVertices.Destroy(d);

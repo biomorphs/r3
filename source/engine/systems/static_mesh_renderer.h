@@ -12,7 +12,7 @@ namespace R3
 	struct BucketPartInstance
 	{
 		uint32_t m_partInstanceIndex;		// index into instance data (gpu memory)
-		uint32_t m_partGlobalIndex;			// index into mesh parts aarray
+		uint32_t m_partGlobalIndex;			// index into mesh parts array
 	};
 
 	// A bucket of draw calls

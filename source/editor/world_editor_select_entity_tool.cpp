@@ -27,7 +27,7 @@ namespace R3
 		{
 			glm::vec3 selectionRayStart, selectionRayEnd;
 			MouseCursorToWorldspaceRay(100000.0f, selectionRayStart, selectionRayEnd);		// fire a ray out into the world
-			hitEntity = staticMeshes->FindClosestActiveEntityIntersectingRay(selectionRayStart, selectionRayEnd);
+			hitEntity = FindClosestActiveEntityIntersectingRay(w, selectionRayStart, selectionRayEnd);
 		}
 		if (hitEntity.GetID() != -1)
 		{

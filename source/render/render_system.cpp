@@ -22,7 +22,7 @@
 
 namespace R3
 {
-	static constexpr int c_maxFramesInFlight = 3;	// let the cpu get ahead of the gpu by this many frames. should always be > num swap images
+	static constexpr int c_maxFramesInFlight = 2;	// let the cpu get ahead of the gpu by this many frames. should always be > num swap images
 	using VulkanHelpers::CheckResult;				// laziness
 	using VulkanHelpers::FindQueueFamilyIndices;
 
