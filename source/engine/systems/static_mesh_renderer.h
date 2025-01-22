@@ -36,20 +36,18 @@ namespace R3
 		virtual void RegisterTickFns();
 		virtual bool Init();
 		void CullInstancesOnGpu(class RenderPassContext& ctx);
-		void PrepareForRendering(class RenderPassContext& ctx);		// call from frame graph before drawing anything
+		void PrepareForRendering(class RenderPassContext& ctx);		// call from frame graph before CullInstancesOnGpu or drawing anything
 		void OnForwardPassDraw(class RenderPassContext& ctx);
 		void OnGBufferPassDraw(class RenderPassContext& ctx);
 		void OnDrawEnd(class RenderPassContext& ctx);
-		VkDeviceAddress GetDrawIndirectBufferAddress();
-		VkDeviceAddress GetPerDrawInstanceBufferAddress();
 	private:
 		struct GlobalConstants;
 		Frustum GetMainCameraFrustum();
-		void CollectAllPartInstances();
-		void PrepareDrawBucket(MeshPartDrawBucket& bucket);
-		void PrepareAndCullDrawBucketCompute(Device&, VkCommandBuffer cmds, MeshPartDrawBucket& bucket);
+		void RebuildStaticScene();									// collect static entities, rebuilds static draw buckets
+		void PrepareDrawBucket(MeshPartDrawBucket& bucket);			// write draw indirects with no culling, only used when culling disabled
+		void PrepareAndCullDrawBucketCompute(Device&, VkCommandBuffer cmds, VkDeviceAddress instanceDataBuffer, MeshPartDrawBucket& bucket);	// cull instances + write draw indirects
 		bool ShowGui();
-		bool CollectInstances();
+		bool CollectInstances();									// collects dynamic instances + rebuilds static scene if required
 		void Cleanup(Device&);
 		bool CreatePipelineLayout(Device&);
 		bool CreateForwardPipelineData(Device&, VkFormat mainColourFormat, VkFormat mainDepthFormat);
@@ -72,34 +70,32 @@ namespace R3
 			double m_prepareBucketsEndTime = 0.0;
 		};
 
-		MeshPartDrawBucket m_allOpaques;
-		MeshPartDrawBucket m_allTransparents;
 		FrameStats m_frameStats;
 
 		bool m_enableComputeCulling = true;		// run instance culling in compute
 		bool m_lockMainFrustum = false;
 		bool m_showGui = false;
+		bool m_rebuildStaticScene = true;
 
 		std::unique_ptr<StaticMeshInstanceCullingCompute> m_computeCulling;
 
-		const uint32_t c_maxBuffers = 3;		// we reserve space per-frame in globals, draws + instance data. this determines how many frames to handle
-		uint32_t m_thisFrameBuffer = 0;			// determines where to write to globals, draw + instance data each frame
+		std::unique_ptr<BufferPool> m_meshRenderBufferPool;		// pool used to allocate all buffers
+
+		WriteOnlyGpuArray<StaticMeshInstanceGpu> m_staticMeshInstances;	// all *static* instance data written here on static scene rebuild
+		MeshPartDrawBucket m_staticOpaques;								// all static opaque instances collected here
+
+		const uint32_t c_maxBuffers = 3;		// we reserve space per-frame in globals, draws + dynamic instance data. this determines how many frames to handle
+		uint32_t m_thisFrameBuffer = 0;			// determines where to write to globals, draw + dynamic instance data each frame
 
 		WriteOnlyGpuArray<GlobalConstants> m_globalConstantsBuffer;	// globals written here every frame, split into c_maxBuffers sub-buffers
 		int m_currentGlobalConstantsBuffer = 0;
 
-		AllocatedBuffer m_globalInstancesHostVisible;	// one giant buffer for all instance data, split into c_maxBuffers sub-buffers
-		StaticMeshInstanceGpu* m_globalInstancesMappedPtr = nullptr;
-		VkDeviceAddress m_globalInstancesDeviceAddress;
-		uint32_t m_currentInstanceBufferOffset = 0;		// next write offset for instance data
-
-		AllocatedBuffer m_drawIndirectHostVisible;	// draw indirect entries for each instance, split into c_maxBuffers sub-buffers
+		AllocatedBuffer m_drawIndirectHostVisible;	// draw indirect entries for each instance, split into c_maxBuffers sub-buffers. populated every frame from buckets
 		void* m_drawIndirectMappedPtr = nullptr;
 		VkDeviceAddress m_drawIndirectBufferAddress;
-		uint32_t m_currentDrawBufferOffset = 0;		// next write offset for draw data
+		uint32_t m_currentDrawBufferOffset = 0;		// next write offset for draw data, resets each frame
 
 		const uint32_t c_maxInstances = 1024 * 256;
-		const uint32_t c_maxInstanceBuffers = 3;
 
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_forwardPipeline = VK_NULL_HANDLE;

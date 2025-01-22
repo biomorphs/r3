@@ -74,14 +74,11 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		m_computeCulling->Cleanup(d);
+		m_staticMeshInstances.Destroy(d);
+		m_meshRenderBufferPool = nullptr;
 		vkDestroyPipeline(d.GetVkDevice(), m_forwardPipeline, nullptr);
 		vkDestroyPipeline(d.GetVkDevice(), m_gBufferPipeline, nullptr);
 		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayout, nullptr);
-		if (m_globalInstancesHostVisible.m_allocation)
-		{
-			vmaUnmapMemory(d.GetVMA(), m_globalInstancesHostVisible.m_allocation);
-			vmaDestroyBuffer(d.GetVMA(), m_globalInstancesHostVisible.m_buffer, m_globalInstancesHostVisible.m_allocation);
-		}
 		if (m_drawIndirectHostVisible.m_allocation)
 		{
 			vmaUnmapMemory(d.GetVMA(), m_drawIndirectHostVisible.m_allocation);
@@ -102,6 +99,7 @@ namespace R3
 			ImGui::Begin("Static Mesh Renderer");
 			ImGui::Checkbox("Enable Compute Culling", &m_enableComputeCulling);
 			ImGui::Checkbox("Lock main frustum", &m_lockMainFrustum);
+			ImGui::Checkbox("Enable static scene rebuild", &m_rebuildStaticScene);
 			std::string txt = std::format("{} Model Instances Submitted", m_frameStats.m_totalModelInstances);
 			ImGui::Text(txt.c_str());
 			txt = std::format("    {} Total Part Instances", m_frameStats.m_totalPartInstances);
@@ -255,8 +253,7 @@ namespace R3
 		if (m_enableComputeCulling)
 		{
 			m_frameStats.m_prepareBucketsStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
-			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_allOpaques);
-			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_allTransparents);
+			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_staticMeshInstances.GetDataDeviceAddress(), m_staticOpaques);
 			m_frameStats.m_prepareBucketsEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		}
 	}
@@ -273,17 +270,6 @@ namespace R3
 				return;
 			}
 			m_globalConstantsBuffer.Allocate(c_maxBuffers);
-		}
-		if (m_globalInstancesMappedPtr == nullptr)
-		{
-			m_globalInstancesHostVisible = VulkanHelpers::CreateBuffer(ctx.m_device->GetVMA(),
-				c_maxInstances * c_maxBuffers * sizeof(StaticMeshInstanceGpu),
-				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
-			VulkanHelpers::SetBufferName(ctx.m_device->GetVkDevice(), m_globalInstancesHostVisible, "Static mesh global instances");
-			void* mapped = nullptr;
-			vmaMapMemory(ctx.m_device->GetVMA(), m_globalInstancesHostVisible.m_allocation, &mapped);
-			m_globalInstancesMappedPtr = static_cast<StaticMeshInstanceGpu*>(mapped);
-			m_globalInstancesDeviceAddress = VulkanHelpers::GetBufferDeviceAddress(ctx.m_device->GetVkDevice(), m_globalInstancesHostVisible);
 		}
 		if (m_drawIndirectMappedPtr == nullptr)
 		{
@@ -304,6 +290,26 @@ namespace R3
 				return;
 			}
 		}
+		if (m_meshRenderBufferPool == nullptr)
+		{
+			m_meshRenderBufferPool = std::make_unique<BufferPool>("Mesh renderer buffers");
+		}
+		if (!m_staticMeshInstances.IsCreated())
+		{
+			if (!m_staticMeshInstances.Create(*ctx.m_device, c_maxInstances, c_maxInstances, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_meshRenderBufferPool.get()))
+			{
+				LogError("Failed to create static mesh instance buffer");
+				return;
+			}
+			m_staticMeshInstances.Allocate(c_maxInstances);
+		}
+
+		// retire old static data buffers on scene rebuild + flush to new buffers for later
+		if (m_rebuildStaticScene && m_staticOpaques.m_partInstances.size() > 0)
+		{
+			m_staticMeshInstances.RetirePooledBuffer(*ctx.m_device);
+			m_staticMeshInstances.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+		}
 
 		// write + flush the global constants each frame
 		auto cameras = GetSystem<CameraSystem>();
@@ -315,7 +321,7 @@ namespace R3
 		globals.m_vertexBufferAddress = staticMeshes->GetVertexDataDeviceAddress();
 		globals.m_materialBufferAddress = staticMeshes->GetMaterialsDeviceAddress();
 		globals.m_lightDataBufferAddress = lights->GetAllLightsDeviceAddress();
-		globals.m_instanceDataBufferAddress = m_globalInstancesDeviceAddress;
+		globals.m_instanceDataBufferAddress = m_staticMeshInstances.GetDataDeviceAddress();	// todo, we need to pass globals for each set of draw calls (probably in push constant)
 		m_globalConstantsBuffer.Write(m_thisFrameBuffer, 1, &globals);
 		m_globalConstantsBuffer.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 	}
@@ -338,7 +344,7 @@ namespace R3
 
 		auto textures = GetSystem<TextureSystem>();
 		auto time = GetSystem<TimeSystem>();
-		if (m_allOpaques.m_drawCount == 0)
+		if (m_staticOpaques.m_drawCount == 0)
 		{
 			return;
 		}
@@ -366,7 +372,7 @@ namespace R3
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 
 		// Draw opaques
-		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_allOpaques.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_allOpaques.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
+		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_staticOpaques.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_staticOpaques.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 
 		m_frameStats.m_writeCmdsEndTime = time->GetElapsedTimeReal();
 	}
@@ -375,49 +381,49 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 
-		if (m_forwardPipeline == VK_NULL_HANDLE)
-		{
-			auto mainColourTarget = ctx.GetResolvedTarget("MainColour");
-			auto mainDepthTarget = ctx.GetResolvedTarget("MainDepth");
-			if (!CreateForwardPipelineData(*ctx.m_device, mainColourTarget->m_info.m_format, mainDepthTarget->m_info.m_format))
-			{
-				LogError("Failed to create pipeline data for forward pass");
-			}
-		}
-
-		auto textures = GetSystem<TextureSystem>();
-		auto time = GetSystem<TimeSystem>();
-		if (m_allTransparents.m_drawCount == 0)
-		{
-			return;
-		}
-
-		m_frameStats.m_writeCmdsStartTime = time->GetElapsedTimeReal();
-
-		VkViewport viewport = { 0 };
-		viewport.x = 0.0f;
-		viewport.y = 0.0f;
-		viewport.width = ctx.m_renderExtents.x;
-		viewport.height = ctx.m_renderExtents.y;
-		viewport.minDepth = 0.0f;	// normalised! must be between 0 and 1
-		viewport.maxDepth = 1.0f;	// ^^
-		VkRect2D scissor = { 0 };
-		scissor.offset = { 0, 0 };
-		scissor.extent = { (uint32_t)viewport.width, (uint32_t)viewport.height };	// draw the full image
-		vkCmdBindPipeline(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_forwardPipeline);
-		vkCmdSetViewport(ctx.m_graphicsCmds, 0, 1, &viewport);
-		vkCmdSetScissor(ctx.m_graphicsCmds, 0, 1, &scissor);
-		vkCmdBindIndexBuffer(ctx.m_graphicsCmds, GetSystem<StaticMeshSystem>()->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-		VkDescriptorSet allTextures = textures->GetAllTexturesSet();
-		vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, nullptr);
-		PushConstants pc;
-		pc.m_globalsBufferAddress = m_globalConstantsBuffer.GetDataDeviceAddress() + (m_thisFrameBuffer * sizeof(GlobalConstants));
-		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-
-		// Draw opaques
-		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_allTransparents.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_allTransparents.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
-
-		m_frameStats.m_writeCmdsEndTime = time->GetElapsedTimeReal();
+		// if (m_forwardPipeline == VK_NULL_HANDLE)
+		// {
+		// 	auto mainColourTarget = ctx.GetResolvedTarget("MainColour");
+		// 	auto mainDepthTarget = ctx.GetResolvedTarget("MainDepth");
+		// 	if (!CreateForwardPipelineData(*ctx.m_device, mainColourTarget->m_info.m_format, mainDepthTarget->m_info.m_format))
+		// 	{
+		// 		LogError("Failed to create pipeline data for forward pass");
+		// 	}
+		// }
+		// 
+		// auto textures = GetSystem<TextureSystem>();
+		// auto time = GetSystem<TimeSystem>();
+		// if (m_allTransparents.m_drawCount == 0)
+		// {
+		// 	return;
+		// }
+		// 
+		// m_frameStats.m_writeCmdsStartTime = time->GetElapsedTimeReal();
+		// 
+		// VkViewport viewport = { 0 };
+		// viewport.x = 0.0f;
+		// viewport.y = 0.0f;
+		// viewport.width = ctx.m_renderExtents.x;
+		// viewport.height = ctx.m_renderExtents.y;
+		// viewport.minDepth = 0.0f;	// normalised! must be between 0 and 1
+		// viewport.maxDepth = 1.0f;	// ^^
+		// VkRect2D scissor = { 0 };
+		// scissor.offset = { 0, 0 };
+		// scissor.extent = { (uint32_t)viewport.width, (uint32_t)viewport.height };	// draw the full image
+		// vkCmdBindPipeline(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_forwardPipeline);
+		// vkCmdSetViewport(ctx.m_graphicsCmds, 0, 1, &viewport);
+		// vkCmdSetScissor(ctx.m_graphicsCmds, 0, 1, &scissor);
+		// vkCmdBindIndexBuffer(ctx.m_graphicsCmds, GetSystem<StaticMeshSystem>()->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+		// VkDescriptorSet allTextures = textures->GetAllTexturesSet();
+		// vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, nullptr);
+		// PushConstants pc;
+		// pc.m_globalsBufferAddress = m_globalConstantsBuffer.GetDataDeviceAddress() + (m_thisFrameBuffer * sizeof(GlobalConstants));
+		// vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
+		// 
+		// // Draw opaques
+		// vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_allTransparents.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_allTransparents.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
+		// 
+		// m_frameStats.m_writeCmdsEndTime = time->GetElapsedTimeReal();
 	}
 
 	void StaticMeshRenderer::OnDrawEnd(class RenderPassContext& ctx)
@@ -430,37 +436,25 @@ namespace R3
 			m_thisFrameBuffer = 0;
 		}
 
-		// reset instance offset for next frame
-		m_currentInstanceBufferOffset = 0;
-
 		// reset draw offset for next frame
 		m_currentDrawBufferOffset = 0;
 
 		m_computeCulling->Reset();
 	}
 
-	VkDeviceAddress StaticMeshRenderer::GetDrawIndirectBufferAddress()
-	{
-		return m_drawIndirectBufferAddress;
-	}
-
-	VkDeviceAddress StaticMeshRenderer::GetPerDrawInstanceBufferAddress()
-	{
-		return m_globalInstancesDeviceAddress;
-	}
-
-	void StaticMeshRenderer::CollectAllPartInstances()
+	void StaticMeshRenderer::RebuildStaticScene()
 	{
 		R3_PROF_EVENT();
 		auto staticMeshes = GetSystem<StaticMeshSystem>();
 		auto activeWorld = Systems::GetSystem<Entities::EntitySystem>()->GetActiveWorld();
-		m_allOpaques.m_partInstances.clear();
-		m_allTransparents.m_partInstances.clear();
+		m_staticOpaques.m_partInstances.clear();
+		m_staticOpaques.m_drawCount = 0;
+		m_staticOpaques.m_firstDrawOffset = 0;
 		if (activeWorld)
 		{
 			ModelDataHandle currentMeshDataHandle;			// the current cached mesh
 			StaticMeshGpuData currentMeshData;				// ^^
-			const uint32_t currentInstanceBufferStart = m_thisFrameBuffer * c_maxInstances;		// base index to write instances
+			uint32_t currentInstanceBufferOffset = 0;		// base index to write instances
 			auto forEachEntity = [&](const Entities::EntityHandle& e, StaticMeshComponent& s, TransformComponent& t)
 			{
 				if (s.m_modelHandle.m_index != -1 && s.m_shouldDraw)	// doesn't mean the model is actually ready to draw!
@@ -479,32 +473,27 @@ namespace R3
 						const StaticMeshPart* currentPart = staticMeshes->GetMeshPart(currentMeshData.m_firstMeshPartOffset + part);
 						const uint32_t relativePartMatIndex = currentPart->m_materialIndex - currentMeshData.m_materialGpuIndex;
 						const glm::mat4 partTransform = instanceTransform * currentPart->m_transform;
-
-						// write instance data now even if it will not be used (faster than duplicating later)
-						if (m_currentInstanceBufferOffset < c_maxInstances)
+						if (currentInstanceBufferOffset < c_maxInstances)	// write instance data now even if it will not be used (faster than duplicating later)
 						{
 							// todo, we can most likely combine StaticMeshInstanceGpu and BucketPartInstance somehow + only write one entry per instance
-							StaticMeshInstanceGpu* instancesPtr = static_cast<StaticMeshInstanceGpu*>(m_globalInstancesMappedPtr) + currentInstanceBufferStart + m_currentInstanceBufferOffset;
-							instancesPtr->m_transform = partTransform;
-							instancesPtr->m_materialIndex = currentMeshData.m_materialGpuIndex + relativePartMatIndex;
-
+							StaticMeshInstanceGpu newInstance;
+							newInstance.m_transform = partTransform;
+							newInstance.m_materialIndex = currentMeshData.m_materialGpuIndex + relativePartMatIndex;
+							m_staticMeshInstances.Write(currentInstanceBufferOffset, 1, &newInstance);
 							BucketPartInstance bucketInstance;
 							bucketInstance.m_partGlobalIndex = currentMeshData.m_firstMeshPartOffset + part;
-							bucketInstance.m_partInstanceIndex = currentInstanceBufferStart + m_currentInstanceBufferOffset;
+							bucketInstance.m_partInstanceIndex = currentInstanceBufferOffset;
 
-							// todo, can we determine which buckets to use in a better way? material is flexible, but this extra indirection is annoying
-							// maybe we bake it into the mesh part?
 							const StaticMeshMaterial* meshMaterial = staticMeshes->GetMeshMaterial(currentMeshData.m_materialGpuIndex + relativePartMatIndex);
 							if (meshMaterial->m_albedoOpacity.w >= 1.0f)
 							{
-								m_allOpaques.m_partInstances.emplace_back(bucketInstance);
+								m_staticOpaques.m_partInstances.emplace_back(bucketInstance);
 							}
 							else
 							{
-								m_allTransparents.m_partInstances.emplace_back(bucketInstance);
+								// m_allTransparents.m_partInstances.emplace_back(bucketInstance);
 							}
-
-							m_currentInstanceBufferOffset++;
+							currentInstanceBufferOffset++;
 						}
 						else
 						{
@@ -543,7 +532,7 @@ namespace R3
 	}
 
 	// use compute to cull and prepare draw calls for instances in this bucket
-	void StaticMeshRenderer::PrepareAndCullDrawBucketCompute(Device& d, VkCommandBuffer cmds, MeshPartDrawBucket& bucket)
+	void StaticMeshRenderer::PrepareAndCullDrawBucketCompute(Device& d, VkCommandBuffer cmds, VkDeviceAddress instanceDataBuffer, MeshPartDrawBucket& bucket)
 	{
 		R3_PROF_EVENT();
 
@@ -553,7 +542,7 @@ namespace R3
 		bucket.m_drawCount = (uint32_t)bucket.m_partInstances.size();						// draw-indirects will be populated by compute shader
 		m_currentDrawBufferOffset += bucket.m_drawCount;
 
-		m_computeCulling->Run(d, cmds, bucket, mainFrustum);										// populate the draw-indirect data for this bucket of instances via compute
+		m_computeCulling->Run(d, cmds, instanceDataBuffer, m_drawIndirectBufferAddress, bucket, mainFrustum);	// populate the draw-indirect data for this bucket of instances via compute
 	}
 
 	Frustum StaticMeshRenderer::GetMainCameraFrustum()
@@ -574,22 +563,18 @@ namespace R3
 		m_frameStats.m_totalModelInstances = 0;
 		m_frameStats.m_totalPartInstances = 0;
 		m_frameStats.m_collectInstancesStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
-		CollectAllPartInstances();
-		m_frameStats.m_totalOpaqueInstances = (uint32_t)m_allOpaques.m_partInstances.size();
-		m_frameStats.m_totalTransparentInstances = (uint32_t)m_allTransparents.m_partInstances.size();
+		if (m_rebuildStaticScene)
+		{
+			RebuildStaticScene();
+		}
+		m_frameStats.m_totalOpaqueInstances = (uint32_t)m_staticOpaques.m_partInstances.size();
 		m_frameStats.m_collectInstancesEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 
-		if (m_enableComputeCulling)		// do nothing here, culling happens later
-		{
-			m_allOpaques.m_drawCount = 0;
-			m_allTransparents.m_drawCount = 0;
-		}
-		else
+		if (!m_enableComputeCulling)		// do nothing here, culling happens later
 		{
 			m_frameStats.m_prepareBucketsStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 			{
-				PrepareDrawBucket(m_allOpaques);
-				PrepareDrawBucket(m_allTransparents);
+				PrepareDrawBucket(m_staticOpaques);
 			}
 			m_frameStats.m_prepareBucketsEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		}

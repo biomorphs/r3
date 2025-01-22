@@ -18,7 +18,7 @@ namespace R3
 		~StaticMeshInstanceCullingCompute();
 
 		void Reset();	// call at the start or end of each frame
-		void Run(Device& d, VkCommandBuffer cmds, const MeshPartDrawBucket& instanceBucket, const Frustum& f);
+		void Run(Device& d, VkCommandBuffer cmds, VkDeviceAddress instanceBuffer, VkDeviceAddress drawIndirectBuffer, const MeshPartDrawBucket& instanceBucket, const Frustum& f);
 		bool Initialise(Device& d);
 		void Cleanup(Device& d);
 

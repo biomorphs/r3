@@ -92,7 +92,7 @@ namespace R3
 		}
 	}
 
-	void StaticMeshInstanceCullingCompute::Run(Device& d, VkCommandBuffer cmds, const MeshPartDrawBucket& instanceBucket, const Frustum& f)
+	void StaticMeshInstanceCullingCompute::Run(Device& d, VkCommandBuffer cmds, VkDeviceAddress instanceBuffer, VkDeviceAddress drawIndirectBuffer, const MeshPartDrawBucket& instanceBucket, const Frustum& f)
 	{
 		R3_PROF_EVENT();
 		if (instanceBucket.m_drawCount == 0)
@@ -109,7 +109,6 @@ namespace R3
 		}
 
 		auto staticMeshes = Systems::GetSystem<StaticMeshSystem>();
-		auto staticRender = Systems::GetSystem<StaticMeshRenderer>();
 
 		// Upload the frustums, bucket instances, and culling task info for this job
 		// We probably want to upload all this in advance and then do a single flush for all compute jobs
@@ -134,10 +133,10 @@ namespace R3
 		uint32_t currentCullingTaskOffset = (m_currentCullingTaskBuffer * c_maxCullingTasks) + m_currentCullingTaskOffset;
 		CullingTaskInfo thisJob;
 		thisJob.m_allBucketInstances = bucketInstancesAddress;
-		thisJob.m_drawIndirects = staticRender->GetDrawIndirectBufferAddress() + (instanceBucket.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand));
+		thisJob.m_drawIndirects = drawIndirectBuffer + (instanceBucket.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand));
 		thisJob.m_thisFrustum = frustumBufferAddress;
 		thisJob.m_allMeshParts = staticMeshes->GetMeshPartsDeviceAddress();
-		thisJob.m_allPerDrawInstances = staticRender->GetPerDrawInstanceBufferAddress();
+		thisJob.m_allPerDrawInstances = instanceBuffer;
 		thisJob.m_bucketPartInstanceCount = (uint32_t)instanceBucket.m_partInstances.size();
 		m_cullingTasksGpu.Write(currentCullingTaskOffset, 1, &thisJob);
 
