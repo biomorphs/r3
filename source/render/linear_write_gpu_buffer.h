@@ -14,6 +14,7 @@ namespace R3
 	// no thread safety
 	// fastest write API is GetWritePtr()..., direct write to staging buffer
 	//	you MUST to do your own bounds checks!
+	//  you CANNOT cache the write ptr beyond a call to flush
 	//  you MUST call CommitWrites(size_t) to increment m_writeOffset + ensure staging buffer is copied correctly
 	
 	class LinearWriteGpuBuffer
@@ -74,13 +75,21 @@ namespace R3
 		{
 			m_buffer.SetDebugName(name);
 		}
-		bool Create(Device& d, uint64_t maxCount, VkBufferUsageFlags usageFlags, BufferPool* pool = nullptr)
+		bool Create(Device& d, uint32_t maxCount, VkBufferUsageFlags usageFlags, BufferPool* pool = nullptr)
 		{
 			return m_buffer.Create(d, maxCount * sizeof(Type), usageFlags, pool);
 		}
 		uint32_t Write(uint32_t count, const Type* data)
 		{
 			return m_buffer.Write(count * sizeof(Type), data) / sizeof(Type);
+		}
+		Type* GetWritePtr() const
+		{
+			return reinterpret_cast<Type*>(m_buffer.GetWritePtr());
+		}
+		void CommitWrites(uint32_t count)
+		{
+			m_buffer.CommitWrites(count * sizeof(Type));
 		}
 		void RetirePooledBuffer(Device& d)
 		{

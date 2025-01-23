@@ -469,6 +469,7 @@ namespace R3
 			ModelDataHandle currentMeshDataHandle;			// the current cached mesh
 			StaticMeshGpuData currentMeshData;				// ^^
 			uint32_t currentInstanceBufferOffset = 0;
+			StaticMeshInstanceGpu* instanceWritePtr = m_staticMeshInstances.GetWritePtr();
 			auto forEachEntity = [&](const Entities::EntityHandle& e, StaticMeshComponent& s, TransformComponent& t)
 			{
 				if (s.m_modelHandle.m_index != -1 && s.m_shouldDraw)	// doesn't mean the model is actually ready to draw!
@@ -489,12 +490,14 @@ namespace R3
 						const glm::mat4 partTransform = instanceTransform * currentPart->m_transform;
 
 						// todo, we can most likely combine StaticMeshInstanceGpu and BucketPartInstance somehow + only write one entry per instance
+						
+#ifdef USE_LINEAR_BUFFER
+						instanceWritePtr[currentInstanceBufferOffset].m_transform = partTransform;
+						instanceWritePtr[currentInstanceBufferOffset].m_materialIndex = currentMeshData.m_materialGpuIndex + relativePartMatIndex;
+#else
 						StaticMeshInstanceGpu newInstance;
 						newInstance.m_transform = partTransform;
 						newInstance.m_materialIndex = currentMeshData.m_materialGpuIndex + relativePartMatIndex;
-#ifdef USE_LINEAR_BUFFER
-						currentInstanceBufferOffset = m_staticMeshInstances.Write(1, &newInstance);
-#else
 						m_staticMeshInstances.Write(currentInstanceBufferOffset, 1, &newInstance);
 #endif
 						BucketPartInstance bucketInstance;
@@ -510,7 +513,6 @@ namespace R3
 						{
 							// m_allTransparents.m_partInstances.emplace_back(bucketInstance);
 						}
-
 						currentInstanceBufferOffset++;
 					}
 					m_frameStats.m_totalModelInstances++;
@@ -519,6 +521,9 @@ namespace R3
 				return true;
 			};
 			Entities::Queries::ForEach<StaticMeshComponent, TransformComponent>(activeWorld, forEachEntity);
+#ifdef USE_LINEAR_BUFFER
+			m_staticMeshInstances.CommitWrites(currentInstanceBufferOffset);
+#endif
 		}
 	}
 

@@ -10,6 +10,26 @@ namespace R3
 	{
 		m_debugName = name;
 	}
+
+	uint8_t* LinearWriteGpuBuffer::GetWritePtr() const
+	{
+		if (m_stagingBuffer.m_mappedBuffer == nullptr)
+		{
+			LogError("LinearWriteGpuBuffer with no staging buffer!");
+			return nullptr;
+		}
+		return static_cast<uint8_t*>(m_stagingBuffer.m_mappedBuffer) + m_writeOffset;
+	}
+
+	void LinearWriteGpuBuffer::CommitWrites(uint32_t sizeBytes)
+	{
+		if (m_writeOffset + sizeBytes > m_maxSize)
+		{
+			LogError("Attempting to commit write too big for this buffer!");
+			return;
+		}
+		m_writeOffset += sizeBytes;
+	}
 	
 	bool LinearWriteGpuBuffer::Create(Device& d, uint32_t dataMaxSize, VkBufferUsageFlags usageFlags, BufferPool* pool)
 	{
@@ -63,7 +83,6 @@ namespace R3
 	void LinearWriteGpuBuffer::RetirePooledBuffer(Device& d)
 	{
 		R3_PROF_EVENT();
-
 		if (m_bufferPool == nullptr)
 		{
 			LogWarn("RetirePooledBuffer called on a non-pooled buffer!");
@@ -82,6 +101,7 @@ namespace R3
 	
 	void LinearWriteGpuBuffer::Flush(Device& d, VkCommandBuffer cmds, VkPipelineStageFlags barrierDst)
 	{
+		R3_PROF_EVENT();
 		if (m_writeOffset > 0)
 		{
 			VkBufferCopy copyRegion;
@@ -198,6 +218,7 @@ namespace R3
 
 	bool LinearWriteGpuBuffer::AcqureNewTargetBuffer(Device& d)
 	{
+		R3_PROF_EVENT();
 		if (m_bufferPool)
 		{
 			auto newBuffer = m_bufferPool->GetBuffer(m_maxSize, m_usageFlags, VMA_MEMORY_USAGE_AUTO, false);
