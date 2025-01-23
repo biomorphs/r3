@@ -253,7 +253,11 @@ namespace R3
 		if (m_enableComputeCulling)
 		{
 			m_frameStats.m_prepareBucketsStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
+#ifdef USE_LINEAR_BUFFER
+			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticOpaques);
+#else
 			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_staticMeshInstances.GetDataDeviceAddress(), m_staticOpaques);
+#endif
 			m_frameStats.m_prepareBucketsEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		}
 	}
@@ -296,12 +300,18 @@ namespace R3
 		}
 		if (!m_staticMeshInstances.IsCreated())
 		{
+#ifdef USE_LINEAR_BUFFER
+			if (!m_staticMeshInstances.Create(*ctx.m_device, c_maxInstances, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_meshRenderBufferPool.get()))
+#else
 			if (!m_staticMeshInstances.Create(*ctx.m_device, c_maxInstances, c_maxInstances, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_meshRenderBufferPool.get()))
+#endif
 			{
 				LogError("Failed to create static mesh instance buffer");
 				return;
 			}
+#ifndef USE_LINEAR_BUFFER
 			m_staticMeshInstances.Allocate(c_maxInstances);
+#endif
 		}
 
 		// retire old static data buffers on scene rebuild + flush to new buffers for later
@@ -321,7 +331,11 @@ namespace R3
 		globals.m_vertexBufferAddress = staticMeshes->GetVertexDataDeviceAddress();
 		globals.m_materialBufferAddress = staticMeshes->GetMaterialsDeviceAddress();
 		globals.m_lightDataBufferAddress = lights->GetAllLightsDeviceAddress();
-		globals.m_instanceDataBufferAddress = m_staticMeshInstances.GetDataDeviceAddress();	// todo, we need to pass globals for each set of draw calls (probably in push constant)
+#ifdef USE_LINEAR_BUFFER
+		globals.m_instanceDataBufferAddress = m_staticMeshInstances.GetBufferDeviceAddress();	// todo, we need to pass this for each set of draw calls (probably in push constant)
+#else
+		globals.m_instanceDataBufferAddress = m_staticMeshInstances.GetDataDeviceAddress();
+#endif
 		m_globalConstantsBuffer.Write(m_thisFrameBuffer, 1, &globals);
 		m_globalConstantsBuffer.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 	}
@@ -454,7 +468,7 @@ namespace R3
 		{
 			ModelDataHandle currentMeshDataHandle;			// the current cached mesh
 			StaticMeshGpuData currentMeshData;				// ^^
-			uint32_t currentInstanceBufferOffset = 0;		// base index to write instances
+			uint32_t currentInstanceBufferOffset = 0;
 			auto forEachEntity = [&](const Entities::EntityHandle& e, StaticMeshComponent& s, TransformComponent& t)
 			{
 				if (s.m_modelHandle.m_index != -1 && s.m_shouldDraw)	// doesn't mean the model is actually ready to draw!
@@ -473,33 +487,31 @@ namespace R3
 						const StaticMeshPart* currentPart = staticMeshes->GetMeshPart(currentMeshData.m_firstMeshPartOffset + part);
 						const uint32_t relativePartMatIndex = currentPart->m_materialIndex - currentMeshData.m_materialGpuIndex;
 						const glm::mat4 partTransform = instanceTransform * currentPart->m_transform;
-						if (currentInstanceBufferOffset < c_maxInstances)	// write instance data now even if it will not be used (faster than duplicating later)
-						{
-							// todo, we can most likely combine StaticMeshInstanceGpu and BucketPartInstance somehow + only write one entry per instance
-							StaticMeshInstanceGpu newInstance;
-							newInstance.m_transform = partTransform;
-							newInstance.m_materialIndex = currentMeshData.m_materialGpuIndex + relativePartMatIndex;
-							m_staticMeshInstances.Write(currentInstanceBufferOffset, 1, &newInstance);
-							BucketPartInstance bucketInstance;
-							bucketInstance.m_partGlobalIndex = currentMeshData.m_firstMeshPartOffset + part;
-							bucketInstance.m_partInstanceIndex = currentInstanceBufferOffset;
 
-							const StaticMeshMaterial* meshMaterial = staticMeshes->GetMeshMaterial(currentMeshData.m_materialGpuIndex + relativePartMatIndex);
-							if (meshMaterial->m_albedoOpacity.w >= 1.0f)
-							{
-								m_staticOpaques.m_partInstances.emplace_back(bucketInstance);
-							}
-							else
-							{
-								// m_allTransparents.m_partInstances.emplace_back(bucketInstance);
-							}
-							currentInstanceBufferOffset++;
+						// todo, we can most likely combine StaticMeshInstanceGpu and BucketPartInstance somehow + only write one entry per instance
+						StaticMeshInstanceGpu newInstance;
+						newInstance.m_transform = partTransform;
+						newInstance.m_materialIndex = currentMeshData.m_materialGpuIndex + relativePartMatIndex;
+#ifdef USE_LINEAR_BUFFER
+						currentInstanceBufferOffset = m_staticMeshInstances.Write(1, &newInstance);
+#else
+						m_staticMeshInstances.Write(currentInstanceBufferOffset, 1, &newInstance);
+#endif
+						BucketPartInstance bucketInstance;
+						bucketInstance.m_partGlobalIndex = currentMeshData.m_firstMeshPartOffset + part;
+						bucketInstance.m_partInstanceIndex = currentInstanceBufferOffset;
+
+						const StaticMeshMaterial* meshMaterial = staticMeshes->GetMeshMaterial(currentMeshData.m_materialGpuIndex + relativePartMatIndex);
+						if (meshMaterial->m_albedoOpacity.w >= 1.0f)
+						{
+							m_staticOpaques.m_partInstances.emplace_back(bucketInstance);
 						}
 						else
 						{
-							LogWarn("Max instances {} hit! Increase StaticMeshRenderer::c_maxInstances or simplify the scene!", c_maxInstances);
-							return false;
+							// m_allTransparents.m_partInstances.emplace_back(bucketInstance);
 						}
+
+						currentInstanceBufferOffset++;
 					}
 					m_frameStats.m_totalModelInstances++;
 					m_frameStats.m_totalPartInstances += currentMeshData.m_meshPartCount;

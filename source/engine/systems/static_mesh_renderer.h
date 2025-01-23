@@ -3,8 +3,11 @@
 #include "engine/systems.h"
 #include "render/vulkan_helpers.h"
 #include "render/writeonly_gpu_buffer.h"
+#include "render/linear_write_gpu_buffer.h"
 #include "render/descriptors.h"
 #include <unordered_map>
+
+#define USE_LINEAR_BUFFER
 
 namespace R3
 {
@@ -81,7 +84,11 @@ namespace R3
 
 		std::unique_ptr<BufferPool> m_meshRenderBufferPool;		// pool used to allocate all buffers
 
-		WriteOnlyGpuArray<StaticMeshInstanceGpu> m_staticMeshInstances;	// all *static* instance data written here on static scene rebuild
+#ifdef USE_LINEAR_BUFFER
+		LinearWriteOnlyGpuArray<StaticMeshInstanceGpu> m_staticMeshInstances;	// all *static* instance data written here on static scene rebuild
+#else
+		WriteOnlyGpuArray<StaticMeshInstanceGpu> m_staticMeshInstances;
+#endif
 		MeshPartDrawBucket m_staticOpaques;								// all static opaque instances collected here
 
 		const uint32_t c_maxBuffers = 3;		// we reserve space per-frame in globals, draws + dynamic instance data. this determines how many frames to handle

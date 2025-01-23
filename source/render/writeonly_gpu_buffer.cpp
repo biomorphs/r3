@@ -202,7 +202,6 @@ namespace R3
 			}
 
 			// use a memory barrier to ensure the transfer finishes before any vertex reads
-			// dst stage probably needs to be customisable 
 			VkMemoryBarrier writeBarrier = { 0 };
 			writeBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
 			writeBarrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;

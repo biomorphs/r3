@@ -34,6 +34,8 @@ set(RenderLib_SourceFiles
 	writeonly_gpu_buffer.cpp
 	command_buffer_allocator.h
 	command_buffer_allocator.cpp
+	linear_write_gpu_buffer.h
+	linear_write_gpu_buffer.cpp
 )
 
 add_library(Render ${RenderLib_SourceFiles})
