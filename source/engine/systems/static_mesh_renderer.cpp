@@ -9,6 +9,7 @@
 #include "engine/graphics/static_mesh_instance_culling_compute.h"
 #include "engine/components/transform.h"
 #include "engine/components/static_mesh.h"
+#include "engine/components/static_mesh_materials.h"
 #include "entities/systems/entity_system.h"
 #include "entities/world.h"
 #include "entities/queries.h"
@@ -62,8 +63,7 @@ namespace R3
 	bool StaticMeshRenderer::Init()
 	{
 		R3_PROF_EVENT();
-		auto render = Systems::GetSystem<RenderSystem>();
-		render->m_onShutdownCbs.AddCallback([this](Device& d) {
+		GetSystem<RenderSystem>()->m_onShutdownCbs.AddCallback([this](Device& d) {
 			Cleanup(d);
 		});
 		return true;
@@ -78,6 +78,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		m_computeCulling->Cleanup(d);
+		m_staticMaterialOverrides.Destroy(d);
 		m_staticMeshInstances.Destroy(d);
 		m_meshRenderBufferPool = nullptr;
 		vkDestroyPipeline(d.GetVkDevice(), m_forwardPipeline, nullptr);
@@ -307,11 +308,19 @@ namespace R3
 				return;
 			}
 		}
+		if (!m_staticMaterialOverrides.IsCreated())
+		{
+			if (!m_staticMaterialOverrides.Create(*ctx.m_device, c_maxStaticMaterialOverrides, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_meshRenderBufferPool.get()))
+			{
+				LogError("Failed to create static mesh instance buffer");
+				return;
+			}
+		}
 
-		// retire old static data buffers on scene rebuild + flush to new buffers for later
+		// old static data buffers have been retired, flush writes to the new ones
 		if (m_rebuildingStaticScene && (m_staticOpaques.m_partInstances.size() > 0 || m_staticTransparents.m_partInstances.size() > 0))
 		{
-			m_staticMeshInstances.RetirePooledBuffer(*ctx.m_device);
+			m_staticMaterialOverrides.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 			m_staticMeshInstances.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 			m_rebuildingStaticScene = false;
 		}
@@ -442,21 +451,41 @@ namespace R3
 		m_computeCulling->Reset();
 	}
 
-	void StaticMeshRenderer::RebuildStaticScene()
+	void StaticMeshRenderer::RebuildStaticMaterialOverrides()
+	{
+		R3_PROF_EVENT();
+		auto activeWorld = GetSystem<Entities::EntitySystem>()->GetActiveWorld();
+		if (activeWorld)
+		{
+			StaticMeshMaterial* materialWritePtr = m_staticMaterialOverrides.GetWritePtr();
+			uint32_t currentMaterialIndex = 0;
+			auto forEachEntity = [&](const Entities::EntityHandle& e, StaticMeshMaterialsComponent& cmp)
+			{
+				cmp.m_gpuDataIndex = currentMaterialIndex;	// assign new index into static material buffer
+				for (uint32_t m = 0; m < cmp.m_materials.size(); ++m)
+				{
+					materialWritePtr[currentMaterialIndex++] = cmp.m_materials[m];	// upload all materials
+				}
+				return true;
+			};
+			Entities::Queries::ForEach<StaticMeshMaterialsComponent>(activeWorld, forEachEntity);
+			m_staticMaterialOverrides.CommitWrites(currentMaterialIndex);
+			m_staticMaterialOverrides.RetirePooledBuffer(*GetSystem<RenderSystem>()->GetDevice());	// retire the old buffer here so RebuildStaticInstances gets the correct buffer address for the new one
+		}
+	}
+
+	void StaticMeshRenderer::RebuildStaticInstances()
 	{
 		R3_PROF_EVENT();
 		auto staticMeshes = GetSystem<StaticMeshSystem>();
-		auto activeWorld = Systems::GetSystem<Entities::EntitySystem>()->GetActiveWorld();
-		m_staticOpaques.m_partInstances.clear();
-		m_staticOpaques.m_drawCount = 0;
-		m_staticOpaques.m_firstDrawOffset = 0;
-		m_staticTransparents.m_partInstances.clear();
-		m_staticTransparents.m_drawCount = 0;
-		m_staticTransparents.m_firstDrawOffset = 0;
+		auto activeWorld = GetSystem<Entities::EntitySystem>()->GetActiveWorld();
 		if (activeWorld)
 		{
 			ModelDataHandle currentMeshDataHandle;			// the current cached mesh
 			StaticMeshGpuData currentMeshData;				// ^^
+			Entities::EntityHandle currentMaterialEntity;	// the current cached material override
+			uint32_t lastMatOverrideGpuIndex = -1;			// base index of the current material override
+			const StaticMeshMaterial* overrideMaterials = nullptr;	// cache a ptr to the last override components' material data
 			uint32_t currentInstanceBufferOffset = 0;
 			StaticMeshInstanceGpu* instanceWritePtr = m_staticMeshInstances.GetWritePtr();
 			auto forEachEntity = [&](const Entities::EntityHandle& e, StaticMeshComponent& s, TransformComponent& t)
@@ -471,6 +500,17 @@ namespace R3
 						}
 						currentMeshDataHandle.m_index = s.m_modelHandle.m_index;
 					}
+					if (s.m_materialOverride != currentMaterialEntity)		// cache the material override
+					{
+						currentMaterialEntity = s.m_materialOverride;
+						const auto materialComponent = activeWorld->GetComponent<StaticMeshMaterialsComponent>(s.m_materialOverride);
+						const bool overrideValid = materialComponent && materialComponent->m_materials.size() >= currentMeshData.m_materialCount;
+						lastMatOverrideGpuIndex = overrideValid ? static_cast<uint32_t>(materialComponent->m_gpuDataIndex) : -1;
+						overrideMaterials = overrideValid ? materialComponent->m_materials.data() : nullptr;
+					}
+					VkDeviceAddress materialBaseAddress = lastMatOverrideGpuIndex == -1 ?
+						staticMeshes->GetMaterialsDeviceAddress() + (currentMeshData.m_materialGpuIndex * sizeof(StaticMeshMaterial)) :
+						m_staticMaterialOverrides.GetBufferDeviceAddress() + (lastMatOverrideGpuIndex * sizeof(StaticMeshMaterial));
 					const glm::mat4 instanceTransform = t.GetWorldspaceInterpolated(e, *activeWorld);
 					for (uint32_t part = 0; part < currentMeshData.m_meshPartCount; ++part)
 					{
@@ -478,8 +518,7 @@ namespace R3
 						const uint32_t relativePartMatIndex = currentPart->m_materialIndex - currentMeshData.m_materialGpuIndex;
 						const glm::mat4 partTransform = instanceTransform * currentPart->m_transform;
 
-						// todo, we can most likely combine StaticMeshInstanceGpu and BucketPartInstance somehow + only write one entry per instance
-						VkDeviceAddress materialAddress = staticMeshes->GetMaterialsDeviceAddress() + (currentMeshData.m_materialGpuIndex + relativePartMatIndex) * sizeof(StaticMeshMaterial);
+						VkDeviceAddress materialAddress = materialBaseAddress + (relativePartMatIndex * sizeof(StaticMeshMaterial));
 						instanceWritePtr[currentInstanceBufferOffset].m_transform = partTransform;
 						instanceWritePtr[currentInstanceBufferOffset].m_materialDataAddress = materialAddress;
 
@@ -487,7 +526,8 @@ namespace R3
 						bucketInstance.m_partGlobalIndex = currentMeshData.m_firstMeshPartOffset + part;
 						bucketInstance.m_partInstanceIndex = currentInstanceBufferOffset;
 
-						const StaticMeshMaterial* meshMaterial = staticMeshes->GetMeshMaterial(currentMeshData.m_materialGpuIndex + relativePartMatIndex);
+						const StaticMeshMaterial* meshMaterial = overrideMaterials == nullptr ? 
+							staticMeshes->GetMeshMaterial(currentMeshData.m_materialGpuIndex + relativePartMatIndex) : &overrideMaterials[relativePartMatIndex];
 						if (meshMaterial->m_albedoOpacity.w >= 1.0f)
 						{
 							m_staticOpaques.m_partInstances.emplace_back(bucketInstance);
@@ -505,7 +545,21 @@ namespace R3
 			};
 			Entities::Queries::ForEach<StaticMeshComponent, TransformComponent>(activeWorld, forEachEntity);
 			m_staticMeshInstances.CommitWrites(currentInstanceBufferOffset);
+			m_staticMeshInstances.RetirePooledBuffer(*GetSystem<RenderSystem>()->GetDevice());	// the old buffer can be retired, we want a new one!
 		}
+	}
+
+	void StaticMeshRenderer::RebuildStaticScene()
+	{
+		R3_PROF_EVENT();
+		m_staticOpaques.m_partInstances.clear();
+		m_staticOpaques.m_drawCount = 0;
+		m_staticOpaques.m_firstDrawOffset = 0;
+		m_staticTransparents.m_partInstances.clear();
+		m_staticTransparents.m_drawCount = 0;
+		m_staticTransparents.m_firstDrawOffset = 0;
+		RebuildStaticMaterialOverrides();
+		RebuildStaticInstances();
 	}
 
 	// populates draw calls for all instances in this bucket with no culling

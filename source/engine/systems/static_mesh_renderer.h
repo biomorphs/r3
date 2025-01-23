@@ -35,6 +35,7 @@ namespace R3
 	class DescriptorSetSimpleAllocator;
 	class StaticMeshInstanceCullingCompute;
 	class Frustum;
+	struct StaticMeshMaterial;
 	class StaticMeshRenderer : public System
 	{
 	public:
@@ -52,6 +53,8 @@ namespace R3
 	private:
 		struct GlobalConstants;
 		Frustum GetMainCameraFrustum();
+		void RebuildStaticMaterialOverrides();						// re-allocate material indexes for all static material overrides + upload them to gpu. Call before RebuildStaticInstances!
+		void RebuildStaticInstances();								// rebuild all draw instances + buckets for static objects
 		void RebuildStaticScene();									// collect static entities, rebuilds static draw buckets
 		void PrepareDrawBucket(MeshPartDrawBucket& bucket);			// write draw indirects with no culling, only used when culling disabled
 		void PrepareAndCullDrawBucketCompute(Device&, VkCommandBuffer cmds, VkDeviceAddress instanceDataBuffer, MeshPartDrawBucket& bucket);	// cull instances + write draw indirects
@@ -87,12 +90,14 @@ namespace R3
 
 		std::unique_ptr<BufferPool> m_meshRenderBufferPool;				// pool used to allocate all buffers
 
-		LinearWriteOnlyGpuArray<StaticMeshInstanceGpu> m_staticMeshInstances;	// all *static* instance data written here on static scene rebuild
+		LinearWriteOnlyGpuArray<StaticMeshMaterial> m_staticMaterialOverrides;	// all static material overrides written here on scene rebuild
+		LinearWriteOnlyGpuArray<StaticMeshInstanceGpu> m_staticMeshInstances;	// all static instance data written here on static scene rebuild
 		MeshPartDrawBucket m_staticOpaques;								// all static opaque instances collected here on scene rebuild
 		MeshPartDrawBucket m_staticTransparents;						// all static transparent instances collected here on scene rebuild
 
 		const uint32_t c_maxInstances = 1024 * 256;		// max static+dynamic instances we support
 		const uint32_t c_maxBuffers = 3;				// we reserve space per-frame in globals, draws + dynamic instance data. this determines how many frames to handle
+		const uint32_t c_maxStaticMaterialOverrides = 1024 * 8;	// max static material overrides we support
 		uint32_t m_thisFrameBuffer = 0;					// determines where to write to globals, draw + dynamic instance data each frame
 
 		WriteOnlyGpuArray<GlobalConstants> m_globalConstantsBuffer;	// globals written here every frame, split into c_maxBuffers sub-buffers
