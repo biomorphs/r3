@@ -9,6 +9,13 @@
 
 namespace R3
 {
+	// Instance data passed for each model part draw call
+	struct StaticMeshInstanceGpu				// needs to match PerInstanceData in shaders
+	{				
+		glm::mat4 m_transform;					// final part world-space transform
+		VkDeviceAddress m_materialDataAddress;	// in order to support multiple material buffers, we pass the address to the material directly for every instance
+	};
+
 	// an instance added to a bucket to be drawn (used to generate draw calls)
 	struct BucketPartInstance
 	{
@@ -55,10 +62,6 @@ namespace R3
 		bool CreateForwardPipelineData(Device&, VkFormat mainColourFormat, VkFormat mainDepthFormat);
 		bool CreateGBufferPipelineData(Device&, VkFormat positionMetalFormat, VkFormat normalRoughnessFormat, VkFormat albedoAOFormat, VkFormat mainDepthFormat);
 
-		struct StaticMeshInstanceGpu {				// needs to match PerInstanceData in shaders
-			glm::mat4 m_transform;
-			uint32_t m_materialIndex;
-		};
 		struct FrameStats {
 			uint32_t m_totalModelInstances = 0;
 			uint32_t m_totalPartInstances = 0;
@@ -82,15 +85,15 @@ namespace R3
 
 		std::unique_ptr<StaticMeshInstanceCullingCompute> m_computeCulling;
 
-		std::unique_ptr<BufferPool> m_meshRenderBufferPool;		// pool used to allocate all buffers
+		std::unique_ptr<BufferPool> m_meshRenderBufferPool;				// pool used to allocate all buffers
 
 		LinearWriteOnlyGpuArray<StaticMeshInstanceGpu> m_staticMeshInstances;	// all *static* instance data written here on static scene rebuild
 		MeshPartDrawBucket m_staticOpaques;								// all static opaque instances collected here on scene rebuild
 		MeshPartDrawBucket m_staticTransparents;						// all static transparent instances collected here on scene rebuild
 
-		const uint32_t c_maxInstances = 1024 * 256;	// max static+dynamic instances we support
-		const uint32_t c_maxBuffers = 3;		// we reserve space per-frame in globals, draws + dynamic instance data. this determines how many frames to handle
-		uint32_t m_thisFrameBuffer = 0;			// determines where to write to globals, draw + dynamic instance data each frame
+		const uint32_t c_maxInstances = 1024 * 256;		// max static+dynamic instances we support
+		const uint32_t c_maxBuffers = 3;				// we reserve space per-frame in globals, draws + dynamic instance data. this determines how many frames to handle
+		uint32_t m_thisFrameBuffer = 0;					// determines where to write to globals, draw + dynamic instance data each frame
 
 		WriteOnlyGpuArray<GlobalConstants> m_globalConstantsBuffer;	// globals written here every frame, split into c_maxBuffers sub-buffers
 		int m_currentGlobalConstantsBuffer = 0;

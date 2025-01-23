@@ -29,7 +29,6 @@ namespace R3
 		glm::mat4 m_projViewTransform;
 		glm::vec4 m_cameraWorldSpacePos;
 		VkDeviceAddress m_vertexBufferAddress;
-		VkDeviceAddress m_materialBufferAddress;
 		VkDeviceAddress m_lightDataBufferAddress;
 		VkDeviceAddress m_instanceDataBufferAddress;
 	};
@@ -285,10 +284,8 @@ namespace R3
 				c_maxInstances * c_maxBuffers * sizeof(VkDrawIndexedIndirectCommand),
 				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
 			VulkanHelpers::SetBufferName(ctx.m_device->GetVkDevice(), m_drawIndirectHostVisible, "Static mesh draw indirect");
-			void* mapped = nullptr;
-			vmaMapMemory(ctx.m_device->GetVMA(), m_drawIndirectHostVisible.m_allocation, &mapped);
+			vmaMapMemory(ctx.m_device->GetVMA(), m_drawIndirectHostVisible.m_allocation, &m_drawIndirectMappedPtr);
 			m_drawIndirectBufferAddress = VulkanHelpers::GetBufferDeviceAddress(ctx.m_device->GetVkDevice(), m_drawIndirectHostVisible);
-			m_drawIndirectMappedPtr = static_cast<StaticMeshInstanceGpu*>(mapped);
 		}
 		if (m_pipelineLayout == VK_NULL_HANDLE)
 		{
@@ -327,7 +324,6 @@ namespace R3
 		globals.m_cameraWorldSpacePos = glm::vec4(cameras->GetMainCamera().Position(), 1);
 		globals.m_projViewTransform = cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix();
 		globals.m_vertexBufferAddress = staticMeshes->GetVertexDataDeviceAddress();
-		globals.m_materialBufferAddress = staticMeshes->GetMaterialsDeviceAddress();
 		globals.m_lightDataBufferAddress = lights->GetAllLightsDeviceAddress();
 		globals.m_instanceDataBufferAddress = m_staticMeshInstances.GetBufferDeviceAddress();	// todo, we need to pass this for each set of draw calls (probably in push constant)
 		m_globalConstantsBuffer.Write(m_thisFrameBuffer, 1, &globals);
@@ -483,8 +479,9 @@ namespace R3
 						const glm::mat4 partTransform = instanceTransform * currentPart->m_transform;
 
 						// todo, we can most likely combine StaticMeshInstanceGpu and BucketPartInstance somehow + only write one entry per instance
+						VkDeviceAddress materialAddress = staticMeshes->GetMaterialsDeviceAddress() + (currentMeshData.m_materialGpuIndex + relativePartMatIndex) * sizeof(StaticMeshMaterial);
 						instanceWritePtr[currentInstanceBufferOffset].m_transform = partTransform;
-						instanceWritePtr[currentInstanceBufferOffset].m_materialIndex = currentMeshData.m_materialGpuIndex + relativePartMatIndex;
+						instanceWritePtr[currentInstanceBufferOffset].m_materialDataAddress = materialAddress;
 
 						BucketPartInstance bucketInstance;
 						bucketInstance.m_partGlobalIndex = currentMeshData.m_firstMeshPartOffset + part;

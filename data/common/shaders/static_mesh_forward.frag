@@ -8,14 +8,15 @@
 layout(location = 0) in vec3 inWorldSpacePos;
 layout(location = 1) in vec3 inWorldspaceNormal;
 layout(location = 2) in vec2 inUV;
-layout(location = 3) in flat uint inMaterialIndex;
+layout(location = 3) in flat uint inInstanceIndex;
 layout(location = 4) in mat3 inTBN;
 layout(location = 0) out vec4 outColour;
 
 void main() {
 	GlobalConstants globals = PushConstants.m_globals.AllGlobals[0];
 	vec3 viewDir = normalize(globals.m_cameraWorldSpacePos.xyz - inWorldSpacePos);
-	StaticMeshMaterial myMaterial = globals.m_materialBuffer.materials[inMaterialIndex];
+	PerInstanceData thisInstance = globals.m_instancesBuffer.AllInstances[inInstanceIndex];
+	StaticMeshMaterial myMaterial = thisInstance.m_material.materials[0];
 	vec3 normal = GetWorldspaceNormal(inWorldspaceNormal, myMaterial.m_normalTexture, inTBN, inUV);
 	
 	PBRMaterial mat;

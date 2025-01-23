@@ -43,9 +43,10 @@ layout(buffer_reference, std430) readonly buffer AllStaticMeshPartsBuffer
 };
 
 // per-instance data used when drawing a mesh
-struct PerInstanceData {
+struct PerInstanceData 
+{
 	mat4 m_transform;		// final model matrix of the part
-	uint m_materialIndex;	// references MaterialBuffer.materials
+	MaterialBuffer m_material;	// materal buffer address passed per-instance, only use m_material.materials[0]!
 };
 
 //all instance data passed via storage buffer (use gl_InstanceIndex to get the current index)
