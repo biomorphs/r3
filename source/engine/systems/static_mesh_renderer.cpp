@@ -261,6 +261,7 @@ namespace R3
 		{
 			m_frameStats.m_prepareBucketsStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticOpaques);
+			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticTransparents);
 			m_frameStats.m_prepareBucketsEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		}
 	}
@@ -311,7 +312,7 @@ namespace R3
 		}
 
 		// retire old static data buffers on scene rebuild + flush to new buffers for later
-		if (m_rebuildingStaticScene && m_staticOpaques.m_partInstances.size() > 0)
+		if (m_rebuildingStaticScene && (m_staticOpaques.m_partInstances.size() > 0 || m_staticTransparents.m_partInstances.size() > 0))
 		{
 			m_staticMeshInstances.RetirePooledBuffer(*ctx.m_device);
 			m_staticMeshInstances.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
@@ -377,8 +378,6 @@ namespace R3
 		PushConstants pc;
 		pc.m_globalsBufferAddress = m_globalConstantsBuffer.GetDataDeviceAddress() + (m_thisFrameBuffer * sizeof(GlobalConstants));
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-
-		// Draw opaques
 		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_staticOpaques.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_staticOpaques.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 
 		m_frameStats.m_writeCmdsEndTime = time->GetElapsedTimeReal();
@@ -388,49 +387,47 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 
-		// if (m_forwardPipeline == VK_NULL_HANDLE)
-		// {
-		// 	auto mainColourTarget = ctx.GetResolvedTarget("MainColour");
-		// 	auto mainDepthTarget = ctx.GetResolvedTarget("MainDepth");
-		// 	if (!CreateForwardPipelineData(*ctx.m_device, mainColourTarget->m_info.m_format, mainDepthTarget->m_info.m_format))
-		// 	{
-		// 		LogError("Failed to create pipeline data for forward pass");
-		// 	}
-		// }
-		// 
-		// auto textures = GetSystem<TextureSystem>();
-		// auto time = GetSystem<TimeSystem>();
-		// if (m_allTransparents.m_drawCount == 0)
-		// {
-		// 	return;
-		// }
-		// 
-		// m_frameStats.m_writeCmdsStartTime = time->GetElapsedTimeReal();
-		// 
-		// VkViewport viewport = { 0 };
-		// viewport.x = 0.0f;
-		// viewport.y = 0.0f;
-		// viewport.width = ctx.m_renderExtents.x;
-		// viewport.height = ctx.m_renderExtents.y;
-		// viewport.minDepth = 0.0f;	// normalised! must be between 0 and 1
-		// viewport.maxDepth = 1.0f;	// ^^
-		// VkRect2D scissor = { 0 };
-		// scissor.offset = { 0, 0 };
-		// scissor.extent = { (uint32_t)viewport.width, (uint32_t)viewport.height };	// draw the full image
-		// vkCmdBindPipeline(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_forwardPipeline);
-		// vkCmdSetViewport(ctx.m_graphicsCmds, 0, 1, &viewport);
-		// vkCmdSetScissor(ctx.m_graphicsCmds, 0, 1, &scissor);
-		// vkCmdBindIndexBuffer(ctx.m_graphicsCmds, GetSystem<StaticMeshSystem>()->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-		// VkDescriptorSet allTextures = textures->GetAllTexturesSet();
-		// vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, nullptr);
-		// PushConstants pc;
-		// pc.m_globalsBufferAddress = m_globalConstantsBuffer.GetDataDeviceAddress() + (m_thisFrameBuffer * sizeof(GlobalConstants));
-		// vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-		// 
-		// // Draw opaques
-		// vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_allTransparents.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_allTransparents.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
-		// 
-		// m_frameStats.m_writeCmdsEndTime = time->GetElapsedTimeReal();
+		if (m_forwardPipeline == VK_NULL_HANDLE)
+		{
+			auto mainColourTarget = ctx.GetResolvedTarget("MainColour");
+			auto mainDepthTarget = ctx.GetResolvedTarget("MainDepth");
+			if (!CreateForwardPipelineData(*ctx.m_device, mainColourTarget->m_info.m_format, mainDepthTarget->m_info.m_format))
+			{
+				LogError("Failed to create pipeline data for forward pass");
+			}
+		}
+		
+		auto textures = GetSystem<TextureSystem>();
+		auto time = GetSystem<TimeSystem>();
+		if (m_staticTransparents.m_drawCount == 0)
+		{
+			return;
+		}
+		
+		m_frameStats.m_writeCmdsStartTime = time->GetElapsedTimeReal();
+		
+		VkViewport viewport = { 0 };
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = ctx.m_renderExtents.x;
+		viewport.height = ctx.m_renderExtents.y;
+		viewport.minDepth = 0.0f;	// normalised! must be between 0 and 1
+		viewport.maxDepth = 1.0f;	// ^^
+		VkRect2D scissor = { 0 };
+		scissor.offset = { 0, 0 };
+		scissor.extent = { (uint32_t)viewport.width, (uint32_t)viewport.height };	// draw the full image
+		vkCmdBindPipeline(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_forwardPipeline);
+		vkCmdSetViewport(ctx.m_graphicsCmds, 0, 1, &viewport);
+		vkCmdSetScissor(ctx.m_graphicsCmds, 0, 1, &scissor);
+		vkCmdBindIndexBuffer(ctx.m_graphicsCmds, GetSystem<StaticMeshSystem>()->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+		VkDescriptorSet allTextures = textures->GetAllTexturesSet();
+		vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, nullptr);
+		PushConstants pc;
+		pc.m_globalsBufferAddress = m_globalConstantsBuffer.GetDataDeviceAddress() + (m_thisFrameBuffer * sizeof(GlobalConstants));
+		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
+		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_staticTransparents.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_staticTransparents.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
+		
+		m_frameStats.m_writeCmdsEndTime = time->GetElapsedTimeReal();
 	}
 
 	void StaticMeshRenderer::OnDrawEnd(class RenderPassContext& ctx)
@@ -457,6 +454,9 @@ namespace R3
 		m_staticOpaques.m_partInstances.clear();
 		m_staticOpaques.m_drawCount = 0;
 		m_staticOpaques.m_firstDrawOffset = 0;
+		m_staticTransparents.m_partInstances.clear();
+		m_staticTransparents.m_drawCount = 0;
+		m_staticTransparents.m_firstDrawOffset = 0;
 		if (activeWorld)
 		{
 			ModelDataHandle currentMeshDataHandle;			// the current cached mesh
@@ -497,7 +497,7 @@ namespace R3
 						}
 						else
 						{
-							// m_allTransparents.m_partInstances.emplace_back(bucketInstance);
+							m_staticTransparents.m_partInstances.emplace_back(bucketInstance);
 						}
 						currentInstanceBufferOffset++;
 					}
@@ -575,6 +575,7 @@ namespace R3
 			RebuildStaticScene();
 		}
 		m_frameStats.m_totalOpaqueInstances = (uint32_t)m_staticOpaques.m_partInstances.size();
+		m_frameStats.m_totalTransparentInstances = (uint32_t)m_staticTransparents.m_partInstances.size();
 		m_frameStats.m_collectInstancesEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 
 		if (!m_enableComputeCulling)		// do nothing here, culling happens later
@@ -582,6 +583,7 @@ namespace R3
 			m_frameStats.m_prepareBucketsStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 			{
 				PrepareDrawBucket(m_staticOpaques);
+				PrepareDrawBucket(m_staticTransparents);
 			}
 			m_frameStats.m_prepareBucketsEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		}

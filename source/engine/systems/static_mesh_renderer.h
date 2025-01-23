@@ -86,6 +86,7 @@ namespace R3
 
 		LinearWriteOnlyGpuArray<StaticMeshInstanceGpu> m_staticMeshInstances;	// all *static* instance data written here on static scene rebuild
 		MeshPartDrawBucket m_staticOpaques;								// all static opaque instances collected here on scene rebuild
+		MeshPartDrawBucket m_staticTransparents;						// all static transparent instances collected here on scene rebuild
 
 		const uint32_t c_maxInstances = 1024 * 256;	// max static+dynamic instances we support
 		const uint32_t c_maxBuffers = 3;		// we reserve space per-frame in globals, draws + dynamic instance data. this determines how many frames to handle
