@@ -70,6 +70,11 @@ namespace R3
 		return true;
 	}
 
+	void StaticMeshRenderer::SetStaticsDirty()
+	{
+		m_staticSceneRebuildRequested = true;
+	}
+
 	void StaticMeshRenderer::Cleanup(Device& d)
 	{
 		R3_PROF_EVENT();
@@ -99,7 +104,10 @@ namespace R3
 			ImGui::Begin("Static Mesh Renderer");
 			ImGui::Checkbox("Enable Compute Culling", &m_enableComputeCulling);
 			ImGui::Checkbox("Lock main frustum", &m_lockMainFrustum);
-			ImGui::Checkbox("Enable static scene rebuild", &m_rebuildStaticScene);
+			if (ImGui::Button("Rebuild statics"))
+			{
+				SetStaticsDirty();
+			}
 			std::string txt = std::format("{} Model Instances Submitted", m_frameStats.m_totalModelInstances);
 			ImGui::Text(txt.c_str());
 			txt = std::format("    {} Total Part Instances", m_frameStats.m_totalPartInstances);
@@ -249,15 +257,10 @@ namespace R3
 	void StaticMeshRenderer::CullInstancesOnGpu(RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
-		// Run compute instance prep+culling here for now (may want a separate frame graph pass instead?)
 		if (m_enableComputeCulling)
 		{
 			m_frameStats.m_prepareBucketsStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
-#ifdef USE_LINEAR_BUFFER
 			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticOpaques);
-#else
-			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_staticMeshInstances.GetDataDeviceAddress(), m_staticOpaques);
-#endif
 			m_frameStats.m_prepareBucketsEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		}
 	}
@@ -300,25 +303,19 @@ namespace R3
 		}
 		if (!m_staticMeshInstances.IsCreated())
 		{
-#ifdef USE_LINEAR_BUFFER
 			if (!m_staticMeshInstances.Create(*ctx.m_device, c_maxInstances, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_meshRenderBufferPool.get()))
-#else
-			if (!m_staticMeshInstances.Create(*ctx.m_device, c_maxInstances, c_maxInstances, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_meshRenderBufferPool.get()))
-#endif
 			{
 				LogError("Failed to create static mesh instance buffer");
 				return;
 			}
-#ifndef USE_LINEAR_BUFFER
-			m_staticMeshInstances.Allocate(c_maxInstances);
-#endif
 		}
 
 		// retire old static data buffers on scene rebuild + flush to new buffers for later
-		if (m_rebuildStaticScene && m_staticOpaques.m_partInstances.size() > 0)
+		if (m_rebuildingStaticScene && m_staticOpaques.m_partInstances.size() > 0)
 		{
 			m_staticMeshInstances.RetirePooledBuffer(*ctx.m_device);
 			m_staticMeshInstances.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+			m_rebuildingStaticScene = false;
 		}
 
 		// write + flush the global constants each frame
@@ -331,11 +328,7 @@ namespace R3
 		globals.m_vertexBufferAddress = staticMeshes->GetVertexDataDeviceAddress();
 		globals.m_materialBufferAddress = staticMeshes->GetMaterialsDeviceAddress();
 		globals.m_lightDataBufferAddress = lights->GetAllLightsDeviceAddress();
-#ifdef USE_LINEAR_BUFFER
 		globals.m_instanceDataBufferAddress = m_staticMeshInstances.GetBufferDeviceAddress();	// todo, we need to pass this for each set of draw calls (probably in push constant)
-#else
-		globals.m_instanceDataBufferAddress = m_staticMeshInstances.GetDataDeviceAddress();
-#endif
 		m_globalConstantsBuffer.Write(m_thisFrameBuffer, 1, &globals);
 		m_globalConstantsBuffer.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 	}
@@ -490,16 +483,9 @@ namespace R3
 						const glm::mat4 partTransform = instanceTransform * currentPart->m_transform;
 
 						// todo, we can most likely combine StaticMeshInstanceGpu and BucketPartInstance somehow + only write one entry per instance
-						
-#ifdef USE_LINEAR_BUFFER
 						instanceWritePtr[currentInstanceBufferOffset].m_transform = partTransform;
 						instanceWritePtr[currentInstanceBufferOffset].m_materialIndex = currentMeshData.m_materialGpuIndex + relativePartMatIndex;
-#else
-						StaticMeshInstanceGpu newInstance;
-						newInstance.m_transform = partTransform;
-						newInstance.m_materialIndex = currentMeshData.m_materialGpuIndex + relativePartMatIndex;
-						m_staticMeshInstances.Write(currentInstanceBufferOffset, 1, &newInstance);
-#endif
+
 						BucketPartInstance bucketInstance;
 						bucketInstance.m_partGlobalIndex = currentMeshData.m_firstMeshPartOffset + part;
 						bucketInstance.m_partInstanceIndex = currentInstanceBufferOffset;
@@ -521,9 +507,7 @@ namespace R3
 				return true;
 			};
 			Entities::Queries::ForEach<StaticMeshComponent, TransformComponent>(activeWorld, forEachEntity);
-#ifdef USE_LINEAR_BUFFER
 			m_staticMeshInstances.CommitWrites(currentInstanceBufferOffset);
-#endif
 		}
 	}
 
@@ -577,10 +561,16 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 
+		// this is the safest place to trigger static scene rebuild
+		if (m_staticSceneRebuildRequested.exchange(false) == true)
+		{
+			m_rebuildingStaticScene = true;
+		}
+
 		m_frameStats.m_totalModelInstances = 0;
 		m_frameStats.m_totalPartInstances = 0;
 		m_frameStats.m_collectInstancesStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
-		if (m_rebuildStaticScene)
+		if (m_rebuildingStaticScene)
 		{
 			RebuildStaticScene();
 		}

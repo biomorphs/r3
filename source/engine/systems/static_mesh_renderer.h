@@ -7,8 +7,6 @@
 #include "render/descriptors.h"
 #include <unordered_map>
 
-#define USE_LINEAR_BUFFER
-
 namespace R3
 {
 	// an instance added to a bucket to be drawn (used to generate draw calls)
@@ -38,11 +36,12 @@ namespace R3
 		static std::string_view GetName() { return "StaticMeshRenderer"; }
 		virtual void RegisterTickFns();
 		virtual bool Init();
-		void CullInstancesOnGpu(class RenderPassContext& ctx);
+		void SetStaticsDirty();										// calling this will trigger a full rebuild of all static instances for 1 frame
 		void PrepareForRendering(class RenderPassContext& ctx);		// call from frame graph before CullInstancesOnGpu or drawing anything
-		void OnForwardPassDraw(class RenderPassContext& ctx);
-		void OnGBufferPassDraw(class RenderPassContext& ctx);
-		void OnDrawEnd(class RenderPassContext& ctx);
+		void CullInstancesOnGpu(class RenderPassContext& ctx);		// call this after PrepareForRendering
+		void OnForwardPassDraw(class RenderPassContext& ctx);		// call after CullInstancesOnGpu
+		void OnGBufferPassDraw(class RenderPassContext& ctx);		// ^^
+		void OnDrawEnd(class RenderPassContext& ctx);				// call once all drawing is complete
 	private:
 		struct GlobalConstants;
 		Frustum GetMainCameraFrustum();
@@ -50,7 +49,7 @@ namespace R3
 		void PrepareDrawBucket(MeshPartDrawBucket& bucket);			// write draw indirects with no culling, only used when culling disabled
 		void PrepareAndCullDrawBucketCompute(Device&, VkCommandBuffer cmds, VkDeviceAddress instanceDataBuffer, MeshPartDrawBucket& bucket);	// cull instances + write draw indirects
 		bool ShowGui();
-		bool CollectInstances();									// collects dynamic instances + rebuilds static scene if required
+		bool CollectInstances();									// collects dynamic instances + rebuilds static scene if required. Called from frame graph
 		void Cleanup(Device&);
 		bool CreatePipelineLayout(Device&);
 		bool CreateForwardPipelineData(Device&, VkFormat mainColourFormat, VkFormat mainDepthFormat);
@@ -78,19 +77,17 @@ namespace R3
 		bool m_enableComputeCulling = true;		// run instance culling in compute
 		bool m_lockMainFrustum = false;
 		bool m_showGui = false;
-		bool m_rebuildStaticScene = true;
+		std::atomic<bool> m_staticSceneRebuildRequested = false;		// trigger a scene rebuild. kept separate from m_rebuildingStaticScene so it can be called from anywhere
+		bool m_rebuildingStaticScene = false;							// a scene rebuild is in progress this frame
 
 		std::unique_ptr<StaticMeshInstanceCullingCompute> m_computeCulling;
 
 		std::unique_ptr<BufferPool> m_meshRenderBufferPool;		// pool used to allocate all buffers
 
-#ifdef USE_LINEAR_BUFFER
 		LinearWriteOnlyGpuArray<StaticMeshInstanceGpu> m_staticMeshInstances;	// all *static* instance data written here on static scene rebuild
-#else
-		WriteOnlyGpuArray<StaticMeshInstanceGpu> m_staticMeshInstances;
-#endif
-		MeshPartDrawBucket m_staticOpaques;								// all static opaque instances collected here
+		MeshPartDrawBucket m_staticOpaques;								// all static opaque instances collected here on scene rebuild
 
+		const uint32_t c_maxInstances = 1024 * 256;	// max static+dynamic instances we support
 		const uint32_t c_maxBuffers = 3;		// we reserve space per-frame in globals, draws + dynamic instance data. this determines how many frames to handle
 		uint32_t m_thisFrameBuffer = 0;			// determines where to write to globals, draw + dynamic instance data each frame
 
@@ -101,9 +98,7 @@ namespace R3
 		void* m_drawIndirectMappedPtr = nullptr;
 		VkDeviceAddress m_drawIndirectBufferAddress;
 		uint32_t m_currentDrawBufferOffset = 0;		// next write offset for draw data, resets each frame
-
-		const uint32_t c_maxInstances = 1024 * 256;
-
+		
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_forwardPipeline = VK_NULL_HANDLE;
 		VkPipeline m_gBufferPipeline = VK_NULL_HANDLE;
