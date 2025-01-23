@@ -71,7 +71,7 @@ function Dungeons_SpawnMonster(gridcmp, monsterType, tilePos, worldPos)
 	for e=1,#newEntities do 
 		local staticMesh = world.GetComponent_StaticMesh(newEntities[e])
 		if(staticMesh ~= nil) then 
-			staticMesh.m_shouldDraw = false
+			staticMesh:SetShouldDraw(false)
 		end
 	end
 end

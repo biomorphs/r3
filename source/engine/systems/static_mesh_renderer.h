@@ -36,6 +36,7 @@ namespace R3
 	class StaticMeshInstanceCullingCompute;
 	class Frustum;
 	struct StaticMeshMaterial;
+	struct ModelDataHandle;
 	class StaticMeshRenderer : public System
 	{
 	public:
@@ -64,6 +65,7 @@ namespace R3
 		bool CreatePipelineLayout(Device&);
 		bool CreateForwardPipelineData(Device&, VkFormat mainColourFormat, VkFormat mainDepthFormat);
 		bool CreateGBufferPipelineData(Device&, VkFormat positionMetalFormat, VkFormat normalRoughnessFormat, VkFormat albedoAOFormat, VkFormat mainDepthFormat);
+		void OnModelReady(const ModelDataHandle& handle);	// called when a model is ready to draw
 
 		struct FrameStats {
 			uint32_t m_totalModelInstances = 0;
@@ -80,8 +82,9 @@ namespace R3
 
 		FrameStats m_frameStats;
 
+		uint64_t m_onModelDataLoadedCbToken = -1;	// trigger static scene rebuild when a model loads
+
 		bool m_enableComputeCulling = true;		// run instance culling in compute
-		bool m_lockMainFrustum = false;
 		bool m_showGui = false;
 		std::atomic<bool> m_staticSceneRebuildRequested = false;		// trigger a scene rebuild. kept separate from m_rebuildingStaticScene so it can be called from anywhere
 		bool m_rebuildingStaticScene = false;							// a scene rebuild is in progress this frame

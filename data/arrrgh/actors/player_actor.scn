@@ -40,9 +40,6 @@
       "AlbedoTex": {
        "PathName": "downloaded\\KayKit_Adventurers_1.0_FREE\\Characters\\gltf\\rogue_texture.png"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -50,8 +47,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.5,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -110,6 +105,40 @@
      "X": 0.0,
      "Y": 5.0,
      "Z": 0.0
+    },
+    "Relative": true,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 2,
+   "Name": "Point Light",
+   "Parent": 0,
+   "PointLight": {
+    "Brightness": 1.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Distance": 8.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 1.53749418258667,
+     "Z": 0.9253211617469788
     },
     "Relative": true,
     "Scale": {

@@ -55,7 +55,7 @@ namespace R3
 					StaticMeshComponent* smc = world->GetComponent<StaticMeshComponent>(m_createdEntity);
 					if (smc)
 					{
-						smc->m_modelHandle = theModel;
+						smc->SetModelHandle(theModel);
 					}
 				}
 				m_window->DeselectAll();

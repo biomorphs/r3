@@ -3,6 +3,7 @@
 #include "engine/ui/entity_list_widget.h"
 #include "engine/ui/entity_inspector_widget.h"
 #include "engine/ui/imgui_menubar_helper.h"
+#include "engine/systems/static_mesh_renderer.h"
 #include "entities/systems/entity_system.h"
 #include "entities/world.h"
 #include "core/profiler.h"
@@ -121,6 +122,7 @@ namespace R3
 		entities->SetActiveWorld(m_worldID);
 		auto scripts = Systems::GetSystem<LuaSystem>();
 		scripts->SetWorldScriptsActive(true);
+		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();	// rebuild static scene
 	}
 
 	void WorldRunnerWindow::OnFocusLost()

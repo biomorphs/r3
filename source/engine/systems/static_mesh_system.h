@@ -3,6 +3,7 @@
 #include "render/vulkan_helpers.h"
 #include "render/writeonly_gpu_buffer.h"
 #include "core/glm_headers.h"
+#include "core/callback_array.h"
 #include "core/mutex.h"
 
 // This system handles only STATIC data associated with meshes
@@ -78,6 +79,12 @@ namespace R3
 		const StaticMeshMaterial* GetMeshMaterial(uint32_t materialIndex);
 		const StaticMeshPart* GetMeshPart(uint32_t partIndex);
 
+		// Callbacks that fire when a model is ready to draw
+		using ModelReadyCallback = std::function<void(const ModelDataHandle&)>;
+		using ModelReadyCallbacks = CallbackArray<ModelReadyCallback>;
+		ModelReadyCallbacks::Token RegisterModelReadyCallback(const ModelReadyCallback& fn);
+		bool UnregisterModelReadyCallback(ModelReadyCallbacks::Token token);
+
 	private:
 		void OnModelDataLoaded(const ModelDataHandle& handle, bool loaded);
 		bool PrepareForUpload(const ModelDataHandle& handle);	// returns true if already uploaded or ready to go 
@@ -85,6 +92,8 @@ namespace R3
 		
 		bool m_showGui = false;
 		uint64_t m_onModelDataLoadedCbToken = -1;
+
+		ModelReadyCallbacks m_onModelReadyCallbacks;				// called when a model is fully uploaded and ready to draw
 
 		Mutex m_allDataMutex;	// protects stuff below
 		std::vector<StaticMeshGpuData> m_allData;

@@ -20,7 +20,7 @@ function Dungeons_ActionPickupItem(action)
 		for c=1,#allChildren do 
 			local meshComponent = world.GetComponent_StaticMesh(allChildren[c])
 			if(meshComponent ~= nil) then 
-				meshComponent.m_shouldDraw = false
+				meshComponent:SetShouldDraw(false)
 			end
 			Arrrgh.SetEntityTilePosition(gridcmp, allChildren[c], -1, -1)	-- remove children from grid
 		end

@@ -195,6 +195,7 @@ namespace R3
 				ScopedLock lock(m_allDataMutex);			// todo, m_allMaterials and allParts probably need this lock too
 				m_allData.push_back(std::move(newMesh));	// push the new mesh to our array, it is ready to go!
 			}
+			m_onModelReadyCallbacks.Run(handle);
 		};
 		RunAsync(std::move(prepMeshData));
 		return true;
@@ -279,6 +280,16 @@ namespace R3
 			ImGui::End();
 		}
 		return true;
+	}
+
+	StaticMeshSystem::ModelReadyCallbacks::Token StaticMeshSystem::RegisterModelReadyCallback(const ModelReadyCallback& fn)
+	{
+		return m_onModelReadyCallbacks.AddCallback(fn);
+	}
+
+	bool StaticMeshSystem::UnregisterModelReadyCallback(ModelReadyCallbacks::Token token)
+	{
+		return m_onModelReadyCallbacks.RemoveCallback(token);
 	}
 
 	void StaticMeshSystem::OnModelDataLoaded(const ModelDataHandle& handle, bool loaded)

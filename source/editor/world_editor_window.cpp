@@ -27,6 +27,7 @@
 #include "engine/systems/model_data_system.h"
 #include "engine/systems/imgui_system.h"
 #include "engine/systems/input_system.h"
+#include "engine/systems/static_mesh_renderer.h"
 #include "engine/components/transform.h"
 #include "engine/components/static_mesh.h"
 #include "engine/components/point_light.h"
@@ -470,6 +471,7 @@ namespace R3
 		auto scripts = Systems::GetSystem<LuaSystem>();
 		entities->SetActiveWorld(m_worldIdentifier);
 		scripts->SetWorldScriptsActive(false);	// don't run scripts in the editor
+		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();	// rebuild static scene
 	}
 
 	void WorldEditorWindow::PushCommand(std::unique_ptr<EditorCommand>&& cmd)

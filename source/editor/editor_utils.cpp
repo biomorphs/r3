@@ -26,9 +26,9 @@ namespace R3
 		std::vector<HitEntityRecord> hitEntities;
 		auto forEachEntity = [&](const Entities::EntityHandle& e, StaticMeshComponent& smc, TransformComponent& t)
 		{
-			if (smc.m_shouldDraw)
+			if (smc.GetShouldDraw())
 			{
-				const auto modelData = Systems::GetSystem<ModelDataSystem>()->GetModelData(smc.m_modelHandle);
+				const auto modelData = Systems::GetSystem<ModelDataSystem>()->GetModelData(smc.GetModelHandle());
 				if (modelData.m_data)
 				{
 					// transform the ray into model space so we can do a simple AABB test
@@ -83,7 +83,7 @@ namespace R3
 		{
 			if (staticMeshCmp)
 			{
-				auto modelHandle = staticMeshCmp->m_modelHandle;
+				auto modelHandle = staticMeshCmp->GetModelHandle();
 				auto modelData = modelDataSys->GetModelData(modelHandle);
 				if (modelData.m_data)
 				{

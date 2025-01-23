@@ -42,7 +42,7 @@ function Dungeons_SpawnProp(gridcmp, propName, tilePos, worldPos, rotation)
 		-- props spawn invisible
 		local staticMesh = world.GetComponent_StaticMesh(newEntities[e])
 		if(staticMesh ~= nil) then 
-			staticMesh.m_shouldDraw = false
+			staticMesh:SetShouldDraw(false)
 		end
 	end
 end

@@ -3,6 +3,7 @@
 #include "engine/systems/texture_system.h"
 #include "engine/systems/model_data_system.h"
 #include "engine/systems/static_mesh_system.h"
+#include "engine/systems/static_mesh_renderer.h"
 #include "engine/assets/model_data.h"
 #include <imgui.h>
 
@@ -44,9 +45,9 @@ namespace R3
 		auto staticMeshCmp = w->GetComponent<StaticMeshComponent>(e);
 		auto mds = Systems::GetSystem<ModelDataSystem>();
 		auto textures = Systems::GetSystem<TextureSystem>();
-		if (staticMeshCmp && staticMeshCmp->m_modelHandle.m_index != -1)
+		if (staticMeshCmp && staticMeshCmp->GetModelHandle().m_index != -1)
 		{
-			auto modelData = mds->GetModelData(staticMeshCmp->m_modelHandle);
+			auto modelData = mds->GetModelData(staticMeshCmp->GetModelHandle());
 			auto& srcMats = modelData.m_data->m_materials;
 			m_materials.clear();
 			for (int m = 0; m < srcMats.size(); ++m)
@@ -78,7 +79,7 @@ namespace R3
 				m_materials.push_back(newMat);
 			}
 		}
-		m_gpuDataIndex = -1;	// material count may have changed, reallocate gpu space for the materials
+		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
 	}
 
 	void StaticMeshMaterialsComponent::Inspect(const Entities::EntityHandle& e, Entities::World* w, ValueInspector& i)
@@ -159,15 +160,20 @@ namespace R3
 					cmp.m_materials[m].m_aoTexture = t.m_index;
 				}
 			});
-			i.InspectColour(std::format("Albedo/Opacity##{}", m).c_str(), m_materials[m].m_albedoOpacity, inspectAlbedoOpacity);
-			i.Inspect(std::format("Metallic##{}", m), m_materials[m].m_metallic, inspectMetallic, 0.01f, 0.0f, 1.0f);
-			i.Inspect(std::format("Roughness##{}", m), m_materials[m].m_roughness, inspectRoughness, 0.01f, 0.0f, 1.0f);
-			i.Inspect(std::format("UV Offset/Scale##{}", m), m_materials[m].m_uvOffsetScale, inspectUVOffsetScale, glm::vec4(-100000.0f), glm::vec4(100000.0f));
-			i.InspectTexture(std::format("Albedo Texture##{}", m), TextureHandle(m_materials[m].m_albedoTexture), inspectAlbedoTex);
-			i.InspectTexture(std::format("Roughness Texture##{}", m), TextureHandle(m_materials[m].m_roughnessTexture), inspectRoughnessTex);
-			i.InspectTexture(std::format("Metal Texture##{}", m), TextureHandle(m_materials[m].m_metalnessTexture), inspectMetalTex);
-			i.InspectTexture(std::format("Normals Texture##{}", m), TextureHandle(m_materials[m].m_normalTexture), inspectNormalsTex);
-			i.InspectTexture(std::format("AO Texture##{}", m), TextureHandle(m_materials[m].m_aoTexture), inspectAOTex);
+			bool modified = false;
+			modified |= i.InspectColour(std::format("Albedo/Opacity##{}", m).c_str(), m_materials[m].m_albedoOpacity, inspectAlbedoOpacity);
+			modified |= i.Inspect(std::format("Metallic##{}", m), m_materials[m].m_metallic, inspectMetallic, 0.01f, 0.0f, 1.0f);
+			modified |= i.Inspect(std::format("Roughness##{}", m), m_materials[m].m_roughness, inspectRoughness, 0.01f, 0.0f, 1.0f);
+			modified |= i.Inspect(std::format("UV Offset/Scale##{}", m), m_materials[m].m_uvOffsetScale, inspectUVOffsetScale, glm::vec4(-100000.0f), glm::vec4(100000.0f));
+			modified |= i.InspectTexture(std::format("Albedo Texture##{}", m), TextureHandle(m_materials[m].m_albedoTexture), inspectAlbedoTex);
+			modified |= i.InspectTexture(std::format("Roughness Texture##{}", m), TextureHandle(m_materials[m].m_roughnessTexture), inspectRoughnessTex);
+			modified |= i.InspectTexture(std::format("Metal Texture##{}", m), TextureHandle(m_materials[m].m_metalnessTexture), inspectMetalTex);
+			modified |= i.InspectTexture(std::format("Normals Texture##{}", m), TextureHandle(m_materials[m].m_normalTexture), inspectNormalsTex);
+			modified |= i.InspectTexture(std::format("AO Texture##{}", m), TextureHandle(m_materials[m].m_aoTexture), inspectAOTex);
+			if (modified)
+			{
+				Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
+			}
 		}
 	}
 

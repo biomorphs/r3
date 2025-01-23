@@ -38,7 +38,7 @@ function Dungeons_SpawnItem(gridcmp, itemName, tilePos, worldPos, spawnVisible)
 	for e=1,#newEntities do 
 		local staticMesh = world.GetComponent_StaticMesh(newEntities[e])
 		if(staticMesh ~= nil) then 
-			staticMesh.m_shouldDraw = makeVisible
+			staticMesh:SetShouldDraw(makeVisible)
 		end
 	end
 

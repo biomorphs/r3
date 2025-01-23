@@ -21,7 +21,7 @@ function Dungeons_TorchOnEquip(actor,torch)
 	for child=1,#allChildren do 
 		local meshComponent = world.GetComponent_StaticMesh(allChildren[child])
 		if(meshComponent ~= nil) then 
-			meshComponent.m_shouldDraw = true
+			meshComponent:SetShouldDraw(true)
 		end
 		local light = world.GetComponent_PointLight(allChildren[child])
 		if(light ~= nil) then 
@@ -37,7 +37,7 @@ function Dungeons_TorchOnUnequip(actor,torch)
 	for child=1,#allChildren do 
 		local meshComponent = world.GetComponent_StaticMesh(allChildren[child])
 		if(meshComponent ~= nil) then 
-			meshComponent.m_shouldDraw = false
+			meshComponent:SetShouldDraw(false)
 		end
 		local light = world.GetComponent_PointLight(allChildren[child])
 		if(light ~= nil) then 

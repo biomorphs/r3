@@ -22,6 +22,22 @@
 #include "core/log.h"
 #include <imgui.h>
 
+// What should trigger static scene rebuilds?
+// Automated
+//	Add/removal of static mesh component - done
+//	Modification of static mesh component - done
+//  Static mesh material repopulate - done
+//  Static mesh material modifications - done
+//	Model data loading - done 
+//  Setting active world - done
+
+// Manual
+//	Scripted trigger
+//	Editor changes
+//		Transform modifications
+//		Entity parent modifications
+//			Can/should we automate these too???
+
 namespace R3
 {
 	// stored in a buffer
@@ -66,6 +82,9 @@ namespace R3
 		GetSystem<RenderSystem>()->m_onShutdownCbs.AddCallback([this](Device& d) {
 			Cleanup(d);
 		});
+		m_onModelDataLoadedCbToken = GetSystem<StaticMeshSystem>()->RegisterModelReadyCallback([this](const ModelDataHandle& handle) {
+			OnModelReady(handle);
+		});
 		return true;
 	}
 
@@ -90,6 +109,8 @@ namespace R3
 			vmaDestroyBuffer(d.GetVMA(), m_drawIndirectHostVisible.m_buffer, m_drawIndirectHostVisible.m_allocation);
 		}
 		m_globalConstantsBuffer.Destroy(d);
+		
+		Systems::GetSystem<StaticMeshSystem>()->UnregisterModelReadyCallback(m_onModelDataLoadedCbToken);
 	}
 
 	bool StaticMeshRenderer::ShowGui()
@@ -103,7 +124,6 @@ namespace R3
 		{
 			ImGui::Begin("Static Mesh Renderer");
 			ImGui::Checkbox("Enable Compute Culling", &m_enableComputeCulling);
-			ImGui::Checkbox("Lock main frustum", &m_lockMainFrustum);
 			if (ImGui::Button("Rebuild statics"))
 			{
 				SetStaticsDirty();
@@ -205,6 +225,11 @@ namespace R3
 		vkDestroyShaderModule(d.GetVkDevice(), vertexShader, nullptr);
 		vkDestroyShaderModule(d.GetVkDevice(), fragShader, nullptr);
 		return true;
+	}
+
+	void StaticMeshRenderer::OnModelReady(const ModelDataHandle& handle)
+	{
+		SetStaticsDirty();
 	}
 
 	bool StaticMeshRenderer::CreateForwardPipelineData(Device& d, VkFormat mainColourFormat, VkFormat mainDepthFormat)
@@ -490,20 +515,21 @@ namespace R3
 			StaticMeshInstanceGpu* instanceWritePtr = m_staticMeshInstances.GetWritePtr();
 			auto forEachEntity = [&](const Entities::EntityHandle& e, StaticMeshComponent& s, TransformComponent& t)
 			{
-				if (s.m_modelHandle.m_index != -1 && s.m_shouldDraw)	// doesn't mean the model is actually ready to draw!
+				const auto modelHandle = s.GetModelHandle();
+				if (modelHandle.m_index != -1 && s.GetShouldDraw())	// doesn't mean the model is actually ready to draw!
 				{
-					if (s.m_modelHandle.m_index != currentMeshDataHandle.m_index)	// avoid getting the data for every instance, only get it when it changes
+					if (modelHandle.m_index != currentMeshDataHandle.m_index)	// avoid getting the data for every instance, only get it when it changes
 					{
-						if (!staticMeshes->GetMeshDataForModel(s.m_modelHandle, currentMeshData))
+						if (!staticMeshes->GetMeshDataForModel(modelHandle, currentMeshData))
 						{
 							return true;
 						}
-						currentMeshDataHandle.m_index = s.m_modelHandle.m_index;
+						currentMeshDataHandle.m_index = modelHandle.m_index;
 					}
-					if (s.m_materialOverride != currentMaterialEntity)		// cache the material override
+					if (s.GetMaterialOverride() != currentMaterialEntity)		// cache the material override
 					{
-						currentMaterialEntity = s.m_materialOverride;
-						const auto materialComponent = activeWorld->GetComponent<StaticMeshMaterialsComponent>(s.m_materialOverride);
+						currentMaterialEntity = s.GetMaterialOverride();
+						const auto materialComponent = activeWorld->GetComponent<StaticMeshMaterialsComponent>(s.GetMaterialOverride());
 						const bool overrideValid = materialComponent && materialComponent->m_materials.size() >= currentMeshData.m_materialCount;
 						lastMatOverrideGpuIndex = overrideValid ? static_cast<uint32_t>(materialComponent->m_gpuDataIndex) : -1;
 						overrideMaterials = overrideValid ? materialComponent->m_materials.data() : nullptr;
@@ -599,13 +625,8 @@ namespace R3
 
 	Frustum StaticMeshRenderer::GetMainCameraFrustum()
 	{
-		static Frustum mainFrustum;
-		if (!m_lockMainFrustum)
-		{
-			auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
-			mainFrustum = (mainCamera.ProjectionMatrix() * mainCamera.ViewMatrix());;
-		}
-		return mainFrustum; 
+		auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
+		return Frustum(mainCamera.ProjectionMatrix() * mainCamera.ViewMatrix());
 	}
 
 	bool StaticMeshRenderer::CollectInstances()

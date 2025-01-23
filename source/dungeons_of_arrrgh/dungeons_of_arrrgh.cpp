@@ -279,7 +279,7 @@ void DungeonsOfArrrgh::SetVisualEntitiesVisible(const DungeonsWorldGridComponent
 			{
 				if (auto meshComponent = w.GetComponent<R3::StaticMeshComponent>(child))
 				{
-					meshComponent->m_shouldDraw = visible;
+					meshComponent->SetShouldDraw(visible);
 				}
 			}
 			for (const auto& actor : contents->m_entitiesInTile)
@@ -290,12 +290,12 @@ void DungeonsOfArrrgh::SetVisualEntitiesVisible(const DungeonsWorldGridComponent
 				{
 					if (auto meshComponent = w.GetComponent<R3::StaticMeshComponent>(child))
 					{
-						meshComponent->m_shouldDraw = visible;
+						meshComponent->SetShouldDraw(visible);
 					}
 				}
 				if (auto meshComponent = w.GetComponent<R3::StaticMeshComponent>(actor))
 				{
-					meshComponent->m_shouldDraw = visible;
+					meshComponent->SetShouldDraw(visible);
 				}
 			}
 		}
@@ -590,7 +590,7 @@ void DungeonsOfArrrgh::GenerateTileVisuals(uint32_t x, uint32_t z, DungeonsWorld
 						}
 						if (auto renderComponent = activeWorld->GetComponent<R3::StaticMeshComponent>(impChild))
 						{
-							renderComponent->m_shouldDraw = !m_enableFogOfWar;
+							renderComponent->SetShouldDraw(!m_enableFogOfWar);
 						}
 						if (activeWorld->GetParent(impChild).GetID() == -1)
 						{

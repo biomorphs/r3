@@ -105,20 +105,20 @@
     "InputParams": {
      "Floats": [
       {
-       "Key": "Z Max",
-       "Value": 64.0
-      },
-      {
        "Key": "X Min",
        "Value": -64.0
       },
       {
-       "Key": "Z Min",
-       "Value": -64.0
+       "Key": "Z Max",
+       "Value": 64.0
       },
       {
        "Key": "X Max",
        "Value": 64.0
+      },
+      {
+       "Key": "Z Min",
+       "Value": -64.0
       },
       {
        "Key": "Y",
@@ -137,11 +137,11 @@
      "Ints": [
       {
        "Key": "Light X Count",
-       "Value": 32
+       "Value": 31
       },
       {
        "Key": "Light Z Count",
-       "Value": 32
+       "Value": 31
       }
      ]
     },

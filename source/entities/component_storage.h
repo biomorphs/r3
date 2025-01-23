@@ -204,7 +204,7 @@ namespace Entities
 			++m_generation;	// pointers are about to be invalidated
 		}
 		m_owners.push_back(e);
-		m_components.emplace_back(std::move(ComponentType()));
+		m_components.emplace_back();
 		assert(m_owners.size() == m_components.size());
 		
 		return static_cast<uint32_t>(m_components.size() - 1);
