@@ -301,7 +301,7 @@ void DungeonsOfArrrgh::SetVisualEntitiesVisible(const DungeonsWorldGridComponent
 			}
 		}
 	}
-	GetSystem<R3::StaticMeshRenderer>()->SetStaticsDirty();
+	GetSystem<R3::MeshRenderer>()->SetStaticsDirty();
 }
 
 void DungeonsOfArrrgh::UpdateVision(DungeonsWorldGridComponent& grid, R3::Entities::World& w)
@@ -346,7 +346,7 @@ void DungeonsOfArrrgh::MoveEntitiesWorldspace(const std::vector<R3::Entities::En
 			}
 		}		
 	}
-	GetSystem<R3::StaticMeshRenderer>()->SetStaticsDirty();
+	GetSystem<R3::MeshRenderer>()->SetStaticsDirty();
 }
 
 // rules match tags against neighbouring tiles
@@ -626,7 +626,7 @@ void DungeonsOfArrrgh::GenerateWorldVisuals(const R3::Entities::EntityHandle& e,
 		}
 	}
 	m_generateVisualsEntityCache.clear();
-	GetSystem<R3::StaticMeshRenderer>()->SetStaticsDirty();
+	GetSystem<R3::MeshRenderer>()->SetStaticsDirty();
 }
 
 void DungeonsOfArrrgh::OnWorldGridDirty(const R3::Entities::EntityHandle& e, class DungeonsWorldGridComponent& grid)

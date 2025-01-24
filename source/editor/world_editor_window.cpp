@@ -96,7 +96,7 @@ namespace R3
 		static_cast<ReactiveValueInspector*>(m_valueInspector.get())->SetOnValueChange([this]() {
 			if (m_isInspectingEntityWithStaticMesh)
 			{
-				Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
+				Systems::GetSystem<MeshRenderer>()->SetStaticsDirty();
 			}
 		});
 
@@ -113,6 +113,7 @@ namespace R3
 		{
 			entities->DestroyWorld(m_worldIdentifier);
 		}
+		Systems::GetSystem<MeshRenderer>()->SetStaticsDirty();	// rebuild static scene
 	}
 
 	void WorldEditorWindow::DeleteSelected()
@@ -484,7 +485,7 @@ namespace R3
 		auto scripts = Systems::GetSystem<LuaSystem>();
 		entities->SetActiveWorld(m_worldIdentifier);
 		scripts->SetWorldScriptsActive(false);	// don't run scripts in the editor
-		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();	// rebuild static scene
+		Systems::GetSystem<MeshRenderer>()->SetStaticsDirty();	// rebuild static scene
 	}
 
 	void WorldEditorWindow::PushCommand(std::unique_ptr<EditorCommand>&& cmd)

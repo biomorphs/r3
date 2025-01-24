@@ -8,7 +8,7 @@
 
 namespace R3
 {
-	void SerialiseJson(StaticMeshMaterial& smm, JsonSerialiser& s)
+	void SerialiseJson(MeshMaterial& smm, JsonSerialiser& s)
 	{
 		auto doTexture = [&](const char* name, uint32_t& i) {
 			TextureHandle th = {i};
@@ -51,7 +51,7 @@ namespace R3
 			m_materials.clear();
 			for (int m = 0; m < srcMats.size(); ++m)
 			{
-				StaticMeshMaterial newMat;
+				MeshMaterial newMat;
 				newMat.m_albedoOpacity = { srcMats[m].m_albedo, srcMats[m].m_opacity };
 				newMat.m_metallic = srcMats[m].m_metallic;
 				newMat.m_roughness = srcMats[m].m_roughness;

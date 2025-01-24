@@ -58,13 +58,13 @@ namespace R3
 		return m_allIndices.GetBuffer();
 	}
 
-	bool StaticMeshSystem::GetMeshDataForModel(const ModelDataHandle& handle, StaticMeshGpuData& result)
+	bool StaticMeshSystem::GetMeshDataForModel(const ModelDataHandle& handle, MeshDrawData& result)
 	{
 		R3_PROF_EVENT();
 		if (handle.m_index != -1)
 		{
 			ScopedLock lock(m_allDataMutex);
-			auto foundIt = std::find_if(m_allData.begin(), m_allData.end(), [&](const StaticMeshGpuData& d) {
+			auto foundIt = std::find_if(m_allData.begin(), m_allData.end(), [&](const MeshDrawData& d) {
 				return d.m_modelHandleIndex == handle.m_index;
 			});
 			if (foundIt != m_allData.end())
@@ -76,19 +76,19 @@ namespace R3
 		return false;
 	}
 
-	const StaticMeshMaterial* StaticMeshSystem::GetMeshMaterial(uint32_t materialIndex)
+	const MeshMaterial* StaticMeshSystem::GetMeshMaterial(uint32_t materialIndex)
 	{
 		assert(materialIndex < m_allMaterials.size());
 		return &m_allMaterials[materialIndex];
 	}
 
-	const StaticMeshPart* StaticMeshSystem::GetMeshPart(uint32_t partIndex)
+	const MeshPart* StaticMeshSystem::GetMeshPart(uint32_t partIndex)
 	{
 		assert(partIndex < m_allParts.size());
 		return &m_allParts[partIndex];
 	}
 
-	bool StaticMeshSystem::GetMeshPart(uint32_t partIndex, StaticMeshPart& result)
+	bool StaticMeshSystem::GetMeshPart(uint32_t partIndex, MeshPart& result)
 	{
 		if (partIndex < m_allParts.size())
 		{
@@ -98,7 +98,7 @@ namespace R3
 		return false;
 	}
 
-	bool StaticMeshSystem::GetMeshMaterial(uint32_t materialIndex, StaticMeshMaterial& result)
+	bool StaticMeshSystem::GetMeshMaterial(uint32_t materialIndex, MeshMaterial& result)
 	{
 		if (materialIndex < m_allMaterials.size())
 		{
@@ -118,7 +118,7 @@ namespace R3
 			auto& m = mdata.m_data;
 
 			// allocate the mesh data + fill in what we can while we have the lock
-			StaticMeshGpuData newMesh;
+			MeshDrawData newMesh;
 			newMesh.m_vertexDataOffset = static_cast<uint32_t>(m_allVertices.Allocate(m->m_vertices.size()));
 			newMesh.m_indexDataOffset = static_cast<uint32_t>(m_allIndices.Allocate(m->m_indices.size()));
 			if (newMesh.m_vertexDataOffset == -1 || newMesh.m_indexDataOffset == -1)
@@ -128,7 +128,7 @@ namespace R3
 			}
 
 			newMesh.m_materialCount = static_cast<uint32_t>(m->m_materials.size());
-			newMesh.m_meshPartCount = static_cast<uint32_t>(m->m_meshes.size());
+			newMesh.m_meshPartCount = static_cast<uint32_t>(m->m_parts.size());
 			newMesh.m_totalIndices = static_cast<uint32_t>(m->m_indices.size());
 			newMesh.m_totalVertices = static_cast<uint32_t>(m->m_vertices.size());
 			newMesh.m_boundsMax = m->m_boundsMax;
@@ -175,12 +175,12 @@ namespace R3
 				for (uint32_t part = 0; part < newMesh.m_meshPartCount; ++part)
 				{
 					auto& pt = m_allParts[part + newMesh.m_firstMeshPartOffset];
-					pt.m_transform = m->m_meshes[part].m_transform;
-					pt.m_boundsMax = glm::vec4(m->m_meshes[part].m_boundsMax,0);
-					pt.m_boundsMin = glm::vec4(m->m_meshes[part].m_boundsMin,0);
-					pt.m_indexCount = m->m_meshes[part].m_indexCount;
-					pt.m_indexStartOffset = newMesh.m_indexDataOffset + m->m_meshes[part].m_indexDataOffset;
-					pt.m_materialIndex = newMesh.m_materialGpuIndex + m->m_meshes[part].m_materialIndex;	// GPU index!
+					pt.m_transform = m->m_parts[part].m_transform;
+					pt.m_boundsMax = glm::vec4(m->m_parts[part].m_boundsMax,0);
+					pt.m_boundsMin = glm::vec4(m->m_parts[part].m_boundsMin,0);
+					pt.m_indexCount = m->m_parts[part].m_indexCount;
+					pt.m_indexStartOffset = newMesh.m_indexDataOffset + m->m_parts[part].m_indexDataOffset;
+					pt.m_materialIndex = newMesh.m_materialGpuIndex + m->m_parts[part].m_materialIndex;	// GPU index!
 					pt.m_vertexDataOffset = static_cast<uint32_t>(newMesh.m_vertexDataOffset);
 				}
 				m_allMeshPartsGpu.Write(newMesh.m_firstMeshPartOffset, newMesh.m_meshPartCount, &m_allParts[newMesh.m_firstMeshPartOffset]);

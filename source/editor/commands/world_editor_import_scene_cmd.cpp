@@ -30,7 +30,7 @@ namespace R3
 				world->SetParent(it, newRoot);
 			}
 		}
-		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
+		Systems::GetSystem<MeshRenderer>()->SetStaticsDirty();
 		return Result::Succeeded;
 	}
 
@@ -47,7 +47,7 @@ namespace R3
 		{
 			m_window->SelectEntity(it);
 		}
-		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
+		Systems::GetSystem<MeshRenderer>()->SetStaticsDirty();
 		return Result::Succeeded;
 	}
 

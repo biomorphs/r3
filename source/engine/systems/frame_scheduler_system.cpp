@@ -58,7 +58,7 @@ namespace R3
 		preparePass->m_onRun.AddCallback([](RenderPassContext& ctx) {
 			GetSystem<TextureSystem>()->ProcessLoadedTextures(ctx);
 			GetSystem<StaticMeshSystem>()->PrepareForRendering(ctx);
-			GetSystem<StaticMeshRenderer>()->PrepareForRendering(ctx);
+			GetSystem<MeshRenderer>()->PrepareForRendering(ctx);
 			GetSystem<LightsSystem>()->PrepareForDrawing(ctx);
 		});
 		return preparePass;
@@ -69,7 +69,7 @@ namespace R3
 		auto cullingPass = std::make_unique<ComputeDrawPass>();
 		cullingPass->m_name = "Instance Culling";
 		cullingPass->m_onRun.AddCallback([](RenderPassContext& ctx) {
-			GetSystem<StaticMeshRenderer>()->CullInstancesOnGpu(ctx);
+			GetSystem<MeshRenderer>()->CullInstancesOnGpu(ctx);
 		});
 		return cullingPass;
 	}
@@ -91,7 +91,7 @@ namespace R3
 		};
 		gbufferPass->m_onDraw.AddCallback([](RenderPassContext& ctx) {
 			R3_PROF_GPU_EVENT("GBuffer Pass");
-			GetSystem<StaticMeshRenderer>()->OnGBufferPassDraw(ctx);
+			GetSystem<MeshRenderer>()->OnGBufferPassDraw(ctx);
 		});
 		
 		return gbufferPass;
@@ -138,11 +138,11 @@ namespace R3
 		});
 		forwardPass->m_onDraw.AddCallback([](RenderPassContext& ctx) {
 			R3_PROF_GPU_EVENT("Forward Pass");
-			GetSystem<StaticMeshRenderer>()->OnForwardPassDraw(ctx);
+			GetSystem<MeshRenderer>()->OnForwardPassDraw(ctx);
 			GetSystem<ImmediateRenderSystem>()->OnForwardPassDraw(ctx);
 		});
 		forwardPass->m_onEnd.AddCallback([](RenderPassContext& ctx) {
-			GetSystem<StaticMeshRenderer>()->OnDrawEnd(ctx);
+			GetSystem<MeshRenderer>()->OnDrawEnd(ctx);
 		});
 		return forwardPass;
 	}

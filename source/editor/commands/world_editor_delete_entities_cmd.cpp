@@ -23,7 +23,7 @@ namespace R3
 		{
 			world->RemoveEntity(m_deletedEntities[i], true);	// true = reserve this handle/slot for later
 		}
-		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
+		Systems::GetSystem<MeshRenderer>()->SetStaticsDirty();
 		return Result::Succeeded;
 	}
 
@@ -39,7 +39,7 @@ namespace R3
 		}
 		world->SerialiseEntities(json, m_deletedEntities);	// this will restore the old handles (or fail!)
 		m_window->SelectEntities(m_deletedEntities);
-		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
+		Systems::GetSystem<MeshRenderer>()->SetStaticsDirty();
 		return Result::Succeeded;
 	}
 	EditorCommand::Result WorldEditorDeleteEntitiesCmd::Redo()

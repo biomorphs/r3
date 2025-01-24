@@ -23,11 +23,9 @@
 #include "core/log.h"
 #include <imgui.h>
 
-// What should trigger static scene rebuilds?
-// Automated
-//  Modification of static mesh component via inspector hook
-//  Static mesh material repopulate - done
-//  Static mesh material modifications - done via inspector
+// What should trigger automatic static scene rebuilds?
+//  Modification of static mesh component via inspector hook - done
+//  Static mesh material modifications - done
 //	Model data loading - done 
 //  Setting active world - done
 //	Editor changes
@@ -39,14 +37,10 @@
 //		Import scene - done
 //		Entity parent modifications  - done
 
-// Manual
-// Add/removal/modification of static mesh component + materials outside of editor context
-// Add Scripted trigger
-
 namespace R3
 {
 	// stored in a buffer
-	struct StaticMeshRenderer::GlobalConstants
+	struct MeshRenderer::GlobalConstants
 	{
 		glm::mat4 m_projViewTransform;
 		glm::vec4 m_cameraWorldSpacePos;
@@ -61,27 +55,27 @@ namespace R3
 		VkDeviceAddress m_globalsBufferAddress;
 	};
 
-	StaticMeshRenderer::StaticMeshRenderer()
+	MeshRenderer::MeshRenderer()
 	{
-		m_computeCulling = std::make_unique<StaticMeshInstanceCullingCompute>();
+		m_computeCulling = std::make_unique<MeshInstanceCullingCompute>();
 	}
 
-	StaticMeshRenderer::~StaticMeshRenderer()
+	MeshRenderer::~MeshRenderer()
 	{
 	}
 
-	void StaticMeshRenderer::RegisterTickFns()
+	void MeshRenderer::RegisterTickFns()
 	{
 		R3_PROF_EVENT();
-		RegisterTick("StaticMeshRenderer::ShowGui", [this]() {
+		RegisterTick("MeshRenderer::ShowGui", [this]() {
 			return ShowGui();
 		});
-		RegisterTick("StaticMeshRenderer::CollectInstances", [this]() {
+		RegisterTick("MeshRenderer::CollectInstances", [this]() {
 			return CollectInstances();
 		});
 	}
 
-	bool StaticMeshRenderer::Init()
+	bool MeshRenderer::Init()
 	{
 		R3_PROF_EVENT();
 		GetSystem<RenderSystem>()->m_onShutdownCbs.AddCallback([this](Device& d) {
@@ -99,12 +93,12 @@ namespace R3
 		return true;
 	}
 
-	void StaticMeshRenderer::SetStaticsDirty()
+	void MeshRenderer::SetStaticsDirty()
 	{
 		m_staticSceneRebuildRequested = true;
 	}
 
-	void StaticMeshRenderer::Cleanup(Device& d)
+	void MeshRenderer::Cleanup(Device& d)
 	{
 		R3_PROF_EVENT();
 		m_computeCulling->Cleanup(d);
@@ -124,7 +118,7 @@ namespace R3
 		Systems::GetSystem<StaticMeshSystem>()->UnregisterModelReadyCallback(m_onModelDataLoadedCbToken);
 	}
 
-	bool StaticMeshRenderer::ShowGui()
+	bool MeshRenderer::ShowGui()
 	{
 		R3_PROF_EVENT();
 		auto& debugMenu = MenuBar::MainMenu().GetSubmenu("Debug");
@@ -158,7 +152,7 @@ namespace R3
 		return true;
 	}
 
-	bool StaticMeshRenderer::CreatePipelineLayout(Device& d)
+	bool MeshRenderer::CreatePipelineLayout(Device& d)
 	{
 		R3_PROF_EVENT();
 		auto textures = GetSystem<TextureSystem>();
@@ -181,7 +175,7 @@ namespace R3
 		return true;
 	}
 
-	bool StaticMeshRenderer::CreateGBufferPipelineData(Device& d, VkFormat positionMetalFormat, VkFormat normalRoughnessFormat, VkFormat albedoAOFormat, VkFormat mainDepthFormat)
+	bool MeshRenderer::CreateGBufferPipelineData(Device& d, VkFormat positionMetalFormat, VkFormat normalRoughnessFormat, VkFormat albedoAOFormat, VkFormat mainDepthFormat)
 	{
 		R3_PROF_EVENT();
 		std::string basePath = "shaders_spirv\\common\\";	// Load the shaders
@@ -238,12 +232,12 @@ namespace R3
 		return true;
 	}
 
-	void StaticMeshRenderer::OnModelReady(const ModelDataHandle& handle)
+	void MeshRenderer::OnModelReady(const ModelDataHandle& handle)
 	{
 		SetStaticsDirty();
 	}
 
-	bool StaticMeshRenderer::CreateForwardPipelineData(Device& d, VkFormat mainColourFormat, VkFormat mainDepthFormat)
+	bool MeshRenderer::CreateForwardPipelineData(Device& d, VkFormat mainColourFormat, VkFormat mainDepthFormat)
 	{
 		R3_PROF_EVENT();
 		std::string basePath = "shaders_spirv\\common\\";	// Load the shaders
@@ -290,7 +284,7 @@ namespace R3
 		return true;
 	}
 
-	void StaticMeshRenderer::CullInstancesOnGpu(RenderPassContext& ctx)
+	void MeshRenderer::CullInstancesOnGpu(RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
 		if (m_enableComputeCulling)
@@ -302,7 +296,7 @@ namespace R3
 		}
 	}
 
-	void StaticMeshRenderer::PrepareForRendering(class RenderPassContext& ctx)
+	void MeshRenderer::PrepareForRendering(class RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
 		if (!m_globalConstantsBuffer.IsCreated())
@@ -375,7 +369,7 @@ namespace R3
 		m_globalConstantsBuffer.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 	}
 
-	void StaticMeshRenderer::OnGBufferPassDraw(class RenderPassContext& ctx)
+	void MeshRenderer::OnGBufferPassDraw(class RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
 
@@ -424,7 +418,7 @@ namespace R3
 		m_frameStats.m_writeCmdsEndTime = time->GetElapsedTimeReal();
 	}
 
-	void StaticMeshRenderer::OnForwardPassDraw(class RenderPassContext& ctx)
+	void MeshRenderer::OnForwardPassDraw(class RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
 
@@ -471,7 +465,7 @@ namespace R3
 		m_frameStats.m_writeCmdsEndTime = time->GetElapsedTimeReal();
 	}
 
-	void StaticMeshRenderer::OnDrawEnd(class RenderPassContext& ctx)
+	void MeshRenderer::OnDrawEnd(class RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
 
@@ -487,13 +481,13 @@ namespace R3
 		m_computeCulling->Reset();
 	}
 
-	void StaticMeshRenderer::RebuildStaticMaterialOverrides()
+	void MeshRenderer::RebuildStaticMaterialOverrides()
 	{
 		R3_PROF_EVENT();
 		auto activeWorld = GetSystem<Entities::EntitySystem>()->GetActiveWorld();
 		if (activeWorld)
 		{
-			StaticMeshMaterial* materialWritePtr = m_staticMaterialOverrides.GetWritePtr();
+			MeshMaterial* materialWritePtr = m_staticMaterialOverrides.GetWritePtr();
 			uint32_t currentMaterialIndex = 0;
 			auto forEachEntity = [&](const Entities::EntityHandle& e, StaticMeshMaterialsComponent& cmp)
 			{
@@ -510,7 +504,7 @@ namespace R3
 		}
 	}
 
-	void StaticMeshRenderer::RebuildStaticInstances()
+	void MeshRenderer::RebuildStaticInstances()
 	{
 		R3_PROF_EVENT();
 		auto staticMeshes = GetSystem<StaticMeshSystem>();
@@ -518,12 +512,12 @@ namespace R3
 		if (activeWorld)
 		{
 			ModelDataHandle currentMeshDataHandle;			// the current cached mesh
-			StaticMeshGpuData currentMeshData;				// ^^
+			MeshDrawData currentMeshData;					// ^^
 			Entities::EntityHandle currentMaterialEntity;	// the current cached material override
 			uint32_t lastMatOverrideGpuIndex = -1;			// base index of the current material override
-			const StaticMeshMaterial* overrideMaterials = nullptr;	// cache a ptr to the last override components' material data
+			const MeshMaterial* overrideMaterials = nullptr;	// cache a ptr to the last override components' material data
 			uint32_t currentInstanceBufferOffset = 0;
-			StaticMeshInstanceGpu* instanceWritePtr = m_staticMeshInstances.GetWritePtr();
+			MeshInstance* instanceWritePtr = m_staticMeshInstances.GetWritePtr();
 			auto forEachEntity = [&](const Entities::EntityHandle& e, StaticMeshComponent& s, TransformComponent& t)
 			{
 				const auto modelHandle = s.GetModelHandle();
@@ -546,16 +540,16 @@ namespace R3
 						overrideMaterials = overrideValid ? materialComponent->m_materials.data() : nullptr;
 					}
 					VkDeviceAddress materialBaseAddress = lastMatOverrideGpuIndex == -1 ?
-						staticMeshes->GetMaterialsDeviceAddress() + (currentMeshData.m_materialGpuIndex * sizeof(StaticMeshMaterial)) :
-						m_staticMaterialOverrides.GetBufferDeviceAddress() + (lastMatOverrideGpuIndex * sizeof(StaticMeshMaterial));
+						staticMeshes->GetMaterialsDeviceAddress() + (currentMeshData.m_materialGpuIndex * sizeof(MeshMaterial)) :
+						m_staticMaterialOverrides.GetBufferDeviceAddress() + (lastMatOverrideGpuIndex * sizeof(MeshMaterial));
 					const glm::mat4 instanceTransform = t.GetWorldspaceMatrix(e, *activeWorld);		// don't use interpolation with static meshes!
 					for (uint32_t part = 0; part < currentMeshData.m_meshPartCount; ++part)
 					{
-						const StaticMeshPart* currentPart = staticMeshes->GetMeshPart(currentMeshData.m_firstMeshPartOffset + part);
+						const MeshPart* currentPart = staticMeshes->GetMeshPart(currentMeshData.m_firstMeshPartOffset + part);
 						const uint32_t relativePartMatIndex = currentPart->m_materialIndex - currentMeshData.m_materialGpuIndex;
 						const glm::mat4 partTransform = instanceTransform * currentPart->m_transform;
 
-						VkDeviceAddress materialAddress = materialBaseAddress + (relativePartMatIndex * sizeof(StaticMeshMaterial));
+						VkDeviceAddress materialAddress = materialBaseAddress + (relativePartMatIndex * sizeof(MeshMaterial));
 						instanceWritePtr[currentInstanceBufferOffset].m_transform = partTransform;
 						instanceWritePtr[currentInstanceBufferOffset].m_materialDataAddress = materialAddress;
 
@@ -563,7 +557,7 @@ namespace R3
 						bucketInstance.m_partGlobalIndex = currentMeshData.m_firstMeshPartOffset + part;
 						bucketInstance.m_partInstanceIndex = currentInstanceBufferOffset;
 
-						const StaticMeshMaterial* meshMaterial = overrideMaterials == nullptr ? 
+						const MeshMaterial* meshMaterial = overrideMaterials == nullptr ?
 							staticMeshes->GetMeshMaterial(currentMeshData.m_materialGpuIndex + relativePartMatIndex) : &overrideMaterials[relativePartMatIndex];
 						if (meshMaterial->m_albedoOpacity.w >= 1.0f)
 						{
@@ -586,7 +580,7 @@ namespace R3
 		}
 	}
 
-	void StaticMeshRenderer::RebuildStaticScene()
+	void MeshRenderer::RebuildStaticScene()
 	{
 		R3_PROF_EVENT();
 		m_staticOpaques.m_partInstances.clear();
@@ -600,7 +594,7 @@ namespace R3
 	}
 
 	// populates draw calls for all instances in this bucket with no culling
-	void StaticMeshRenderer::PrepareDrawBucket(MeshPartDrawBucket& bucket)
+	void MeshRenderer::PrepareDrawBucket(MeshPartDrawBucket& bucket)
 	{
 		R3_PROF_EVENT();
 		auto staticMeshes = GetSystem<StaticMeshSystem>();
@@ -609,7 +603,7 @@ namespace R3
 		bucket.m_drawCount = (uint32_t)bucket.m_partInstances.size();
 		for (const auto& bucketInstance : bucket.m_partInstances)
 		{
-			const StaticMeshPart* currentPartData = staticMeshes->GetMeshPart(bucketInstance.m_partGlobalIndex);
+			const MeshPart* currentPartData = staticMeshes->GetMeshPart(bucketInstance.m_partGlobalIndex);
 			VkDrawIndexedIndirectCommand* drawPtr = static_cast<VkDrawIndexedIndirectCommand*>(m_drawIndirectMappedPtr) + currentDrawBufferStart + m_currentDrawBufferOffset;
 			drawPtr->indexCount = currentPartData->m_indexCount;
 			drawPtr->instanceCount = 1;
@@ -621,7 +615,7 @@ namespace R3
 	}
 
 	// use compute to cull and prepare draw calls for instances in this bucket
-	void StaticMeshRenderer::PrepareAndCullDrawBucketCompute(Device& d, VkCommandBuffer cmds, VkDeviceAddress instanceDataBuffer, MeshPartDrawBucket& bucket)
+	void MeshRenderer::PrepareAndCullDrawBucketCompute(Device& d, VkCommandBuffer cmds, VkDeviceAddress instanceDataBuffer, MeshPartDrawBucket& bucket)
 	{
 		R3_PROF_EVENT();
 
@@ -634,13 +628,13 @@ namespace R3
 		m_computeCulling->Run(d, cmds, instanceDataBuffer, m_drawIndirectBufferAddress, bucket, mainFrustum);	// populate the draw-indirect data for this bucket of instances via compute
 	}
 
-	Frustum StaticMeshRenderer::GetMainCameraFrustum()
+	Frustum MeshRenderer::GetMainCameraFrustum()
 	{
 		auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
 		return Frustum(mainCamera.ProjectionMatrix() * mainCamera.ViewMatrix());
 	}
 
-	bool StaticMeshRenderer::CollectInstances()
+	bool MeshRenderer::CollectInstances()
 	{
 		R3_PROF_EVENT();
 

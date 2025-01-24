@@ -45,7 +45,7 @@ namespace R3
 		s.RegisterSystem<ModelDataSystem>();
 		s.RegisterSystem<TextureSystem>();
 		s.RegisterSystem<StaticMeshSystem>();
-		s.RegisterSystem<StaticMeshRenderer>();
+		s.RegisterSystem<MeshRenderer>();
 		s.RegisterSystem<LightsSystem>();
 		s.RegisterSystem<LuaSystem>();
 		s.RegisterSystem<TransformSystem>();
@@ -86,7 +86,7 @@ namespace R3
 				guiUpdate.AddFn("Jobs::ShowGui");
 				guiUpdate.AddFn("StaticMeshes::ShowGui");
 				guiUpdate.AddFn("ModelData::ShowGui");
-				guiUpdate.AddFn("StaticMeshRenderer::ShowGui");
+				guiUpdate.AddFn("MeshRenderer::ShowGui");
 				guiUpdate.AddFn("Textures::ShowGui");
 				guiUpdate.AddFn("LightsSystem::ShowGui");
 				guiUpdate.AddFn("LuaSystem::ShowGui");
@@ -96,7 +96,7 @@ namespace R3
 				auto& renderUpdate = updateSequence.AddSequence("RenderUpdate");
 				{
 					auto& renderASyncUpdate = renderUpdate.AddAsync("UpdateAsync");
-					renderASyncUpdate.AddFn("StaticMeshRenderer::CollectInstances");
+					renderASyncUpdate.AddFn("MeshRenderer::CollectInstances");
 					renderASyncUpdate.AddFn("LightsSystem::CollectAllLights");
 					renderASyncUpdate.AddFn("FrameScheduler::UpdateTonemapper");
 					renderASyncUpdate.AddFn("FrameScheduler::BuildRenderGraph");

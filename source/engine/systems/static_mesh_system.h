@@ -16,7 +16,7 @@ namespace R3
 		class EntityHandle;
 	}
 
-	struct StaticMeshPart						// uploaded to GPU in m_allParts
+	struct MeshPart								// uploaded to GPU in m_allParts
 	{
 		glm::mat4 m_transform;					// relative to the model
 		glm::vec4 m_boundsMin;					// mesh space bounds (w unused)
@@ -27,7 +27,7 @@ namespace R3
 		uint32_t m_vertexDataOffset;			// used when generating draw calls
 	};
 
-	struct StaticMeshMaterial					// uploaded to GPU in m_allMaterialsGpu
+	struct MeshMaterial							// uploaded to GPU in m_allMaterialsGpu
 	{
 		glm::vec4 m_albedoOpacity;
 		glm::vec4 m_uvOffsetScale = { 0,0,1,1 };		// uv offset/scale, useful for custom materials
@@ -40,7 +40,7 @@ namespace R3
 		uint32_t m_aoTexture = -1;
 	};
 
-	struct StaticMeshGpuData
+	struct MeshDrawData
 	{
 		glm::vec3 m_boundsMin;					// mesh space bounds
 		glm::vec3 m_boundsMax;
@@ -55,7 +55,7 @@ namespace R3
 		uint32_t m_materialCount;
 	};
 
-	struct MeshVertex;
+	struct ModelVertex;
 	struct ModelDataHandle;
 	class StaticMeshSystem : public System
 	{
@@ -73,11 +73,11 @@ namespace R3
 		VkDeviceAddress GetMaterialsDeviceAddress();
 		VkBuffer GetIndexBuffer();
 
-		bool GetMeshDataForModel(const ModelDataHandle& handle, StaticMeshGpuData& result);
-		bool GetMeshPart(uint32_t partIndex, StaticMeshPart& result);
-		bool GetMeshMaterial(uint32_t materialIndex, StaticMeshMaterial& result);
-		const StaticMeshMaterial* GetMeshMaterial(uint32_t materialIndex);
-		const StaticMeshPart* GetMeshPart(uint32_t partIndex);
+		bool GetMeshDataForModel(const ModelDataHandle& handle, MeshDrawData& result);
+		bool GetMeshPart(uint32_t partIndex, MeshPart& result);
+		bool GetMeshMaterial(uint32_t materialIndex, MeshMaterial& result);
+		const MeshMaterial* GetMeshMaterial(uint32_t materialIndex);
+		const MeshPart* GetMeshPart(uint32_t partIndex);
 
 		// Callbacks that fire when a model is ready to draw
 		using ModelReadyCallback = std::function<void(const ModelDataHandle&)>;
@@ -96,13 +96,13 @@ namespace R3
 		ModelReadyCallbacks m_onModelReadyCallbacks;				// called when a model is fully uploaded and ready to draw
 
 		Mutex m_allDataMutex;	// protects stuff below
-		std::vector<StaticMeshGpuData> m_allData;
-		std::vector<StaticMeshMaterial> m_allMaterials;				// cpu-side copy of m_allMaterialsGpu
-		std::vector<StaticMeshPart> m_allParts;						// cpu-side copy of m_allMeshPartsGpu
+		std::vector<MeshDrawData> m_allData;
+		std::vector<MeshMaterial> m_allMaterials;				// cpu-side copy of m_allMaterialsGpu
+		std::vector<MeshPart> m_allParts;						// cpu-side copy of m_allMeshPartsGpu
 
-		WriteOnlyGpuArray<StaticMeshMaterial> m_allMaterialsGpu;	// gpu buffer of materials
-		WriteOnlyGpuArray<StaticMeshPart> m_allMeshPartsGpu;		// gpu buffer of mesh parts
-		WriteOnlyGpuArray<MeshVertex> m_allVertices;
+		WriteOnlyGpuArray<MeshMaterial> m_allMaterialsGpu;	// gpu buffer of materials
+		WriteOnlyGpuArray<MeshPart> m_allMeshPartsGpu;		// gpu buffer of mesh parts
+		WriteOnlyGpuArray<ModelVertex> m_allVertices;
 		WriteOnlyGpuArray<uint32_t> m_allIndices;
 
 		const uint32_t c_maxVerticesToStore = 1024 * 1024 * 16;		// ~800mb

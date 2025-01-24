@@ -6,7 +6,7 @@
 
 namespace R3
 {
-	struct StaticMeshMaterial;
+	struct MeshMaterial;
 	class StaticMeshMaterialsComponent
 	{
 	public:
@@ -16,7 +16,7 @@ namespace R3
 		void SerialiseJson(JsonSerialiser& s);
 		void Inspect(const Entities::EntityHandle& e, Entities::World* w, ValueInspector& i);
 
-		std::vector<StaticMeshMaterial> m_materials;
+		std::vector<MeshMaterial> m_materials;
 		uint32_t m_gpuDataIndex = -1;	// indexes into StaticMeshSystem::m_allMaterialsGpu
 
 	private:

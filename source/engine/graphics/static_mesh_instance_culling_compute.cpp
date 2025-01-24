@@ -8,7 +8,7 @@
 
 namespace R3
 {
-	struct StaticMeshInstanceCullingCompute::CullingTaskInfo
+	struct MeshInstanceCullingCompute::CullingTaskInfo
 	{
 		VkDeviceAddress m_drawIndirects;		// offset into allocated space already, write from index 0 to m_bucketPartInstanceCount
 		VkDeviceAddress m_thisFrustum;			// offset into buffer already, only read allFrustums[0]
@@ -23,15 +23,15 @@ namespace R3
 		VkDeviceAddress m_taskInfoDeviceAddress;	// offset into m_cullingTasksGpu for a task
 	};
 
-	StaticMeshInstanceCullingCompute::StaticMeshInstanceCullingCompute()
+	MeshInstanceCullingCompute::MeshInstanceCullingCompute()
 	{
 	}
 
-	StaticMeshInstanceCullingCompute::~StaticMeshInstanceCullingCompute()
+	MeshInstanceCullingCompute::~MeshInstanceCullingCompute()
 	{
 	}
 
-	uint32_t StaticMeshInstanceCullingCompute::UploadFrustum(const Frustum& f)	// returns offset index into the frustum buffer
+	uint32_t MeshInstanceCullingCompute::UploadFrustum(const Frustum& f)	// returns offset index into the frustum buffer
 	{
 		R3_PROF_EVENT();
 		if ((m_currentFrustumOffset + 1) < c_maxFrustums)
@@ -52,7 +52,7 @@ namespace R3
 		}
 	}
 
-	uint32_t StaticMeshInstanceCullingCompute::UploadBucketInstances(const MeshPartDrawBucket& instanceBucket)
+	uint32_t MeshInstanceCullingCompute::UploadBucketInstances(const MeshPartDrawBucket& instanceBucket)
 	{
 		R3_PROF_EVENT();
 		if ((m_currentBucketPartOffset + instanceBucket.m_drawCount) < c_maxBucketPartInstances)
@@ -69,10 +69,9 @@ namespace R3
 		}
 	}
 
-	void StaticMeshInstanceCullingCompute::Reset()
+	void MeshInstanceCullingCompute::Reset()
 	{
 		R3_PROF_EVENT();
-		
 		m_currentBucketPartOffset = 0;
 		if (++m_currentBucketPartBuffer >= c_maxBucketPartBuffers)
 		{
@@ -92,7 +91,7 @@ namespace R3
 		}
 	}
 
-	void StaticMeshInstanceCullingCompute::Run(Device& d, VkCommandBuffer cmds, VkDeviceAddress instanceBuffer, VkDeviceAddress drawIndirectBuffer, const MeshPartDrawBucket& instanceBucket, const Frustum& f)
+	void MeshInstanceCullingCompute::Run(Device& d, VkCommandBuffer cmds, VkDeviceAddress instanceBuffer, VkDeviceAddress drawIndirectBuffer, const MeshPartDrawBucket& instanceBucket, const Frustum& f)
 	{
 		R3_PROF_EVENT();
 		if (instanceBucket.m_drawCount == 0)
@@ -167,10 +166,9 @@ namespace R3
 		m_currentCullingTaskOffset++;
 	}
 
-	bool StaticMeshInstanceCullingCompute::Initialise(Device& d)
+	bool MeshInstanceCullingCompute::Initialise(Device& d)
 	{
 		R3_PROF_EVENT();
-
 		m_bucketPartInstancesGpu.SetDebugName("Compute culling bucket part instances");
 		if (!m_bucketPartInstancesGpu.Create(d, c_maxBucketPartInstances * c_maxBucketPartBuffers, c_maxBucketPartInstances, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 		{
@@ -229,7 +227,7 @@ namespace R3
 		return true;
 	}
 
-	void StaticMeshInstanceCullingCompute::Cleanup(Device& d)
+	void MeshInstanceCullingCompute::Cleanup(Device& d)
 	{
 		R3_PROF_EVENT();
 		vkDestroyPipeline(d.GetVkDevice(), m_pipeline, nullptr);

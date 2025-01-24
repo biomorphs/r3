@@ -11,11 +11,11 @@ namespace R3
 	struct MeshPartDrawBucket;
 	struct BucketPartInstance;
 	class Frustum;
-	class StaticMeshInstanceCullingCompute
+	class MeshInstanceCullingCompute
 	{
 	public:
-		StaticMeshInstanceCullingCompute();
-		~StaticMeshInstanceCullingCompute();
+		MeshInstanceCullingCompute();
+		~MeshInstanceCullingCompute();
 
 		void Reset();	// call at the start or end of each frame
 		void Run(Device& d, VkCommandBuffer cmds, VkDeviceAddress instanceBuffer, VkDeviceAddress drawIndirectBuffer, const MeshPartDrawBucket& instanceBucket, const Frustum& f);

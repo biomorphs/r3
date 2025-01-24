@@ -34,7 +34,7 @@ namespace R3
 				world->RemoveComponent(m_targetEntities[i], m_componentType);
 			}
 		}
-		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
+		Systems::GetSystem<MeshRenderer>()->SetStaticsDirty();
 		return Result::Succeeded;
 	}
 
@@ -51,7 +51,7 @@ namespace R3
 				world->SerialiseComponent(m_deletedFromEntities[d], m_componentType, cmpReadData);	// restore the data
 			}
 		}
-		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
+		Systems::GetSystem<MeshRenderer>()->SetStaticsDirty();
 		return Result::Succeeded;
 	}
 

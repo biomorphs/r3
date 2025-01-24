@@ -21,14 +21,14 @@ struct aiMesh;
 
 namespace R3
 {
-	struct MeshVertex
+	struct ModelVertex
 	{
 		float m_positionU0[4];
 		float m_normalV0[4];
 		float m_tangentPad[4];
 	};
 
-	struct MeshMaterial
+	struct ModelMaterial
 	{
 		std::vector<std::string> m_diffuseMaps;
 		std::vector<std::string> m_normalMaps;
@@ -42,7 +42,7 @@ namespace R3
 		float m_roughness;
 	};
 
-	struct Mesh
+	struct ModelPart
 	{
 		glm::mat4 m_transform;		// relative to the model
 		glm::vec3 m_boundsMin;		// bounds are in mesh space
@@ -56,10 +56,10 @@ namespace R3
 
 	struct ModelData
 	{
-		std::vector<MeshVertex> m_vertices;	// verts are in mesh space
+		std::vector<ModelVertex> m_vertices;	// verts are in mesh space
 		std::vector<uint32_t> m_indices;
-		std::vector<MeshMaterial> m_materials;
-		std::vector<Mesh> m_meshes;
+		std::vector<ModelMaterial> m_materials;
+		std::vector<ModelPart> m_parts;
 		glm::vec3 m_boundsMin = glm::vec3{ -1.0f };
 		glm::vec3 m_boundsMax = glm::vec3{ 1.0f };
 	};

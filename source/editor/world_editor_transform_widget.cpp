@@ -65,7 +65,7 @@ namespace R3
 				transformCmp->SetPositionWorldSpaceNoInterpolation(it.m_entity, *world, it.m_originalPosition);
 			}
 		}
-		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
+		Systems::GetSystem<MeshRenderer>()->SetStaticsDirty();
 	}
 
 	void WorldEditorTransformWidget::CommitTranslation(glm::vec3 translation)
@@ -208,7 +208,7 @@ namespace R3
 								transformCmp->SetPositionWorldSpaceNoInterpolation(it.m_entity, *world, newPos);
 							}
 						}
-						Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
+						Systems::GetSystem<MeshRenderer>()->SetStaticsDirty();
 					}
 					else    // just let go of mouse
 					{

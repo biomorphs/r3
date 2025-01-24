@@ -141,7 +141,7 @@ namespace R3
 			auto bakedPath = GetBakedModelPath(path);
 			LoadModelData(bakedPath, result, didBake ? bakeProgress : progCb);
 		}
-		if (result.m_meshes.size() == 0)	// failed to load baked model, load the src model instead
+		if (result.m_parts.size() == 0)	// failed to load baked model, load the src model instead
 		{
 			LoadModelData(path, result, progCb);
 		}

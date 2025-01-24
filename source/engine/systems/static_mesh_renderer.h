@@ -10,7 +10,7 @@
 namespace R3
 {
 	// Instance data passed for each model part draw call
-	struct StaticMeshInstanceGpu				// needs to match PerInstanceData in shaders
+	struct MeshInstance							// needs to match PerInstanceData in shaders
 	{				
 		glm::mat4 m_transform;					// final part world-space transform
 		VkDeviceAddress m_materialDataAddress;	// in order to support multiple material buffers, we pass the address to the material directly for every instance
@@ -32,17 +32,16 @@ namespace R3
 	};
 
 	class Device;
-	class DescriptorSetSimpleAllocator;
-	class StaticMeshInstanceCullingCompute;
+	class MeshInstanceCullingCompute;
 	class Frustum;
-	struct StaticMeshMaterial;
+	struct MeshMaterial;
 	struct ModelDataHandle;
-	class StaticMeshRenderer : public System
+	class MeshRenderer : public System
 	{
 	public:
-		StaticMeshRenderer();
-		virtual ~StaticMeshRenderer();
-		static std::string_view GetName() { return "StaticMeshRenderer"; }
+		MeshRenderer();
+		virtual ~MeshRenderer();
+		static std::string_view GetName() { return "MeshRenderer"; }
 		virtual void RegisterTickFns();
 		virtual bool Init();
 		void SetStaticsDirty();										// calling this will trigger a full rebuild of all static instances for 1 frame
@@ -89,12 +88,12 @@ namespace R3
 		std::atomic<bool> m_staticSceneRebuildRequested = false;		// trigger a scene rebuild. kept separate from m_rebuildingStaticScene so it can be called from anywhere
 		bool m_rebuildingStaticScene = false;							// a scene rebuild is in progress this frame
 
-		std::unique_ptr<StaticMeshInstanceCullingCompute> m_computeCulling;
+		std::unique_ptr<MeshInstanceCullingCompute> m_computeCulling;
 
 		std::unique_ptr<BufferPool> m_meshRenderBufferPool;				// pool used to allocate all buffers
 
-		LinearWriteOnlyGpuArray<StaticMeshMaterial> m_staticMaterialOverrides;	// all static material overrides written here on scene rebuild
-		LinearWriteOnlyGpuArray<StaticMeshInstanceGpu> m_staticMeshInstances;	// all static instance data written here on static scene rebuild
+		LinearWriteOnlyGpuArray<MeshMaterial> m_staticMaterialOverrides;	// all static material overrides written here on scene rebuild
+		LinearWriteOnlyGpuArray<MeshInstance> m_staticMeshInstances;	// all static instance data written here on static scene rebuild
 		MeshPartDrawBucket m_staticOpaques;								// all static opaque instances collected here on scene rebuild
 		MeshPartDrawBucket m_staticTransparents;						// all static transparent instances collected here on scene rebuild
 

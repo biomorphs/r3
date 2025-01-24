@@ -47,6 +47,7 @@ namespace R3
 		{
 			entities->DestroyWorld(m_worldID);
 		}
+		Systems::GetSystem<MeshRenderer>()->SetStaticsDirty();	// rebuild static scene
 	}
 
 	Entities::World* WorldRunnerWindow::GetWorld()
@@ -122,7 +123,7 @@ namespace R3
 		entities->SetActiveWorld(m_worldID);
 		auto scripts = Systems::GetSystem<LuaSystem>();
 		scripts->SetWorldScriptsActive(true);
-		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();	// rebuild static scene
+		Systems::GetSystem<MeshRenderer>()->SetStaticsDirty();	// rebuild static scene
 	}
 
 	void WorldRunnerWindow::OnFocusLost()

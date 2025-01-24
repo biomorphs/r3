@@ -93,7 +93,7 @@ namespace R3
 		return true;
 	}
 
-	void ParseBakedMaterial(const BakedMaterial& baked, MeshMaterial& result)
+	void ParseBakedMaterial(const BakedMaterial& baked, ModelMaterial& result)
 	{
 		if (strnlen(baked.m_diffuseTexture, c_bakedMaterialTexturePathLength) != 0)
 		{
@@ -125,7 +125,7 @@ namespace R3
 		result.m_roughness = baked.m_roughness;
 	}
 
-	bool MakeBakedMaterial(const MeshMaterial& src, BakedMaterial& target)
+	bool MakeBakedMaterial(const ModelMaterial& src, BakedMaterial& target)
 	{
 		auto bakePath = [](const std::vector<std::string>& srcPaths, char* targetPath)
 		{
@@ -186,7 +186,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		glm::vec3 boundsMin(FLT_MAX), boundsMax(-FLT_MAX);
-		for (const auto& m : m.m_meshes)
+		for (const auto& m : m.m_parts)
 		{
 			const auto& transform = m.m_transform;
 			const auto& bmin = m.m_boundsMin;
@@ -222,11 +222,11 @@ namespace R3
 		glm::vec3 boundsMin(FLT_MAX);
 		glm::vec3 boundsMax(FLT_MIN);
 
-		Mesh newMesh;
+		ModelPart newMesh;
 		newMesh.m_transform = transform;
 		newMesh.m_vertexDataOffset = static_cast<uint32_t>(model.m_vertices.size());
 		newMesh.m_vertexCount = mesh->mNumVertices;
-		MeshVertex newVertex;
+		ModelVertex newVertex;
 		for (uint32_t v = 0; v < mesh->mNumVertices; ++v)
 		{
 			auto uv0 = (mesh->mTextureCoords[0] != nullptr) ? glm::vec2(mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y) : glm::vec2(0, 0);
@@ -270,7 +270,7 @@ namespace R3
 			newMesh.m_materialIndex = -1;
 		}
 
-		model.m_meshes.push_back(std::move(newMesh));
+		model.m_parts.push_back(std::move(newMesh));
 	}
 
 	void ParseSceneNode(const aiScene* scene, const aiNode* node, ModelData& model, glm::mat4 parentTransform)
@@ -306,7 +306,7 @@ namespace R3
 			result.m_materials.reserve(scene->mNumMaterials);
 			for (unsigned int i = 0; i < scene->mNumMaterials; ++i)
 			{
-				MeshMaterial newMaterial;
+				ModelMaterial newMaterial;
 				const aiMaterial* sceneMat = scene->mMaterials[i];
 				auto getTexture = [&](aiTextureType type, std::vector<std::string>& out) {
 					uint32_t count = sceneMat->GetTextureCount(type);
@@ -455,10 +455,10 @@ namespace R3
 		progCb(5);
 		uint32_t vertexCount = loadedFile->m_header["VertexCount"];
 		auto vertexBlob = loadedFile->GetBlob("Vertices");
-		if ((vertexCount * sizeof(MeshVertex)) == vertexBlob->m_data.size())
+		if ((vertexCount * sizeof(ModelVertex)) == vertexBlob->m_data.size())
 		{
 			result.m_vertices.resize(vertexCount);
-			memcpy(result.m_vertices.data(), vertexBlob->m_data.data(), vertexCount * sizeof(MeshVertex));
+			memcpy(result.m_vertices.data(), vertexBlob->m_data.data(), vertexCount * sizeof(ModelVertex));
 		}
 		else
 		{
@@ -483,10 +483,10 @@ namespace R3
 
 		uint32_t meshCount = loadedFile->m_header["MeshCount"];
 		auto meshBlob = loadedFile->GetBlob("Meshes");
-		if ((meshCount * sizeof(Mesh)) == meshBlob->m_data.size())
+		if ((meshCount * sizeof(ModelPart)) == meshBlob->m_data.size())
 		{
-			result.m_meshes.resize(meshCount);
-			memcpy(result.m_meshes.data(), meshBlob->m_data.data(), meshCount * sizeof(Mesh));
+			result.m_parts.resize(meshCount);
+			memcpy(result.m_parts.data(), meshBlob->m_data.data(), meshCount * sizeof(ModelPart));
 		}
 		else
 		{
@@ -528,7 +528,7 @@ namespace R3
 		bakedFile.m_header["VertexCount"] = modelData.m_vertices.size();
 		bakedFile.m_header["IndexCount"] = modelData.m_indices.size();
 		bakedFile.m_header["MaterialCount"] = modelData.m_materials.size();
-		bakedFile.m_header["MeshCount"] = modelData.m_meshes.size();
+		bakedFile.m_header["MeshCount"] = modelData.m_parts.size();
 		auto& boundsMinJson = bakedFile.m_header["BoundsMin"];
 		boundsMinJson["X"] = modelData.m_boundsMin.x;
 		boundsMinJson["Y"] = modelData.m_boundsMin.y;
@@ -540,8 +540,8 @@ namespace R3
 
 		AssetFile::Blob& vertexBlob = bakedFile.m_blobs.emplace_back();
 		vertexBlob.m_name = "Vertices";
-		vertexBlob.m_data.resize(sizeof(MeshVertex) * modelData.m_vertices.size());
-		memcpy(vertexBlob.m_data.data(), modelData.m_vertices.data(), sizeof(MeshVertex) * modelData.m_vertices.size());
+		vertexBlob.m_data.resize(sizeof(ModelVertex) * modelData.m_vertices.size());
+		memcpy(vertexBlob.m_data.data(), modelData.m_vertices.data(), sizeof(ModelVertex) * modelData.m_vertices.size());
 
 		AssetFile::Blob& indexBlob = bakedFile.m_blobs.emplace_back();
 		indexBlob.m_name = "Indices";
@@ -550,8 +550,8 @@ namespace R3
 
 		AssetFile::Blob& meshesBlob = bakedFile.m_blobs.emplace_back();
 		meshesBlob.m_name = "Meshes";
-		meshesBlob.m_data.resize(sizeof(Mesh) * modelData.m_meshes.size());
-		memcpy(meshesBlob.m_data.data(), modelData.m_meshes.data(), sizeof(Mesh) * modelData.m_meshes.size());
+		meshesBlob.m_data.resize(sizeof(ModelPart) * modelData.m_parts.size());
+		memcpy(meshesBlob.m_data.data(), modelData.m_parts.data(), sizeof(ModelPart) * modelData.m_parts.size());
 
 		std::vector<BakedMaterial> bakedMaterials;
 		bakedMaterials.resize(modelData.m_materials.size());
@@ -582,43 +582,43 @@ namespace R3
 
 		// run meshoptimizer on each model part, rebuild the vb/ib for the entire model
 		std::vector<uint32_t> allMeshIndices;		// vb/ib for the entire model (with re-patched indices to reference one giant buffer)
-		std::vector<MeshVertex> allMeshVertices;
+		std::vector<ModelVertex> allMeshVertices;
 		float progress = 50.0f;
-		for (int part = 0; part < sourceModel.m_meshes.size(); ++part)
+		for (int part = 0; part < sourceModel.m_parts.size(); ++part)
 		{
 			std::vector<uint32_t> remapTable;
 			std::vector<uint32_t> newPartIndices;		// vb/ib for each part
-			std::vector<MeshVertex> newPartVertices;
-			auto sourceIndexCount = sourceModel.m_meshes[part].m_indexCount;
-			auto sourceVerticesCount = sourceModel.m_meshes[part].m_vertexCount;
-			auto sourceIndicesPtr = sourceModel.m_indices.data() + sourceModel.m_meshes[part].m_indexDataOffset;
-			auto sourceVerticesPtr = sourceModel.m_vertices.data() + sourceModel.m_meshes[part].m_vertexDataOffset;
+			std::vector<ModelVertex> newPartVertices;
+			auto sourceIndexCount = sourceModel.m_parts[part].m_indexCount;
+			auto sourceVerticesCount = sourceModel.m_parts[part].m_vertexCount;
+			auto sourceIndicesPtr = sourceModel.m_indices.data() + sourceModel.m_parts[part].m_indexDataOffset;
+			auto sourceVerticesPtr = sourceModel.m_vertices.data() + sourceModel.m_parts[part].m_vertexDataOffset;
 
 			// Part indices are relative to the entire vertex buffer. Remap them back to the 'local' vertex buffer
 			for (uint32_t i = 0; i < sourceIndexCount; ++i)
 			{
-				sourceModel.m_indices[i + sourceModel.m_meshes[part].m_indexDataOffset] -= sourceModel.m_meshes[part].m_vertexDataOffset;
-				assert(sourceModel.m_indices[i + sourceModel.m_meshes[part].m_indexDataOffset] < sourceVerticesCount);
+				sourceModel.m_indices[i + sourceModel.m_parts[part].m_indexDataOffset] -= sourceModel.m_parts[part].m_vertexDataOffset;
+				assert(sourceModel.m_indices[i + sourceModel.m_parts[part].m_indexDataOffset] < sourceVerticesCount);
 			}
 
 			// First build a remap table
 			remapTable.resize(sourceVerticesCount);
-			size_t newVertexCount = meshopt_generateVertexRemap(remapTable.data(), sourceIndicesPtr, sourceIndexCount, sourceVerticesPtr, sourceVerticesCount, sizeof(MeshVertex));
+			size_t newVertexCount = meshopt_generateVertexRemap(remapTable.data(), sourceIndicesPtr, sourceIndexCount, sourceVerticesPtr, sourceVerticesCount, sizeof(ModelVertex));
 
 			// Generate a new set of indices + vertices based on remap table
 			newPartIndices.resize(sourceIndexCount);
 			newPartVertices.resize(newVertexCount);
 			meshopt_remapIndexBuffer(newPartIndices.data(), sourceIndicesPtr, sourceIndexCount, remapTable.data());
-			meshopt_remapVertexBuffer(newPartVertices.data(), sourceVerticesPtr, sourceVerticesCount, sizeof(MeshVertex), remapTable.data());
+			meshopt_remapVertexBuffer(newPartVertices.data(), sourceVerticesPtr, sourceVerticesCount, sizeof(ModelVertex), remapTable.data());
 
 			// Optimise indices for vertex cache
 			meshopt_optimizeVertexCache(newPartIndices.data(), newPartIndices.data(), newPartIndices.size(), newPartVertices.size());
 
 			// Optimise indices for overdraw, sacrificing some amount of cache efficiency
-			meshopt_optimizeOverdraw(newPartIndices.data(), newPartIndices.data(), newPartIndices.size(), (const float*)newPartVertices.data(), newPartVertices.size(), sizeof(MeshVertex), settings.m_optimiseOverdrawThreshold);
+			meshopt_optimizeOverdraw(newPartIndices.data(), newPartIndices.data(), newPartIndices.size(), (const float*)newPartVertices.data(), newPartVertices.size(), sizeof(ModelVertex), settings.m_optimiseOverdrawThreshold);
 
 			// Re-order the vertices and indices for optimal vertex fetch
-			meshopt_optimizeVertexFetch(newPartVertices.data(), newPartIndices.data(), newPartIndices.size(), newPartVertices.data(), newPartVertices.size(), sizeof(MeshVertex));
+			meshopt_optimizeVertexFetch(newPartVertices.data(), newPartIndices.data(), newPartIndices.size(), newPartVertices.data(), newPartVertices.size(), sizeof(ModelVertex));
 
 			if (settings.m_simplifyModel)
 			{
@@ -632,9 +632,9 @@ namespace R3
 					newPartIndices.size(),
 					(const float*)newPartVertices.data(),
 					newPartVertices.size(),
-					sizeof(MeshVertex),
+					sizeof(ModelVertex),
 					&newPartVertices[0].m_positionU0[3],	// start at uv0
-					sizeof(MeshVertex),
+					sizeof(ModelVertex),
 					attribWeights,
 					5,										// uv0 + normal + uv1
 					nullptr,
@@ -651,8 +651,8 @@ namespace R3
 
 				// re-optimise indices
 				meshopt_optimizeVertexCache(newPartIndices.data(), newPartIndices.data(), newPartIndices.size(), newPartVertices.size());
-				meshopt_optimizeOverdraw(newPartIndices.data(), newPartIndices.data(), newPartIndices.size(), (const float*)newPartVertices.data(), newPartVertices.size(), sizeof(MeshVertex), settings.m_optimiseOverdrawThreshold);
-				meshopt_optimizeVertexFetch(newPartVertices.data(), newPartIndices.data(), newPartIndices.size(), newPartVertices.data(), newPartVertices.size(), sizeof(MeshVertex));
+				meshopt_optimizeOverdraw(newPartIndices.data(), newPartIndices.data(), newPartIndices.size(), (const float*)newPartVertices.data(), newPartVertices.size(), sizeof(ModelVertex), settings.m_optimiseOverdrawThreshold);
+				meshopt_optimizeVertexFetch(newPartVertices.data(), newPartIndices.data(), newPartIndices.size(), newPartVertices.data(), newPartVertices.size(), sizeof(ModelVertex));
 			}
 
 			// Patch the part data with the new vb/ib, append the data to the new mesh vb/ib
@@ -665,12 +665,12 @@ namespace R3
 			allMeshVertices.insert(allMeshVertices.end(), newPartVertices.begin(), newPartVertices.end());
 			allMeshIndices.insert(allMeshIndices.end(), newPartIndices.begin(), newPartIndices.end());
 
-			sourceModel.m_meshes[part].m_indexDataOffset = newMeshIbOffset;
-			sourceModel.m_meshes[part].m_vertexDataOffset = newMeshVbOffset;
-			sourceModel.m_meshes[part].m_indexCount = (uint32_t)newPartIndices.size();
-			sourceModel.m_meshes[part].m_vertexCount = (uint32_t)newVertexCount;
+			sourceModel.m_parts[part].m_indexDataOffset = newMeshIbOffset;
+			sourceModel.m_parts[part].m_vertexDataOffset = newMeshVbOffset;
+			sourceModel.m_parts[part].m_indexCount = (uint32_t)newPartIndices.size();
+			sourceModel.m_parts[part].m_vertexCount = (uint32_t)newVertexCount;
 
-			progress += 45.0f / (float)sourceModel.m_meshes.size();		// up to 95% progress
+			progress += 45.0f / (float)sourceModel.m_parts.size();		// up to 95% progress
 			progCb((int)progress);
 		}
 

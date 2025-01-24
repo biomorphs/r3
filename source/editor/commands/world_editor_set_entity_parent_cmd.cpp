@@ -23,7 +23,7 @@ namespace R3
 			m_oldParents[i] = m_window->GetWorld()->GetParent(m_children[i]);
 			m_window->GetWorld()->SetParent(m_children[i], m_newParent);
 		}
-		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
+		Systems::GetSystem<MeshRenderer>()->SetStaticsDirty();
 		return EditorCommand::Result::Succeeded;
 	}
 
@@ -34,7 +34,7 @@ namespace R3
 		{
 			m_window->GetWorld()->SetParent(m_children[i], m_oldParents[i]);
 		}
-		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
+		Systems::GetSystem<MeshRenderer>()->SetStaticsDirty();
 		return EditorCommand::Result::Succeeded;
 	}
 

@@ -20,7 +20,7 @@ namespace R3
 				transform->SetPositionWorldSpaceNoInterpolation(ent.m_entity, *m_window->GetWorld(), ent.m_oldPos);
 			}
 		}
-		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
+		Systems::GetSystem<MeshRenderer>()->SetStaticsDirty();
 		return EditorCommand::Result::Succeeded;
 	}
 
@@ -39,7 +39,7 @@ namespace R3
 				transform->SetPositionWorldSpaceNoInterpolation(ent.m_entity, *m_window->GetWorld(), ent.m_newPos);
 			}
 		}
-		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
+		Systems::GetSystem<MeshRenderer>()->SetStaticsDirty();
 		return EditorCommand::Result::Succeeded;
 	}
 }

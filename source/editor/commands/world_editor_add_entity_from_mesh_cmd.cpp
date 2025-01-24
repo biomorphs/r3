@@ -63,7 +63,7 @@ namespace R3
 				m_window->SelectEntity(m_createdEntity);
 				m_currentStatus = EditorCommand::Result::Succeeded;
 			}
-			Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
+			Systems::GetSystem<MeshRenderer>()->SetStaticsDirty();
 		}
 		
 		return m_currentStatus;
@@ -76,7 +76,7 @@ namespace R3
 		world->RemoveEntity(m_createdEntity, true);	// true = reserve the handle/slot in case we need to restore it
 		m_window->DeselectAll();
 		m_window->SelectEntities(m_oldSelection);
-		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
+		Systems::GetSystem<MeshRenderer>()->SetStaticsDirty();
 		return EditorCommand::Result::Succeeded;
 	}
 
