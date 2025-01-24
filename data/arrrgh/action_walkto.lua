@@ -34,6 +34,7 @@ function Dungeons_ActionWalkTo(action)
 				Dungeons_SpendActionPoint()	-- each node after the first costs an action point
 			end
 			action.currentTargetNode = action.currentTargetNode + 1
+			R3.RebuildStaticScene()	-- remove this when we add dynamic entities
 			if(action.currentTargetNode > action.walkNodeCount) then -- final goal reached
 				return 'complete'
 			end
@@ -48,6 +49,7 @@ function Dungeons_ActionWalkTo(action)
 			actorPos.z = actorPos.z + targetDir.z * tDelta
 			actorTransform:SetPosition(actorPos)
 			Dungeons_CameraLookAt(actorPos)
+			R3.RebuildStaticScene()	-- remove this when we add dynamic entities
 			return 'continue'
 		end
 	end

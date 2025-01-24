@@ -19,22 +19,6 @@ function RotatingCubes_GetSpawnPosition(blackboard)
 	return vec3.new(R3.RandomFloat(minX, maxX), R3.RandomFloat(minY, maxY), R3.RandomFloat(minZ, maxZ))
 end
 
-function RotateCubePls(e)
-	local world = R3.ActiveWorld()
-	if(world == nil) then 
-		print('No active world?')
-		return;
-	end
-	local myTransform = world.GetComponent_Transform(e)
-	if(myTransform == nil) then 
-		print('No transform?')
-		return;
-	end
-	local myRotation = myTransform:GetOrientation()
-	myRotation = R3.RotateQuat(myRotation, R3.GetFixedUpdateDelta() * math.pi, vec3.new(0,1,0))
-	myTransform:SetOrientation(myRotation)
-end
-
 function MakeACube(world, blackboard)
 	local newCube = world:AddEntity()
 	
@@ -56,7 +40,7 @@ function MakeManyRotatingCubes_FixedUpdate(e)
 	for i=1,count do
 		MakeACube(world, myScriptCmp.m_inputParams)
 	end
-	
+	R3.RebuildStaticScene()
 	if(myScriptCmp == nil) then 
 	 	print('No script cmp?!')
 	 	return

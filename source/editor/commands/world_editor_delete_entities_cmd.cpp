@@ -1,5 +1,6 @@
 #include "world_editor_delete_entities_cmd.h"
 #include "editor/world_editor_window.h"
+#include "engine/systems/static_mesh_renderer.h"
 #include "core/profiler.h"
 #include "entities/world.h"
 
@@ -22,6 +23,7 @@ namespace R3
 		{
 			world->RemoveEntity(m_deletedEntities[i], true);	// true = reserve this handle/slot for later
 		}
+		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
 		return Result::Succeeded;
 	}
 
@@ -37,7 +39,7 @@ namespace R3
 		}
 		world->SerialiseEntities(json, m_deletedEntities);	// this will restore the old handles (or fail!)
 		m_window->SelectEntities(m_deletedEntities);
-
+		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
 		return Result::Succeeded;
 	}
 	EditorCommand::Result WorldEditorDeleteEntitiesCmd::Redo()

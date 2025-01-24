@@ -23,6 +23,7 @@ namespace R3
 	{
 	public:
 		virtual ~ValueInspector() {}
+		virtual void SetModified() = 0;	// generic trigger used to inform inspector that something changed. useful for custom UI that doesn't go through normal Inspect functions
 		virtual bool Inspect(std::string label, bool currentValue, std::function<void(bool)> setFn) = 0;
 		virtual bool Inspect(std::string label, Tag currentValue, std::function<void(Tag)> newVal) = 0;
 		virtual bool Inspect(std::string_view label, std::string_view currentValue, std::function<void(std::string)> newValue) = 0;

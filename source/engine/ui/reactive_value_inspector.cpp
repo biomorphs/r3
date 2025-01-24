@@ -10,6 +10,11 @@ namespace R3
 		m_onChanged = fn;
 	}
 
+	void ReactiveValueInspector::SetModified()
+	{
+		m_onChanged();
+	}
+
 	bool ReactiveValueInspector::Inspect(std::string label, bool currentValue, std::function<void(bool)> setFn)
 	{
 		bool modified = m_child->Inspect(label, currentValue, setFn);

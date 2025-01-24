@@ -1,18 +1,15 @@
 #include "static_mesh.h"
 #include "engine/systems/lua_system.h"
-#include "engine/systems/static_mesh_renderer.h"
 #include "engine/ui/file_dialogs.h"
 
 namespace R3
 {
 	StaticMeshComponent::StaticMeshComponent()
 	{
-		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
 	}
 
 	StaticMeshComponent::~StaticMeshComponent()
 	{
-		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
 	}
 
 	void StaticMeshComponent::RegisterScripts(LuaSystem& l)
@@ -47,25 +44,21 @@ namespace R3
 	void StaticMeshComponent::SetModelHandle(ModelDataHandle h)
 	{
 		m_modelHandle = h;
-		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
 	}
 
 	void StaticMeshComponent::SetShouldDraw(bool draw)
 	{
 		m_shouldDraw = draw;
-		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
 	}
 
 	void StaticMeshComponent::SetMaterialOverride(Entities::EntityHandle m) 
 	{ 
 		m_materialOverride = m; 
-		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
 	}
 
 	void StaticMeshComponent::SetModelFromPath(std::string_view path)
 	{
 		auto modelSys = Systems::GetSystem<ModelDataSystem>();
 		m_modelHandle = modelSys->LoadModel(path.data());
-		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
 	}
 }

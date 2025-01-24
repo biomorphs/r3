@@ -1,5 +1,6 @@
 #include "world_editor_import_scene_cmd.h"
 #include "editor/world_editor_window.h"
+#include "engine/systems/static_mesh_renderer.h"
 #include "core/profiler.h"
 #include "entities/world.h"
 
@@ -29,6 +30,7 @@ namespace R3
 				world->SetParent(it, newRoot);
 			}
 		}
+		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
 		return Result::Succeeded;
 	}
 
@@ -45,6 +47,7 @@ namespace R3
 		{
 			m_window->SelectEntity(it);
 		}
+		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
 		return Result::Succeeded;
 	}
 

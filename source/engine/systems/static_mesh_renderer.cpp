@@ -10,6 +10,7 @@
 #include "engine/components/transform.h"
 #include "engine/components/static_mesh.h"
 #include "engine/components/static_mesh_materials.h"
+#include "engine/systems/lua_system.h"
 #include "entities/systems/entity_system.h"
 #include "entities/world.h"
 #include "entities/queries.h"
@@ -24,19 +25,23 @@
 
 // What should trigger static scene rebuilds?
 // Automated
-//	Add/removal of static mesh component - done
-//	Modification of static mesh component - done
+//  Modification of static mesh component via inspector hook
 //  Static mesh material repopulate - done
-//  Static mesh material modifications - done
+//  Static mesh material modifications - done via inspector
 //	Model data loading - done 
 //  Setting active world - done
+//	Editor changes
+//		Transform modifications - done
+//		Delete component - done
+//		Add entity from mesh - done
+//		Clone entities - done
+//		Delete entities - done
+//		Import scene - done
+//		Entity parent modifications  - done
 
 // Manual
-//	Scripted trigger
-//	Editor changes
-//		Transform modifications
-//		Entity parent modifications
-//			Can/should we automate these too???
+// Add/removal/modification of static mesh component + materials outside of editor context
+// Add Scripted trigger
 
 namespace R3
 {
@@ -85,6 +90,12 @@ namespace R3
 		m_onModelDataLoadedCbToken = GetSystem<StaticMeshSystem>()->RegisterModelReadyCallback([this](const ModelDataHandle& handle) {
 			OnModelReady(handle);
 		});
+
+		// Register static scene rebuild script hook
+		GetSystem<LuaSystem>()->RegisterFunction("RebuildStaticScene", [this]() {
+			SetStaticsDirty();
+		});
+
 		return true;
 	}
 

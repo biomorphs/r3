@@ -87,11 +87,10 @@ namespace R3
 			m_cmds->Push(std::move(newCmd));
 		};
 
-		// Handle modification of anything owning a static mesh component
+		// Handle modification of anything owning a static mesh component by rebuilding static scene (todo, refactor inspectors to make this cleaner)
 		m_inspectEntityWidget->m_onInspectEntity = [this](const Entities::EntityHandle& h, Entities::World& w) {
 			m_isInspectingEntityWithStaticMesh = w.GetComponent<StaticMeshComponent>(h);
 		};
-
 		m_cmds = std::make_unique<EditorCommandList>();
 		m_valueInspector = std::make_unique<ReactiveValueInspector>(std::make_unique<UndoRedoInspector>(*m_cmds));
 		static_cast<ReactiveValueInspector*>(m_valueInspector.get())->SetOnValueChange([this]() {

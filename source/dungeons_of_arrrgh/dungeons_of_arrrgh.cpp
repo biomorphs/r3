@@ -13,6 +13,7 @@
 #include "consumable_item_component.h"
 #include "item_stats_component.h"
 #include "engine/systems/immediate_render_system.h"
+#include "engine/systems/static_mesh_renderer.h"
 #include "engine/systems/lua_system.h"
 #include "engine/systems/input_system.h"
 #include "engine/systems/camera_system.h"
@@ -300,6 +301,7 @@ void DungeonsOfArrrgh::SetVisualEntitiesVisible(const DungeonsWorldGridComponent
 			}
 		}
 	}
+	GetSystem<R3::StaticMeshRenderer>()->SetStaticsDirty();
 }
 
 void DungeonsOfArrrgh::UpdateVision(DungeonsWorldGridComponent& grid, R3::Entities::World& w)
@@ -344,6 +346,7 @@ void DungeonsOfArrrgh::MoveEntitiesWorldspace(const std::vector<R3::Entities::En
 			}
 		}		
 	}
+	GetSystem<R3::StaticMeshRenderer>()->SetStaticsDirty();
 }
 
 // rules match tags against neighbouring tiles
@@ -623,6 +626,7 @@ void DungeonsOfArrrgh::GenerateWorldVisuals(const R3::Entities::EntityHandle& e,
 		}
 	}
 	m_generateVisualsEntityCache.clear();
+	GetSystem<R3::StaticMeshRenderer>()->SetStaticsDirty();
 }
 
 void DungeonsOfArrrgh::OnWorldGridDirty(const R3::Entities::EntityHandle& e, class DungeonsWorldGridComponent& grid)

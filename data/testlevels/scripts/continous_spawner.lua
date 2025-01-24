@@ -37,5 +37,6 @@ function Spawner_FixedUpdate(e)
 		for i=1,spawnCount do 
 			Spawner_DoSpawn(world, scriptCmp)
 		end
+		R3.RebuildStaticScene()
 	end
 end

@@ -31,5 +31,6 @@ function Multiballs_Main(e)
 			Multiballs_SpawnBall(e, matEntities[matIndex])
 		end
 	end
+	R3.RebuildStaticScene()
 	Multiballs.m_ranFirstFrame = true
 end

@@ -21,6 +21,7 @@ namespace R3
 		using OnValueChangedFn = std::function<void()>;
 		void SetOnValueChange(OnValueChangedFn fn);
 
+		virtual void SetModified();
 		virtual bool Inspect(std::string label, bool currentValue, std::function<void(bool)> setFn);
 		virtual bool Inspect(std::string label, Tag currentValue, std::function<void(Tag)> newVal);
 		virtual bool Inspect(std::string_view label, std::string_view currentValue, std::function<void(std::string)> newValue);

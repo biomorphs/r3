@@ -92,6 +92,7 @@ function Dungeons_OnActorDeath(world, entity)
 		world:RemoveEntity(allChildren[c], false)
 	end
 	world:RemoveEntity(entity, false)
+	R3.RebuildStaticScene()	-- temp, remove when we add dynamic meshes
 end
 
 function Dungeons_HealActor(world, entity, hp)

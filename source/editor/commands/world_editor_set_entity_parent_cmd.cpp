@@ -1,6 +1,7 @@
 #include "world_editor_set_entity_parent_cmd.h"
 #include "editor/world_editor_window.h"
 #include "entities/world.h"
+#include "engine/systems/static_mesh_renderer.h"
 #include "core/profiler.h"
 
 namespace R3
@@ -22,6 +23,7 @@ namespace R3
 			m_oldParents[i] = m_window->GetWorld()->GetParent(m_children[i]);
 			m_window->GetWorld()->SetParent(m_children[i], m_newParent);
 		}
+		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
 		return EditorCommand::Result::Succeeded;
 	}
 
@@ -32,6 +34,7 @@ namespace R3
 		{
 			m_window->GetWorld()->SetParent(m_children[i], m_oldParents[i]);
 		}
+		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
 		return EditorCommand::Result::Succeeded;
 	}
 
