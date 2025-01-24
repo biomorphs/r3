@@ -75,8 +75,8 @@ set(EngineLib_SourceFiles
 	systems/model_data_system.cpp
 	systems/static_mesh_system.h
 	systems/static_mesh_system.cpp
-	systems/static_mesh_renderer.h
-	systems/static_mesh_renderer.cpp
+	systems/mesh_renderer.h
+	systems/mesh_renderer.cpp
 	systems/lights_system.h
 	systems/lights_system.cpp
 	systems/lua_system.h

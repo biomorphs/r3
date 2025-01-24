@@ -1,6 +1,6 @@
 #include "world_editor_delete_entities_cmd.h"
 #include "editor/world_editor_window.h"
-#include "engine/systems/static_mesh_renderer.h"
+#include "engine/systems/mesh_renderer.h"
 #include "core/profiler.h"
 #include "entities/world.h"
 

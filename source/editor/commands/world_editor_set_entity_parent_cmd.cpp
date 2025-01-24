@@ -1,7 +1,7 @@
 #include "world_editor_set_entity_parent_cmd.h"
 #include "editor/world_editor_window.h"
 #include "entities/world.h"
-#include "engine/systems/static_mesh_renderer.h"
+#include "engine/systems/mesh_renderer.h"
 #include "core/profiler.h"
 
 namespace R3

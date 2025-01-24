@@ -1,6 +1,6 @@
 #include "static_mesh_instance_culling_compute.h"
-#include "engine/systems/static_mesh_renderer.h"
 #include "engine/systems/static_mesh_system.h"
+#include "engine/systems/mesh_renderer.h"
 #include "engine/utils/frustum.h"
 #include "render/device.h"
 #include "core/profiler.h"

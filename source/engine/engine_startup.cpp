@@ -10,7 +10,7 @@
 #include "systems/model_data_system.h"
 #include "systems/texture_system.h"
 #include "systems/static_mesh_system.h"
-#include "systems/static_mesh_renderer.h"
+#include "systems/mesh_renderer.h"
 #include "systems/lights_system.h"
 #include "systems/job_system.h"
 #include "systems/lua_system.h"

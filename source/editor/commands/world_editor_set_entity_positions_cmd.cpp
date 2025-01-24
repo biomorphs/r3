@@ -1,7 +1,7 @@
 #include "world_editor_set_entity_positions_cmd.h"
 #include "editor/world_editor_window.h"
 #include "engine/components/transform.h"
-#include "engine/systems/static_mesh_renderer.h"
+#include "engine/systems/mesh_renderer.h"
 
 namespace R3
 {

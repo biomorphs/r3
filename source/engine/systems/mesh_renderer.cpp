@@ -1,4 +1,4 @@
-#include "static_mesh_renderer.h"
+#include "mesh_renderer.h"
 #include "static_mesh_system.h"
 #include "camera_system.h"
 #include "lights_system.h"

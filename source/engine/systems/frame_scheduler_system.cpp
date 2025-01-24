@@ -3,7 +3,7 @@
 #include "imgui_system.h"
 #include "lights_system.h"
 #include "static_mesh_system.h"
-#include "static_mesh_renderer.h"
+#include "mesh_renderer.h"
 #include "texture_system.h"
 #include "engine/graphics/tonemap_compute.h"
 #include "engine/graphics/deferred_lighting_compute.h"

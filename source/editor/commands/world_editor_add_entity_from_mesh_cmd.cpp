@@ -1,7 +1,7 @@
 #include "world_editor_add_entity_from_mesh_cmd.h"
 #include "editor/world_editor_window.h"
 #include "entities/world.h"
-#include "engine/systems/static_mesh_renderer.h"
+#include "engine/systems/mesh_renderer.h"
 #include "core/profiler.h"
 #include "engine/components/transform.h"
 #include "engine/components/static_mesh.h"

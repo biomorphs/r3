@@ -28,7 +28,7 @@
 #include "engine/systems/model_data_system.h"
 #include "engine/systems/imgui_system.h"
 #include "engine/systems/input_system.h"
-#include "engine/systems/static_mesh_renderer.h"
+#include "engine/systems/mesh_renderer.h"
 #include "engine/components/transform.h"
 #include "engine/components/static_mesh.h"
 #include "engine/components/point_light.h"

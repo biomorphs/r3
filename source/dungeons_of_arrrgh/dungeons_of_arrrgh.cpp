@@ -13,7 +13,7 @@
 #include "consumable_item_component.h"
 #include "item_stats_component.h"
 #include "engine/systems/immediate_render_system.h"
-#include "engine/systems/static_mesh_renderer.h"
+#include "engine/systems/mesh_renderer.h"
 #include "engine/systems/lua_system.h"
 #include "engine/systems/input_system.h"
 #include "engine/systems/camera_system.h"
