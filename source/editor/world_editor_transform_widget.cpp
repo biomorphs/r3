@@ -6,6 +6,7 @@
 #include "engine/systems/camera_system.h"
 #include "engine/components/transform.h"
 #include "engine/systems/input_system.h"
+#include "engine/systems/static_mesh_renderer.h"
 #include "engine/utils/intersection_tests.h"
 #include "engine/systems/immediate_render_system.h"
 
@@ -61,9 +62,10 @@ namespace R3
 			auto transformCmp = world->GetComponent<TransformComponent>(it.m_entity);
 			if (transformCmp)
 			{
-				transformCmp->SetPositionWorldSpace(it.m_entity, *world, it.m_originalPosition);
+				transformCmp->SetPositionWorldSpaceNoInterpolation(it.m_entity, *world, it.m_originalPosition);
 			}
 		}
+		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
 	}
 
 	void WorldEditorTransformWidget::CommitTranslation(glm::vec3 translation)
@@ -203,9 +205,10 @@ namespace R3
 							if (transformCmp)
 							{
 								glm::vec3 newPos = it.m_originalPosition + translation;
-								transformCmp->SetPositionWorldSpace(it.m_entity, *world, newPos);
+								transformCmp->SetPositionWorldSpaceNoInterpolation(it.m_entity, *world, newPos);
 							}
 						}
+						Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
 					}
 					else    // just let go of mouse
 					{

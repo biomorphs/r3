@@ -23,6 +23,7 @@
 #include "engine/ui/entity_inspector_widget.h"
 #include "engine/ui/imgui_menubar_helper.h"
 #include "engine/ui/file_dialogs.h"
+#include "engine/ui/reactive_value_inspector.h"
 #include "engine/systems/lua_system.h"
 #include "engine/systems/model_data_system.h"
 #include "engine/systems/imgui_system.h"
@@ -32,6 +33,7 @@
 #include "engine/components/static_mesh.h"
 #include "engine/components/point_light.h"
 #include "entities/systems/entity_system.h"
+#include "entities/component_type_registry.h"
 #include "render/render_system.h"
 #include "core/file_io.h"
 #include "imgui.h"
@@ -46,6 +48,7 @@ namespace R3
 		, m_filePath(filePath)
 	{
 		R3_PROF_EVENT();
+
 		m_allEntitiesWidget = std::make_unique<EntityListWidget>();
 		m_allEntitiesWidget->m_options.m_canExpandEntities = false;
 		m_allEntitiesWidget->m_options.m_showInternalIndex = false;
@@ -73,7 +76,7 @@ namespace R3
 			deleteCmd->m_targetEntities.push_back(h);
 			deleteCmd->m_componentType = typeName;
 			m_cmds->Push(std::move(deleteCmd));
-			};
+		};
 		m_inspectEntityWidget->m_onSetEntityName = [this](const Entities::EntityHandle& h, std::string_view oldName, std::string_view newName)
 		{
 			auto setNameFn = [this, h](std::string n) {
@@ -84,8 +87,19 @@ namespace R3
 			m_cmds->Push(std::move(newCmd));
 		};
 
+		// Handle modification of anything owning a static mesh component
+		m_inspectEntityWidget->m_onInspectEntity = [this](const Entities::EntityHandle& h, Entities::World& w) {
+			m_isInspectingEntityWithStaticMesh = w.GetComponent<StaticMeshComponent>(h);
+		};
+
 		m_cmds = std::make_unique<EditorCommandList>();
-		m_valueInspector = std::make_unique<UndoRedoInspector>(*m_cmds);
+		m_valueInspector = std::make_unique<ReactiveValueInspector>(std::make_unique<UndoRedoInspector>(*m_cmds));
+		static_cast<ReactiveValueInspector*>(m_valueInspector.get())->SetOnValueChange([this]() {
+			if (m_isInspectingEntityWithStaticMesh)
+			{
+				Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
+			}
+		});
 
 		CreateTools();
 

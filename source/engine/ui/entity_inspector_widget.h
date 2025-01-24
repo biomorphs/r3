@@ -20,9 +20,11 @@ namespace R3
 		using OnAddComponent = std::function<void(const Entities::EntityHandle& h, std::string_view typeName)>;
 		using OnRemoveComponent = std::function<void(const Entities::EntityHandle& h, std::string_view typeName)>;
 		using OnSetEntityName = std::function<void(const Entities::EntityHandle& h, std::string_view old, std::string_view newName)>;
+		using OnInspectEntity = std::function<void(const Entities::EntityHandle& h, Entities::World& w)>;
 		OnAddComponent m_onAddComponent;
 		OnRemoveComponent m_onRemoveComponent;
 		OnSetEntityName m_onSetEntityName;
+		OnInspectEntity m_onInspectEntity;	// called whenever am entity is about to be inspected
 	private:
 		bool ShowEntityHeader(const Entities::EntityHandle& h, Entities::World& w);
 		void UpdateEntityContextMenu(const Entities::EntityHandle& h, Entities::World& w);

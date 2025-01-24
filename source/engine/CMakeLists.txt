@@ -22,6 +22,8 @@ set(EngineLib_SourceFiles
 	ui/imgui_menubar_helper.h
 	ui/imgui_menubar_helper.cpp
 	ui/value_inspector.h
+	ui/reactive_value_inspector.h
+	ui/reactive_value_inspector.cpp
 	ui/entity_inspector_widget.h
 	ui/entity_inspector_widget.cpp
 	ui/basic_value_inspector.h

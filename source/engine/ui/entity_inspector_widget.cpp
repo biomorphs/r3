@@ -66,6 +66,10 @@ namespace R3
 		{
 			if (ShowEntityHeader(h, w))
 			{
+				if (m_onInspectEntity)
+				{
+					m_onInspectEntity(h, w);
+				}
 				Entities::ComponentTypeRegistry& cti = Entities::ComponentTypeRegistry::GetInstance();
 				for (int cmpTypeIndex = 0; cmpTypeIndex < cti.AllTypes().size(); ++cmpTypeIndex)
 				{

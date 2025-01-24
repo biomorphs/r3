@@ -1,6 +1,7 @@
 #include "world_editor_set_entity_positions_cmd.h"
 #include "editor/world_editor_window.h"
 #include "engine/components/transform.h"
+#include "engine/systems/static_mesh_renderer.h"
 
 namespace R3
 {
@@ -16,9 +17,10 @@ namespace R3
 			auto transform = m_window->GetWorld()->GetComponent<TransformComponent>(ent.m_entity);
 			if (transform)
 			{
-				transform->SetPositionWorldSpace(ent.m_entity, *m_window->GetWorld(), ent.m_oldPos);
+				transform->SetPositionWorldSpaceNoInterpolation(ent.m_entity, *m_window->GetWorld(), ent.m_oldPos);
 			}
 		}
+		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
 		return EditorCommand::Result::Succeeded;
 	}
 
@@ -34,9 +36,10 @@ namespace R3
 			auto transform = m_window->GetWorld()->GetComponent<TransformComponent>(ent.m_entity);
 			if (transform)
 			{
-				transform->SetPositionWorldSpace(ent.m_entity, *m_window->GetWorld(), ent.m_newPos);
+				transform->SetPositionWorldSpaceNoInterpolation(ent.m_entity, *m_window->GetWorld(), ent.m_newPos);
 			}
 		}
+		Systems::GetSystem<StaticMeshRenderer>()->SetStaticsDirty();
 		return EditorCommand::Result::Succeeded;
 	}
 }

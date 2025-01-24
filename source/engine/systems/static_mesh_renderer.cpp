@@ -537,7 +537,7 @@ namespace R3
 					VkDeviceAddress materialBaseAddress = lastMatOverrideGpuIndex == -1 ?
 						staticMeshes->GetMaterialsDeviceAddress() + (currentMeshData.m_materialGpuIndex * sizeof(StaticMeshMaterial)) :
 						m_staticMaterialOverrides.GetBufferDeviceAddress() + (lastMatOverrideGpuIndex * sizeof(StaticMeshMaterial));
-					const glm::mat4 instanceTransform = t.GetWorldspaceInterpolated(e, *activeWorld);
+					const glm::mat4 instanceTransform = t.GetWorldspaceMatrix(e, *activeWorld);		// don't use interpolation with static meshes!
 					for (uint32_t part = 0; part < currentMeshData.m_meshPartCount; ++part)
 					{
 						const StaticMeshPart* currentPart = staticMeshes->GetMeshPart(currentMeshData.m_firstMeshPartOffset + part);
