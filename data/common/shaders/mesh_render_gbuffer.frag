@@ -1,7 +1,7 @@
 #version 450
 #extension GL_EXT_buffer_reference : require
 
-#include "static_mesh_shared.h"
+#include "mesh_render_shared.h"
 #include "utils.h"
 
 layout(location = 0) in vec3 inWorldSpacePos;

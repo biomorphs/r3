@@ -185,8 +185,8 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		std::string basePath = "shaders_spirv\\common\\";	// Load the shaders
-		auto vertexShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), basePath + "static_mesh.vert.spv");
-		auto fragShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), basePath + "static_mesh_gbuffer.frag.spv");
+		auto vertexShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), basePath + "mesh_render.vert.spv");
+		auto fragShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), basePath + "mesh_render_gbuffer.frag.spv");
 		if (vertexShader == VK_NULL_HANDLE || fragShader == VK_NULL_HANDLE)
 		{
 			LogError("Failed to create shader modules");
@@ -247,8 +247,8 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		std::string basePath = "shaders_spirv\\common\\";	// Load the shaders
-		auto vertexShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), basePath + "static_mesh.vert.spv");
-		auto fragShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), basePath + "static_mesh_forward.frag.spv");
+		auto vertexShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), basePath + "mesh_render.vert.spv");
+		auto fragShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), basePath + "mesh_render_forward.frag.spv");
 		if (vertexShader == VK_NULL_HANDLE || fragShader == VK_NULL_HANDLE)
 		{
 			LogError("Failed to create shader modules");

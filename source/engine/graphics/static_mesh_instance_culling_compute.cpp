@@ -210,7 +210,7 @@ namespace R3
 			return false;
 		}
 
-		auto computeShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), "shaders_spirv/common/static_mesh_prep_and_cull_instances_compute.comp.spv");
+		auto computeShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), "shaders_spirv/common/mesh_prep_and_cull_instances_compute.comp.spv");
 		if (computeShader == VK_NULL_HANDLE)
 		{
 			LogError("Failed to load culling shader");
