@@ -35,7 +35,7 @@ namespace R3
 			uint64_t m_frameReleased = -1;
 		};
 		std::vector<ReleasedBuffer> m_releasedBuffers;
-		const uint64_t c_framesBeforeAvailable = 4;
+		const uint64_t c_framesBeforeAvailable = 3;
 		uint64_t m_totalBudget = 0;
 		std::string m_debugName;
 	};
