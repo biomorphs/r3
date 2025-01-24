@@ -6,8 +6,8 @@
 // 1 bucket part instance per draw call
 struct BucketPartInstance 
 {
-	uint m_partInstanceIndex;		// index into AllInstancesBuffer
-	uint m_partGlobalIndex;			// index into AllStaticMeshPartsBuffer
+	uint m_partInstanceIndex;		// index into InstancesBuffer
+	uint m_partGlobalIndex;			// index into MeshPartsBuffer
 };
 
 // frustums passed as 6 world-space planes
@@ -26,36 +26,36 @@ struct DrawIndirectEntry
     uint m_firstInstance;
 };
 
-layout(buffer_reference, std430) readonly buffer AllBucketInstancesBuffer
+layout(buffer_reference, std430) readonly buffer BucketInstancesBuffer
 {
-	BucketPartInstance allBucketInstances[];
+	BucketPartInstance data[];
 };
 
-layout(buffer_reference, std430) readonly buffer AllFrustumsBuffer
+layout(buffer_reference, std430) readonly buffer FrustumsBuffer
 {
-	Frustum allFrustums[];
+	Frustum data[];
 };
 
-layout(buffer_reference, std430) writeonly buffer AllDrawIndirectsBuffer
+layout(buffer_reference, std430) writeonly buffer DrawIndirectsBuffer
 {
-	DrawIndirectEntry allDrawIndirects[];
+	DrawIndirectEntry data[];
 };
 
 // describes all buffers/data required to run a culling task
 struct CullingTaskInfo 
 {
-	AllDrawIndirectsBuffer m_drawIndirects;			// offset into allocated space already, write from index 0 to m_bucketPartInstanceCount
-	AllFrustumsBuffer m_frustums;					// offset into buffer already, only read allFrustums[0]
-	AllBucketInstancesBuffer m_bucketInstances;		// already offset into the bucket instances, read from index 0 to m_bucketPartInstanceCount
-	AllStaticMeshPartsBuffer m_allMeshParts;		// base address
-	AllInstancesBuffer m_allPerDrawInstances;		// base address
+	DrawIndirectsBuffer m_drawIndirects;			// offset into allocated space already, write from index 0 to m_bucketPartInstanceCount
+	FrustumsBuffer m_frustums;					// offset into buffer already, only read allFrustums[0]
+	BucketInstancesBuffer m_bucketInstances;		// already offset into the bucket instances, read from index 0 to m_bucketPartInstanceCount
+	MeshPartsBuffer m_allMeshParts;				// base address
+	InstancesBuffer m_allPerDrawInstances;		// base address
 	uint m_bucketPartInstanceCount;		// num draw indirects to generate
 };
 
-// address sent via push constant, only use info[0]
-layout(buffer_reference, std430) readonly buffer AllCullingTaskInfoBuffer
+// address sent via push constant, only use data[0]
+layout(buffer_reference, std430) readonly buffer CullingTaskInfoBuffer
 {
-	CullingTaskInfo info[];
+	CullingTaskInfo data[];
 };
 
 layout (local_size_x = 64) in;
@@ -63,7 +63,7 @@ layout (local_size_x = 64) in;
 // frustum and instance buffers sent via push
 layout(push_constant) uniform constants
 {
-	AllCullingTaskInfoBuffer m_thisTaskInfo;
+	CullingTaskInfoBuffer m_thisTaskInfo;
 } PushConstants;
 
 // same as CPU implementation
@@ -101,20 +101,20 @@ bool IsBoxVisible(vec4 oobbMin, vec4 oobbMax, mat4 transform, Frustum frustum)
 
 void main() 
 {
-	CullingTaskInfo taskInfo = PushConstants.m_thisTaskInfo.info[0];
+	CullingTaskInfo taskInfo = PushConstants.m_thisTaskInfo.data[0];
 	if(gl_GlobalInvocationID.x < taskInfo.m_bucketPartInstanceCount)
 	{
-		BucketPartInstance thisBucketInstance = taskInfo.m_bucketInstances.allBucketInstances[gl_GlobalInvocationID.x];
-		StaticMeshPart thisMeshPart = taskInfo.m_allMeshParts.parts[thisBucketInstance.m_partGlobalIndex];
-		PerInstanceData thisInstance = taskInfo.m_allPerDrawInstances.AllInstances[thisBucketInstance.m_partInstanceIndex];
+		BucketPartInstance thisBucketInstance = taskInfo.m_bucketInstances.data[gl_GlobalInvocationID.x];
+		MeshPart thisMeshPart = taskInfo.m_allMeshParts.data[thisBucketInstance.m_partGlobalIndex];
+		MeshInstanceData thisInstance = taskInfo.m_allPerDrawInstances.data[thisBucketInstance.m_partInstanceIndex];
 		
 		// Populate the draw indirect from the mesh part data
-		bool isVisible = IsBoxVisible(thisMeshPart.m_boundsMin, thisMeshPart.m_boundsMax, thisInstance.m_transform, taskInfo.m_frustums.allFrustums[0]);
+		bool isVisible = IsBoxVisible(thisMeshPart.m_boundsMin, thisMeshPart.m_boundsMax, thisInstance.m_transform, taskInfo.m_frustums.data[0]);
 		
-		taskInfo.m_drawIndirects.allDrawIndirects[gl_GlobalInvocationID.x].m_indexCount = thisMeshPart.m_indexCount;
-		taskInfo.m_drawIndirects.allDrawIndirects[gl_GlobalInvocationID.x].m_instanceCount = isVisible ? 1 : 0;
-		taskInfo.m_drawIndirects.allDrawIndirects[gl_GlobalInvocationID.x].m_firstIndex = thisMeshPart.m_indexStartOffset;
-		taskInfo.m_drawIndirects.allDrawIndirects[gl_GlobalInvocationID.x].m_vertexOffset = thisMeshPart.m_vertexDataOffset;
-		taskInfo.m_drawIndirects.allDrawIndirects[gl_GlobalInvocationID.x].m_firstInstance = thisBucketInstance.m_partInstanceIndex;
+		taskInfo.m_drawIndirects.data[gl_GlobalInvocationID.x].m_indexCount = thisMeshPart.m_indexCount;
+		taskInfo.m_drawIndirects.data[gl_GlobalInvocationID.x].m_instanceCount = isVisible ? 1 : 0;
+		taskInfo.m_drawIndirects.data[gl_GlobalInvocationID.x].m_firstIndex = thisMeshPart.m_indexStartOffset;
+		taskInfo.m_drawIndirects.data[gl_GlobalInvocationID.x].m_vertexOffset = thisMeshPart.m_vertexDataOffset;
+		taskInfo.m_drawIndirects.data[gl_GlobalInvocationID.x].m_firstInstance = thisBucketInstance.m_partInstanceIndex;
 	}
 }

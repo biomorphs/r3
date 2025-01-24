@@ -31,7 +31,7 @@ vec3 GetWorldspaceNormal(vec3 worldSpaceNormal, uint normalMapTexture, mat3 tbn,
 	vec3 normal = normalize(worldSpaceNormal);
 	if(normalMapTexture != -1)	// normal mapping
 	{
-		normal.xy = texture(allTextures[normalMapTexture],texCoords).xy;
+		normal.xy = texture(AllTextures[normalMapTexture],texCoords).xy;
 		normal.xy = normal.xy * 2.0 - 1.0;		// convert to -1,1
 		normal.z = sqrt(1.0 - (normal.x*normal.x) - (normal.y*normal.y));	// infer 3rd channel from x,y
 		normal = normalize(tbn * normal);
@@ -41,7 +41,7 @@ vec3 GetWorldspaceNormal(vec3 worldSpaceNormal, uint normalMapTexture, mat3 tbn,
 
 vec2 ParallaxMappingBasic(uint heightTexId, vec2 texCoords, vec3 viewDir, float paralaxAmount)
 { 
-    float height =  1.0 - texture(allTextures[heightTexId],texCoords).r;
+    float height =  1.0 - texture(AllTextures[heightTexId],texCoords).r;
     vec2 p = viewDir.xy / viewDir.z * (height * paralaxAmount);
     return texCoords - p;    
 } 
@@ -59,14 +59,14 @@ vec2 ParallaxMappingSteep(uint heightTexId, vec2 texCoords, vec3 viewDir, float 
     vec2 deltaTexCoords = P / numLayers;
 	// get initial values
 	vec2  currentTexCoords     = texCoords;
-	float currentDepthMapValue =  1.0 - texture(allTextures[heightTexId],currentTexCoords).r;
+	float currentDepthMapValue =  1.0 - texture(AllTextures[heightTexId],currentTexCoords).r;
 	
 	while(currentLayerDepth < currentDepthMapValue)
 	{
 		// shift texture coordinates along direction of P
 		currentTexCoords -= deltaTexCoords;
 		// get depthmap value at current texture coordinates
-		currentDepthMapValue = 1.0 - texture(allTextures[heightTexId],currentTexCoords).r;
+		currentDepthMapValue = 1.0 - texture(AllTextures[heightTexId],currentTexCoords).r;
 		// get depth of next layer
 		currentLayerDepth += layerDepth;  
 	}
@@ -87,14 +87,14 @@ vec2 ParallaxOcclusionMapping(uint heightTexId, vec2 texCoords, vec3 viewDir, fl
     vec2 deltaTexCoords = P / numLayers;
 	// get initial values
 	vec2  currentTexCoords     = texCoords;
-	float currentDepthMapValue =  1.0 - texture(allTextures[heightTexId],currentTexCoords).r;
+	float currentDepthMapValue =  1.0 - texture(AllTextures[heightTexId],currentTexCoords).r;
 	
 	while(currentLayerDepth < currentDepthMapValue)
 	{
 		// shift texture coordinates along direction of P
 		currentTexCoords -= deltaTexCoords;
 		// get depthmap value at current texture coordinates
-		currentDepthMapValue = 1.0 - texture(allTextures[heightTexId],currentTexCoords).r;
+		currentDepthMapValue = 1.0 - texture(AllTextures[heightTexId],currentTexCoords).r;
 		// get depth of next layer
 		currentLayerDepth += layerDepth;  
 	}
@@ -104,7 +104,7 @@ vec2 ParallaxOcclusionMapping(uint heightTexId, vec2 texCoords, vec3 viewDir, fl
 
 	// get depth after and before collision for linear interpolation
 	float afterDepth  = currentDepthMapValue - currentLayerDepth;
-	float beforeDepth = 1.0 - texture(allTextures[heightTexId], prevTexCoords).r - currentLayerDepth + layerDepth;
+	float beforeDepth = 1.0 - texture(AllTextures[heightTexId], prevTexCoords).r - currentLayerDepth + layerDepth;
 	 
 	// interpolation of texture coordinates
 	float weight = afterDepth / (afterDepth - beforeDepth);
@@ -132,7 +132,7 @@ float ParallaxSoftShadowMultiplier(uint heightTexId, vec3 fragToLightTangentSpac
 		// current parameters
 		float currentLayerHeight = initialHeight - layerHeight;
 		vec2 currentTextureCoords = initialTexCoord + texStep;
-		float heightFromTexture = 1.0 - texture(allTextures[heightTexId], currentTextureCoords).r;
+		float heightFromTexture = 1.0 - texture(AllTextures[heightTexId], currentTextureCoords).r;
 		int stepIndex = 1;
 
 		// while point is below depth 0.0 )
@@ -151,7 +151,7 @@ float ParallaxSoftShadowMultiplier(uint heightTexId, vec3 fragToLightTangentSpac
 			stepIndex += 1;
 			currentLayerHeight -= layerHeight;
 			currentTextureCoords += texStep;
-			heightFromTexture = 1.0 - texture(allTextures[heightTexId], currentTextureCoords).r;
+			heightFromTexture = 1.0 - texture(AllTextures[heightTexId], currentTextureCoords).r;
 		}
 		// Shadowing factor should be 1 if there were no points under the surface
 		if(numSamplesUnderSurface < 1)

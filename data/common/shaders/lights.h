@@ -5,10 +5,10 @@ struct Pointlight
 };
 
 layout(buffer_reference, std430) readonly buffer PointlightBuffer { 
-	Pointlight lights[];
+	Pointlight data[];
 };
 
-struct AllLightsData
+struct LightsData
 {
 	vec4 m_sunDirectionBrightness;
 	vec4 m_sunColourAmbient;
@@ -17,8 +17,8 @@ struct AllLightsData
 	uint m_pointlightCount;	
 };
 
-layout(buffer_reference, std430) readonly buffer AllLightsBuffer { 
-	AllLightsData data[];
+layout(buffer_reference, std430) readonly buffer LightsBuffer { 
+	LightsData data[];
 };
 
 // based on Moving Frostbite to Physically Based Rendering 3.0

@@ -6,10 +6,10 @@ struct MeshVertex
 };
 
 layout(buffer_reference, std430) readonly buffer VertexBuffer { 
-	MeshVertex vertices[];
+	MeshVertex data[];
 };
 
-struct StaticMeshMaterial
+struct MeshMaterial
 {
 	vec4 m_albedoOpacity;
 	vec4 m_uvOffsetScale;					// uv offset/scale, useful for custom materials
@@ -23,10 +23,10 @@ struct StaticMeshMaterial
 };
 
 layout(buffer_reference, std430) readonly buffer MaterialBuffer { 
-	StaticMeshMaterial materials[];
+	MeshMaterial data[];
 };
 
-struct StaticMeshPart					// Describes a single mesh part
+struct MeshPart					// Describes a single mesh part
 {
 	mat4 m_transform;					// relative to the model
 	vec4 m_boundsMin;					// mesh space bounds
@@ -37,20 +37,20 @@ struct StaticMeshPart					// Describes a single mesh part
 	uint m_vertexDataOffset;			// used when generating draw calls
 };
 
-layout(buffer_reference, std430) readonly buffer AllStaticMeshPartsBuffer
+layout(buffer_reference, std430) readonly buffer MeshPartsBuffer
 {
-	StaticMeshPart parts[];
+	MeshPart data[];
 };
 
 // per-instance data used when drawing a mesh
-struct PerInstanceData 
+struct MeshInstanceData 
 {
 	mat4 m_transform;		// final model matrix of the part
 	MaterialBuffer m_material;	// materal buffer address passed per-instance, only use m_material.materials[0]!
 };
 
 //all instance data passed via storage buffer (use gl_InstanceIndex to get the current index)
-layout(buffer_reference, std430) readonly buffer AllInstancesBuffer
+layout(buffer_reference, std430) readonly buffer InstancesBuffer
 {
-	PerInstanceData AllInstances[];
+	MeshInstanceData data[];
 };

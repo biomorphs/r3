@@ -12,10 +12,10 @@ layout(location = 4) out mat3 outTBN;
 
 
 void main() {
-	GlobalConstants globals = PushConstants.m_globals.AllGlobals[0];
-	PerInstanceData thisInstance = globals.m_instancesBuffer.AllInstances[gl_InstanceIndex];
-	StaticMeshMaterial myMaterial = thisInstance.m_material.materials[0];
-	MeshVertex v = globals.m_vertexBuffer.vertices[gl_VertexIndex];
+	GlobalConstants globals = PushConstants.m_globals.data[0];
+	MeshInstanceData thisInstance = globals.m_instancesBuffer.data[gl_InstanceIndex];
+	MeshMaterial myMaterial = thisInstance.m_material.data[0];
+	MeshVertex v = globals.m_vertexBuffer.data[gl_VertexIndex];
 	vec4 worldSpacePosition = thisInstance.m_transform * vec4(v.m_positionU0.xyz, 1);
 	outWorldspacePos = worldSpacePosition.xyz;
 	outWorldspaceNormal = normalize(mat3(transpose(inverse(thisInstance.m_transform))) * v.m_normalV0.xyz);

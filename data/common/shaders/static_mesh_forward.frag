@@ -13,17 +13,17 @@ layout(location = 4) in mat3 inTBN;
 layout(location = 0) out vec4 outColour;
 
 void main() {
-	GlobalConstants globals = PushConstants.m_globals.AllGlobals[0];
+	GlobalConstants globals = PushConstants.m_globals.data[0];
 	vec3 viewDir = normalize(globals.m_cameraWorldSpacePos.xyz - inWorldSpacePos);
-	PerInstanceData thisInstance = globals.m_instancesBuffer.AllInstances[inInstanceIndex];
-	StaticMeshMaterial myMaterial = thisInstance.m_material.materials[0];
+	MeshInstanceData thisInstance = globals.m_instancesBuffer.data[inInstanceIndex];
+	MeshMaterial myMaterial = thisInstance.m_material.data[0];
 	vec3 normal = GetWorldspaceNormal(inWorldspaceNormal, myMaterial.m_normalTexture, inTBN, inUV);
 	
 	PBRMaterial mat;
 	float finalAlpha = myMaterial.m_albedoOpacity.a;
 	if(myMaterial.m_albedoTexture != -1)
 	{
-		vec4 albedoTex = texture(allTextures[myMaterial.m_albedoTexture],inUV);
+		vec4 albedoTex = texture(AllTextures[myMaterial.m_albedoTexture],inUV);
 		mat.m_albedo = myMaterial.m_albedoOpacity.xyz * SRGBToLinear(albedoTex).xyz;
 		finalAlpha = finalAlpha * albedoTex.a;
 	}
@@ -37,11 +37,11 @@ void main() {
 		discard;
 	}
 	
-	mat.m_roughness = (myMaterial.m_roughnessTexture!=-1) ? texture(allTextures[myMaterial.m_roughnessTexture],inUV).r : myMaterial.m_roughness;
-	mat.m_metallic = (myMaterial.m_metalnessTexture != -1) ? texture(allTextures[myMaterial.m_metalnessTexture],inUV).r : myMaterial.m_metallic;
-	mat.m_ao = (myMaterial.m_aoTexture != -1) ? texture(allTextures[myMaterial.m_aoTexture],inUV).x : 1.0;
+	mat.m_roughness = (myMaterial.m_roughnessTexture!=-1) ? texture(AllTextures[myMaterial.m_roughnessTexture],inUV).r : myMaterial.m_roughness;
+	mat.m_metallic = (myMaterial.m_metalnessTexture != -1) ? texture(AllTextures[myMaterial.m_metalnessTexture],inUV).r : myMaterial.m_metallic;
+	mat.m_ao = (myMaterial.m_aoTexture != -1) ? texture(AllTextures[myMaterial.m_aoTexture],inUV).x : 1.0;
 	
-	AllLightsData lightsData = globals.m_lightsBuffer.data[0];
+	LightsData lightsData = globals.m_lightsBuffer.data[0];
 	
 	// Apply sun direct light
 	vec4 sunDirectionBrightness = lightsData.m_sunDirectionBrightness;
@@ -52,7 +52,7 @@ void main() {
 	uint pointLightCount = lightsData.m_pointlightCount;
 	for(uint p=0;p<pointLightCount;++p)
 	{
-		Pointlight pl = lightsData.m_allPointlights.lights[p];
+		Pointlight pl = lightsData.m_allPointlights.data[p];
 		vec3 lightToPixel = pl.m_positionDistance.xyz - inWorldSpacePos;
 		float lightDistanceSq = dot(lightToPixel,lightToPixel);
 		float radiusSq = pl.m_positionDistance.w * pl.m_positionDistance.w;

@@ -16,7 +16,7 @@ layout(set = 0, binding = 4) uniform writeonly image2D hdrOutput;
 layout(push_constant) uniform constants
 {
 	vec4 m_cameraWorldSpacePos;
-	AllLightsBuffer m_lightData;
+	LightsBuffer m_lightData;
 } PushConstants;
 
 // Copy all pointlights to shared memory for this work group
@@ -26,13 +26,13 @@ shared Pointlight sharedLights[MAX_SHARED_LIGHTS];
 void main() 
 {
 	// Copy lights list to shared memory
-	AllLightsData lightsData = PushConstants.m_lightData.data[0];
+	LightsData lightsData = PushConstants.m_lightData.data[0];
 	uint pointLightCount = min(lightsData.m_pointlightCount, MAX_SHARED_LIGHTS);
 	if(gl_LocalInvocationIndex == 0)
 	{
 		for(uint p=0;p<pointLightCount;++p)
 		{
-			sharedLights[p] = lightsData.m_allPointlights.lights[p];
+			sharedLights[p] = lightsData.m_allPointlights.data[p];
 		}
 	}
 	memoryBarrierShared();		// ensure all writes to shared memory complete

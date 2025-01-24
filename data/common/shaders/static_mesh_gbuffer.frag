@@ -15,16 +15,16 @@ layout(location = 1) out vec4 outWorldNormalRoughness;	// world space normal + r
 layout(location = 2) out vec4 outAlbedoAO;	// albedo + AO
 
 void main() {
-	GlobalConstants globals = PushConstants.m_globals.AllGlobals[0];
-	PerInstanceData thisInstance = globals.m_instancesBuffer.AllInstances[inInstanceIndex];
-	StaticMeshMaterial myMaterial = thisInstance.m_material.materials[0];
+	GlobalConstants globals = PushConstants.m_globals.data[0];
+	MeshInstanceData thisInstance = globals.m_instancesBuffer.data[inInstanceIndex];
+	MeshMaterial myMaterial = thisInstance.m_material.data[0];
 	vec3 normal = GetWorldspaceNormal(inWorldspaceNormal, myMaterial.m_normalTexture, inTBN, inUV);
 	
 	vec3 albedo = myMaterial.m_albedoOpacity.xyz;
 	float finalAlpha = myMaterial.m_albedoOpacity.a;
 	if(myMaterial.m_albedoTexture != -1)
 	{
-		vec4 albedoTex = texture(allTextures[myMaterial.m_albedoTexture],inUV);
+		vec4 albedoTex = texture(AllTextures[myMaterial.m_albedoTexture],inUV);
 		albedo = albedo * SRGBToLinear(albedoTex).xyz;
 		finalAlpha = finalAlpha * albedoTex.a;
 	}
@@ -34,9 +34,9 @@ void main() {
 		discard;
 	}
 	
-	float roughness = (myMaterial.m_roughnessTexture!=-1) ? texture(allTextures[myMaterial.m_roughnessTexture],inUV).r : myMaterial.m_roughness;
-	float metallic = (myMaterial.m_metalnessTexture != -1) ? texture(allTextures[myMaterial.m_metalnessTexture],inUV).r : myMaterial.m_metallic;
-	float ao = (myMaterial.m_aoTexture != -1) ? texture(allTextures[myMaterial.m_aoTexture],inUV).x : 1.0;
+	float roughness = (myMaterial.m_roughnessTexture!=-1) ? texture(AllTextures[myMaterial.m_roughnessTexture],inUV).r : myMaterial.m_roughness;
+	float metallic = (myMaterial.m_metalnessTexture != -1) ? texture(AllTextures[myMaterial.m_metalnessTexture],inUV).r : myMaterial.m_metallic;
+	float ao = (myMaterial.m_aoTexture != -1) ? texture(AllTextures[myMaterial.m_aoTexture],inUV).x : 1.0;
 	
 	outWorldSpacePositionMetal = vec4(inWorldSpacePos,metallic);
 	outWorldNormalRoughness = vec4(normal,roughness);
