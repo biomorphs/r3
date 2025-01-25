@@ -445,24 +445,24 @@
     "InputParams": {
      "Floats": [
       {
-       "Key": "Z Max",
-       "Value": 6.0
-      },
-      {
        "Key": "X Min",
        "Value": -11.0
       },
       {
-       "Key": "Max Radius",
+       "Key": "Z Max",
        "Value": 6.0
+      },
+      {
+       "Key": "X Max",
+       "Value": 11.0
       },
       {
        "Key": "Z Min",
        "Value": -6.0
       },
       {
-       "Key": "X Max",
-       "Value": 11.0
+       "Key": "Max Radius",
+       "Value": 6.0
       },
       {
        "Key": "Max Brightness",
@@ -473,12 +473,12 @@
        "Value": 1.0
       },
       {
-       "Key": "Min Brightness",
-       "Value": 1.0
-      },
-      {
        "Key": "Y Max",
        "Value": 12.0
+      },
+      {
+       "Key": "Min Brightness",
+       "Value": 1.0
       },
       {
        "Key": "Min Radius",
@@ -557,6 +557,39 @@
    "ID": 16,
    "Name": "Lights",
    "Parent": 4294967295
+  },
+  {
+   "DynamicMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "downloaded\\erato\\erato.obj"
+    }
+   },
+   "ID": 17,
+   "Name": "",
+   "Parent": 4294967295,
+   "Transform": {
+    "Orientation": {
+     "W": 0.4999999701976776,
+     "X": 1.599948262764883e-08,
+     "Y": 0.866025447845459,
+     "Z": 1.599948262764883e-08
+    },
+    "Position": {
+     "X": -2.8033652305603027,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 0.10000000149011612,
+     "Y": 0.10000000149011612,
+     "Z": 0.10000000149011612
+    }
+   }
   }
  ],
  "WorldName": "New World"

@@ -19,7 +19,8 @@
      "X": 0.4000000059604645,
      "Y": -0.800000011920929,
      "Z": 1.0
-    }
+    },
+    "Tonemap Type": 0
    },
    "ID": 0,
    "Name": "Globals",
@@ -53,9 +54,6 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -63,8 +61,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.800000011920929,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -131,9 +127,6 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -141,8 +134,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.6000000238418579,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -450,9 +441,6 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -460,8 +448,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.8999999761581421,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -589,9 +575,6 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -599,8 +582,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.3999999761581421,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -720,9 +701,6 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -730,8 +708,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.8999999761581421,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -859,9 +835,6 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -869,8 +842,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.3999999761581421,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -990,9 +961,6 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1000,8 +968,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.8999999761581421,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -1129,9 +1095,6 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1139,8 +1102,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.3999999761581421,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -1260,9 +1221,6 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1270,8 +1228,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.8999999761581421,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -1399,9 +1355,6 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1409,8 +1362,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.3999999761581421,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -1530,9 +1481,6 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1540,8 +1488,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.8999999761581421,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -1669,9 +1615,6 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1679,8 +1622,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.3999999761581421,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -1800,9 +1741,6 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1810,8 +1748,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.8999999761581421,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -1939,9 +1875,6 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1949,8 +1882,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.3999999761581421,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -2070,9 +2001,6 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2080,8 +2008,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.8999999761581421,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -2209,9 +2135,6 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2219,8 +2142,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.3999999761581421,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -2340,9 +2261,6 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2350,8 +2268,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.8999999761581421,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -2479,9 +2395,6 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2489,8 +2402,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.3999999761581421,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -2652,6 +2563,39 @@
      "Z": -1.579075813293457
     },
     "Relative": true,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "DynamicMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": ""
+    }
+   },
+   "ID": 62,
+   "Name": "",
+   "Parent": 4294967295,
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 6.020606517791748,
+     "Z": 0.0
+    },
+    "Relative": false,
     "Scale": {
      "X": 1.0,
      "Y": 1.0,
