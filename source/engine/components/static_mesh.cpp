@@ -4,31 +4,36 @@
 
 namespace R3
 {
-	StaticMeshComponent::StaticMeshComponent()
+	template<class SpecialisedType>
+	MeshComponent<SpecialisedType>::MeshComponent()
 	{
 	}
 
-	StaticMeshComponent::~StaticMeshComponent()
+	template<class SpecialisedType>
+	MeshComponent<SpecialisedType>::~MeshComponent()
 	{
 	}
 
-	void StaticMeshComponent::RegisterScripts(LuaSystem& l)
+	template<class SpecialisedType>
+	void MeshComponent<SpecialisedType>::RegisterScripts(LuaSystem& l)
 	{
-		l.RegisterType<StaticMeshComponent>(GetTypeName(),
-			"SetModelFromPath", &StaticMeshComponent::SetModelFromPath,
-			"SetMaterialOverride", &StaticMeshComponent::SetMaterialOverride,
-			"SetShouldDraw", &StaticMeshComponent::SetShouldDraw
+		l.RegisterType<SpecialisedType>(GetTypeName(),
+			"SetModelFromPath", &SpecialisedType::SetModelFromPath,
+			"SetMaterialOverride", &SpecialisedType::SetMaterialOverride,
+			"SetShouldDraw", &SpecialisedType::SetShouldDraw
 		);
 	}
 
-	void StaticMeshComponent::SerialiseJson(JsonSerialiser& s)
+	template<class SpecialisedType>
+	void MeshComponent<SpecialisedType>::SerialiseJson(JsonSerialiser& s)
 	{
 		s("Model", m_modelHandle);
 		s("MaterialsOverride", m_materialOverride);
 		s("Draw", m_shouldDraw);
 	}
 
-	void StaticMeshComponent::Inspect(const Entities::EntityHandle& e, Entities::World* w, ValueInspector& i)
+	template<class SpecialisedType>
+	void MeshComponent<SpecialisedType>::Inspect(const Entities::EntityHandle& e, Entities::World* w, ValueInspector& i)
 	{
 		auto modelSys = Systems::GetSystem<ModelDataSystem>();
 		std::string currentPath = modelSys->GetModelName(m_modelHandle);
@@ -36,29 +41,38 @@ namespace R3
 		FileDialogFilter filters[] = {
 			{ "Mesh Source File", "gltf,glb,fbx,obj" }
 		};
-		i.InspectFile("Model Path", currentPath, InspectProperty(&StaticMeshComponent::SetModelFromPath, e, w), filters, std::size(filters));
-		i.InspectEntity("Material Override", m_materialOverride, w, InspectProperty(&StaticMeshComponent::SetMaterialOverride, e, w));
-		i.Inspect("Should Draw", m_shouldDraw, InspectProperty(&StaticMeshComponent::SetShouldDraw, e, w));
+		// note, we must explicitly call InspectPropery<SpecialisedType> to ensure the specialised component type is used
+		i.InspectFile("Model Path", currentPath, InspectProperty<SpecialisedType>(&SpecialisedType::SetModelFromPath, e, w), filters, std::size(filters));
+		i.InspectEntity("Material Override", m_materialOverride, w, InspectProperty<SpecialisedType>(&SpecialisedType::SetMaterialOverride, e, w));
+		i.Inspect("Should Draw", m_shouldDraw, InspectProperty<SpecialisedType>(&SpecialisedType::SetShouldDraw, e, w));
 	}
 
-	void StaticMeshComponent::SetModelHandle(ModelDataHandle h)
+	template<class SpecialisedType>
+	void MeshComponent<SpecialisedType>::SetModelHandle(ModelDataHandle h)
 	{
 		m_modelHandle = h;
 	}
 
-	void StaticMeshComponent::SetShouldDraw(bool draw)
+	template<class SpecialisedType>
+	void MeshComponent<SpecialisedType>::SetShouldDraw(bool draw)
 	{
 		m_shouldDraw = draw;
 	}
 
-	void StaticMeshComponent::SetMaterialOverride(Entities::EntityHandle m) 
+	template<class SpecialisedType>
+	void MeshComponent<SpecialisedType>::SetMaterialOverride(Entities::EntityHandle m)
 	{ 
 		m_materialOverride = m; 
 	}
 
-	void StaticMeshComponent::SetModelFromPath(std::string_view path)
+	template<class SpecialisedType>
+	void MeshComponent<SpecialisedType>::SetModelFromPath(std::string_view path)
 	{
 		auto modelSys = Systems::GetSystem<ModelDataSystem>();
 		m_modelHandle = modelSys->LoadModel(path.data());
 	}
+
+	// Explicit instantiation for linking 
+	template class MeshComponent<StaticMeshComponent>;
+	template class MeshComponent<DynamicMeshComponent>;
 }

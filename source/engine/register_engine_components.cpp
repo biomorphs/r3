@@ -18,6 +18,7 @@ namespace R3
 		entities->RegisterComponentType<TransformComponent>(1024 * 32);
 		entities->RegisterComponentType<CameraComponent>(32);
 		entities->RegisterComponentType<StaticMeshComponent>(1024 * 32);
+		entities->RegisterComponentType<DynamicMeshComponent>(1024 * 32);
 		entities->RegisterComponentType<StaticMeshMaterialsComponent>(1024);
 		entities->RegisterComponentType<PointLightComponent>(1024 * 16);
 		entities->RegisterComponentType<LuaScriptComponent>(1024 * 8);

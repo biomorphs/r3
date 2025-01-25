@@ -269,6 +269,7 @@ void DungeonsOfArrrgh::SetEntityTilePosition(DungeonsWorldGridComponent& grid, R
 void DungeonsOfArrrgh::SetVisualEntitiesVisible(const DungeonsWorldGridComponent& grid, R3::Entities::World& w, const std::unordered_set<glm::uvec2>& tiles, bool visible)
 {
 	R3_PROF_EVENT();
+	bool staticsModified = false;
 	for (const auto& tile : tiles)
 	{
 		auto contents = grid.GetContents(tile.x, tile.y);
@@ -279,6 +280,11 @@ void DungeonsOfArrrgh::SetVisualEntitiesVisible(const DungeonsWorldGridComponent
 			for (const auto& child : children)
 			{
 				if (auto meshComponent = w.GetComponent<R3::StaticMeshComponent>(child))
+				{
+					meshComponent->SetShouldDraw(visible);
+					staticsModified = true;
+				}
+				if (auto meshComponent = w.GetComponent<R3::DynamicMeshComponent>(child))
 				{
 					meshComponent->SetShouldDraw(visible);
 				}
@@ -292,16 +298,29 @@ void DungeonsOfArrrgh::SetVisualEntitiesVisible(const DungeonsWorldGridComponent
 					if (auto meshComponent = w.GetComponent<R3::StaticMeshComponent>(child))
 					{
 						meshComponent->SetShouldDraw(visible);
+						staticsModified = true;
+					}
+					if (auto meshComponent = w.GetComponent<R3::DynamicMeshComponent>(child))
+					{
+						meshComponent->SetShouldDraw(visible);
 					}
 				}
 				if (auto meshComponent = w.GetComponent<R3::StaticMeshComponent>(actor))
+				{
+					meshComponent->SetShouldDraw(visible);
+					staticsModified = true;
+				}
+				if (auto meshComponent = w.GetComponent<R3::DynamicMeshComponent>(actor))
 				{
 					meshComponent->SetShouldDraw(visible);
 				}
 			}
 		}
 	}
-	GetSystem<R3::MeshRenderer>()->SetStaticsDirty();
+	if (staticsModified)
+	{
+		GetSystem<R3::MeshRenderer>()->SetStaticsDirty();
+	}
 }
 
 void DungeonsOfArrrgh::UpdateVision(DungeonsWorldGridComponent& grid, R3::Entities::World& w)

@@ -53,9 +53,12 @@ namespace R3
 	private:
 		struct GlobalConstants;
 		Frustum GetMainCameraFrustum();
-		void RebuildStaticMaterialOverrides();						// re-allocate material indexes for all static material overrides + upload them to gpu. Call before RebuildStaticInstances!
-		void RebuildStaticInstances();								// rebuild all draw instances + buckets for static objects
+		void RebuildStaticMaterialOverrides();						// re-allocate material indexes for all static material overrides + upload them to gpu. Call before RebuildInstances!
+		// build instance data for a mesh component type
+		template<class MeshCmpType, bool UseInterpolatedTransforms>
+		void RebuildInstances(LinearWriteOnlyGpuArray<MeshInstance>& instanceBuffer, MeshPartDrawBucket& opaques, MeshPartDrawBucket& transparents);
 		void RebuildStaticScene();									// collect static entities, rebuilds static draw buckets
+		void RebuildDynamicScene();
 		void PrepareDrawBucket(MeshPartDrawBucket& bucket);			// write draw indirects with no culling, only used when culling disabled
 		void PrepareAndCullDrawBucketCompute(Device&, VkCommandBuffer cmds, VkDeviceAddress instanceDataBuffer, MeshPartDrawBucket& bucket);	// cull instances + write draw indirects
 		bool ShowGui();
@@ -96,6 +99,10 @@ namespace R3
 		LinearWriteOnlyGpuArray<MeshInstance> m_staticMeshInstances;	// all static instance data written here on static scene rebuild
 		MeshPartDrawBucket m_staticOpaques;								// all static opaque instances collected here on scene rebuild
 		MeshPartDrawBucket m_staticTransparents;						// all static transparent instances collected here on scene rebuild
+
+		LinearWriteOnlyGpuArray<MeshInstance> m_dynamicMeshInstances;	// all dynamic instance data written here every frame
+		MeshPartDrawBucket m_dynamicOpaques;							// all dynamic opaque instances collected here every frame
+		MeshPartDrawBucket m_dynamicTransparents;						// all dynamic transparent instances collected here every frame
 
 		const uint32_t c_maxInstances = 1024 * 256;		// max static+dynamic instances we support
 		const uint32_t c_maxBuffers = 3;				// we reserve space per-frame in globals, draws + dynamic instance data. this determines how many frames to handle

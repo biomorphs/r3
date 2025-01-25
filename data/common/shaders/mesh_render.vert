@@ -13,7 +13,7 @@ layout(location = 4) out mat3 outTBN;
 
 void main() {
 	GlobalConstants globals = PushConstants.m_globals.data[0];
-	MeshInstanceData thisInstance = globals.m_instancesBuffer.data[gl_InstanceIndex];
+	MeshInstanceData thisInstance = PushConstants.m_instances.data[gl_InstanceIndex];
 	MeshMaterial myMaterial = thisInstance.m_material.data[0];
 	MeshVertex v = globals.m_vertexBuffer.data[gl_VertexIndex];
 	vec4 worldSpacePosition = thisInstance.m_transform * vec4(v.m_positionU0.xyz, 1);

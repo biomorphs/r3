@@ -46,13 +46,13 @@ namespace R3
 		glm::vec4 m_cameraWorldSpacePos;
 		VkDeviceAddress m_vertexBufferAddress;
 		VkDeviceAddress m_lightDataBufferAddress;
-		VkDeviceAddress m_instanceDataBufferAddress;
 	};
 
 	// pushed once per pipeline, provides global constants buffer address for this frame
 	struct PushConstants 
 	{
 		VkDeviceAddress m_globalsBufferAddress;
+		VkDeviceAddress m_instanceDataBufferAddress;
 	};
 
 	MeshRenderer::MeshRenderer()
@@ -104,6 +104,7 @@ namespace R3
 		m_computeCulling->Cleanup(d);
 		m_staticMaterialOverrides.Destroy(d);
 		m_staticMeshInstances.Destroy(d);
+		m_dynamicMeshInstances.Destroy(d);
 		m_meshRenderBufferPool = nullptr;
 		vkDestroyPipeline(d.GetVkDevice(), m_forwardPipeline, nullptr);
 		vkDestroyPipeline(d.GetVkDevice(), m_gBufferPipeline, nullptr);
@@ -292,6 +293,8 @@ namespace R3
 			m_frameStats.m_prepareBucketsStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticOpaques);
 			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticTransparents);
+			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_dynamicMeshInstances.GetBufferDeviceAddress(), m_dynamicOpaques);
+			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_dynamicMeshInstances.GetBufferDeviceAddress(), m_dynamicTransparents);
 			m_frameStats.m_prepareBucketsEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		}
 	}
@@ -332,6 +335,7 @@ namespace R3
 		}
 		if (!m_staticMeshInstances.IsCreated())
 		{
+			m_staticMeshInstances.SetDebugName("Static mesh instances");
 			if (!m_staticMeshInstances.Create(*ctx.m_device, c_maxInstances, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_meshRenderBufferPool.get()))
 			{
 				LogError("Failed to create static mesh instance buffer");
@@ -340,9 +344,19 @@ namespace R3
 		}
 		if (!m_staticMaterialOverrides.IsCreated())
 		{
+			m_staticMeshInstances.SetDebugName("Static material overrides");
 			if (!m_staticMaterialOverrides.Create(*ctx.m_device, c_maxStaticMaterialOverrides, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_meshRenderBufferPool.get()))
 			{
 				LogError("Failed to create static mesh instance buffer");
+				return;
+			}
+		}
+		if (!m_dynamicMeshInstances.IsCreated())
+		{
+			m_dynamicMeshInstances.SetDebugName("Dynamic mesh instances");
+			if (!m_dynamicMeshInstances.Create(*ctx.m_device, c_maxInstances, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_meshRenderBufferPool.get()))
+			{
+				LogError("Failed to create dynamic mesh instance buffer");
 				return;
 			}
 		}
@@ -367,9 +381,14 @@ namespace R3
 		globals.m_projViewTransform = cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix();
 		globals.m_vertexBufferAddress = staticMeshes->GetVertexDataDeviceAddress();
 		globals.m_lightDataBufferAddress = lights->GetAllLightsDeviceAddress();
-		globals.m_instanceDataBufferAddress = m_staticMeshInstances.GetBufferDeviceAddress();	// todo, we need to pass this for each set of draw calls (probably in push constant)
 		m_globalConstantsBuffer.Write(m_thisFrameBuffer, 1, &globals);
 		m_globalConstantsBuffer.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
+		// Flush dynamic data every frame
+		if ((m_dynamicOpaques.m_partInstances.size() > 0 || m_dynamicTransparents.m_partInstances.size() > 0))
+		{
+			m_dynamicMeshInstances.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+		}
 	}
 
 	void MeshRenderer::OnGBufferPassDraw(class RenderPassContext& ctx)
@@ -415,8 +434,14 @@ namespace R3
 		vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, nullptr);
 		PushConstants pc;
 		pc.m_globalsBufferAddress = m_globalConstantsBuffer.GetDataDeviceAddress() + (m_thisFrameBuffer * sizeof(GlobalConstants));
+
+		pc.m_instanceDataBufferAddress = m_staticMeshInstances.GetBufferDeviceAddress();
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_staticOpaques.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_staticOpaques.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
+
+		pc.m_instanceDataBufferAddress = m_dynamicMeshInstances.GetBufferDeviceAddress();
+		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
+		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_dynamicOpaques.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_dynamicOpaques.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 
 		m_frameStats.m_writeCmdsEndTime = time->GetElapsedTimeReal();
 	}
@@ -462,9 +487,16 @@ namespace R3
 		vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, nullptr);
 		PushConstants pc;
 		pc.m_globalsBufferAddress = m_globalConstantsBuffer.GetDataDeviceAddress() + (m_thisFrameBuffer * sizeof(GlobalConstants));
+
+		pc.m_instanceDataBufferAddress = m_staticMeshInstances.GetBufferDeviceAddress();
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_staticTransparents.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_staticTransparents.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 		
+		pc.m_instanceDataBufferAddress = m_dynamicMeshInstances.GetBufferDeviceAddress();
+		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
+		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_dynamicTransparents.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_dynamicTransparents.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
+
+
 		m_frameStats.m_writeCmdsEndTime = time->GetElapsedTimeReal();
 	}
 
@@ -507,7 +539,8 @@ namespace R3
 		}
 	}
 
-	void MeshRenderer::RebuildStaticInstances()
+	template<class MeshCmpType, bool UseInterpolatedTransforms>
+	void MeshRenderer::RebuildInstances(LinearWriteOnlyGpuArray<MeshInstance>& instanceBuffer, MeshPartDrawBucket& opaques, MeshPartDrawBucket& transparents)
 	{
 		R3_PROF_EVENT();
 		auto staticMeshes = GetSystem<StaticMeshSystem>();
@@ -520,8 +553,8 @@ namespace R3
 			uint32_t lastMatOverrideGpuIndex = -1;			// base index of the current material override
 			const MeshMaterial* overrideMaterials = nullptr;	// cache a ptr to the last override components' material data
 			uint32_t currentInstanceBufferOffset = 0;
-			MeshInstance* instanceWritePtr = m_staticMeshInstances.GetWritePtr();
-			auto forEachEntity = [&](const Entities::EntityHandle& e, StaticMeshComponent& s, TransformComponent& t)
+			MeshInstance* instanceWritePtr = instanceBuffer.GetWritePtr();
+			auto forEachEntity = [&](const Entities::EntityHandle& e, MeshCmpType& s, TransformComponent& t)
 			{
 				const auto modelHandle = s.GetModelHandle();
 				if (modelHandle.m_index != -1 && s.GetShouldDraw())	// doesn't mean the model is actually ready to draw!
@@ -545,7 +578,15 @@ namespace R3
 					VkDeviceAddress materialBaseAddress = lastMatOverrideGpuIndex == -1 ?
 						staticMeshes->GetMaterialsDeviceAddress() + (currentMeshData.m_materialGpuIndex * sizeof(MeshMaterial)) :
 						m_staticMaterialOverrides.GetBufferDeviceAddress() + (lastMatOverrideGpuIndex * sizeof(MeshMaterial));
-					const glm::mat4 instanceTransform = t.GetWorldspaceMatrix(e, *activeWorld);		// don't use interpolation with static meshes!
+					glm::mat4 instanceTransform;
+					if constexpr (UseInterpolatedTransforms)
+					{
+						instanceTransform = t.GetWorldspaceInterpolated(e, *activeWorld);
+					}
+					else
+					{
+						instanceTransform = t.GetWorldspaceMatrix(e, *activeWorld);
+					}
 					for (uint32_t part = 0; part < currentMeshData.m_meshPartCount; ++part)
 					{
 						const MeshPart* currentPart = staticMeshes->GetMeshPart(currentMeshData.m_firstMeshPartOffset + part);
@@ -564,11 +605,11 @@ namespace R3
 							staticMeshes->GetMeshMaterial(currentMeshData.m_materialGpuIndex + relativePartMatIndex) : &overrideMaterials[relativePartMatIndex];
 						if (meshMaterial->m_albedoOpacity.w >= 1.0f)
 						{
-							m_staticOpaques.m_partInstances.emplace_back(bucketInstance);
+							opaques.m_partInstances.emplace_back(bucketInstance);
 						}
 						else
 						{
-							m_staticTransparents.m_partInstances.emplace_back(bucketInstance);
+							transparents.m_partInstances.emplace_back(bucketInstance);
 						}
 						currentInstanceBufferOffset++;
 					}
@@ -577,9 +618,9 @@ namespace R3
 				}
 				return true;
 			};
-			Entities::Queries::ForEach<StaticMeshComponent, TransformComponent>(activeWorld, forEachEntity);
-			m_staticMeshInstances.CommitWrites(currentInstanceBufferOffset);
-			m_staticMeshInstances.RetirePooledBuffer(*GetSystem<RenderSystem>()->GetDevice());	// the old buffer can be retired, we want a new one!
+			Entities::Queries::ForEach<MeshCmpType, TransformComponent>(activeWorld, forEachEntity);
+			instanceBuffer.CommitWrites(currentInstanceBufferOffset);
+			instanceBuffer.RetirePooledBuffer(*GetSystem<RenderSystem>()->GetDevice());		// write to a new buffer each time
 		}
 	}
 
@@ -593,7 +634,19 @@ namespace R3
 		m_staticTransparents.m_drawCount = 0;
 		m_staticTransparents.m_firstDrawOffset = 0;
 		RebuildStaticMaterialOverrides();
-		RebuildStaticInstances();
+		RebuildInstances<StaticMeshComponent, false>(m_staticMeshInstances, m_staticOpaques, m_staticTransparents);
+	}
+
+	// must be called after RebuildStaticScene to get proper material updates after scene rebuild
+	void MeshRenderer::RebuildDynamicScene()
+	{
+		m_dynamicOpaques.m_partInstances.clear();
+		m_dynamicOpaques.m_drawCount = 0;
+		m_dynamicOpaques.m_firstDrawOffset = 0;
+		m_dynamicTransparents.m_partInstances.clear();
+		m_dynamicTransparents.m_drawCount = 0;
+		m_dynamicTransparents.m_firstDrawOffset = 0;
+		RebuildInstances<DynamicMeshComponent, true>(m_dynamicMeshInstances, m_dynamicOpaques, m_dynamicTransparents);
 	}
 
 	// populates draw calls for all instances in this bucket with no culling
@@ -654,6 +707,7 @@ namespace R3
 		{
 			RebuildStaticScene();
 		}
+		RebuildDynamicScene();
 		m_frameStats.m_totalOpaqueInstances = (uint32_t)m_staticOpaques.m_partInstances.size();
 		m_frameStats.m_totalTransparentInstances = (uint32_t)m_staticTransparents.m_partInstances.size();
 		m_frameStats.m_collectInstancesEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();

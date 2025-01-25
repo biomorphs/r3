@@ -24,7 +24,7 @@ namespace R3
 			float m_hitDistance;
 		};
 		std::vector<HitEntityRecord> hitEntities;
-		auto forEachEntity = [&](const Entities::EntityHandle& e, StaticMeshComponent& smc, TransformComponent& t)
+		auto forEachEntity = [&]<class CmpType>(const Entities::EntityHandle& e, CmpType& smc, TransformComponent& t)
 		{
 			if (smc.GetShouldDraw())
 			{
@@ -45,6 +45,7 @@ namespace R3
 			return true;
 		};
 		Entities::Queries::ForEach<StaticMeshComponent, TransformComponent>(&world, forEachEntity);
+		Entities::Queries::ForEach<DynamicMeshComponent, TransformComponent>(&world, forEachEntity);
 
 		// now find the closest hit entity that is in front of the ray
 		Entities::EntityHandle closestHit = {};
@@ -78,12 +79,11 @@ namespace R3
 		auto modelDataSys = Systems::GetSystem<ModelDataSystem>();
 		auto& imRender = Systems::GetSystem<ImmediateRenderSystem>()->m_imRender;
 		auto transformCmp = w.GetComponent<TransformComponent>(e);
-		auto staticMeshCmp = w.GetComponent<StaticMeshComponent>(e);
 		if (transformCmp)
 		{
-			if (staticMeshCmp)
+			auto drawMeshCmp = [&]<class Type>(Type* cmp)
 			{
-				auto modelHandle = staticMeshCmp->GetModelHandle();
+				auto modelHandle = cmp->GetModelHandle();
 				auto modelData = modelDataSys->GetModelData(modelHandle);
 				if (modelData.m_data)
 				{
@@ -91,6 +91,14 @@ namespace R3
 					glm::mat4 transform = transformCmp->GetWorldspaceInterpolated(e, w);
 					imRender->DrawAABB(bounds[0], bounds[1], transform, colour);
 				}
+			}; 
+			if (auto staticMeshCmp = w.GetComponent<StaticMeshComponent>(e))
+			{
+				drawMeshCmp(staticMeshCmp);
+			}
+			else if (auto dynamicMeshCmp = w.GetComponent<DynamicMeshComponent>(e))
+			{
+				drawMeshCmp(dynamicMeshCmp);
 			}
 			else
 			{

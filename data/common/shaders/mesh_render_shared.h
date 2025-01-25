@@ -8,7 +8,6 @@ struct GlobalConstants {
 	vec4 m_cameraWorldSpacePos;
 	VertexBuffer m_vertexBuffer;
 	LightsBuffer m_lightsBuffer;
-	InstancesBuffer m_instancesBuffer;
 };
 
 // global constants stored in an array to allow overlapping frames
@@ -24,4 +23,5 @@ layout (set = 0, binding = 0) uniform sampler2D AllTextures[1024];
 layout(push_constant) uniform constants
 {
 	GlobalConstantsBuffer m_globals;
+	InstancesBuffer m_instances;
 } PushConstants;

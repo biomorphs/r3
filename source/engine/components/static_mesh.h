@@ -5,12 +5,18 @@
 namespace R3
 {
 	struct ModelDataHandle;
-	class StaticMeshComponent
+
+	// MeshComponent is used for both Static and Dynamic meshes
+	// We keep separate component types to allow for iteration through static/dynamic objects separately
+	// Using CRTP for compile-time polymorphism + explicit instantiation to avoid inlining everything
+
+	template<class SpecialisedType>
+	class MeshComponent
 	{
 	public:
-		StaticMeshComponent();
-		~StaticMeshComponent();
-		static std::string_view GetTypeName() { return "StaticMesh"; }
+		MeshComponent();
+		~MeshComponent();
+		static std::string_view GetTypeName() { return SpecialisedType::GetTypeName(); }
 		static void RegisterScripts(class LuaSystem&);
 		void SerialiseJson(JsonSerialiser& s);
 		void Inspect(const Entities::EntityHandle& e, Entities::World* w, ValueInspector& i);
@@ -27,5 +33,19 @@ namespace R3
 		ModelDataHandle m_modelHandle;
 		Entities::EntityHandle m_materialOverride;
 		bool m_shouldDraw = true;
+	};
+
+	// Static mesh, intended for objects that are not modified or do not move often
+	class StaticMeshComponent : public MeshComponent<StaticMeshComponent>
+	{
+	public:
+		static std::string_view GetTypeName() { return "StaticMesh"; }
+	};
+
+	// Dynamic mesh, for objects that may change every frame
+	class DynamicMeshComponent : public MeshComponent<DynamicMeshComponent>
+	{
+	public:
+		static std::string_view GetTypeName() { return "DynamicMesh"; }
 	};
 }
