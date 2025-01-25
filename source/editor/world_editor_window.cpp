@@ -18,6 +18,7 @@
 #include "commands/world_editor_add_entity_from_mesh_cmd.h"
 #include "commands/world_editor_set_entity_parent_cmd.h"
 #include "commands/world_editor_import_scene_cmd.h"
+#include "commands/world_editor_convert_mesh_components_cmd.h"
 #include "engine/systems.h"
 #include "engine/ui/entity_list_widget.h"
 #include "engine/ui/entity_inspector_widget.h"
@@ -31,6 +32,7 @@
 #include "engine/systems/mesh_renderer.h"
 #include "engine/components/transform.h"
 #include "engine/components/static_mesh.h"
+#include "engine/components/static_mesh_materials.h"
 #include "engine/components/point_light.h"
 #include "entities/systems/entity_system.h"
 #include "entities/component_type_registry.h"
@@ -89,12 +91,12 @@ namespace R3
 
 		// Handle modification of anything owning a static mesh component by rebuilding static scene (todo, refactor inspectors to make this cleaner)
 		m_inspectEntityWidget->m_onInspectEntity = [this](const Entities::EntityHandle& h, Entities::World& w) {
-			m_isInspectingEntityWithStaticMesh = w.GetComponent<StaticMeshComponent>(h);
+			m_isInspectingEntityWithStaticMeshOrMaterial = w.GetComponent<StaticMeshComponent>(h) != nullptr || w.GetComponent<StaticMeshMaterialsComponent>(h) != nullptr;
 		};
 		m_cmds = std::make_unique<EditorCommandList>();
 		m_valueInspector = std::make_unique<ReactiveValueInspector>(std::make_unique<UndoRedoInspector>(*m_cmds));
 		static_cast<ReactiveValueInspector*>(m_valueInspector.get())->SetOnValueChange([this]() {
-			if (m_isInspectingEntityWithStaticMesh)
+			if (m_isInspectingEntityWithStaticMeshOrMaterial)
 			{
 				Systems::GetSystem<MeshRenderer>()->SetStaticsDirty();
 			}
@@ -125,6 +127,36 @@ namespace R3
 			world->RemoveEntity(m_selectedEntities[s]);
 		}
 		m_selectedEntities.clear();
+	}
+
+	void WorldEditorWindow::UpdateMeshContextMenu(MenuBar& contextMenu, Entities::World& w)
+	{
+		bool containsStatics = false;
+		bool containsDynamics = false;
+		for (auto sel = 0; sel < m_selectedEntities.size() && !(containsStatics && containsDynamics); ++sel)
+		{
+			containsStatics |= w.GetComponent<StaticMeshComponent>(m_selectedEntities[sel]) != nullptr;
+			containsDynamics |= w.GetComponent<DynamicMeshComponent>(m_selectedEntities[sel]) != nullptr;
+		}
+
+		if (containsStatics || containsDynamics)
+		{
+			auto& meshMenu = contextMenu.GetSubmenu("Mesh Components");
+			if (containsStatics)
+			{
+				meshMenu.AddItem("Convert to Dynamic Meshes", [&]()
+				{
+					m_cmds->Push(std::make_unique<WorldEditorConvertMeshComponentsCmd>(this, m_selectedEntities, WorldEditorConvertMeshComponentsCmd::StaticToDynamic));
+				});
+			}
+			if (containsDynamics)
+			{
+				meshMenu.AddItem("Convert to Static Meshes", [&]()
+				{
+					m_cmds->Push(std::make_unique<WorldEditorConvertMeshComponentsCmd>(this, m_selectedEntities, WorldEditorConvertMeshComponentsCmd::DynamicToStatic));
+				});
+			}
+		}
 	}
 
 	void WorldEditorWindow::UpdateMainContextMenu()
@@ -191,6 +223,7 @@ namespace R3
 			contextMenu.AddItem("Set Parent Entity", [this]() {
 				m_isSelectParentActive = true;
 			});
+			UpdateMeshContextMenu(contextMenu, *world);
 		}
 		contextMenu.DisplayContextMenu();
 	}

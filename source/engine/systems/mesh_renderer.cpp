@@ -134,9 +134,9 @@ namespace R3
 			{
 				SetStaticsDirty();
 			}
-			std::string txt = std::format("{} Model Instances Submitted", m_frameStats.m_totalModelInstances);
+			std::string txt = std::format("{} Total Part Instances", m_frameStats.m_totalPartInstances);
 			ImGui::Text(txt.c_str());
-			txt = std::format("    {} Total Part Instances", m_frameStats.m_totalPartInstances);
+			txt = std::format("    {} Statics / {} Dynamics", m_frameStats.m_totalStaticInstances, m_frameStats.m_totalDynamicInstances);
 			ImGui::Text(txt.c_str());
 			txt = std::format("    {} Opaque Part Instances", m_frameStats.m_totalOpaqueInstances);
 			ImGui::Text(txt.c_str());
@@ -146,7 +146,13 @@ namespace R3
 			ImGui::Text(txt.c_str());
 			txt = std::format("Draw buckets took {:.3f}ms to prepare", 1000.0 * (m_frameStats.m_prepareBucketsEndTime - m_frameStats.m_prepareBucketsStartTime));
 			ImGui::Text(txt.c_str());
-			txt = std::format("Command buffer took {:.3f}ms to write", 1000.0 * (m_frameStats.m_writeCmdsEndTime - m_frameStats.m_writeCmdsStartTime));
+			auto totalCmdBufferWriteTime = m_frameStats.m_writeGBufferCmdsEndTime - m_frameStats.m_writeGBufferCmdsStartTime;
+			totalCmdBufferWriteTime += m_frameStats.m_writeForwardCmdsEndTime - m_frameStats.m_writeForwardCmdsStartTime;
+			txt = std::format("Command buffer took {:.3f}ms to write", 1000.0 * totalCmdBufferWriteTime);
+			ImGui::Text(txt.c_str());
+			txt = std::format("    GBuffer Cmds: {:.3f}ms", 1000.0 * (m_frameStats.m_writeGBufferCmdsEndTime - m_frameStats.m_writeGBufferCmdsStartTime));
+			ImGui::Text(txt.c_str());
+			txt = std::format("    Forward Cmds: {:.3f}ms", 1000.0 * (m_frameStats.m_writeForwardCmdsEndTime - m_frameStats.m_writeForwardCmdsStartTime));
 			ImGui::Text(txt.c_str());
 			ImGui::End();
 		}
@@ -409,12 +415,12 @@ namespace R3
 
 		auto textures = GetSystem<TextureSystem>();
 		auto time = GetSystem<TimeSystem>();
-		if (m_staticOpaques.m_drawCount == 0)
+		if (m_staticOpaques.m_drawCount == 0 && m_dynamicOpaques.m_drawCount == 0)
 		{
 			return;
 		}
 
-		m_frameStats.m_writeCmdsStartTime = time->GetElapsedTimeReal();
+		m_frameStats.m_writeGBufferCmdsStartTime = time->GetElapsedTimeReal();
 
 		VkViewport viewport = { 0 };
 		viewport.x = 0.0f;
@@ -443,7 +449,7 @@ namespace R3
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_dynamicOpaques.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_dynamicOpaques.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 
-		m_frameStats.m_writeCmdsEndTime = time->GetElapsedTimeReal();
+		m_frameStats.m_writeGBufferCmdsEndTime = time->GetElapsedTimeReal();
 	}
 
 	void MeshRenderer::OnForwardPassDraw(class RenderPassContext& ctx)
@@ -462,12 +468,12 @@ namespace R3
 		
 		auto textures = GetSystem<TextureSystem>();
 		auto time = GetSystem<TimeSystem>();
-		if (m_staticTransparents.m_drawCount == 0)
+		if (m_staticTransparents.m_drawCount == 0 && m_dynamicTransparents.m_drawCount == 0)
 		{
 			return;
 		}
 		
-		m_frameStats.m_writeCmdsStartTime = time->GetElapsedTimeReal();
+		m_frameStats.m_writeForwardCmdsStartTime = time->GetElapsedTimeReal();
 		
 		VkViewport viewport = { 0 };
 		viewport.x = 0.0f;
@@ -497,7 +503,7 @@ namespace R3
 		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_dynamicTransparents.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_dynamicTransparents.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 
 
-		m_frameStats.m_writeCmdsEndTime = time->GetElapsedTimeReal();
+		m_frameStats.m_writeForwardCmdsEndTime = time->GetElapsedTimeReal();
 	}
 
 	void MeshRenderer::OnDrawEnd(class RenderPassContext& ctx)
@@ -613,8 +619,6 @@ namespace R3
 						}
 						currentInstanceBufferOffset++;
 					}
-					m_frameStats.m_totalModelInstances++;
-					m_frameStats.m_totalPartInstances += currentMeshData.m_meshPartCount;
 				}
 				return true;
 			};
@@ -700,24 +704,28 @@ namespace R3
 			m_rebuildingStaticScene = true;
 		}
 
-		m_frameStats.m_totalModelInstances = 0;
-		m_frameStats.m_totalPartInstances = 0;
 		m_frameStats.m_collectInstancesStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		if (m_rebuildingStaticScene)
 		{
 			RebuildStaticScene();
 		}
 		RebuildDynamicScene();
-		m_frameStats.m_totalOpaqueInstances = (uint32_t)m_staticOpaques.m_partInstances.size();
-		m_frameStats.m_totalTransparentInstances = (uint32_t)m_staticTransparents.m_partInstances.size();
-		m_frameStats.m_collectInstancesEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 
-		if (!m_enableComputeCulling)		// do nothing here, culling happens later
+		m_frameStats.m_totalOpaqueInstances = (uint32_t)(m_staticOpaques.m_partInstances.size() + m_dynamicOpaques.m_partInstances.size());
+		m_frameStats.m_totalTransparentInstances = (uint32_t)(m_staticTransparents.m_partInstances.size() + m_dynamicTransparents.m_partInstances.size());
+		m_frameStats.m_totalPartInstances = m_frameStats.m_totalOpaqueInstances + m_frameStats.m_totalTransparentInstances;
+		m_frameStats.m_collectInstancesEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
+		m_frameStats.m_totalStaticInstances = (uint32_t)(m_staticOpaques.m_partInstances.size() + m_staticTransparents.m_partInstances.size());
+		m_frameStats.m_totalDynamicInstances = (uint32_t)(m_dynamicOpaques.m_partInstances.size() + m_dynamicTransparents.m_partInstances.size());
+
+		if (!m_enableComputeCulling)		// do nothing here, gpu culling happens later
 		{
 			m_frameStats.m_prepareBucketsStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 			{
 				PrepareDrawBucket(m_staticOpaques);
 				PrepareDrawBucket(m_staticTransparents);
+				PrepareDrawBucket(m_dynamicOpaques);
+				PrepareDrawBucket(m_dynamicTransparents);
 			}
 			m_frameStats.m_prepareBucketsEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		}

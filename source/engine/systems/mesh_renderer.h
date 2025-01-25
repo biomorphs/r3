@@ -70,12 +70,15 @@ namespace R3
 		void OnModelReady(const ModelDataHandle& handle);	// called when a model is ready to draw
 
 		struct FrameStats {
-			uint32_t m_totalModelInstances = 0;
 			uint32_t m_totalPartInstances = 0;
 			uint32_t m_totalOpaqueInstances = 0;
 			uint32_t m_totalTransparentInstances = 0;
-			double m_writeCmdsStartTime = 0.0;
-			double m_writeCmdsEndTime = 0.0;
+			uint32_t m_totalStaticInstances = 0;
+			uint32_t m_totalDynamicInstances = 0;
+			double m_writeGBufferCmdsStartTime = 0.0;
+			double m_writeGBufferCmdsEndTime = 0.0;
+			double m_writeForwardCmdsStartTime = 0.0;
+			double m_writeForwardCmdsEndTime = 0.0;
 			double m_collectInstancesStartTime = 0.0;
 			double m_collectInstancesEndTime = 0.0;
 			double m_prepareBucketsStartTime = 0.0;

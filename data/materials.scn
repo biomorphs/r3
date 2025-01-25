@@ -99,7 +99,7 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "Roughness": 0.3999999761581421,
+      "Roughness": 0.10000000149011612,
       "RoughnessTex": {
        "PathName": "invalid"
       },
@@ -133,10 +133,7 @@
    }
   },
   {
-   "ID": 4,
-   "Name": "Cube",
-   "Parent": 4294967295,
-   "StaticMesh": {
+   "DynamicMesh": {
     "Draw": true,
     "MaterialsOverride": {
      "ID": 4
@@ -145,6 +142,9 @@
      "Path": "common\\models\\cube.fbx"
     }
    },
+   "ID": 4,
+   "Name": "Cube",
+   "Parent": 4294967295,
    "StaticMeshMaterials": {
     "Materials": [
      {
@@ -201,10 +201,7 @@
    }
   },
   {
-   "ID": 5,
-   "Name": "Cube",
-   "Parent": 4294967295,
-   "StaticMesh": {
+   "DynamicMesh": {
     "Draw": true,
     "MaterialsOverride": {
      "ID": 5
@@ -213,6 +210,9 @@
      "Path": "common\\models\\cube.fbx"
     }
    },
+   "ID": 5,
+   "Name": "Cube",
+   "Parent": 4294967295,
    "StaticMeshMaterials": {
     "Materials": [
      {
@@ -344,8 +344,8 @@
     "Brightness": 32.0,
     "Colour": {
      "X": 1.0,
-     "Y": 0.4112902879714966,
-     "Z": 0.0
+     "Y": 0.8077198266983032,
+     "Z": 0.6733871102333069
     },
     "Distance": 64.0,
     "Enabled": true
@@ -410,10 +410,10 @@
        "PathName": "downloaded\\textures\\rocky_dirt1-bl\\rocky_dirt1_Roughness.png"
       },
       "UVOffsetScale": {
-       "W": 16.0,
+       "W": 8.0,
        "X": 0.0,
        "Y": 0.0,
-       "Z": 16.0
+       "Z": 8.0
       }
      }
     ]
@@ -446,8 +446,8 @@
     "Brightness": 32.0,
     "Colour": {
      "X": 1.0,
-     "Y": 0.4112902879714966,
-     "Z": 0.0
+     "Y": 0.8290842771530151,
+     "Z": 0.7096774578094482
     },
     "Distance": 64.0,
     "Enabled": true
@@ -480,8 +480,8 @@
     "Brightness": 32.0,
     "Colour": {
      "X": 1.0,
-     "Y": 0.4112902879714966,
-     "Z": 0.0
+     "Y": 0.8789346814155579,
+     "Z": 0.7943548560142517
     },
     "Distance": 64.0,
     "Enabled": true
@@ -546,10 +546,10 @@
        "PathName": "downloaded\\textures\\antique_veneer1_bl\\antique_veneer1_Roughness.png"
       },
       "UVOffsetScale": {
-       "W": 1.0,
+       "W": 0.25,
        "X": 0.0,
        "Y": 0.0,
-       "Z": 1.0
+       "Z": 0.25
       }
      }
     ]
@@ -575,10 +575,7 @@
    }
   },
   {
-   "ID": 12,
-   "Name": "Cube",
-   "Parent": 4294967295,
-   "StaticMesh": {
+   "DynamicMesh": {
     "Draw": true,
     "MaterialsOverride": {
      "ID": 12
@@ -587,6 +584,9 @@
      "Path": "common\\models\\cube.fbx"
     }
    },
+   "ID": 12,
+   "Name": "Cube",
+   "Parent": 4294967295,
    "StaticMeshMaterials": {
     "Materials": [
      {
@@ -614,10 +614,10 @@
        "PathName": "downloaded\\textures\\broken_down_concrete2_bl\\broken_down_concrete2_Roughness.png"
       },
       "UVOffsetScale": {
-       "W": 1.0,
+       "W": 2.0,
        "X": 0.0,
        "Y": 0.0,
-       "Z": 1.0
+       "Z": 2.0
       }
      }
     ]
@@ -643,10 +643,7 @@
    }
   },
   {
-   "ID": 13,
-   "Name": "Cube",
-   "Parent": 4294967295,
-   "StaticMesh": {
+   "DynamicMesh": {
     "Draw": true,
     "MaterialsOverride": {
      "ID": 13
@@ -655,6 +652,9 @@
      "Path": "common\\models\\cube.fbx"
     }
    },
+   "ID": 13,
+   "Name": "Cube",
+   "Parent": 4294967295,
    "StaticMeshMaterials": {
     "Materials": [
      {
@@ -682,10 +682,10 @@
        "PathName": "downloaded\\textures\\carbon-fiber-bl\\carbon-fiber_roughness.png"
       },
       "UVOffsetScale": {
-       "W": 1.0,
+       "W": 0.5,
        "X": 0.0,
        "Y": 0.0,
-       "Z": 1.0
+       "Z": 0.5
       }
      }
     ]

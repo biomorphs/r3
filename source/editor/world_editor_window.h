@@ -16,6 +16,7 @@ namespace R3
 	class EditorCommandList;
 	class EditorCommand;
 	class WorldEditorTool;
+	class MenuBar;
 	class WorldEditorWindow : public EditorWindow
 	{
 	public:
@@ -42,6 +43,7 @@ namespace R3
 		void UpdateSelectParentWindow();
 		void DrawSelected();
 		void UpdateMainContextMenu();
+		void UpdateMeshContextMenu(MenuBar& contextMenu, Entities::World& w);
 		void UpdateMainMenu();
 		void DrawSideBarLeft(Entities::World* w);
 		void DrawSideBarRight(Entities::World* w);
@@ -51,7 +53,7 @@ namespace R3
 		float m_sidebarLeftWidth = 200.0f;
 		float m_sidebarRightWidth = 200.0f;
 		bool m_showCommandsWindow = false;
-		bool m_isInspectingEntityWithStaticMesh = false;
+		bool m_isInspectingEntityWithStaticMeshOrMaterial = false;
 		std::string m_titleString;
 		std::string m_filePath;	// set if the world was ever saved/loaded
 		std::string m_worldIdentifier;	// used to index world in entity system
