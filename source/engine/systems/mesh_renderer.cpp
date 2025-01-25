@@ -348,10 +348,13 @@ namespace R3
 		}
 
 		// old static data buffers have been retired, flush writes to the new ones
-		if (m_rebuildingStaticScene && (m_staticOpaques.m_partInstances.size() > 0 || m_staticTransparents.m_partInstances.size() > 0))
+		if (m_rebuildingStaticScene)
 		{
 			m_staticMaterialOverrides.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
-			m_staticMeshInstances.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+			if ((m_staticOpaques.m_partInstances.size() > 0 || m_staticTransparents.m_partInstances.size() > 0))
+			{
+				m_staticMeshInstances.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+			}
 			m_rebuildingStaticScene = false;
 		}
 

@@ -254,6 +254,12 @@ namespace R3
 		// we should not trust the pitch output by exporters according to MS
 		uint64_t imgPitch = glm::max(1u, ((header.m_widthPx + 3) / 4)) * GetBlockSizeBytes(newTexture.m_format);
 		size_t mip0Size = imgPitch * newTexture.m_height / 4;
+		
+		// 1x1 textures may report as having 0 mips, force them to 1 at least so we can load *something*
+		if (header.m_mipCount == 0 && header.m_heightPx == 1 && header.m_widthPx == 1)
+		{
+			header.m_mipCount = 1;
+		}
 
 		// the image data is not aligned how we would like, so we need to remake it ourselves
 		// each mip level will be stored consecutively with 16 byte alignment

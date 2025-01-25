@@ -15,6 +15,13 @@ namespace R3
 		bool BakeTexture(std::string_view pathName)
 		{
 			R3_PROF_EVENT();
+
+			// we treat source dds files as already baked
+			if (std::filesystem::path(pathName).extension() == ".dds")
+			{
+				return true;
+			}
+
 			std::string bakedPath = GetBakedTexturePath(pathName);
 			if (bakedPath.empty())
 			{
@@ -94,6 +101,12 @@ namespace R3
 			{
 				LogWarn("Texture file {} is outside data root", pathName);
 				return {};
+			}
+
+			// treat source dds files as already baked
+			if (std::filesystem::path(pathName).extension() == ".dds")
+			{
+				return std::filesystem::absolute(relPath).string();
 			}
 
 			// replace any directory separators with '_'

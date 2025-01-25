@@ -9,6 +9,11 @@ project(R3
   LANGUAGES CXX)
   
 set(CMAKE_CXX_STANDARD 20)
+if (MSVC)
+	#required to force MSVC to set the __cplusplus define correctly
+	add_compile_options(/Zc:__cplusplus)
+endif()
+
 
 #Disable implicit conversions when using json lib
 set(nlohmann-json_IMPLICIT_CONVERSIONS OFF)
