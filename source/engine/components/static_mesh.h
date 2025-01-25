@@ -4,8 +4,6 @@
 
 namespace R3
 {
-	struct ModelDataHandle;
-
 	// MeshComponent is used for both Static and Dynamic meshes
 	// We keep separate component types to allow for iteration through static/dynamic objects separately
 	// Using CRTP for compile-time polymorphism + explicit instantiation to avoid inlining everything
