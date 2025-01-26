@@ -104,6 +104,7 @@ namespace R3
 			ctx.m_graphicsCmds = cmdBuffer;
 			ctx.m_targets = m_renderTargets.get();
 			ctx.m_timestampHandler = &timestamps;
+			ctx.m_targets->ResetForNewFrame();
 			m_renderGraph->Run(ctx);
 
 			// Transition swap chain image to format optimal for present

@@ -45,6 +45,7 @@ namespace R3
 		RenderTarget* GetTarget(const RenderTargetInfo& info);	// will create a new one if no matching target found
 		void AddTarget(const RenderTargetInfo& info, VkImage image, VkImageView view);	// add an external target to the cache
 		void Clear();	// remove all existing targets + free memory
+		void ResetForNewFrame();	// reset all previous access mode/layouts for a new frame
 	private:
 		std::vector<RenderTarget> m_allTargets;
 	};

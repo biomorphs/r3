@@ -34,6 +34,15 @@ namespace R3
 		m_allTargets.clear();
 	}
 
+	void RenderTargetCache::ResetForNewFrame()
+	{
+		for (int i = 0; i < m_allTargets.size(); ++i)
+		{
+			m_allTargets[i].m_lastAccessMode = VK_ACCESS_NONE;
+			m_allTargets[i].m_lastLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		}
+	}
+
 	RenderTargetCache::RenderTargetCache()
 	{
 		m_allTargets.reserve(1024);	// some large number to ensure the pointers dont get invalidated
