@@ -26,14 +26,14 @@ shared Pointlight sharedLights[MAX_SHARED_LIGHTS];
 void main() 
 {
 	// Copy lights list to shared memory
+	// since work group is 16x16, each thread can grab 4 lights each (1024 max)
 	LightsData lightsData = PushConstants.m_lightData.data[0];
 	uint pointLightCount = min(lightsData.m_pointlightCount, MAX_SHARED_LIGHTS);
-	if(gl_LocalInvocationIndex == 0)
+	uint firstLightIndex = gl_LocalInvocationIndex * 4;
+	uint lastLightIndex = min(firstLightIndex + 4, pointLightCount);
+	for(uint p=firstLightIndex;p<lastLightIndex;++p)
 	{
-		for(uint p=0;p<pointLightCount;++p)
-		{
-			sharedLights[p] = lightsData.m_allPointlights.data[p];
-		}
+		sharedLights[p] = lightsData.m_allPointlights.data[p];
 	}
 	memoryBarrierShared();		// ensure all writes to shared memory complete
 	groupMemoryBarrier();		// synchronise memory between all invocations in this work group
