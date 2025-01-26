@@ -623,8 +623,11 @@ namespace R3
 				return true;
 			};
 			Entities::Queries::ForEach<MeshCmpType, TransformComponent>(activeWorld, forEachEntity);
-			instanceBuffer.CommitWrites(currentInstanceBufferOffset);
-			instanceBuffer.RetirePooledBuffer(*GetSystem<RenderSystem>()->GetDevice());		// write to a new buffer each time
+			if (currentInstanceBufferOffset > 0)
+			{
+				instanceBuffer.CommitWrites(currentInstanceBufferOffset);
+				instanceBuffer.RetirePooledBuffer(*GetSystem<RenderSystem>()->GetDevice());		// write to a new buffer each time
+			}
 		}
 	}
 
