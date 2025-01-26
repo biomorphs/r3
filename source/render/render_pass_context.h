@@ -22,6 +22,7 @@ namespace R3
 		VkCommandBuffer_T* m_graphicsCmds = nullptr;	// main cmd buffer, supports graphics + compute
 		std::vector<RenderTarget*> m_resolvedTargets;	// all targets used by a pass
 		glm::vec2 m_renderExtents;		// extents of render pass
+		uint32_t m_previousStageFlags = 0;	// used when submitting pipeline barriers during resolve
 
 		RenderTarget* GetResolvedTarget(const RenderTargetInfo& info);
 		RenderTarget* GetResolvedTarget(std::string_view targetName);

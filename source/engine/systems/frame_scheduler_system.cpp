@@ -249,7 +249,6 @@ namespace R3
 		graph.m_allPasses.push_back(MakeDeferredLightingPass(mainDepth, gBufferPosition, gBufferNormal, gBufferAlbedo, mainColour));	// deferred lighting
 		graph.m_allPasses.push_back(MakeForwardPass(mainColour, mainDepth));	// forward render to main colour
 		graph.m_allPasses.push_back(MakeTonemapToLDRPass(mainColour, mainColourLDR));	// HDR -> LDR
-		graph.m_allPasses.push_back(MakeColourBlitToPass("LDR to swap", mainColourLDR, swapchainImage));	// blit LDR -> swap
 		if (m_colourTargetDebuggerEnabled && m_colourDebugTargetName.length() > 0)
 		{
 			auto srcTarget = std::find_if(m_allCurrentTargets.begin(), m_allCurrentTargets.end(), [&](const RenderTargetInfo& info) {
@@ -259,6 +258,10 @@ namespace R3
 			{
 				graph.m_allPasses.push_back(MakeColourBlitToPass("Colour target debug", *srcTarget, swapchainImage));	// blit debug target -> swap
 			}
+		}
+		else
+		{
+			graph.m_allPasses.push_back(MakeColourBlitToPass("LDR to swap", mainColourLDR, swapchainImage));	// blit LDR -> swap
 		}
 		graph.m_allPasses.push_back(MakeImguiPass(swapchainImage));		// imgui to swap
 		

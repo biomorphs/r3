@@ -13,7 +13,7 @@ namespace R3
 		if (resource->m_lastAccessMode != access || resource->m_lastLayout != layout)
 		{
 			auto barrier = VulkanHelpers::MakeImageBarrier(resource->m_image, resource->m_info.m_aspectFlags,
-				VK_ACCESS_NONE, access, resource->m_lastLayout, layout);	// we dont care about src access mask
+				resource->m_lastAccessMode, access, resource->m_lastLayout, layout);
 			resource->m_lastAccessMode = access;
 			resource->m_lastLayout = layout;
 			return barrier;
@@ -57,7 +57,8 @@ namespace R3
 		{
 			auto srcStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;	// barrier must happen between output to attachment + before compute
 			auto dstStages = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-			vkCmdPipelineBarrier(ctx.m_graphicsCmds, srcStages, dstStages, 0, 0, nullptr, 0, nullptr, (uint32_t)barriers.size(), barriers.data());
+			vkCmdPipelineBarrier(ctx.m_graphicsCmds, ctx.m_previousStageFlags, dstStages, 0, 0, nullptr, 0, nullptr, (uint32_t)barriers.size(), barriers.data());
+			ctx.m_previousStageFlags = dstStages;
 		}
 	}
 
@@ -104,7 +105,8 @@ namespace R3
 		if (barriers.size() > 0)
 		{
 			auto dstStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-			vkCmdPipelineBarrier(ctx.m_graphicsCmds, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, dstStages, 0, 0, nullptr, 0, nullptr, (uint32_t)barriers.size(), barriers.data());
+			vkCmdPipelineBarrier(ctx.m_graphicsCmds, ctx.m_previousStageFlags, dstStages, 0, 0, nullptr, 0, nullptr, (uint32_t)barriers.size(), barriers.data());
+			ctx.m_previousStageFlags = dstStages;
 		}
 	}
 
@@ -204,7 +206,7 @@ namespace R3
 			if (target)
 			{
 				ctx.m_resolvedTargets.push_back(target);
-				auto barrier = DoTransition(target, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+				auto barrier = DoTransition(target, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 				if (barrier)
 				{
 					outBarriers.push_back(*barrier);
@@ -214,12 +216,13 @@ namespace R3
 		if (inBarriers.size() > 0)	// transition inputs before transfers
 		{
 			auto dstStages = VK_PIPELINE_STAGE_TRANSFER_BIT;
-			vkCmdPipelineBarrier(ctx.m_graphicsCmds, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, dstStages, 0, 0, nullptr, 0, nullptr, (uint32_t)inBarriers.size(), inBarriers.data());
+			vkCmdPipelineBarrier(ctx.m_graphicsCmds, ctx.m_previousStageFlags, dstStages, 0, 0, nullptr, 0, nullptr, (uint32_t)inBarriers.size(), inBarriers.data());
 		}
-		if (outBarriers.size() > 0)	// transition outputs after transfer + before draw
+		if (outBarriers.size() > 0)	// transition outputs before transfer
 		{
-			auto dstStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			vkCmdPipelineBarrier(ctx.m_graphicsCmds, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, dstStages, 0, 0, nullptr, 0, nullptr, (uint32_t)outBarriers.size(), outBarriers.data());
+			auto dstStages = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			vkCmdPipelineBarrier(ctx.m_graphicsCmds, ctx.m_previousStageFlags, dstStages, 0, 0, nullptr, 0, nullptr, (uint32_t)outBarriers.size(), outBarriers.data());
+			ctx.m_previousStageFlags = dstStages;
 		}
 	}
 
@@ -243,15 +246,15 @@ namespace R3
 	void RenderGraph::Run(GraphContext& context)
 	{
 		R3_PROF_EVENT();
+		RenderPassContext rpc;
+		rpc.m_device = context.m_device;
+		rpc.m_targets = context.m_targets;
+		rpc.m_graphicsCmds = context.m_graphicsCmds;
+		rpc.m_previousStageFlags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 		for (uint32_t p = 0; p < m_allPasses.size(); ++p)
 		{
 			auto passTimestamp = context.m_timestampHandler->MakeScopedQuery(m_allPasses[p]->m_name);
-
-			RenderPassContext rpc;
-			rpc.m_device = context.m_device;
 			rpc.m_pass = m_allPasses[p].get();
-			rpc.m_targets = context.m_targets;
-			rpc.m_graphicsCmds = context.m_graphicsCmds;
 			m_allPasses[p]->Run(rpc);
 		}
 	}
