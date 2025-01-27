@@ -30,7 +30,7 @@ function Multiballs_Main(e)
 			local matIndex = math.random(1,#matEntities)
 			Multiballs_SpawnBall(e, matEntities[matIndex])
 		end
+		R3.RebuildStaticScene()
 	end
-	R3.RebuildStaticScene()
 	Multiballs.m_ranFirstFrame = true
 end
