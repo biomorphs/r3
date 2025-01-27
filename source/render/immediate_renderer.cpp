@@ -280,6 +280,27 @@ namespace R3
 		}
 	}
 
+	void ImmediateRenderer::AddTriangle(const PosColourVertex& v0, const PosColourVertex& v1, const PosColourVertex& v2, bool depthTestEnabled)
+	{
+		DrawData newTri;
+		newTri.m_startVertexOffset = static_cast<uint32_t>(m_thisFramePosColVertices.size());
+		if (newTri.m_startVertexOffset + 3 <= m_maxVertices)
+		{
+			newTri.m_vertexCount = 3;
+			m_thisFramePosColVertices.emplace_back(v0);
+			m_thisFramePosColVertices.emplace_back(v1);
+			m_thisFramePosColVertices.emplace_back(v2);
+			if (depthTestEnabled)
+			{
+				m_thisFrameTrianglesWithDepth.emplace_back(newTri);
+			}
+			else
+			{
+				m_thisFrameTriangles.emplace_back(newTri);
+			}
+		}
+	}
+
 	void ImmediateRenderer::AddLine(glm::vec3 p0, glm::vec3 p1, glm::vec4 colour, bool depthTestEnabled)
 	{
 		PosColourVertex verts[2];

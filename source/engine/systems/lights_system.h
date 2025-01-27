@@ -27,8 +27,9 @@ namespace R3
 		static std::string_view GetName() { return "LightsSystem"; }
 		virtual void RegisterTickFns();
 		void PrepareForDrawing(class RenderPassContext& ctx);		// call this from render graph before accessing light data
-		VkDeviceAddress GetAllLightsDeviceAddress();					// get the address of m_allLightsData for this frame
+		VkDeviceAddress GetAllLightsDeviceAddress();				// get the address of m_allLightsData for this frame
 		glm::vec3 GetSkyColour();
+		const std::vector<Pointlight>& GetActivePointLights() { return m_allPointLightsCPU; }
 	private:
 		bool CollectAllLights();
 		bool ShowGui();
@@ -39,6 +40,7 @@ namespace R3
 		const uint32_t c_maxLights = 1024 * 32;
 		const uint32_t c_framesInFlight = 3;	// lights update every frame, need multiple buffers
 		uint32_t m_currentFrame = 0;			// offset into m_allPointlights and m_allLightsData
+		std::vector<Pointlight> m_allPointLightsCPU;	// keep a cpu-side array of all active point lights for this frame
 		WriteOnlyGpuArray<Pointlight> m_allPointlights;	// c_maxLights x c_framesInFlight point lights
 		WriteOnlyGpuArray<AllLights> m_allLightsData;	// c_maxLights * AllLights
 		uint32_t m_totalPointlightsThisFrame = 0;

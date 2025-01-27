@@ -7,7 +7,9 @@
 #include "texture_system.h"
 #include "engine/graphics/tonemap_compute.h"
 #include "engine/graphics/deferred_lighting_compute.h"
+#include "engine/graphics/simple_tiled_lights_compute.h"
 #include "engine/components/environment_settings.h"
+#include "engine/systems/camera_system.h"
 #include "engine/ui/imgui_menubar_helper.h"
 #include "entities/systems/entity_system.h"
 #include "entities/queries.h"
@@ -44,9 +46,11 @@ namespace R3
 	{
 		m_tonemapComputeRenderer = std::make_unique<TonemapCompute>();
 		m_deferredLightingCompute = std::make_unique<DeferredLightingCompute>();
+		m_simpleTiledLightsCompute = std::make_unique<SimpleTiledLightsCompute>();
 		GetSystem<RenderSystem>()->m_onShutdownCbs.AddCallback([this](Device& d) {
 			m_tonemapComputeRenderer->Cleanup(d);
 			m_deferredLightingCompute->Cleanup(d);
+			m_simpleTiledLightsCompute->Cleanup(d);
 		});
 		return true;
 	}
@@ -62,6 +66,19 @@ namespace R3
 			GetSystem<LightsSystem>()->PrepareForDrawing(ctx);
 		});
 		return preparePass;
+	}
+
+	std::unique_ptr<ComputeDrawPass> FrameScheduler::MakeLightTilingPass()
+	{
+		auto lightTilingPass = std::make_unique<ComputeDrawPass>();
+		lightTilingPass->m_name = "Light Tiling";
+		lightTilingPass->m_onRun.AddCallback([this](RenderPassContext& ctx) {
+			auto screenSize = GetSystem<RenderSystem>()->GetWindowExtents();
+			auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
+			auto allTiles = m_simpleTiledLightsCompute->BuildMainCameraLightTilesCpu(glm::uvec2(ctx.m_renderExtents), mainCamera);
+			m_simpleTiledLightsCompute->DebugDrawLightTiles(glm::uvec2(ctx.m_renderExtents), mainCamera, allTiles);
+		});
+		return lightTilingPass;
 	}
 
 	std::unique_ptr<ComputeDrawPass> FrameScheduler::MakeCullingPass()
@@ -246,6 +263,7 @@ namespace R3
 		graph.m_allPasses.push_back(MakeRenderPreparePass());
 		graph.m_allPasses.push_back(MakeCullingPass());
 		graph.m_allPasses.push_back(MakeGBufferPass(gBufferPosition, gBufferNormal, gBufferAlbedo, mainDepth));	// write gbuffer
+		graph.m_allPasses.push_back(MakeLightTilingPass());											// light tile determination
 		graph.m_allPasses.push_back(MakeDeferredLightingPass(mainDepth, gBufferPosition, gBufferNormal, gBufferAlbedo, mainColour));	// deferred lighting
 		graph.m_allPasses.push_back(MakeForwardPass(mainColour, mainDepth));	// forward render to main colour
 		graph.m_allPasses.push_back(MakeTonemapToLDRPass(mainColour, mainColourLDR));	// HDR -> LDR

@@ -52,6 +52,9 @@ namespace R3
 	bool LightsSystem::CollectAllLights()
 	{
 		R3_PROF_EVENT();
+
+		m_allPointLightsCPU.clear();
+
 		auto activeWorld = Systems::GetSystem<Entities::EntitySystem>()->GetActiveWorld();
 		if (activeWorld == nullptr || !m_allPointlights.IsCreated() || !m_allLightsData.IsCreated())
 		{
@@ -87,6 +90,7 @@ namespace R3
 					newlight.m_colourBrightness = { pl.m_colour, pl.m_brightness };
 					newlight.m_positionDistance = { lightCenter, pl.m_distance };
 					m_allPointlights.Write(pointLightBaseOffset + thisFrameLightData.m_pointlightCount, 1, &newlight);
+					m_allPointLightsCPU.emplace_back(newlight);
 					thisFrameLightData.m_pointlightCount++;
 				}
 			}

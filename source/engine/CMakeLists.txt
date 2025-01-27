@@ -13,6 +13,8 @@ set(EngineLib_SourceFiles
 	graphics/tonemap_compute.cpp
 	graphics/deferred_lighting_compute.h
 	graphics/deferred_lighting_compute.cpp
+	graphics/simple_tiled_lights_compute.h
+	graphics/simple_tiled_lights_compute.cpp
 	graphics/flycam.h
 	graphics/flycam.cpp
 	ui/console_log_widget.h

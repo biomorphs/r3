@@ -37,6 +37,7 @@ namespace R3
 
 		void AddTriangles(const PosColourVertex* vertices, uint32_t count, bool depthTestEnabled = false);
 		void AddTriangle(const PosColourVertex vertices[3], bool depthTestEnabled = false);
+		void AddTriangle(const PosColourVertex& v0, const PosColourVertex& v1, const PosColourVertex& v2, bool depthTestEnabled = false);
 		void AddLine(glm::vec3 p0, glm::vec3 p1, glm::vec4 colour, bool depthTestEnabled = false);
 		void AddLine(const PosColourVertex vertices[2], bool depthTestEnabled = false);
 		void AddLines(const PosColourVertex* vertices, int linecount, bool depthTestEnabled = false);
