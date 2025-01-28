@@ -26,9 +26,11 @@ layout(push_constant) uniform constants
 #endif
 } PushConstants;
 
-// Copy all pointlights to shared memory for this work group
-#define MAX_SHARED_LIGHTS 1024
-shared Pointlight sharedLights[MAX_SHARED_LIGHTS];
+#ifndef USE_TILED_LIGHTS
+	// Copy all pointlights to shared memory for this work group
+	#define MAX_SHARED_LIGHTS 1024
+	shared Pointlight sharedLights[MAX_SHARED_LIGHTS];
+#endif
 
 void main() 
 {
@@ -36,19 +38,9 @@ void main()
 	ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
 	ivec2 size = imageSize(hdrOutput);
 	float depthValue = texelFetch(inDepthBuffer, texelCoord, 0).r;
+	
+#ifndef USE_TILED_LIGHTS
 	// Copy lights list to shared memory, up to 4 lights per thread
-#ifdef USE_TILED_LIGHTS
-	LightTileMetadata tileMetadata = PushConstants.m_lightTileMetadata.data[0];
-	uint tileIndex = GetLightTileIndex(uvec2(gl_GlobalInvocationID.xy), tileMetadata);
-	uint pointLightCount = uint(tileMetadata.m_lightTiles.data[tileIndex].m_lightCount);
-	uint firstLightIndex = gl_LocalInvocationIndex * 4;
-	uint lastLightIndex = min(firstLightIndex + 4, pointLightCount);
-	for(uint p=firstLightIndex;p<lastLightIndex;++p)
-	{
-		uint lightIndex = uint(tileMetadata.m_lightTiles.data[tileIndex].m_lightIndices[p]);
-		sharedLights[p] = lightsData.m_allPointlights.data[lightIndex];
-	}
-#else
 	uint pointLightCount = min(lightsData.m_pointlightCount, MAX_SHARED_LIGHTS);
 	uint firstLightIndex = gl_LocalInvocationIndex * 4;
 	uint lastLightIndex = min(firstLightIndex + 4, pointLightCount);
@@ -56,9 +48,9 @@ void main()
 	{
 		sharedLights[p] = lightsData.m_allPointlights.data[p];
 	}
-#endif
 	memoryBarrierShared();		// ensure all writes to shared memory complete
 	groupMemoryBarrier();		// synchronise memory between all invocations in this work group
+#endif
 
 	if(texelCoord.x < size.x && texelCoord.y < size.y)
 	{
@@ -82,16 +74,27 @@ void main()
 			vec3 directLight = PBRDirectLighting(mat, viewDir, -sunDirectionBrightness.xyz, normalRoughness.xyz, sunRadiance, 1.0);
 			
 			// Apply point lights (direct)
+#ifdef USE_TILED_LIGHTS
+			LightTileMetadata tileMetadata = PushConstants.m_lightTileMetadata.data[0];
+			uint tileIndex = GetLightTileIndex(uvec2(gl_GlobalInvocationID.xy), tileMetadata);
+			uint pointLightCount = uint(tileMetadata.m_lightTiles.data[tileIndex].m_lightCount);
+			for(uint l=0;l<pointLightCount;++l)
+			{
+				uint p = uint(tileMetadata.m_lightTiles.data[tileIndex].m_lightIndices[l]);
+				Pointlight pl = lightsData.m_allPointlights.data[p];
+#else
 			for(uint p=0;p<pointLightCount;++p)
 			{
-				vec3 lightToPixel = sharedLights[p].m_positionDistance.xyz - positionMetallic.xyz;
+				Pointlight pl = sharedLights[p];
+#endif
+				vec3 lightToPixel = pl.m_positionDistance.xyz - positionMetallic.xyz;
 				float lightDistanceSq = dot(lightToPixel,lightToPixel);
-				float radiusSq = sharedLights[p].m_positionDistance.w * sharedLights[p].m_positionDistance.w;
+				float radiusSq = pl.m_positionDistance.w * pl.m_positionDistance.w;
 				if(lightDistanceSq < radiusSq)
 				{
-					vec3 lightRadiance = sharedLights[p].m_colourBrightness.xyz * sharedLights[p].m_colourBrightness.w;
-					float attenuation = GetPointlightAttenuation(sharedLights[p], positionMetallic.xyz);
-					vec3 lightToPixel = normalize(sharedLights[p].m_positionDistance.xyz - positionMetallic.xyz);
+					vec3 lightRadiance = pl.m_colourBrightness.xyz * pl.m_colourBrightness.w;
+					float attenuation = GetPointlightAttenuation(pl, positionMetallic.xyz);
+					vec3 lightToPixel = normalize(pl.m_positionDistance.xyz - positionMetallic.xyz);
 					directLight += PBRDirectLighting(mat, viewDir, lightToPixel, normalRoughness.xyz, lightRadiance, attenuation);
 				}
 			}
