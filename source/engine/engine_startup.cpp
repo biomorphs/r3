@@ -94,6 +94,7 @@ namespace R3
 			}
 			{
 				auto& renderUpdate = updateSequence.AddSequence("RenderUpdate");
+				renderUpdate.AddFn("Cameras::PreRenderUpdate");
 				{
 					auto& renderASyncUpdate = renderUpdate.AddAsync("UpdateAsync");
 					renderASyncUpdate.AddFn("MeshRenderer::CollectInstances");
@@ -110,10 +111,7 @@ namespace R3
 		auto& runRenderAndGC = fg.m_root.AddAsync("RenderAndGC");	// first entry always runs on main thread
 		{
 			auto& render = runRenderAndGC.AddSequence("Render");
-			{
-				render.AddFn("Cameras::PreRenderUpdate");
-				render.AddFn("Render::DrawFrame");
-			}
+			render.AddFn("Render::DrawFrame");
 			runRenderAndGC.AddFn("LuaSystem::RunGC");
 		}
 	}
