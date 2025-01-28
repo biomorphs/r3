@@ -73,12 +73,22 @@ namespace R3
 		auto lightTilingPass = std::make_unique<GenericPass>();
 		lightTilingPass->m_name = "Light Tiling";
 		lightTilingPass->m_onRun.AddCallback([this](RenderPassContext& ctx) {
-			auto screenSize = glm::uvec2(GetSystem<RenderSystem>()->GetWindowExtents());
-			auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
-			auto allTiles = m_tiledLightsCompute->BuildLightTilesCpu(screenSize, mainCamera);
-			//m_tiledLightsCompute->DebugDrawLightTiles(screenSize, mainCamera, allTiles);
-			VkDeviceAddress gpuData = m_tiledLightsCompute->CopyCpuDataToGpu(*ctx.m_device, ctx.m_graphicsCmds, screenSize, allTiles);
-			m_deferredLightingCompute->SetTiledLightinMetadataAddress(gpuData);
+			if (m_useTiledLighting)
+			{
+				auto screenSize = glm::uvec2(GetSystem<RenderSystem>()->GetWindowExtents());
+				auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
+				auto allTiles = m_tiledLightsCompute->BuildLightTilesCpu(screenSize, mainCamera);
+				if (m_showLightTilesDebug)
+				{
+					m_tiledLightsCompute->DebugDrawLightTiles(screenSize, mainCamera, allTiles);
+				}
+				VkDeviceAddress gpuData = m_tiledLightsCompute->CopyCpuDataToGpu(*ctx.m_device, ctx.m_graphicsCmds, screenSize, allTiles);
+				m_deferredLightingCompute->SetTiledLightinMetadataAddress(gpuData);
+			}
+			else
+			{
+				m_deferredLightingCompute->SetTiledLightinMetadataAddress(0);
+			}
 		});
 		return lightTilingPass;
 	}
@@ -133,7 +143,7 @@ namespace R3
 			auto inAlbedoAO = ctx.GetResolvedTarget(albedoBuffer);
 			auto outTarget = ctx.GetResolvedTarget(mainColour);
 			auto outSize = ctx.m_targets->GetTargetSize(outTarget->m_info);
-			m_deferredLightingCompute->Run(*ctx.m_device, ctx.m_graphicsCmds, *inDepth, *inPosMetal, *inNormalRoughness, *inAlbedoAO, *outTarget, outSize);
+			m_deferredLightingCompute->Run(*ctx.m_device, ctx.m_graphicsCmds, *inDepth, *inPosMetal, *inNormalRoughness, *inAlbedoAO, *outTarget, outSize, m_useTiledLighting);
 		});
 		return lightingPass;
 	}
@@ -294,6 +304,18 @@ namespace R3
 		debugMenu.AddItem("Render target visualiser", [&]() {
 			m_colourTargetDebuggerEnabled = true;
 		});
+
+		auto& lights = debugMenu.GetSubmenu("Lights");
+		lights.AddItem(m_useTiledLighting ? "Use non-tiled lighting" : "Use tiled lighting", [this]() {
+			m_useTiledLighting = !m_useTiledLighting;
+		});
+		if (m_useTiledLighting)
+		{
+			lights.AddItem(m_showLightTilesDebug ? "Hide light tiles debug" : "Show light tiles debug", [this]() {
+				m_showLightTilesDebug = !m_showLightTilesDebug;
+			});
+		}
+		
 
 		if (m_colourTargetDebuggerEnabled)
 		{

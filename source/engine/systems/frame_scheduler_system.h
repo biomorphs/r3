@@ -43,5 +43,8 @@ namespace R3
 		// Colour target visualiser (blits a target to swap chain)
 		bool m_colourTargetDebuggerEnabled = false;
 		std::string m_colourDebugTargetName;
+
+		bool m_useTiledLighting = true;
+		bool m_showLightTilesDebug = false;
 	};
 }

@@ -29,7 +29,7 @@ namespace R3
 		RenderTarget& positionMetalTarget,
 		RenderTarget& normalRoughnessTarget,
 		RenderTarget& albedoAOTarget,
-		RenderTarget& outputTarget, glm::vec2 outputDimensions)
+		RenderTarget& outputTarget, glm::vec2 outputDimensions, bool useTiledLighting)
 	{
 		R3_PROF_EVENT();
 
@@ -51,7 +51,7 @@ namespace R3
 		writer.WriteStorageImage(4, outputTarget.m_view, outputTarget.m_lastLayout);
 		writer.FlushWrites();
 
-		if (m_useTiledLighting && m_lightTileMetadata != 0)
+		if (useTiledLighting && m_lightTileMetadata != 0)
 		{
 			vkCmdBindPipeline(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelineTiled);
 			vkCmdBindDescriptorSets(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelineLayoutTiled, 0, 1, &m_descriptorSets[m_currentSet], 0, nullptr);

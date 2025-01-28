@@ -16,7 +16,7 @@ namespace R3
 			RenderTarget& positionMetalTarget,
 			RenderTarget& normalRoughnessTarget,
 			RenderTarget& albedoAOTarget,
-			RenderTarget& outputTarget, glm::vec2 outputDimensions);
+			RenderTarget& outputTarget, glm::vec2 outputDimensions, bool useTiledLighting);
 		bool Initialise(Device& d);
 		void Cleanup(Device& d);
 		void SetTiledLightinMetadataAddress(VkDeviceAddress addr) { m_lightTileMetadata = addr; }
@@ -24,7 +24,6 @@ namespace R3
 	private:
 		// track if we need to initialise internal state
 		bool m_resourcesInitialised = false;
-		bool m_useTiledLighting = true;
 
 		// light tile metadata for the next draw
 		VkDeviceAddress m_lightTileMetadata = 0;

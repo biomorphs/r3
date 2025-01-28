@@ -92,7 +92,7 @@ namespace R3
 					};
 
 					glm::vec4 c_pallete[] = {
-						{0.0f,0.0f,0.1f,c_maxLightsPerTile / 32},
+						{0.0f,0.0f,0.1f,c_maxLightsPerTile / 16},
 						{0.0f,1.0f,0.1f,c_maxLightsPerTile / 8},
 						{1.0f,1.0f,0.0f,c_maxLightsPerTile / 4},
 						{1.0f,0.0f,0.0f,c_maxLightsPerTile / 2},
