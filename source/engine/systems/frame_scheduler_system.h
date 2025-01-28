@@ -11,7 +11,7 @@ namespace R3
 	struct RenderTargetInfo;
 	class TonemapCompute;
 	class DeferredLightingCompute;
-	class SimpleTiledLightsCompute;
+	class TiledLightsCompute;
 	// Builds + maintains the render graph
 	class FrameScheduler : public System
 	{
@@ -28,7 +28,7 @@ namespace R3
 
 		std::unique_ptr<GenericPass> MakeRenderPreparePass();	// sets stuff up before other render passes
 		std::unique_ptr<ComputeDrawPass> MakeCullingPass();
-		std::unique_ptr<ComputeDrawPass> MakeLightTilingPass();
+		std::unique_ptr<GenericPass> MakeLightTilingPass();
 		std::unique_ptr<DrawPass> MakeForwardPass(const RenderTargetInfo& mainColour, const RenderTargetInfo& mainDepth);
 		std::unique_ptr<DrawPass> MakeGBufferPass(const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainDepth);
 		std::unique_ptr<ComputeDrawPass> MakeDeferredLightingPass(const RenderTargetInfo& mainDepth, const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainColour);
@@ -37,7 +37,7 @@ namespace R3
 		std::unique_ptr<DrawPass> MakeImguiPass(const RenderTargetInfo& colourTarget);
 		std::unique_ptr<TonemapCompute> m_tonemapComputeRenderer;
 		std::unique_ptr<DeferredLightingCompute> m_deferredLightingCompute;
-		std::unique_ptr<SimpleTiledLightsCompute> m_simpleTiledLightsCompute;
+		std::unique_ptr<TiledLightsCompute> m_tiledLightsCompute;
 		std::vector<RenderTargetInfo> m_allCurrentTargets;	// keep the list of all render targets around for debugging
 
 		// Colour target visualiser (blits a target to swap chain)

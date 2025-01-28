@@ -10,10 +10,18 @@
 namespace R3
 {
 	// Pass lighting data buffer address via push constants
-	struct PushConstants
+	struct PushConstantsAllLights
 	{
 		glm::vec4 m_cameraWorldSpacePosition;	// used to calculate view direction
 		VkDeviceAddress m_lightingData;			// address of light data from lights system
+	};
+
+	// Tiled lighting needs extra buffers
+	struct PushConstantsTiled
+	{
+		glm::vec4 m_cameraWorldSpacePosition;	// used to calculate view direction
+		VkDeviceAddress m_lightingData;			// address of light data from lights system
+		VkDeviceAddress m_tileMetadata;			// built by TiledLightsCompute
 	};
 
 	void DeferredLightingCompute::Run(Device& d, VkCommandBuffer cmds, 
@@ -43,13 +51,27 @@ namespace R3
 		writer.WriteStorageImage(4, outputTarget.m_view, outputTarget.m_lastLayout);
 		writer.FlushWrites();
 
-		vkCmdBindPipeline(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipeline);
-		vkCmdBindDescriptorSets(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelineLayout, 0, 1, &m_descriptorSets[m_currentSet], 0, nullptr);
-		
-		PushConstants pc;
-		pc.m_cameraWorldSpacePosition = glm::vec4(Systems::GetSystem<CameraSystem>()->GetMainCamera().Position(), 1);
-		pc.m_lightingData = Systems::GetSystem<LightsSystem>()->GetAllLightsDeviceAddress();
-		vkCmdPushConstants(cmds, m_pipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(pc), &pc);
+		if (m_useTiledLighting && m_lightTileMetadata != 0)
+		{
+			vkCmdBindPipeline(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelineTiled);
+			vkCmdBindDescriptorSets(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelineLayoutTiled, 0, 1, &m_descriptorSets[m_currentSet], 0, nullptr);
+
+			PushConstantsTiled pc;
+			pc.m_cameraWorldSpacePosition = glm::vec4(Systems::GetSystem<CameraSystem>()->GetMainCamera().Position(), 1);
+			pc.m_lightingData = Systems::GetSystem<LightsSystem>()->GetAllLightsDeviceAddress();
+			pc.m_tileMetadata = m_lightTileMetadata;
+			vkCmdPushConstants(cmds, m_pipelineLayoutTiled, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(pc), &pc);
+		}
+		else
+		{
+			vkCmdBindPipeline(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelineAllLights);
+			vkCmdBindDescriptorSets(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelineLayoutAllLights, 0, 1, &m_descriptorSets[m_currentSet], 0, nullptr);
+
+			PushConstantsAllLights pc;
+			pc.m_cameraWorldSpacePosition = glm::vec4(Systems::GetSystem<CameraSystem>()->GetMainCamera().Position(), 1);
+			pc.m_lightingData = Systems::GetSystem<LightsSystem>()->GetAllLightsDeviceAddress();
+			vkCmdPushConstants(cmds, m_pipelineLayoutAllLights, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(pc), &pc);
+		}
 
 		vkCmdDispatch(cmds, (uint32_t)glm::ceil(outputDimensions.x / 16.0f), (uint32_t)glm::ceil(outputDimensions.y / 16.0f), 1);
 		if (++m_currentSet >= c_maxSets)
@@ -107,34 +129,55 @@ namespace R3
 			return false;
 		}
 
-		auto computeShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), "shaders_spirv/common/deferred_lighting_compute.comp.spv");
-		if (computeShader == VK_NULL_HANDLE)
+		auto computeShaderTiled = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), "shaders_spirv/common/deferred_lighting_compute_tiled.comp.spv");
+		auto computeShaderAllLights = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), "shaders_spirv/common/deferred_lighting_compute_all_lights.comp.spv");
+		if (computeShaderAllLights == VK_NULL_HANDLE || computeShaderTiled == VK_NULL_HANDLE)
 		{
 			LogError("Failed to load tonemap shader");
 			return false;
 		}
 
-		// Create the pipeline
-		VkPushConstantRange constantRange;
-		constantRange.offset = 0;
-		constantRange.size = sizeof(PushConstants);
-		constantRange.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
-
-		VkPipelineLayoutCreateInfo pipelineLayoutInfo = { 0 };
-		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.pSetLayouts = &m_descriptorLayout;
-		pipelineLayoutInfo.setLayoutCount = 1;
-		pipelineLayoutInfo.pushConstantRangeCount = 1;
-		pipelineLayoutInfo.pPushConstantRanges = &constantRange;
-		if (!VulkanHelpers::CheckResult(vkCreatePipelineLayout(d.GetVkDevice(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout)))
+		// Create the pipelines and layouts
 		{
-			LogError("Failed to create pipeline layout");
-			return false;
+			VkPushConstantRange constantRangeAllLights;
+			constantRangeAllLights.offset = 0;
+			constantRangeAllLights.size = sizeof(PushConstantsAllLights);
+			constantRangeAllLights.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+			VkPipelineLayoutCreateInfo pipelineLayoutInfoAllLights = { 0 };
+			pipelineLayoutInfoAllLights.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+			pipelineLayoutInfoAllLights.pSetLayouts = &m_descriptorLayout;
+			pipelineLayoutInfoAllLights.setLayoutCount = 1;
+			pipelineLayoutInfoAllLights.pushConstantRangeCount = 1;
+			pipelineLayoutInfoAllLights.pPushConstantRanges = &constantRangeAllLights;
+			if (!VulkanHelpers::CheckResult(vkCreatePipelineLayout(d.GetVkDevice(), &pipelineLayoutInfoAllLights, nullptr, &m_pipelineLayoutAllLights)))
+			{
+				LogError("Failed to create pipeline layout");
+				return false;
+			}
+			m_pipelineAllLights = VulkanHelpers::CreateComputePipeline(d.GetVkDevice(), computeShaderAllLights, m_pipelineLayoutAllLights, "main");
 		}
-		m_pipeline = VulkanHelpers::CreateComputePipeline(d.GetVkDevice(), computeShader, m_pipelineLayout, "main");
+		{
+			VkPushConstantRange constantRangeTiled;
+			constantRangeTiled.offset = 0;
+			constantRangeTiled.size = sizeof(PushConstantsTiled);
+			constantRangeTiled.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+			VkPipelineLayoutCreateInfo pipelineLayoutInfoTiled = { 0 };
+			pipelineLayoutInfoTiled.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+			pipelineLayoutInfoTiled.pSetLayouts = &m_descriptorLayout;
+			pipelineLayoutInfoTiled.setLayoutCount = 1;
+			pipelineLayoutInfoTiled.pushConstantRangeCount = 1;
+			pipelineLayoutInfoTiled.pPushConstantRanges = &constantRangeTiled;
+			if (!VulkanHelpers::CheckResult(vkCreatePipelineLayout(d.GetVkDevice(), &pipelineLayoutInfoTiled, nullptr, &m_pipelineLayoutTiled)))
+			{
+				LogError("Failed to create pipeline layout");
+				return false;
+			}
+			m_pipelineTiled = VulkanHelpers::CreateComputePipeline(d.GetVkDevice(), computeShaderTiled, m_pipelineLayoutTiled, "main");
+		}
 
 		// We don't need the shader any more
-		vkDestroyShaderModule(d.GetVkDevice(), computeShader, nullptr);
+		vkDestroyShaderModule(d.GetVkDevice(), computeShaderTiled, nullptr);
+		vkDestroyShaderModule(d.GetVkDevice(), computeShaderAllLights, nullptr);
 		m_resourcesInitialised = true;
 
 		return true;
@@ -146,9 +189,12 @@ namespace R3
 
 		vkDestroySampler(d.GetVkDevice(), m_depthSampler, nullptr);
 
-		// cleanup the pipeline
-		vkDestroyPipeline(d.GetVkDevice(), m_pipeline, nullptr);
-		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayout, nullptr);
+		// cleanup the pipelines
+		vkDestroyPipeline(d.GetVkDevice(), m_pipelineAllLights, nullptr);
+		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayoutAllLights, nullptr);
+
+		vkDestroyPipeline(d.GetVkDevice(), m_pipelineTiled, nullptr);
+		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayoutTiled, nullptr);
 
 		// cleanup the descriptors
 		vkDestroyDescriptorSetLayout(d.GetVkDevice(), m_descriptorLayout, nullptr);

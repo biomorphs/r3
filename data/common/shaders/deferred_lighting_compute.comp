@@ -4,6 +4,10 @@
 #include "lights.h"
 #include "pbr.h"
 
+#ifdef USE_TILED_LIGHTS
+	#include "tiled_lighting.h"
+#endif
+
 layout (local_size_x = 16, local_size_y = 16) in;
 
 layout(rgba16f,set = 0, binding = 0) uniform readonly image2D inWorldSpacePositionMetallic;
@@ -16,7 +20,10 @@ layout(set = 0, binding = 4) uniform writeonly image2D hdrOutput;
 layout(push_constant) uniform constants
 {
 	vec4 m_cameraWorldSpacePos;
-	LightsBuffer m_lightData;
+	LightsBuffer m_allLights;
+#ifdef USE_TILED_LIGHTS
+	LightTileMetadataBuffer m_lightTileMetadata;
+#endif
 } PushConstants;
 
 // Copy all pointlights to shared memory for this work group
@@ -25,9 +32,23 @@ shared Pointlight sharedLights[MAX_SHARED_LIGHTS];
 
 void main() 
 {
-	// Copy lights list to shared memory
-	// since work group is 16x16, each thread can grab 4 lights each (1024 max)
-	LightsData lightsData = PushConstants.m_lightData.data[0];
+	LightsData lightsData = PushConstants.m_allLights.data[0];
+	ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
+	ivec2 size = imageSize(hdrOutput);
+	float depthValue = texelFetch(inDepthBuffer, texelCoord, 0).r;
+	// Copy lights list to shared memory, up to 4 lights per thread
+#ifdef USE_TILED_LIGHTS
+	LightTileMetadata tileMetadata = PushConstants.m_lightTileMetadata.data[0];
+	uint tileIndex = GetLightTileIndex(uvec2(gl_GlobalInvocationID.xy), tileMetadata);
+	uint pointLightCount = uint(tileMetadata.m_lightTiles.data[tileIndex].m_lightCount);
+	uint firstLightIndex = gl_LocalInvocationIndex * 4;
+	uint lastLightIndex = min(firstLightIndex + 4, pointLightCount);
+	for(uint p=firstLightIndex;p<lastLightIndex;++p)
+	{
+		uint lightIndex = uint(tileMetadata.m_lightTiles.data[tileIndex].m_lightIndices[p]);
+		sharedLights[p] = lightsData.m_allPointlights.data[lightIndex];
+	}
+#else
 	uint pointLightCount = min(lightsData.m_pointlightCount, MAX_SHARED_LIGHTS);
 	uint firstLightIndex = gl_LocalInvocationIndex * 4;
 	uint lastLightIndex = min(firstLightIndex + 4, pointLightCount);
@@ -35,12 +56,10 @@ void main()
 	{
 		sharedLights[p] = lightsData.m_allPointlights.data[p];
 	}
+#endif
 	memoryBarrierShared();		// ensure all writes to shared memory complete
 	groupMemoryBarrier();		// synchronise memory between all invocations in this work group
 
-	ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
-	ivec2 size = imageSize(hdrOutput);
-	float depthValue = texelFetch(inDepthBuffer, texelCoord, 0).r;
 	if(texelCoord.x < size.x && texelCoord.y < size.y)
 	{
 		vec3 finalLight = lightsData.m_skyColourAmbient.xyz;	// apply sky colour if no depth was written (probably should be a separate sky/skybox pass later)

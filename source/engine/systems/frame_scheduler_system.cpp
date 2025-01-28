@@ -46,11 +46,11 @@ namespace R3
 	{
 		m_tonemapComputeRenderer = std::make_unique<TonemapCompute>();
 		m_deferredLightingCompute = std::make_unique<DeferredLightingCompute>();
-		m_simpleTiledLightsCompute = std::make_unique<SimpleTiledLightsCompute>();
+		m_tiledLightsCompute = std::make_unique<TiledLightsCompute>();
 		GetSystem<RenderSystem>()->m_onShutdownCbs.AddCallback([this](Device& d) {
 			m_tonemapComputeRenderer->Cleanup(d);
 			m_deferredLightingCompute->Cleanup(d);
-			m_simpleTiledLightsCompute->Cleanup(d);
+			m_tiledLightsCompute->Cleanup(d);
 		});
 		return true;
 	}
@@ -68,15 +68,17 @@ namespace R3
 		return preparePass;
 	}
 
-	std::unique_ptr<ComputeDrawPass> FrameScheduler::MakeLightTilingPass()
+	std::unique_ptr<GenericPass> FrameScheduler::MakeLightTilingPass()
 	{
-		auto lightTilingPass = std::make_unique<ComputeDrawPass>();
+		auto lightTilingPass = std::make_unique<GenericPass>();
 		lightTilingPass->m_name = "Light Tiling";
 		lightTilingPass->m_onRun.AddCallback([this](RenderPassContext& ctx) {
-			auto screenSize = GetSystem<RenderSystem>()->GetWindowExtents();
+			auto screenSize = glm::uvec2(GetSystem<RenderSystem>()->GetWindowExtents());
 			auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
-			auto allTiles = m_simpleTiledLightsCompute->BuildMainCameraLightTilesCpu(glm::uvec2(ctx.m_renderExtents), mainCamera);
-			m_simpleTiledLightsCompute->DebugDrawLightTiles(glm::uvec2(ctx.m_renderExtents), mainCamera, allTiles);
+			auto allTiles = m_tiledLightsCompute->BuildLightTilesCpu(screenSize, mainCamera);
+			//m_tiledLightsCompute->DebugDrawLightTiles(screenSize, mainCamera, allTiles);
+			VkDeviceAddress gpuData = m_tiledLightsCompute->CopyCpuDataToGpu(*ctx.m_device, ctx.m_graphicsCmds, screenSize, allTiles);
+			m_deferredLightingCompute->SetTiledLightinMetadataAddress(gpuData);
 		});
 		return lightTilingPass;
 	}

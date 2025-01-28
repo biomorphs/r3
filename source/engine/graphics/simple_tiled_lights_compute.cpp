@@ -3,19 +3,67 @@
 #include "engine/systems/camera_system.h"
 #include "engine/systems/immediate_render_system.h"
 #include "engine/utils/frustum.h"
+#include "render/linear_write_gpu_buffer.h"
 #include "core/profiler.h"
+#include "core/log.h"
 
 namespace R3
 {
-	void SimpleTiledLightsCompute::Reset()
+	void TiledLightsCompute::Cleanup(Device&)
 	{
+		m_lightTileBufferPool = {};
 	}
 
-	void SimpleTiledLightsCompute::Cleanup(Device&)
+	VkDeviceAddress TiledLightsCompute::CopyCpuDataToGpu(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, const std::vector<LightTile>& tileData)
 	{
+		R3_PROF_EVENT();
+		VkDeviceAddress address = 0;
+		if (m_lightTileBufferPool == nullptr)
+		{
+			m_lightTileBufferPool = std::make_unique<BufferPool>("Light Tile Buffers");
+		}
+
+		const uint32_t c_tilesX = (uint32_t)glm::ceil(screenDimensions.x / (float)c_lightTileDimensions);
+		const uint32_t c_tilesY = (uint32_t)glm::ceil(screenDimensions.y / (float)c_lightTileDimensions);
+		assert(tileData.size() == (c_tilesX * c_tilesY));
+
+		// upload the light tile data + metadata
+		LinearWriteOnlyGpuArray<LightTile> lightTileBuffer;
+		LightTileMetaData metadata;
+		if (lightTileBuffer.Create(d, c_tilesX * c_tilesY, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_lightTileBufferPool.get()))
+		{
+			lightTileBuffer.Write((uint32_t)tileData.size(), tileData.data());
+			lightTileBuffer.Flush(d, cmds, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+			metadata.m_lightTileBuffer = lightTileBuffer.GetBufferDeviceAddress();
+			lightTileBuffer.Destroy(d);	// this does not actually destroy anything, but it releases the buffers back to the pools
+		}
+		else
+		{
+			LogError("Failed to allocate light tile buffer");
+		}
+
+		metadata.m_tileCount[0] = c_tilesX;
+		metadata.m_tileCount[1] = c_tilesY;
+		metadata.m_screenResolution[0] = screenDimensions.x;
+		metadata.m_screenResolution[1] = screenDimensions.y;
+		
+		LinearWriteGpuBuffer metadataBuffer;
+		if (metadataBuffer.Create(d, sizeof(LightTileMetaData), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_lightTileBufferPool.get()))
+		{
+			metadataBuffer.Write(sizeof(LightTileMetaData), &metadata);
+			metadataBuffer.Flush(d, cmds, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+			address = metadataBuffer.GetBufferDeviceAddress();
+			metadataBuffer.Destroy(d);	// release the buffer back to the pool
+		}
+		else
+		{
+			LogError("Failed to allocate light tile metadata buffer");
+		}
+
+		return address;
 	}
 
-	void SimpleTiledLightsCompute::DebugDrawLightTiles(glm::uvec2 screenDimensions, const Camera& camera, const std::vector<LightTileData>& tiles)
+	void TiledLightsCompute::DebugDrawLightTiles(glm::uvec2 screenDimensions, const Camera& camera, const std::vector<LightTile>& tiles)
 	{
 		// how many tiles do we need
 		const uint32_t c_tilesX = (uint32_t)glm::ceil(screenDimensions.x / (float)c_lightTileDimensions);
@@ -28,7 +76,7 @@ namespace R3
 		{
 			for (uint32_t x = 0; x < c_tilesX; ++x)
 			{
-				const LightTileData& thisTileLightData = tiles[x + (y * c_tilesX)];
+				const LightTile& thisTileLightData = tiles[x + (y * c_tilesX)];
 				if (thisTileLightData.m_lightCount > 0)
 				{
 					glm::vec2 negativeStep = (2.0f * glm::vec2(x, y)) / glm::vec2(c_tilesX, c_tilesY);
@@ -67,7 +115,7 @@ namespace R3
 						farPoints[i] = glm::vec3(projected / projected.w);	// perspective divide
 
 						quadVerts[i].m_position = glm::vec4(farPoints[i], 1.0f);
-						quadVerts[i].m_colour = glm::vec4(colour,0.5f);
+						quadVerts[i].m_colour = glm::vec4(colour,0.25f);
 					}
 
 					imRender->AddTriangle(quadVerts[0], quadVerts[1], quadVerts[2]);
@@ -77,22 +125,16 @@ namespace R3
 		}
 	}
 
-	std::vector<LightTileData> SimpleTiledLightsCompute::BuildMainCameraLightTilesCpu(glm::uvec2 screenDimensions, const Camera& camera)
+	std::vector<TiledLightsCompute::LightTile> TiledLightsCompute::BuildLightTilesCpu(glm::uvec2 screenDimensions, const Camera& camera)
 	{
 		R3_PROF_EVENT();
-		return BuildLightTileDataCpu(screenDimensions, camera);
-	}
-
-	std::vector<LightTileData> SimpleTiledLightsCompute::BuildLightTileDataCpu(glm::uvec2 screenDimensions, const Camera& camera)
-	{
-		R3_PROF_EVENT();
-		std::vector<LightTileData> allTiles;
+		std::vector<LightTile> allTiles;
 		const std::vector<Pointlight>& activePointlights = Systems::GetSystem<LightsSystem>()->GetActivePointLights();
 
 		// how many tiles do we need
 		const uint32_t c_tilesX = (uint32_t)glm::ceil(screenDimensions.x / (float)c_lightTileDimensions);
 		const uint32_t c_tilesY = (uint32_t)glm::ceil(screenDimensions.y / (float)c_lightTileDimensions);
-		allTiles.resize(c_tilesX * c_tilesX);
+		allTiles.resize(c_tilesX * c_tilesY);
 
 		if (activePointlights.size() > 0)
 		{
@@ -104,7 +146,7 @@ namespace R3
 			{
 				for (uint32_t tileX = 0; tileX < c_tilesX; ++tileX)
 				{
-					// build a frustum in clip space then convert it to view space using inverse of proj matrix
+					// build a frustum in clip space then convert it to world space using inverse of proj-view matrix
 
 					// Split frustum into 'steps'/cells on x/y axis
 					glm::vec2 negativeStep = (2.0f * glm::vec2(tileX, tileY)) / glm::vec2(c_tilesX, c_tilesY);
@@ -144,7 +186,7 @@ namespace R3
 					};
 
 					// now determine which lights intersect the frustum for this tile
-					LightTileData& thisTileLightData = allTiles[tileX + (tileY * c_tilesX)];
+					LightTile& thisTileLightData = allTiles[tileX + (tileY * c_tilesX)];
 					for (uint32_t l = 0; l < activePointlights.size() && thisTileLightData.m_lightCount < c_maxLightsPerTile; ++l)
 					{
 						const glm::vec3 center = glm::vec3(activePointlights[l].m_positionDistance);

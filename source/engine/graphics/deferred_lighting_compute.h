@@ -19,10 +19,15 @@ namespace R3
 			RenderTarget& outputTarget, glm::vec2 outputDimensions);
 		bool Initialise(Device& d);
 		void Cleanup(Device& d);
+		void SetTiledLightinMetadataAddress(VkDeviceAddress addr) { m_lightTileMetadata = addr; }
 
 	private:
 		// track if we need to initialise internal state
 		bool m_resourcesInitialised = false;
+		bool m_useTiledLighting = true;
+
+		// light tile metadata for the next draw
+		VkDeviceAddress m_lightTileMetadata = 0;
 
 		// per-frame descriptor sets + allocator
 		std::unique_ptr<DescriptorSetSimpleAllocator> m_descriptorAllocator;
@@ -34,8 +39,12 @@ namespace R3
 		// Can't use depth buffer as storage image, sample it as a texture instead
 		VkSampler m_depthSampler = VK_NULL_HANDLE;
 
-		// pipeline for the pass
-		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
-		VkPipeline m_pipeline = VK_NULL_HANDLE;
+		// pipeline for the technique using all lights in one big buffer
+		VkPipelineLayout m_pipelineLayoutAllLights = VK_NULL_HANDLE;
+		VkPipeline m_pipelineAllLights = VK_NULL_HANDLE;
+
+		// pipeline for the tiled lighting technique
+		VkPipelineLayout m_pipelineLayoutTiled = VK_NULL_HANDLE;
+		VkPipeline m_pipelineTiled = VK_NULL_HANDLE;
 	};
 }
