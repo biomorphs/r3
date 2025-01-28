@@ -631,7 +631,8 @@ namespace R3
 		{
 			return {
 				VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-				VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME
+				VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME,
+				VK_KHR_16BIT_STORAGE_EXTENSION_NAME
 			};
 		}
 
@@ -785,6 +786,12 @@ namespace R3
 			indexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;		// allow binding of a descriptor set where we didn't write all entries
 			indexingFeatures.runtimeDescriptorArray = VK_TRUE;				// allow indexing into 
 			bAddr.pNext = &indexingFeatures;
+
+			// 16 bit types in storage buffers
+			VkPhysicalDevice16BitStorageFeaturesKHR storage16bit = {};
+			storage16bit.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES;
+			storage16bit.storageBuffer16BitAccess = true;	// allow 16 bit ints in storage buffers
+			indexingFeatures.pNext = &storage16bit;
 
 			VkDevice newDevice = nullptr;
 			VkResult r = vkCreateDevice(pdd.m_device, &deviceCreate, nullptr, &newDevice);
