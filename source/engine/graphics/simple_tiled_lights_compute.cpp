@@ -79,16 +79,13 @@ namespace R3
 				const LightTile& thisTileLightData = tiles[x + (y * c_tilesX)];
 				if (thisTileLightData.m_lightCount > 0)
 				{
-					glm::vec2 negativeStep = (2.0f * glm::vec2(x, y)) / glm::vec2(c_tilesX, c_tilesY);
-					glm::vec2 positiveStep = (2.0f * glm::vec2(x + 1, y + 1)) / glm::vec2(c_tilesX, c_tilesY);
-
-					// build clip-space points just off near plane
+					// build screen-space points just off near clip plane
 					glm::vec3 farPoints[4] =
 					{
-						{ -1.0f + negativeStep.x, -1.0f + negativeStep.y, 0.01f },		// top left 
-						{ -1.0f + positiveStep.x, -1.0f + negativeStep.y, 0.01f },		// top right
-						{ -1.0f + negativeStep.x, -1.0f + positiveStep.y, 0.01f },		// botton left 
-						{ -1.0f + positiveStep.x, -1.0f + positiveStep.y, 0.01f },		// botton right
+						{ x * c_lightTileDimensions, y * c_lightTileDimensions, 0.01f },					// top left 
+						{ (x + 1) * c_lightTileDimensions, y * c_lightTileDimensions, 0.01f },				// top right
+						{ x * c_lightTileDimensions, (y + 1) * c_lightTileDimensions, 0.01f },				// botton left 
+						{ (x + 1) * c_lightTileDimensions, (y + 1) * c_lightTileDimensions, 0.01f },		// botton right
 					};
 
 					glm::vec4 c_pallete[] = {
@@ -108,9 +105,16 @@ namespace R3
 						}
 					}
 
+					// convert screen x,y to clip space, z is already on far clip plane!
+					auto screenToClip = [&screenDimensions](glm::vec3 p)
+					{
+						return glm::vec3(((p.x / (float)screenDimensions.x) * 2.0f) - 1.0f, ((p.y / (float)screenDimensions.y) * 2.0f) - 1.0f, p.z);
+					};
+
 					// convert the points to world-space
 					for (int i = 0; i < 4; ++i)
 					{
+						farPoints[i] = screenToClip(farPoints[i]);
 						glm::vec4 projected = inverseProjView * glm::vec4(farPoints[i], 1.0f);
 						farPoints[i] = glm::vec3(projected / projected.w);	// perspective divide
 
@@ -146,24 +150,27 @@ namespace R3
 			{
 				for (uint32_t tileX = 0; tileX < c_tilesX; ++tileX)
 				{
-					// build a frustum in clip space then convert it to world space using inverse of proj-view matrix
+					// build a frustum in clip space then convert it to world space
 
-					// Split frustum into 'steps'/cells on x/y axis
-					glm::vec2 negativeStep = (2.0f * glm::vec2(tileX, tileY)) / glm::vec2(c_tilesX, c_tilesY);
-					glm::vec2 positiveStep = (2.0f * glm::vec2(tileX + 1, tileY + 1)) / glm::vec2(c_tilesX, c_tilesY);
-
-					// build clip-space points on far plane which we use to build the frustum planes
+					// start in screen space to ensure tiles are actually c_lightTileDimensions x c_lightTileDimensions
 					glm::vec3 farPoints[4] =
 					{
-						{ -1.0f + negativeStep.x, -1.0f + negativeStep.y, 1.0f },		// top left 
-						{ -1.0f + positiveStep.x, -1.0f + negativeStep.y, 1.0f },		// top right
-						{ -1.0f + negativeStep.x, -1.0f + positiveStep.y, 1.0f },		// botton left 
-						{ -1.0f + positiveStep.x, -1.0f + positiveStep.y, 1.0f },		// botton right
+						{ tileX * c_lightTileDimensions, tileY * c_lightTileDimensions, 1.0f },					// top left 
+						{ (tileX + 1) * c_lightTileDimensions, tileY * c_lightTileDimensions, 1.0f },			// top right
+						{ tileX * c_lightTileDimensions, (tileY + 1) * c_lightTileDimensions, 1.0f },			// botton left 
+						{ (tileX + 1) * c_lightTileDimensions, (tileY + 1) * c_lightTileDimensions, 1.0f },		// botton right
 					};
 
-					// convert the points to world-space
+					// convert screen x,y to clip space, z is already on far clip plane!
+					auto screenToClip = [&screenDimensions](glm::vec3 p)
+					{
+						return glm::vec3(((p.x / (float)screenDimensions.x) * 2.0f) - 1.0f, ((p.y / (float)screenDimensions.y) * 2.0f) - 1.0f, p.z);
+					};
+
+					// convert the points clip-space, then to world-space
 					for (int i = 0; i < 4; ++i)
 					{
+						farPoints[i] = screenToClip(farPoints[i]);
 						glm::vec4 projected = inverseProjView * glm::vec4(farPoints[i], 1.0f);
 						farPoints[i] = glm::vec3(projected / projected.w);	// perspective divide
 					}
