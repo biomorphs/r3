@@ -89,7 +89,6 @@ namespace R3
 					Pointlight newlight;
 					newlight.m_colourBrightness = { pl.m_colour, pl.m_brightness };
 					newlight.m_positionDistance = { lightCenter, pl.m_distance };
-					m_allPointlights.Write(pointLightBaseOffset + thisFrameLightData.m_pointlightCount, 1, &newlight);
 					m_allPointLightsCPU.emplace_back(newlight);
 					thisFrameLightData.m_pointlightCount++;
 				}
@@ -97,6 +96,10 @@ namespace R3
 			return true;
 		};
 		Entities::Queries::ForEach<PointLightComponent, TransformComponent>(activeWorld, collectPointLights);
+		if (m_allPointLightsCPU.size() > 0)
+		{
+			m_allPointlights.Write(pointLightBaseOffset, m_allPointLightsCPU.size(), m_allPointLightsCPU.data());
+		}
 		m_allLightsData.Write(m_currentFrame, 1, &thisFrameLightData);
 		m_totalPointlightsThisFrame = thisFrameLightData.m_pointlightCount;
 
