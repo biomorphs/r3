@@ -40,13 +40,14 @@ void main()
 #ifdef USE_TILED_LIGHTS
 	LightTileMetadata tileMetadata = PushConstants.m_lightTileMetadata.data[0];
 	uint tileIndex = GetLightTileIndex(uvec2(gl_GlobalInvocationID.xy), tileMetadata);
-	uint pointLightCount = min(uint(tileMetadata.m_lightTiles.data[tileIndex].m_lightCount), MAX_SHARED_LIGHTS);
-	uint firstLightIndex = gl_LocalInvocationIndex * 4;
-	uint lastLightIndex = min(firstLightIndex + 4, pointLightCount);
+	uint pointLightCount = min(uint(tileMetadata.m_lightTiles.data[tileIndex].m_lightIndexCount), MAX_SHARED_LIGHTS);
+	uint firstLightOffset = tileMetadata.m_lightTiles.data[tileIndex].m_firstLightIndex;
+	uint firstLightIndex = firstLightOffset + (gl_LocalInvocationIndex * 4);
+	uint lastLightIndex = min(firstLightIndex + 4, firstLightOffset + pointLightCount);
 	for(uint l=firstLightIndex;l<lastLightIndex;++l)
 	{
-		uint p = uint(tileMetadata.m_lightTiles.data[tileIndex].m_lightIndices[l]);
-		sharedLights[l] = lightsData.m_allPointlights.data[p];
+		uint lightIndex = uint(tileMetadata.m_lightIndices.data[l]);
+		sharedLights[l-firstLightOffset] = lightsData.m_allPointlights.data[lightIndex];
 	}
 #else
 	uint pointLightCount = min(lightsData.m_pointlightCount, MAX_SHARED_LIGHTS);
@@ -58,7 +59,7 @@ void main()
 	}
 #endif
 	groupMemoryBarrier();		// ensure all writes to shared memory complete for this group
-	barrier();		// synchronise all invocations in this group (required since not all invocations touch shared memory!)
+	barrier();					// synchronise all invocations in this group (required since not all invocations touch shared memory!)
 
 	if(texelCoord.x < size.x && texelCoord.y < size.y)
 	{

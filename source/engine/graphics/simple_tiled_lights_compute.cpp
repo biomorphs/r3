@@ -14,7 +14,7 @@ namespace R3
 		m_lightTileBufferPool = {};
 	}
 
-	VkDeviceAddress TiledLightsCompute::CopyCpuDataToGpu(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, const std::vector<LightTile>& tileData)
+	VkDeviceAddress TiledLightsCompute::CopyCpuDataToGpu(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, const std::vector<LightTile>& tiles, const std::vector<uint16_t>& indices)
 	{
 		R3_PROF_EVENT();
 		VkDeviceAddress address = 0;
@@ -23,16 +23,19 @@ namespace R3
 			m_lightTileBufferPool = std::make_unique<BufferPool>("Light Tile Buffers");
 		}
 
+		LightTileMetaData metadata;
 		const uint32_t c_tilesX = (uint32_t)glm::ceil(screenDimensions.x / (float)c_lightTileDimensions);
 		const uint32_t c_tilesY = (uint32_t)glm::ceil(screenDimensions.y / (float)c_lightTileDimensions);
-		assert(tileData.size() == (c_tilesX * c_tilesY));
+		assert(tiles.size() == (c_tilesX * c_tilesY));
+		metadata.m_tileCount[0] = c_tilesX;
+		metadata.m_tileCount[1] = c_tilesY;
 
-		// upload the light tile data + metadata
+		// upload the light tile data, indices, and metadata
 		LinearWriteOnlyGpuArray<LightTile> lightTileBuffer;
-		LightTileMetaData metadata;
+		
 		if (lightTileBuffer.Create(d, c_tilesX * c_tilesY, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_lightTileBufferPool.get()))
 		{
-			lightTileBuffer.Write((uint32_t)tileData.size(), tileData.data());
+			lightTileBuffer.Write((uint32_t)tiles.size(), tiles.data());
 			lightTileBuffer.Flush(d, cmds, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 			metadata.m_lightTileBuffer = lightTileBuffer.GetBufferDeviceAddress();
 			lightTileBuffer.Destroy(d);	// this does not actually destroy anything, but it releases the buffers back to the pools
@@ -42,11 +45,22 @@ namespace R3
 			LogError("Failed to allocate light tile buffer");
 		}
 
-		metadata.m_tileCount[0] = c_tilesX;
-		metadata.m_tileCount[1] = c_tilesY;
-		metadata.m_screenResolution[0] = screenDimensions.x;
-		metadata.m_screenResolution[1] = screenDimensions.y;
-		
+		LinearWriteOnlyGpuArray<uint16_t> lightIndexBuffer;
+		if (lightIndexBuffer.Create(d, c_maxTiledLights, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_lightTileBufferPool.get()))
+		{
+			if (indices.size() > 0)
+			{
+				lightIndexBuffer.Write((uint32_t)indices.size(), indices.data());
+				lightIndexBuffer.Flush(d, cmds, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+			}
+			metadata.m_lightIndexBuffer = lightIndexBuffer.GetBufferDeviceAddress();
+			lightIndexBuffer.Destroy(d);	// this does not actually destroy anything, but it releases the buffers back to the pools
+		}
+		else
+		{
+			LogError("Failed to allocate light index buffer");
+		}
+
 		LinearWriteGpuBuffer metadataBuffer;
 		if (metadataBuffer.Create(d, sizeof(LightTileMetaData), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_lightTileBufferPool.get()))
 		{
@@ -63,7 +77,7 @@ namespace R3
 		return address;
 	}
 
-	void TiledLightsCompute::DebugDrawLightTiles(glm::uvec2 screenDimensions, const Camera& camera, const std::vector<LightTile>& tiles)
+	void TiledLightsCompute::DebugDrawLightTiles(glm::uvec2 screenDimensions, const Camera& camera, const std::vector<LightTile>& tiles, const std::vector<uint16_t>& indices)
 	{
 		// how many tiles do we need
 		const uint32_t c_tilesX = (uint32_t)glm::ceil(screenDimensions.x / (float)c_lightTileDimensions);
@@ -77,7 +91,7 @@ namespace R3
 			for (uint32_t x = 0; x < c_tilesX; ++x)
 			{
 				const LightTile& thisTileLightData = tiles[x + (y * c_tilesX)];
-				if (thisTileLightData.m_lightCount > 0)
+				if (thisTileLightData.m_lightIndexCount > 0)
 				{
 					// build screen-space points just off near clip plane
 					glm::vec3 farPoints[4] =
@@ -88,19 +102,20 @@ namespace R3
 						{ (x + 1) * c_lightTileDimensions, (y + 1) * c_lightTileDimensions, 0.01f },		// botton right
 					};
 
+					// make a nice colour pallete
 					glm::vec4 c_pallete[] = {
-						{0.0f,0.0f,0.1f,c_maxLightsPerTile / 16},
-						{0.0f,1.0f,0.1f,c_maxLightsPerTile / 8},
-						{1.0f,1.0f,0.0f,c_maxLightsPerTile / 4},
-						{1.0f,0.0f,0.0f,c_maxLightsPerTile / 2},
-						{1.0f,1.0f,1.0f,c_maxLightsPerTile}
+						{0.0f,0.0f,0.1f,0},
+						{0.0f,1.0f,0.1f,64},
+						{1.0f,1.0f,0.0f,128},
+						{1.0f,0.0f,0.0f,256},
+						{1.0f,1.0f,1.0f,1024}
 					};
 					glm::vec3 colour = { 0,0,0.1f };
 					for (int i = 0; i < (int)std::size(c_pallete) - 1; ++i)
 					{
-						if ((thisTileLightData.m_lightCount > c_pallete[i].w) && (thisTileLightData.m_lightCount <= c_pallete[i + 1].w))
+						if ((thisTileLightData.m_lightIndexCount > c_pallete[i].w) && (thisTileLightData.m_lightIndexCount <= c_pallete[i + 1].w))
 						{
-							const float mixVal = (float)(thisTileLightData.m_lightCount - c_pallete[i].w) / (c_pallete[i + 1].w - c_pallete[i].w);
+							const float mixVal = (float)(thisTileLightData.m_lightIndexCount - c_pallete[i].w) / (c_pallete[i + 1].w - c_pallete[i].w);
 							colour = glm::mix(glm::vec3(c_pallete[i]), glm::vec3(c_pallete[i + 1]), mixVal);
 						}
 					}
@@ -119,7 +134,7 @@ namespace R3
 						farPoints[i] = glm::vec3(projected / projected.w);	// perspective divide
 
 						quadVerts[i].m_position = glm::vec4(farPoints[i], 1.0f);
-						quadVerts[i].m_colour = glm::vec4(colour,0.25f);
+						quadVerts[i].m_colour = glm::vec4(colour,0.5f);
 					}
 
 					imRender->AddTriangle(quadVerts[0], quadVerts[1], quadVerts[2]);
@@ -129,16 +144,17 @@ namespace R3
 		}
 	}
 
-	std::vector<TiledLightsCompute::LightTile> TiledLightsCompute::BuildLightTilesCpu(glm::uvec2 screenDimensions, const Camera& camera)
+	void TiledLightsCompute::BuildLightTilesCpu(glm::uvec2 screenDimensions, const Camera& camera, std::vector<LightTile>& tiles, std::vector<uint16_t>& indices)
 	{
 		R3_PROF_EVENT();
-		std::vector<LightTile> allTiles;
 		const std::vector<Pointlight>& activePointlights = Systems::GetSystem<LightsSystem>()->GetActivePointLights();
 
 		// how many tiles do we need
 		const uint32_t c_tilesX = (uint32_t)glm::ceil(screenDimensions.x / (float)c_lightTileDimensions);
 		const uint32_t c_tilesY = (uint32_t)glm::ceil(screenDimensions.y / (float)c_lightTileDimensions);
-		allTiles.resize(c_tilesX * c_tilesY);
+		tiles.resize(c_tilesX * c_tilesY);
+		indices.clear();
+		indices.reserve(c_maxTiledLights);
 
 		if (activePointlights.size() > 0)
 		{
@@ -193,8 +209,10 @@ namespace R3
 					};
 
 					// now determine which lights intersect the frustum for this tile
-					LightTile& thisTileLightData = allTiles[tileX + (tileY * c_tilesX)];
-					for (uint32_t l = 0; l < activePointlights.size() && thisTileLightData.m_lightCount < c_maxLightsPerTile; ++l)
+					LightTile& thisTileLightData = tiles[tileX + (tileY * c_tilesX)];
+					thisTileLightData.m_lightIndexCount = 0;
+					thisTileLightData.m_firstLightIndex = (uint32_t)indices.size();
+					for (uint32_t l = 0; l < activePointlights.size() && (indices.size() < c_maxTiledLights-1); ++l)
 					{
 						const glm::vec3 center = glm::vec3(activePointlights[l].m_positionDistance);
 						const float radius = activePointlights[l].m_positionDistance.w;
@@ -206,13 +224,12 @@ namespace R3
 						}
 						if (inFrustum)
 						{
-							thisTileLightData.m_lightIndices[thisTileLightData.m_lightCount++] = l;
+							indices.push_back(l);
+							thisTileLightData.m_lightIndexCount++;
 						}
 					}
 				}
 			}
 		}
-
-		return allTiles;
 	}
 }

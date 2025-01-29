@@ -77,12 +77,14 @@ namespace R3
 			{
 				auto screenSize = glm::uvec2(GetSystem<RenderSystem>()->GetWindowExtents());
 				auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
-				auto allTiles = m_tiledLightsCompute->BuildLightTilesCpu(screenSize, mainCamera);
+				std::vector<TiledLightsCompute::LightTile> lightTiles;
+				std::vector<uint16_t> lightIndices;
+				m_tiledLightsCompute->BuildLightTilesCpu(screenSize, mainCamera, lightTiles, lightIndices);
 				if (m_showLightTilesDebug)
 				{
-					m_tiledLightsCompute->DebugDrawLightTiles(screenSize, mainCamera, allTiles);
+					m_tiledLightsCompute->DebugDrawLightTiles(screenSize, mainCamera, lightTiles, lightIndices);
 				}
-				VkDeviceAddress gpuData = m_tiledLightsCompute->CopyCpuDataToGpu(*ctx.m_device, ctx.m_graphicsCmds, screenSize, allTiles);
+				VkDeviceAddress gpuData = m_tiledLightsCompute->CopyCpuDataToGpu(*ctx.m_device, ctx.m_graphicsCmds, screenSize, lightTiles, lightIndices);
 				m_deferredLightingCompute->SetTiledLightinMetadataAddress(gpuData);
 			}
 			else

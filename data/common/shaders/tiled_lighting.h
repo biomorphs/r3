@@ -1,9 +1,14 @@
 #extension GL_EXT_shader_16bit_storage : require
 
+// light indices stored in one giant buffer of uint16
+layout(buffer_reference, std430) readonly buffer LightTileIndexBuffer { 
+	uint16_t data[];
+};
+
 struct LightTile				// one per tile
 {
-	uint16_t m_lightCount;			// num lights in this tile
-	uint16_t m_lightIndices[127];	// index into global lights list
+	uint m_firstLightIndex;		// offset into LightTileIndexBuffer
+	uint m_lightIndexCount;		// num indices (i.e. num lights)
 };
 
 // all tiles stored in one buffer
@@ -14,7 +19,7 @@ layout(buffer_reference, std430) readonly buffer LightTileBuffer {
 struct LightTileMetadata		// describes all light tile data
 {
 	LightTileBuffer m_lightTiles;	// a buffer of m_tileCount[0] * m_tileCount[1] instances of LightTile
-	uint m_screenResolution[2];
+	LightTileIndexBuffer m_lightIndices;
 	uint m_tileCount[2];
 	uint m_tileDimensions;
 };
