@@ -87,16 +87,10 @@ void main()
 			{
 				Pointlight pl = sharedLights[p];
 #endif
-				vec3 lightToPixel = pl.m_positionDistance.xyz - positionMetallic.xyz;
-				float lightDistanceSq = dot(lightToPixel,lightToPixel);
-				float radiusSq = pl.m_positionDistance.w * pl.m_positionDistance.w;
-				if(lightDistanceSq < radiusSq)
-				{
-					vec3 lightRadiance = pl.m_colourBrightness.xyz * pl.m_colourBrightness.w;
-					float attenuation = GetPointlightAttenuation(pl, positionMetallic.xyz);
-					vec3 lightToPixel = normalize(pl.m_positionDistance.xyz - positionMetallic.xyz);
-					directLight += PBRDirectLighting(mat, viewDir, lightToPixel, normalRoughness.xyz, lightRadiance, attenuation);
-				}
+				vec3 lightRadiance = pl.m_colourBrightness.xyz * pl.m_colourBrightness.w;
+				float attenuation = GetPointlightAttenuation(pl, positionMetallic.xyz);
+				vec3 lightToPixel = normalize(pl.m_positionDistance.xyz - positionMetallic.xyz);
+				directLight += PBRDirectLighting(mat, viewDir, lightToPixel, normalRoughness.xyz, lightRadiance, attenuation);
 			}
 			
 			// Ambient is a hack, tries to combine sky + sun colour somehow
