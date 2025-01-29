@@ -68,9 +68,9 @@ namespace R3
 		return preparePass;
 	}
 
-	std::unique_ptr<GenericPass> FrameScheduler::MakeLightTilingPass()
+	std::unique_ptr<ComputeDrawPass> FrameScheduler::MakeLightTilingPass()
 	{
-		auto lightTilingPass = std::make_unique<GenericPass>();
+		auto lightTilingPass = std::make_unique<ComputeDrawPass>();
 		lightTilingPass->m_name = "Light Tiling";
 		lightTilingPass->m_onRun.AddCallback([this](RenderPassContext& ctx) {
 			if (m_useTiledLighting)
@@ -86,6 +86,9 @@ namespace R3
 				}
 				VkDeviceAddress gpuData = m_tiledLightsCompute->CopyCpuDataToGpu(*ctx.m_device, ctx.m_graphicsCmds, screenSize, lightTiles, lightIndices);
 				m_deferredLightingCompute->SetTiledLightinMetadataAddress(gpuData);
+
+				// testing gpu data builder
+				m_tiledLightsCompute->BuildTilesListCompute(*ctx.m_device, ctx.m_graphicsCmds, screenSize, mainCamera);
 			}
 			else
 			{

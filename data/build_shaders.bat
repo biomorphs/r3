@@ -18,6 +18,7 @@ glslc tonemap_compute.comp -DUSE_ACES_APPROX -g -o ..\..\shaders_spirv\common\to
 glslc tonemap_compute.comp -DUSE_ACES_FITTED -g -o ..\..\shaders_spirv\common\tonemap_aces_fitted_compute.comp.spv
 glslc deferred_lighting_compute.comp -g -o ..\..\shaders_spirv\common\deferred_lighting_compute_all_lights.comp.spv
 glslc deferred_lighting_compute.comp -DUSE_TILED_LIGHTS -g -o ..\..\shaders_spirv\common\deferred_lighting_compute_tiled.comp.spv
+glslc build_light_tile_frustums.comp -g -o ..\..\shaders_spirv\common\build_light_tile_frustums.comp.spv
 
 pause
 

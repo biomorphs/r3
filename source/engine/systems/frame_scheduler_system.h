@@ -28,7 +28,7 @@ namespace R3
 
 		std::unique_ptr<GenericPass> MakeRenderPreparePass();	// sets stuff up before other render passes
 		std::unique_ptr<ComputeDrawPass> MakeCullingPass();
-		std::unique_ptr<GenericPass> MakeLightTilingPass();
+		std::unique_ptr<ComputeDrawPass> MakeLightTilingPass();
 		std::unique_ptr<DrawPass> MakeForwardPass(const RenderTargetInfo& mainColour, const RenderTargetInfo& mainDepth);
 		std::unique_ptr<DrawPass> MakeGBufferPass(const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainDepth);
 		std::unique_ptr<ComputeDrawPass> MakeDeferredLightingPass(const RenderTargetInfo& mainDepth, const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainColour);

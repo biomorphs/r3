@@ -39,7 +39,7 @@ void main()
 	// Copy lights list to shared memory, 4 lights per thread
 #ifdef USE_TILED_LIGHTS
 	LightTileMetadata tileMetadata = PushConstants.m_lightTileMetadata.data[0];
-	uint tileIndex = GetLightTileIndex(uvec2(gl_GlobalInvocationID.xy), tileMetadata);
+	uint tileIndex = GetLightTileIndex(uvec2(gl_GlobalInvocationID.xy), tileMetadata.m_tileCount);
 	uint pointLightCount = min(uint(tileMetadata.m_lightTiles.data[tileIndex].m_lightIndexCount), MAX_SHARED_LIGHTS);
 	uint firstLightOffset = tileMetadata.m_lightTiles.data[tileIndex].m_firstLightIndex;
 	uint firstLightIndex = firstLightOffset + (gl_LocalInvocationIndex * 4);

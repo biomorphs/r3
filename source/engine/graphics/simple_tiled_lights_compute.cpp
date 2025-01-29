@@ -4,23 +4,197 @@
 #include "engine/systems/immediate_render_system.h"
 #include "engine/utils/frustum.h"
 #include "render/linear_write_gpu_buffer.h"
+#include "render/device.h"
 #include "core/profiler.h"
 #include "core/log.h"
 
 namespace R3
 {
-	void TiledLightsCompute::Cleanup(Device&)
+	struct BuildFrustumPushConstants
 	{
+		VkDeviceAddress m_tileFrustumBuffer;	// preallocated 
+		glm::mat4 m_inverseProjViewMatrix;		
+		glm::vec4 m_eyeWorldSpacePosition;		// w is unused
+		glm::vec2 m_screenDimensions;
+		uint32_t m_tileCount[2];
+	};
+
+	void TiledLightsCompute::Cleanup(Device& d)
+	{
+		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayoutFrustumBuild, nullptr);
+		vkDestroyPipeline(d.GetVkDevice(), m_pipelineFrustumBuild, nullptr);
 		m_lightTileBufferPool = {};
+	}
+
+	bool TiledLightsCompute::Initialise(Device& d)
+	{
+		R3_PROF_EVENT();
+
+		if (m_lightTileBufferPool == nullptr)
+		{
+			m_lightTileBufferPool = std::make_unique<BufferPool>("Light Tile Buffers");
+		}
+
+		auto frustumComputeShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), "shaders_spirv/common/build_light_tile_frustums.comp.spv");
+		if (frustumComputeShader == VK_NULL_HANDLE)
+		{
+			LogError("Failed to load tonemap shader");
+			return false;
+		}
+
+		// Create the pipelines and layouts
+		{
+			VkPushConstantRange constantRange;
+			constantRange.offset = 0;
+			constantRange.size = sizeof(BuildFrustumPushConstants);
+			constantRange.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+			VkPipelineLayoutCreateInfo pipelineLayoutInfoFrustums = { 0 };
+			pipelineLayoutInfoFrustums.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+			pipelineLayoutInfoFrustums.pushConstantRangeCount = 1;
+			pipelineLayoutInfoFrustums.pPushConstantRanges = &constantRange;
+			if (!VulkanHelpers::CheckResult(vkCreatePipelineLayout(d.GetVkDevice(), &pipelineLayoutInfoFrustums, nullptr, &m_pipelineLayoutFrustumBuild)))
+			{
+				LogError("Failed to create pipeline layout");
+				return false;
+			}
+			m_pipelineFrustumBuild = VulkanHelpers::CreateComputePipeline(d.GetVkDevice(), frustumComputeShader, m_pipelineLayoutFrustumBuild, "main");
+		}
+
+		vkDestroyShaderModule(d.GetVkDevice(), frustumComputeShader, nullptr);
+
+		m_initialised = true;
+		return true;
+	}
+
+	VkDeviceAddress TiledLightsCompute::BuildTileFrustumsCompute(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, const Camera& camera)
+	{
+		R3_PROF_EVENT();
+		VkDeviceAddress address = 0;
+		const uint32_t c_tilesX = (uint32_t)glm::ceil(screenDimensions.x / (float)c_lightTileDimensions);
+		const uint32_t c_tilesY = (uint32_t)glm::ceil(screenDimensions.y / (float)c_lightTileDimensions);
+
+		// We need a frustum buffer big enough for all the tiles
+		auto frustumBuffer = m_lightTileBufferPool->GetBuffer(c_tilesX * c_tilesY * sizeof(LightTileFrustum), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO, false);
+		if (!frustumBuffer)
+		{
+			LogError("Failed to allocate tile frustum buffer");
+			return address;
+		}
+
+		// If there are no lights, just allocate the buffer
+		if (Systems::GetSystem<LightsSystem>()->GetActivePointLights().size() > 0)
+		{
+			// build a frustum for each tile
+			BuildFrustumPushConstants pc;
+			pc.m_tileFrustumBuffer = frustumBuffer->m_deviceAddress;
+			pc.m_eyeWorldSpacePosition = glm::vec4(camera.Position(), 0.0f);
+			pc.m_screenDimensions = glm::vec2(screenDimensions);
+			pc.m_inverseProjViewMatrix = glm::inverse(camera.ProjectionMatrix() * camera.ViewMatrix());
+			pc.m_tileCount[0] = c_tilesX;
+			pc.m_tileCount[1] = c_tilesY;
+			vkCmdBindPipeline(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelineFrustumBuild);
+			vkCmdPushConstants(cmds, m_pipelineLayoutFrustumBuild, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(pc), &pc);
+			vkCmdDispatch(cmds, c_tilesX, c_tilesY, 1);
+
+			// memory barrier between compute stages
+			VkMemoryBarrier writeBarrier = { 0 };
+			writeBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+			writeBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+			writeBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+			vkCmdPipelineBarrier(cmds,
+				VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,		// src stage
+				VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,		// dst stage
+				0,
+				1,
+				&writeBarrier,
+				0, nullptr, 0, nullptr
+			);
+		}
+
+		address = frustumBuffer->m_deviceAddress;
+		m_lightTileBufferPool->Release(*frustumBuffer);	// release the buffer back to the pool for a future frame
+
+		return address;
+	}
+
+	// tile list building runs in 2 compute passes
+	// the first pass builds a world-space frustum for each screen tile
+	// the 2nd pass tests each light against each frustum and appends indices to the light-list
+	VkDeviceAddress TiledLightsCompute::BuildTilesListCompute(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, const Camera& camera)
+	{
+		R3_PROF_EVENT();
+		if (!m_initialised)
+		{
+			if (!Initialise(d))
+			{
+				return 0;
+			}
+		}
+
+		const uint32_t c_tilesX = (uint32_t)glm::ceil(screenDimensions.x / (float)c_lightTileDimensions);
+		const uint32_t c_tilesY = (uint32_t)glm::ceil(screenDimensions.y / (float)c_lightTileDimensions);
+
+		// first build frustum for each tile
+		VkDeviceAddress frustumBuffer = BuildTileFrustumsCompute(d, cmds, screenDimensions, camera);
+		if (frustumBuffer == 0)
+		{
+			LogError("Failed to build tile frustums");
+			return 0;
+		}
+
+		// allocate light data buffers
+		auto lightTileBuffer = m_lightTileBufferPool->GetBuffer(c_tilesX * c_tilesY * sizeof(LightTile), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO, false);
+		if (!lightTileBuffer)
+		{
+			LogError("Failed to allocate light tile buffer");
+			return 0;
+		}
+		auto lightIndexBuffer = m_lightTileBufferPool->GetBuffer(c_maxTiledLights * sizeof(uint16_t), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO, false);
+		if (!lightIndexBuffer)
+		{
+			LogError("Failed to allocate light index buffer");
+			return 0;
+		}
+
+		// build light tile data in compute...
+
+		// build metadata object to pass to lighting shaders
+		LightTileMetaData metadata;
+		VkDeviceAddress metadataAddress = 0;
+		metadata.m_tileCount[0] = (uint32_t)glm::ceil(screenDimensions.x / (float)c_lightTileDimensions);
+		metadata.m_tileCount[1] = (uint32_t)glm::ceil(screenDimensions.y / (float)c_lightTileDimensions);
+		metadata.m_lightIndexBuffer = lightIndexBuffer->m_deviceAddress;
+		metadata.m_lightTileBuffer = lightTileBuffer->m_deviceAddress;
+		LinearWriteGpuBuffer metadataBuffer;
+		if (metadataBuffer.Create(d, sizeof(LightTileMetaData), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_lightTileBufferPool.get()))
+		{
+			metadataAddress = metadataBuffer.GetBufferDeviceAddress();
+			metadataBuffer.Write(sizeof(LightTileMetaData), &metadata);
+			metadataBuffer.Flush(d, cmds, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+		}
+		else
+		{
+			LogError("Failed to allocate light tile metadata buffer");
+		}
+
+		// release all temp buffers back to the pool
+		m_lightTileBufferPool->Release(*lightTileBuffer);
+		m_lightTileBufferPool->Release(*lightIndexBuffer);
+		metadataBuffer.Destroy(d);
+
+		return metadataAddress;
 	}
 
 	VkDeviceAddress TiledLightsCompute::CopyCpuDataToGpu(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, const std::vector<LightTile>& tiles, const std::vector<uint16_t>& indices)
 	{
 		R3_PROF_EVENT();
 		VkDeviceAddress address = 0;
-		if (m_lightTileBufferPool == nullptr)
+		if (!m_initialised)
 		{
-			m_lightTileBufferPool = std::make_unique<BufferPool>("Light Tile Buffers");
+			if (!Initialise(d))
+			{
+				return address;
+			}
 		}
 
 		LightTileMetaData metadata;
