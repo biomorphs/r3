@@ -29,18 +29,18 @@ namespace R3
 		struct LightTileMetaData
 		{
 			VkDeviceAddress m_lightTileBuffer;	// a buffer of m_tileCount[0] * m_tileCount[1] instances of LightTile
-			VkDeviceAddress m_lightIndexBuffer;	// a buffer of c_maxTiledLights uint16 indices into the lights themselves.
+			VkDeviceAddress m_lightIndexBuffer;	// a buffer of 1 + c_maxTiledLights uint32 indices into the lights themselves (first entry is total count).
 			uint32_t m_tileCount[2] = { 0,0 };
 		};
 
 		void Cleanup(Device&);
 
 		// Cpu-based light tile builder
-		void DebugDrawLightTiles(glm::uvec2 screenDimensions, const Camera& camera, const std::vector<LightTile>& tiles, const std::vector<uint16_t>& indices);
-		void BuildLightTilesCpu(glm::uvec2 screenDimensions, const Camera& camera, std::vector<LightTile>& tiles, std::vector<uint16_t>& indices);
+		void DebugDrawLightTiles(glm::uvec2 screenDimensions, const Camera& camera, const std::vector<LightTile>& tiles, const std::vector<uint32_t>& indices);
+		void BuildLightTilesCpu(glm::uvec2 screenDimensions, const Camera& camera, std::vector<LightTile>& tiles, std::vector<uint32_t>& indices);
 
 		// returns an address to a LightTileMetaData buffer
-		VkDeviceAddress CopyCpuDataToGpu(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, const std::vector<LightTile>& tiles, const std::vector<uint16_t>& indices);
+		VkDeviceAddress CopyCpuDataToGpu(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, const std::vector<LightTile>& tiles, const std::vector<uint32_t>& indices);
 
 		// run the entire process on gpu, returns an address to a LightTileMetaData object
 		VkDeviceAddress BuildTilesListCompute(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, const Camera& camera);
@@ -53,6 +53,9 @@ namespace R3
 		};
 		VkDeviceAddress BuildTileFrustumsCompute(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, const Camera& camera);
 
+		// fills in lightTileBuffer and lightIndexBuffer based on frustums in tileFrustums
+		void BuildTileDataCompute(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, VkDeviceAddress tileFrustums, VkDeviceAddress lightTileBuffer, VkDeviceAddress lightIndexBuffer);
+
 		bool Initialise(Device& d);
 		bool m_initialised = false;
 		std::unique_ptr<BufferPool> m_lightTileBufferPool;	// tile buffers are allocated/released here
@@ -60,5 +63,9 @@ namespace R3
 		// pipeline for the frustum builder
 		VkPipelineLayout m_pipelineLayoutFrustumBuild = VK_NULL_HANDLE;
 		VkPipeline m_pipelineFrustumBuild = VK_NULL_HANDLE;
+
+		// pipeline for the tile data builder
+		VkPipelineLayout m_pipelineLayoutTileData = VK_NULL_HANDLE;
+		VkPipeline m_pipelineTileData = VK_NULL_HANDLE;
 	};
 }

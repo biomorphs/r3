@@ -40,13 +40,16 @@ void main()
 #ifdef USE_TILED_LIGHTS
 	LightTileMetadata tileMetadata = PushConstants.m_lightTileMetadata.data[0];
 	uint tileIndex = GetLightTileIndex(uvec2(gl_GlobalInvocationID.xy), tileMetadata.m_tileCount);
-	uint pointLightCount = min(uint(tileMetadata.m_lightTiles.data[tileIndex].m_lightIndexCount), MAX_SHARED_LIGHTS);
-	uint firstLightOffset = tileMetadata.m_lightTiles.data[tileIndex].m_firstLightIndex;
+	LightTile thisLightTile = tileMetadata.m_lightTiles.data[tileIndex];
+	
+	// tile light count also takes into account global light count (since the light tile data will not be valid when there are 0 lights!)
+	uint pointLightCount = min(lightsData.m_pointlightCount, min(uint(thisLightTile.m_lightIndexCount), MAX_SHARED_LIGHTS));	
+	uint firstLightOffset = thisLightTile.m_firstLightIndex;
 	uint firstLightIndex = firstLightOffset + (gl_LocalInvocationIndex * 4);
 	uint lastLightIndex = min(firstLightIndex + 4, firstLightOffset + pointLightCount);
 	for(uint l=firstLightIndex;l<lastLightIndex;++l)
 	{
-		uint lightIndex = uint(tileMetadata.m_lightIndices.data[l]);
+		uint lightIndex = tileMetadata.m_lightIndices.data[l];
 		sharedLights[l-firstLightOffset] = lightsData.m_allPointlights.data[lightIndex];
 	}
 #else

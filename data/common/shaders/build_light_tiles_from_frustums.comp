@@ -1,0 +1,102 @@
+#version 460
+#extension GL_EXT_buffer_reference : require
+
+#include "tiled_lighting.h"
+#include "lights.h"
+
+// One frustum per tile
+layout(buffer_reference, std430) readonly buffer LightTileFrustumBuffer { 
+	LightTileFrustum data[];
+};
+
+layout(buffer_reference, std430) buffer OutLightTileIndexBuffer { 
+	uint m_totalCount;
+	uint data[];
+};
+
+layout(buffer_reference, std430) writeonly buffer OutLightTileBuffer { 
+	LightTile data[];
+};
+
+layout (local_size_x = COMPUTE_LIGHT_TILE_SIZE, local_size_y = COMPUTE_LIGHT_TILE_SIZE) in;
+
+layout(push_constant) uniform constants
+{
+	LightsBuffer m_allLights;
+	LightTileFrustumBuffer m_tileFrustums;
+	OutLightTileIndexBuffer m_lightIndices;
+	OutLightTileBuffer m_lightTiles;
+	uint m_tileCount[2];
+} PushConstants;
+
+#define MAX_TILE_INDICES 2048
+shared uint sharedLightIndices[MAX_TILE_INDICES];
+shared uint sharedLightIndexCount;
+
+shared LightTileFrustum sharedThisFrustum;	// load frustum once for entire group
+
+bool IsSphereInFrustum(vec3 center, float radius)
+{
+	bool inFrustum = true;
+	for (int i = 0; (i < 4) && inFrustum; ++i)
+	{
+		float d = dot(sharedThisFrustum.m_planes[i].xyz, center) - sharedThisFrustum.m_planes[i].w;
+		inFrustum = (d >= -radius);
+	}
+	return inFrustum;
+}
+
+void main() 
+{
+	uvec2 thisTilePosition = gl_WorkGroupID.xy;
+	uint thisTileIndex = thisTilePosition.x + (thisTilePosition.y * PushConstants.m_tileCount[0]);
+
+	// set up initial state
+	if(gl_LocalInvocationIndex == 0)
+	{
+		sharedLightIndexCount = 0;
+		sharedThisFrustum = PushConstants.m_tileFrustums.data[thisTileIndex];
+		PushConstants.m_lightTiles.data[thisTileIndex].m_lightIndexCount = 0;
+	}
+	groupMemoryBarrier();
+	barrier();
+
+	// each work group deals with a single tile of lights
+	// each invocation processes 1 or more lights and writes an index to a shared buffer of light indices
+	// we run a number of 'passes' in each invocation to support a large number of lights
+	// once every invocation is finished we dump the shared indices to the light tile index buffer and update the light tile data
+	uint totalLightCount = PushConstants.m_allLights.data[0].m_pointlightCount;
+	uint lightsPerPass = COMPUTE_LIGHT_TILE_SIZE * COMPUTE_LIGHT_TILE_SIZE;
+	uint totalPasses = totalLightCount + (lightsPerPass-1) / lightsPerPass;	// make sure we run at least 1 pass if num lights > 0
+	for(uint lightPass = 0; lightPass < totalPasses; ++lightPass)
+	{
+		uint thisLightIndex = (lightPass * lightsPerPass) + gl_LocalInvocationIndex;
+		if(thisLightIndex < totalLightCount)
+		{
+			Pointlight pl = PushConstants.m_allLights.data[0].m_allPointlights.data[thisLightIndex];
+			if(IsSphereInFrustum(pl.m_positionDistance.xyz, pl.m_positionDistance.w))
+			{
+				uint newLocalIndex = atomicAdd(sharedLightIndexCount, 1);
+				if(newLocalIndex < MAX_TILE_INDICES)
+				{
+					sharedLightIndices[newLocalIndex] = thisLightIndex;
+				}
+			}
+		}
+	}
+	groupMemoryBarrier();
+	barrier();
+
+	// write the final indices from a single invocation
+	if(gl_LocalInvocationIndex == 0)
+	{
+		uint finalIndexOffset = atomicAdd(PushConstants.m_lightIndices.m_totalCount, sharedLightIndexCount);
+		for(int sharedIndex=0; sharedIndex < sharedLightIndexCount; ++sharedIndex)
+		{
+			PushConstants.m_lightIndices.data[finalIndexOffset + sharedIndex] = sharedLightIndices[sharedIndex];
+		}
+		
+		PushConstants.m_lightTiles.data[thisTileIndex].m_lightIndexCount = sharedLightIndexCount;
+		PushConstants.m_lightTiles.data[thisTileIndex].m_firstLightIndex = finalIndexOffset;
+	}
+}

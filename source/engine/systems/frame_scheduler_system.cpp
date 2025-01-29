@@ -77,18 +77,23 @@ namespace R3
 			{
 				auto screenSize = glm::uvec2(GetSystem<RenderSystem>()->GetWindowExtents());
 				auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
-				std::vector<TiledLightsCompute::LightTile> lightTiles;
-				std::vector<uint16_t> lightIndices;
-				m_tiledLightsCompute->BuildLightTilesCpu(screenSize, mainCamera, lightTiles, lightIndices);
-				if (m_showLightTilesDebug)
+				if (m_buildLightTilesOnCpu)
 				{
-					m_tiledLightsCompute->DebugDrawLightTiles(screenSize, mainCamera, lightTiles, lightIndices);
+					std::vector<TiledLightsCompute::LightTile> lightTiles;
+					std::vector<uint32_t> lightIndices;
+					m_tiledLightsCompute->BuildLightTilesCpu(screenSize, mainCamera, lightTiles, lightIndices);
+					if (m_showLightTilesDebug)
+					{
+						m_tiledLightsCompute->DebugDrawLightTiles(screenSize, mainCamera, lightTiles, lightIndices);
+					}
+					VkDeviceAddress gpuData = m_tiledLightsCompute->CopyCpuDataToGpu(*ctx.m_device, ctx.m_graphicsCmds, screenSize, lightTiles, lightIndices);
+					m_deferredLightingCompute->SetTiledLightinMetadataAddress(gpuData);
 				}
-				VkDeviceAddress gpuData = m_tiledLightsCompute->CopyCpuDataToGpu(*ctx.m_device, ctx.m_graphicsCmds, screenSize, lightTiles, lightIndices);
-				m_deferredLightingCompute->SetTiledLightinMetadataAddress(gpuData);
-
-				// testing gpu data builder
-				m_tiledLightsCompute->BuildTilesListCompute(*ctx.m_device, ctx.m_graphicsCmds, screenSize, mainCamera);
+				else
+				{
+					VkDeviceAddress gpuData = m_tiledLightsCompute->BuildTilesListCompute(*ctx.m_device, ctx.m_graphicsCmds, screenSize, mainCamera);
+					m_deferredLightingCompute->SetTiledLightinMetadataAddress(gpuData);
+				}
 			}
 			else
 			{
@@ -316,6 +321,9 @@ namespace R3
 		});
 		if (m_useTiledLighting)
 		{
+			lights.AddItem(m_buildLightTilesOnCpu ? "Build lights using compute" : "Build lights on CPU", [this] {
+				m_buildLightTilesOnCpu = !m_buildLightTilesOnCpu;
+			});
 			lights.AddItem(m_showLightTilesDebug ? "Hide light tiles debug" : "Show light tiles debug", [this]() {
 				m_showLightTilesDebug = !m_showLightTilesDebug;
 			});

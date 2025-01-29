@@ -1,11 +1,10 @@
-#extension GL_EXT_shader_16bit_storage : require
-
 // Size of light tiles built on gpu
 #define COMPUTE_LIGHT_TILE_SIZE 32
 
-// light indices stored in one giant buffer of uint16
+// light indices stored in one giant buffer of uints
 layout(buffer_reference, std430) readonly buffer LightTileIndexBuffer { 
-	uint16_t data[];
+	uint m_totalCount;			// used when writing indices from compute
+	uint data[];
 };
 
 struct LightTile				// one per tile

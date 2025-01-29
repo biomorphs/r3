@@ -45,6 +45,7 @@ namespace R3
 		std::string m_colourDebugTargetName;
 
 		bool m_useTiledLighting = true;
+		bool m_buildLightTilesOnCpu = false;
 		bool m_showLightTilesDebug = false;
 	};
 }
