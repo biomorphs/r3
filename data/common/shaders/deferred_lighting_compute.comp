@@ -16,7 +16,6 @@ layout(rgba8,set = 0, binding = 2) uniform readonly image2D inAlbedoAO;
 layout (set = 0, binding = 3) uniform sampler2D inDepthBuffer;
 layout(set = 0, binding = 4) uniform writeonly image2D hdrOutput;
 
-// send lighting buffer address via push constat
 layout(push_constant) uniform constants
 {
 	vec4 m_cameraWorldSpacePos;
@@ -26,11 +25,9 @@ layout(push_constant) uniform constants
 #endif
 } PushConstants;
 
-#ifndef USE_TILED_LIGHTS
-	// Copy all pointlights to shared memory for this work group
-	#define MAX_SHARED_LIGHTS 1024
-	shared Pointlight sharedLights[MAX_SHARED_LIGHTS];
-#endif
+// Copy all pointlights to shared memory for this work group
+#define MAX_SHARED_LIGHTS 1024
+shared Pointlight sharedLights[MAX_SHARED_LIGHTS];
 
 void main() 
 {
@@ -39,8 +36,19 @@ void main()
 	ivec2 size = imageSize(hdrOutput);
 	float depthValue = texelFetch(inDepthBuffer, texelCoord, 0).r;
 	
-#ifndef USE_TILED_LIGHTS
-	// Copy lights list to shared memory, up to 4 lights per thread
+	// Copy lights list to shared memory, 4 lights per thread
+#ifdef USE_TILED_LIGHTS
+	LightTileMetadata tileMetadata = PushConstants.m_lightTileMetadata.data[0];
+	uint tileIndex = GetLightTileIndex(uvec2(gl_GlobalInvocationID.xy), tileMetadata);
+	uint pointLightCount = min(uint(tileMetadata.m_lightTiles.data[tileIndex].m_lightCount), MAX_SHARED_LIGHTS);
+	uint firstLightIndex = gl_LocalInvocationIndex * 4;
+	uint lastLightIndex = min(firstLightIndex + 4, pointLightCount);
+	for(uint l=firstLightIndex;l<lastLightIndex;++l)
+	{
+		uint p = uint(tileMetadata.m_lightTiles.data[tileIndex].m_lightIndices[l]);
+		sharedLights[l] = lightsData.m_allPointlights.data[p];
+	}
+#else
 	uint pointLightCount = min(lightsData.m_pointlightCount, MAX_SHARED_LIGHTS);
 	uint firstLightIndex = gl_LocalInvocationIndex * 4;
 	uint lastLightIndex = min(firstLightIndex + 4, pointLightCount);
@@ -48,9 +56,9 @@ void main()
 	{
 		sharedLights[p] = lightsData.m_allPointlights.data[p];
 	}
-	groupMemoryBarrier ();		// ensure all writes to shared memory complete for this group
-	barrier();		// synchronise all invocations in this group
 #endif
+	groupMemoryBarrier();		// ensure all writes to shared memory complete for this group
+	barrier();		// synchronise all invocations in this group (required since not all invocations touch shared memory!)
 
 	if(texelCoord.x < size.x && texelCoord.y < size.y)
 	{
@@ -74,19 +82,9 @@ void main()
 			vec3 directLight = PBRDirectLighting(mat, viewDir, -sunDirectionBrightness.xyz, normalRoughness.xyz, sunRadiance, 1.0);
 			
 			// Apply point lights (direct)
-#ifdef USE_TILED_LIGHTS
-			LightTileMetadata tileMetadata = PushConstants.m_lightTileMetadata.data[0];
-			uint tileIndex = GetLightTileIndex(uvec2(gl_GlobalInvocationID.xy), tileMetadata);
-			uint pointLightCount = uint(tileMetadata.m_lightTiles.data[tileIndex].m_lightCount);
-			for(uint l=0;l<pointLightCount;++l)
-			{
-				uint p = uint(tileMetadata.m_lightTiles.data[tileIndex].m_lightIndices[l]);
-				Pointlight pl = lightsData.m_allPointlights.data[p];
-#else
 			for(uint p=0;p<pointLightCount;++p)
 			{
 				Pointlight pl = sharedLights[p];
-#endif
 				vec3 lightRadiance = pl.m_colourBrightness.xyz * pl.m_colourBrightness.w;
 				float attenuation = GetPointlightAttenuation(pl, positionMetallic.xyz);
 				vec3 lightToPixel = normalize(pl.m_positionDistance.xyz - positionMetallic.xyz);
