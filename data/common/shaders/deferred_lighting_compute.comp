@@ -48,8 +48,8 @@ void main()
 	{
 		sharedLights[p] = lightsData.m_allPointlights.data[p];
 	}
-	memoryBarrierShared();		// ensure all writes to shared memory complete
-	groupMemoryBarrier();		// synchronise memory between all invocations in this work group
+	groupMemoryBarrier ();		// ensure all writes to shared memory complete for this group
+	barrier();		// synchronise all invocations in this group
 #endif
 
 	if(texelCoord.x < size.x && texelCoord.y < size.y)
