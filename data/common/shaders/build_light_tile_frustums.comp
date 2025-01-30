@@ -8,15 +8,15 @@ layout(buffer_reference, std430) writeonly buffer LightTileFrustumBuffer {
 	LightTileFrustum data[];
 };
 
-layout (local_size_x = COMPUTE_LIGHT_TILE_SIZE, local_size_y = COMPUTE_LIGHT_TILE_SIZE) in;
+layout (local_size_x = 16, local_size_y = 16) in;
 
 layout(push_constant) uniform constants
 {
-	LightTileFrustumBuffer m_tileFrustums;
 	mat4 m_inverseProjViewMatrix;
 	vec4 m_eyeWorldSpacePosition;	// w is unused
 	vec2 m_screenDimensions;
 	uint m_tileCount[2];
+	LightTileFrustumBuffer m_tileFrustums;
 } PushConstants;
 
 // convert screen-space point with clip space z to clip space
@@ -32,34 +32,37 @@ vec4 PointsToPlane(vec3 p0, vec3 p1, vec3 p2)
 	vec3 v0 = p1 - p0;
 	vec3 v1 = p2 - p0;
 	vec4 plane = vec4(normalize(cross(v0, v1)), 0.0f);
-	plane.w = dot(vec3(plane), p0);
+	plane.w = dot(plane.xyz, p0);
 	return plane;
 }
 
 void main() 
 {
-	uint tileIndex = GetLightTileIndex(uvec2(gl_GlobalInvocationID.xy), PushConstants.m_tileCount);
-	
-	// generate screen-space points on the far clip plane
-	vec3 farPoints[4] =
+	if(gl_GlobalInvocationID.x < PushConstants.m_tileCount[0] && gl_GlobalInvocationID.y < PushConstants.m_tileCount[1])
 	{
-		{ gl_GlobalInvocationID.x * COMPUTE_LIGHT_TILE_SIZE, gl_GlobalInvocationID.y * COMPUTE_LIGHT_TILE_SIZE, 1.0f },					// top left 
-		{ (gl_GlobalInvocationID.x + 1) * COMPUTE_LIGHT_TILE_SIZE, gl_GlobalInvocationID.y * COMPUTE_LIGHT_TILE_SIZE, 1.0f },			// top right
-		{ gl_GlobalInvocationID.x * COMPUTE_LIGHT_TILE_SIZE, (gl_GlobalInvocationID.y + 1) * COMPUTE_LIGHT_TILE_SIZE, 1.0f },			// botton left 
-		{ (gl_GlobalInvocationID.x + 1) * COMPUTE_LIGHT_TILE_SIZE, (gl_GlobalInvocationID.y + 1) * COMPUTE_LIGHT_TILE_SIZE, 1.0f },		// botton right
-	};
-	
-	// convert each point to world-space. I hope the compiler unrolls this!
-	for(int i=0; i<4; ++i)
-	{
-		farPoints[i] = TilePointToClipSpace(farPoints[i]);
-		vec4 projected = PushConstants.m_inverseProjViewMatrix * vec4(farPoints[i], 1.0f);
-		farPoints[i] = vec3(projected / projected.w);	// perspective divide
+		uint tileIndex = gl_GlobalInvocationID.x + (gl_GlobalInvocationID.y * PushConstants.m_tileCount[0]);
+		
+		// generate screen-space points on the far clip plane
+		vec3 farPoints[4] =
+		{
+			{ gl_GlobalInvocationID.x * COMPUTE_LIGHT_TILE_SIZE, gl_GlobalInvocationID.y * COMPUTE_LIGHT_TILE_SIZE, 1.0f },					// top left 
+			{ (gl_GlobalInvocationID.x + 1) * COMPUTE_LIGHT_TILE_SIZE, gl_GlobalInvocationID.y * COMPUTE_LIGHT_TILE_SIZE, 1.0f },			// top right
+			{ gl_GlobalInvocationID.x * COMPUTE_LIGHT_TILE_SIZE, (gl_GlobalInvocationID.y + 1) * COMPUTE_LIGHT_TILE_SIZE, 1.0f },			// botton left 
+			{ (gl_GlobalInvocationID.x + 1) * COMPUTE_LIGHT_TILE_SIZE, (gl_GlobalInvocationID.y + 1) * COMPUTE_LIGHT_TILE_SIZE, 1.0f }		// botton right
+		};
+		
+		// convert each point to world-space. I hope the compiler unrolls this!
+		for(int i=0; i<4; ++i)
+		{
+			farPoints[i] = TilePointToClipSpace(farPoints[i]);
+			vec4 projected = PushConstants.m_inverseProjViewMatrix * vec4(farPoints[i], 1.0f);
+			farPoints[i] = vec3(projected / projected.w);	// perspective divide
+		}
+		
+		// compute planes + write to the frustum buffer
+		PushConstants.m_tileFrustums.data[tileIndex].m_planes[0] = PointsToPlane(PushConstants.m_eyeWorldSpacePosition.xyz, farPoints[2], farPoints[0]);
+		PushConstants.m_tileFrustums.data[tileIndex].m_planes[1] = PointsToPlane(PushConstants.m_eyeWorldSpacePosition.xyz, farPoints[1], farPoints[3]);
+		PushConstants.m_tileFrustums.data[tileIndex].m_planes[2] = PointsToPlane(PushConstants.m_eyeWorldSpacePosition.xyz, farPoints[0], farPoints[1]);
+		PushConstants.m_tileFrustums.data[tileIndex].m_planes[3] = PointsToPlane(PushConstants.m_eyeWorldSpacePosition.xyz, farPoints[3], farPoints[2]);
 	}
-	
-	// compute planes + write to the frustum buffer
-	PushConstants.m_tileFrustums.data[tileIndex].m_planes[0] = PointsToPlane(PushConstants.m_eyeWorldSpacePosition.xyz, farPoints[2], farPoints[0]);
-	PushConstants.m_tileFrustums.data[tileIndex].m_planes[1] = PointsToPlane(PushConstants.m_eyeWorldSpacePosition.xyz, farPoints[1], farPoints[3]);
-	PushConstants.m_tileFrustums.data[tileIndex].m_planes[2] = PointsToPlane(PushConstants.m_eyeWorldSpacePosition.xyz, farPoints[0], farPoints[1]);
-	PushConstants.m_tileFrustums.data[tileIndex].m_planes[3] = PointsToPlane(PushConstants.m_eyeWorldSpacePosition.xyz, farPoints[3], farPoints[2]);
 }

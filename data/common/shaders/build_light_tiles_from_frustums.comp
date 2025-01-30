@@ -48,7 +48,7 @@ bool IsSphereInFrustum(vec3 center, float radius)
 
 void main() 
 {
-	uvec2 thisTilePosition = gl_WorkGroupID.xy;
+	uvec2 thisTilePosition = gl_WorkGroupID.xy;		// one work-group per tile
 	uint thisTileIndex = thisTilePosition.x + (thisTilePosition.y * PushConstants.m_tileCount[0]);
 
 	// set up initial state
@@ -67,7 +67,7 @@ void main()
 	// once every invocation is finished we dump the shared indices to the light tile index buffer and update the light tile data
 	uint totalLightCount = PushConstants.m_allLights.data[0].m_pointlightCount;
 	uint lightsPerPass = COMPUTE_LIGHT_TILE_SIZE * COMPUTE_LIGHT_TILE_SIZE;
-	uint totalPasses = totalLightCount + (lightsPerPass-1) / lightsPerPass;	// make sure we run at least 1 pass if num lights > 0
+	uint totalPasses = (totalLightCount + (lightsPerPass-1)) / lightsPerPass;	// make sure we run at least 1 pass if num lights > 0
 	for(uint lightPass = 0; lightPass < totalPasses; ++lightPass)
 	{
 		uint thisLightIndex = (lightPass * lightsPerPass) + gl_LocalInvocationIndex;

@@ -12,11 +12,11 @@ namespace R3
 {
 	struct BuildFrustumPushConstants
 	{
-		VkDeviceAddress m_tileFrustumBuffer;	// preallocated 
 		glm::mat4 m_inverseProjViewMatrix;		
 		glm::vec4 m_eyeWorldSpacePosition;		// w is unused
 		glm::vec2 m_screenDimensions;
 		uint32_t m_tileCount[2];
+		VkDeviceAddress m_tileFrustumBuffer;	// preallocated 
 	};
 
 	struct BuildLightTilePushConstants
@@ -116,17 +116,20 @@ namespace R3
 		{
 			VulkanHelpers::CommandBufferRegionLabel cmdLabel(cmds, "BuildTileFrustums", { 1,1,0,1 });
 
+			const glm::mat4 projViewMat = camera.ProjectionMatrix() * camera.ViewMatrix();
+			const glm::mat4 inverseProjView = glm::inverse(projViewMat);
+
 			// build a frustum for each tile
 			BuildFrustumPushConstants pc;
 			pc.m_tileFrustumBuffer = frustumBuffer->m_deviceAddress;
 			pc.m_eyeWorldSpacePosition = glm::vec4(camera.Position(), 0.0f);
 			pc.m_screenDimensions = glm::vec2(screenDimensions);
-			pc.m_inverseProjViewMatrix = glm::inverse(camera.ProjectionMatrix() * camera.ViewMatrix());
+			pc.m_inverseProjViewMatrix = inverseProjView;
 			pc.m_tileCount[0] = c_tilesX;
 			pc.m_tileCount[1] = c_tilesY;
 			vkCmdBindPipeline(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelineFrustumBuild);
 			vkCmdPushConstants(cmds, m_pipelineLayoutFrustumBuild, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(pc), &pc);
-			vkCmdDispatch(cmds, c_tilesX, c_tilesY, 1);
+			vkCmdDispatch(cmds, (uint32_t)glm::ceil(c_tilesX / 16.0f), (uint32_t)glm::ceil(c_tilesY / 16.0f), 1);	// one invocation per tile
 
 			// memory barrier between compute stages
 			VkMemoryBarrier writeBarrier = { 0 };

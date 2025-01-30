@@ -17,7 +17,7 @@ namespace R3
 		TiledLightsCompute() = default;
 		~TiledLightsCompute() = default;
 
-		static const uint32_t c_lightTileDimensions = 32;	// must always be a multiple of 16 and never < 16. must match COMPUTE_LIGHT_TILE_SIZE in shaders!
+		static const uint32_t c_lightTileDimensions = 16;	// must always be a multiple of 16 and never < 16. must match COMPUTE_LIGHT_TILE_SIZE in shaders!
 		static const uint32_t c_maxTiledLights = ((3840 * 2160) / (c_lightTileDimensions * c_lightTileDimensions)) * 256;	// enough for 256 lights per tile at 4k
 		struct LightTile						// one per tile
 		{

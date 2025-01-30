@@ -1,5 +1,5 @@
 // Size of light tiles built on gpu
-#define COMPUTE_LIGHT_TILE_SIZE 32
+#define COMPUTE_LIGHT_TILE_SIZE 16
 
 // light indices stored in one giant buffer of uints
 layout(buffer_reference, std430) readonly buffer LightTileIndexBuffer { 
