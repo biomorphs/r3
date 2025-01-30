@@ -1,0 +1,46 @@
+#version 460
+#extension GL_EXT_buffer_reference : require
+
+#include "tiled_lighting.h"
+
+// Globals buffer sent via push constant
+layout(push_constant) uniform constants
+{
+	LightTileMetadataBuffer m_lightTileMetadata;	// only used with USE_TILED_LIGHTS in forward pass
+} PushConstants;
+
+layout (local_size_x = 16, local_size_y = 16) in;
+
+layout(set = 0, binding = 0) uniform writeonly image2D hdrOutput;
+
+void main() 
+{
+	ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
+	ivec2 size = imageSize(hdrOutput);
+	if(texelCoord.x < size.x && texelCoord.y < size.y)
+	{
+		LightTileMetadata tileMetadata = PushConstants.m_lightTileMetadata.data[0];
+		uint tileIndex = GetLightTileIndex(uvec2(texelCoord), tileMetadata.m_tileCount);
+		LightTile thisLightTile = tileMetadata.m_lightTiles.data[tileIndex];
+		
+		// make a nice colour pallete, w = num. lights in tile
+		vec4 c_pallete[] = {
+			{0.0f,0.0f,0.1f,0},
+			{0.0f,1.0f,0.1f,64},
+			{1.0f,1.0f,0.0f,128},
+			{1.0f,0.0f,0.0f,256},
+			{1.0f,1.0f,1.0f,1024},
+			{0.0f,1.0f,1.0f,4096}
+		};
+		vec3 colour = { 0,0,0.1f };
+		for (int i = 0; i < 5; ++i)
+		{
+			if ((thisLightTile.m_lightIndexCount > c_pallete[i].w) && (thisLightTile.m_lightIndexCount <= c_pallete[i + 1].w))
+			{
+				float mixVal = float(thisLightTile.m_lightIndexCount - c_pallete[i].w) / (c_pallete[i + 1].w - c_pallete[i].w);
+				colour = mix(c_pallete[i].xyz, c_pallete[i + 1].xyz, mixVal);
+			}
+		}
+		imageStore(hdrOutput, texelCoord, vec4(colour,1));
+	}
+}

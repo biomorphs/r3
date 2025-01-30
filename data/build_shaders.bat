@@ -21,6 +21,7 @@ glslc deferred_lighting_compute.comp -g -o ..\..\shaders_spirv\common\deferred_l
 glslc deferred_lighting_compute.comp -DUSE_TILED_LIGHTS -g -o ..\..\shaders_spirv\common\deferred_lighting_compute_tiled.comp.spv
 glslc build_light_tile_frustums.comp -g -o ..\..\shaders_spirv\common\build_light_tile_frustums.comp.spv
 glslc build_light_tiles_from_frustums.comp -g -o ..\..\shaders_spirv\common\build_light_tiles_from_frustums.comp.spv
+glslc light_tile_debug_output.comp -g -o ..\..\shaders_spirv\common\light_tile_debug_output.comp.spv
 
 pause
 

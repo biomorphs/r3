@@ -1,10 +1,10 @@
 #include "simple_tiled_lights_compute.h"
 #include "engine/systems/lights_system.h"
 #include "engine/systems/camera_system.h"
-#include "engine/systems/immediate_render_system.h"
-#include "engine/utils/frustum.h"
 #include "render/linear_write_gpu_buffer.h"
 #include "render/device.h"
+#include "render/render_target_cache.h"
+#include "render/descriptors.h"
 #include "core/profiler.h"
 #include "core/log.h"
 
@@ -28,12 +28,21 @@ namespace R3
 		uint32_t m_tileCount[2];
 	};
 
+	struct LightTileDebugPushConstants
+	{
+		VkDeviceAddress m_lightTileMetadata;
+	};
+
 	void TiledLightsCompute::Cleanup(Device& d)
 	{
 		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayoutFrustumBuild, nullptr);
 		vkDestroyPipeline(d.GetVkDevice(), m_pipelineFrustumBuild, nullptr);
 		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayoutTileData, nullptr);
 		vkDestroyPipeline(d.GetVkDevice(), m_pipelineTileData, nullptr);
+		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayoutDebug, nullptr);
+		vkDestroyPipeline(d.GetVkDevice(), m_pipelineDebug, nullptr);
+		vkDestroyDescriptorSetLayout(d.GetVkDevice(), m_descriptorLayout, nullptr);
+		m_descriptorAllocator = {};
 		m_lightTileBufferPool = {};
 	}
 
@@ -90,6 +99,54 @@ namespace R3
 			}
 			m_pipelineTileData = VulkanHelpers::CreateComputePipeline(d.GetVkDevice(), tileDataShader, m_pipelineLayoutTileData, "main");
 			vkDestroyShaderModule(d.GetVkDevice(), tileDataShader, nullptr);
+		}
+		{
+			m_descriptorAllocator = std::make_unique<DescriptorSetSimpleAllocator>();
+			std::vector<VkDescriptorPoolSize> poolSizes = {
+				{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, c_maxSets }					// input + output images
+			};
+			if (!m_descriptorAllocator->Initialise(d, c_maxSets, poolSizes))
+			{
+				LogError("Failed to create descriptor allocator");
+				return false;
+			}
+			DescriptorLayoutBuilder layoutBuilder;
+			layoutBuilder.AddBinding(0, 1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);		// output image
+			m_descriptorLayout = layoutBuilder.Create(d, false);					// dont need bindless here
+			if (m_descriptorLayout == nullptr)
+			{
+				LogError("Failed to create descriptor set layout");
+				return false;
+			}
+			// Create the sets but don't write them yet
+			for (uint32_t i = 0; i < c_maxSets; ++i)
+			{
+				m_descriptorSets[i] = m_descriptorAllocator->Allocate(d, m_descriptorLayout);
+			}
+
+			auto debugShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), "shaders_spirv/common/light_tile_debug_output.comp.spv");
+			if (debugShader == VK_NULL_HANDLE)
+			{
+				LogError("Failed to load light tile debug shader");
+				return false;
+			}
+			VkPushConstantRange constantRange;
+			constantRange.offset = 0;
+			constantRange.size = sizeof(LightTileDebugPushConstants);
+			constantRange.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+			VkPipelineLayoutCreateInfo pipelineLayoutInfo = { 0 };
+			pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+			pipelineLayoutInfo.setLayoutCount = 1;
+			pipelineLayoutInfo.pSetLayouts= &m_descriptorLayout;
+			pipelineLayoutInfo.pushConstantRangeCount = 1;
+			pipelineLayoutInfo.pPushConstantRanges = &constantRange;
+			if (!VulkanHelpers::CheckResult(vkCreatePipelineLayout(d.GetVkDevice(), &pipelineLayoutInfo, nullptr, &m_pipelineLayoutDebug)))
+			{
+				LogError("Failed to create pipeline layout");
+				return false;
+			}
+			m_pipelineDebug = VulkanHelpers::CreateComputePipeline(d.GetVkDevice(), debugShader, m_pipelineLayoutDebug, "main");
+			vkDestroyShaderModule(d.GetVkDevice(), debugShader, nullptr);
 		}
 
 		m_initialised = true;
@@ -265,6 +322,34 @@ namespace R3
 		return metadataAddress;
 	}
 
+	void TiledLightsCompute::ShowTilesDebug(Device& d, VkCommandBuffer cmds, RenderTarget& outputTarget, glm::vec2 outputDimensions, VkDeviceAddress lightTileMetadata)
+	{
+		R3_PROF_EVENT();
+		if (!m_initialised)
+		{
+			if (!Initialise(d))
+			{
+				return;
+			}
+		}
+		// Write a descriptor set each frame
+		DescriptorSetWriter writer(m_descriptorSets[m_currentSet]);
+		writer.WriteStorageImage(0, outputTarget.m_view, outputTarget.m_lastLayout);
+		writer.FlushWrites();
+
+		LightTileDebugPushConstants pc;
+		pc.m_lightTileMetadata = lightTileMetadata;
+
+		vkCmdBindPipeline(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelineDebug);
+		vkCmdBindDescriptorSets(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelineLayoutDebug, 0, 1, &m_descriptorSets[m_currentSet], 0, nullptr);
+		vkCmdPushConstants(cmds, m_pipelineLayoutDebug, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(pc), &pc);
+		vkCmdDispatch(cmds, (uint32_t)glm::ceil(outputDimensions.x / 16.0f), (uint32_t)glm::ceil(outputDimensions.y / 16.0f), 1);
+		if (++m_currentSet >= c_maxSets)
+		{
+			m_currentSet = 0;
+		}
+	}
+
 	VkDeviceAddress TiledLightsCompute::CopyCpuDataToGpu(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, const std::vector<LightTile>& tiles, const std::vector<uint32_t>& indices)
 	{
 		R3_PROF_EVENT();
@@ -330,70 +415,6 @@ namespace R3
 		}
 
 		return address;
-	}
-
-	void TiledLightsCompute::DebugDrawLightTiles(glm::uvec2 screenDimensions, const Camera& camera, const std::vector<LightTile>& tiles, const std::vector<uint32_t>& indices)
-	{
-		// how many tiles do we need
-		const uint32_t c_tilesX = (uint32_t)glm::ceil(screenDimensions.x / (float)c_lightTileDimensions);
-		const uint32_t c_tilesY = (uint32_t)glm::ceil(screenDimensions.y / (float)c_lightTileDimensions);
-		const glm::mat4 projViewMat = camera.ProjectionMatrix() * camera.ViewMatrix();
-		const glm::mat4 inverseProjView = glm::inverse(projViewMat);
-		auto& imRender = Systems::GetSystem<ImmediateRenderSystem>()->m_imRender;
-		ImmediateRenderer::PosColourVertex quadVerts[4];
-		for (uint32_t y = 0; y < c_tilesY; ++y)
-		{
-			for (uint32_t x = 0; x < c_tilesX; ++x)
-			{
-				const LightTile& thisTileLightData = tiles[x + (y * c_tilesX)];
-				if (thisTileLightData.m_lightIndexCount > 0)
-				{
-					// build screen-space points just off near clip plane
-					glm::vec3 farPoints[4] =
-					{
-						{ x * c_lightTileDimensions, y * c_lightTileDimensions, 0.01f },					// top left 
-						{ (x + 1) * c_lightTileDimensions, y * c_lightTileDimensions, 0.01f },				// top right
-						{ x * c_lightTileDimensions, (y + 1) * c_lightTileDimensions, 0.01f },				// botton left 
-						{ (x + 1) * c_lightTileDimensions, (y + 1) * c_lightTileDimensions, 0.01f },		// botton right
-					};
-
-					// make a nice colour pallete
-					glm::vec4 c_pallete[] = {
-						{0.0f,0.0f,0.1f,0},
-						{0.0f,1.0f,0.1f,64},
-						{1.0f,1.0f,0.0f,128},
-						{1.0f,0.0f,0.0f,256},
-						{1.0f,1.0f,1.0f,1024}
-					};
-					glm::vec3 colour = { 0,0,0.1f };
-					for (int i = 0; i < (int)std::size(c_pallete) - 1; ++i)
-					{
-						if ((thisTileLightData.m_lightIndexCount > c_pallete[i].w) && (thisTileLightData.m_lightIndexCount <= c_pallete[i + 1].w))
-						{
-							const float mixVal = (float)(thisTileLightData.m_lightIndexCount - c_pallete[i].w) / (c_pallete[i + 1].w - c_pallete[i].w);
-							colour = glm::mix(glm::vec3(c_pallete[i]), glm::vec3(c_pallete[i + 1]), mixVal);
-						}
-					}
-
-					// convert screen x,y to clip space, z is already on far clip plane!
-					auto screenToClip = [&screenDimensions](glm::vec3 p)
-					{
-						return glm::vec3(((p.x / (float)screenDimensions.x) * 2.0f) - 1.0f, ((p.y / (float)screenDimensions.y) * 2.0f) - 1.0f, p.z);
-					};
-					for (int i = 0; i < 4; ++i)
-					{
-						farPoints[i] = screenToClip(farPoints[i]);
-						glm::vec4 projected = inverseProjView * glm::vec4(farPoints[i], 1.0f);
-						farPoints[i] = glm::vec3(projected / projected.w);	// perspective divide
-
-						quadVerts[i].m_position = glm::vec4(farPoints[i], 1.0f);
-						quadVerts[i].m_colour = glm::vec4(colour,0.5f);
-					}
-					imRender->AddTriangle(quadVerts[0], quadVerts[1], quadVerts[2]);
-					imRender->AddTriangle(quadVerts[1], quadVerts[3], quadVerts[2]);
-				}
-			}
-		}
 	}
 
 	void TiledLightsCompute::BuildLightTilesCpu(glm::uvec2 screenDimensions, const Camera& camera, std::vector<LightTile>& tiles, std::vector<uint32_t>& indices)

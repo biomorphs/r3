@@ -7,6 +7,8 @@ namespace R3
 {
 	class Device;
 	class Camera;
+	class DescriptorSetSimpleAllocator;
+	struct RenderTarget;
 
 	// A compute or CPU pass that culls lights against a screen-space grid of tiles
 	// Lights are stored as a buffer of indices, with index offset+size stored per tile
@@ -35,28 +37,29 @@ namespace R3
 
 		void Cleanup(Device&);
 
-		// Cpu-based light tile builder
-		void DebugDrawLightTiles(glm::uvec2 screenDimensions, const Camera& camera, const std::vector<LightTile>& tiles, const std::vector<uint32_t>& indices);
+		// Cpu-based light tile builder. CopyCpuDataToGpu returns an address to a LightTileMetaData buffer. Only for debugging
 		void BuildLightTilesCpu(glm::uvec2 screenDimensions, const Camera& camera, std::vector<LightTile>& tiles, std::vector<uint32_t>& indices);
-
-		// returns an address to a LightTileMetaData buffer
 		VkDeviceAddress CopyCpuDataToGpu(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, const std::vector<LightTile>& tiles, const std::vector<uint32_t>& indices);
 
-		// run the entire process on gpu, returns an address to a LightTileMetaData object
+		// Compute-based light tile builder
 		VkDeviceAddress BuildTilesListCompute(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, const Camera& camera);
 
+		// display the light tile debug info to a colour target via compute
+		void ShowTilesDebug(Device& d, VkCommandBuffer cmds, RenderTarget& outputTarget, glm::vec2 outputDimensions, VkDeviceAddress lightTileMetadata);
+
 	private:
-		// returns a buffer containing a LightTileFrustum per tile
 		struct LightTileFrustum
 		{
 			glm::vec4 m_planes[4];
 		};
+		// returns a buffer containing a LightTileFrustum per tile
 		VkDeviceAddress BuildTileFrustumsCompute(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, const Camera& camera);
 
 		// fills in lightTileBuffer and lightIndexBuffer based on frustums in tileFrustums
 		void BuildTileDataCompute(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, VkDeviceAddress tileFrustums, VkDeviceAddress lightTileBuffer, VkDeviceAddress lightIndexBuffer);
 
 		bool Initialise(Device& d);
+
 		bool m_initialised = false;
 		std::unique_ptr<BufferPool> m_lightTileBufferPool;	// tile buffers are allocated/released here
 
@@ -67,5 +70,15 @@ namespace R3
 		// pipeline for the tile data builder
 		VkPipelineLayout m_pipelineLayoutTileData = VK_NULL_HANDLE;
 		VkPipeline m_pipelineTileData = VK_NULL_HANDLE;
+
+		// data for tile debug display
+		std::unique_ptr<DescriptorSetSimpleAllocator> m_descriptorAllocator;	// per-frame descriptor sets + allocator
+		VkDescriptorSetLayout_T* m_descriptorLayout = nullptr;
+		static const uint32_t c_maxSets = 3;
+		VkDescriptorSet_T* m_descriptorSets[c_maxSets] = { nullptr };
+		uint32_t m_currentSet = 0;
+
+		VkPipelineLayout m_pipelineLayoutDebug = VK_NULL_HANDLE;
+		VkPipeline m_pipelineDebug = VK_NULL_HANDLE;
 	};
 }

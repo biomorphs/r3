@@ -77,29 +77,27 @@ namespace R3
 			{
 				auto screenSize = glm::uvec2(GetSystem<RenderSystem>()->GetWindowExtents());
 				auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
+				VkDeviceAddress gpuData = 0;
 				if (m_buildLightTilesOnCpu)
 				{
 					std::vector<TiledLightsCompute::LightTile> lightTiles;
 					std::vector<uint32_t> lightIndices;
 					m_tiledLightsCompute->BuildLightTilesCpu(screenSize, mainCamera, lightTiles, lightIndices);
-					if (m_showLightTilesDebug)
-					{
-						m_tiledLightsCompute->DebugDrawLightTiles(screenSize, mainCamera, lightTiles, lightIndices);
-					}
-					VkDeviceAddress gpuData = m_tiledLightsCompute->CopyCpuDataToGpu(*ctx.m_device, ctx.m_graphicsCmds, screenSize, lightTiles, lightIndices);
-					m_deferredLightingCompute->SetTiledLightinMetadataAddress(gpuData);
+					gpuData = m_tiledLightsCompute->CopyCpuDataToGpu(*ctx.m_device, ctx.m_graphicsCmds, screenSize, lightTiles, lightIndices);
 				}
 				else
 				{
-					VkDeviceAddress gpuData = m_tiledLightsCompute->BuildTilesListCompute(*ctx.m_device, ctx.m_graphicsCmds, screenSize, mainCamera);
-					m_deferredLightingCompute->SetTiledLightinMetadataAddress(gpuData);
-					GetSystem<MeshRenderer>()->SetTiledLightinMetadataAddress(gpuData);
+					gpuData = m_tiledLightsCompute->BuildTilesListCompute(*ctx.m_device, ctx.m_graphicsCmds, screenSize, mainCamera);
 				}
+				m_deferredLightingCompute->SetTiledLightinMetadataAddress(gpuData);
+				GetSystem<MeshRenderer>()->SetTiledLightinMetadataAddress(gpuData);
+				m_lightTileDebugMetadataAddress = gpuData;
 			}
 			else
 			{
 				m_deferredLightingCompute->SetTiledLightinMetadataAddress(0);
 				GetSystem<MeshRenderer>()->SetTiledLightinMetadataAddress(0);
+				m_lightTileDebugMetadataAddress = 0;
 			}
 		});
 		return lightTilingPass;
@@ -243,6 +241,20 @@ namespace R3
 		return tonemapPass;
 	}
 
+	std::unique_ptr<ComputeDrawPass> FrameScheduler::MakeLightTileDebugPass(const RenderTargetInfo& colourTarget)
+	{
+		// This pass reads the main colour image, runs tonemap operator and writes to the swap chain image
+		auto debugPass = std::make_unique<ComputeDrawPass>();
+		debugPass->m_name = "Light Tiles Debug";
+		debugPass->m_outputColourAttachments.push_back(colourTarget);
+		debugPass->m_onRun.AddCallback([this, colourTarget](RenderPassContext& ctx) {
+			auto outTarget = ctx.GetResolvedTarget(colourTarget);
+			auto outSize = ctx.m_targets->GetTargetSize(outTarget->m_info);
+			m_tiledLightsCompute->ShowTilesDebug(*ctx.m_device, ctx.m_graphicsCmds, *outTarget, outSize, m_lightTileDebugMetadataAddress);
+		});
+		return debugPass;
+	}
+
 	// This describes the entire renderer as a series of passes that run in series
 	bool FrameScheduler::BuildRenderGraph()
 	{
@@ -290,6 +302,10 @@ namespace R3
 		graph.m_allPasses.push_back(MakeLightTilingPass());											// light tile determination
 		graph.m_allPasses.push_back(MakeDeferredLightingPass(mainDepth, gBufferPosition, gBufferNormal, gBufferAlbedo, mainColour));	// deferred lighting
 		graph.m_allPasses.push_back(MakeForwardPass(mainColour, mainDepth));	// forward render to main colour
+		if (m_useTiledLighting && m_showLightTilesDebug)
+		{
+			graph.m_allPasses.push_back(MakeLightTileDebugPass(mainColour));
+		}
 		graph.m_allPasses.push_back(MakeTonemapToLDRPass(mainColour, mainColourLDR));	// HDR -> LDR
 		if (m_colourTargetDebuggerEnabled && m_colourDebugTargetName.length() > 0)
 		{
