@@ -3,10 +3,7 @@
 
 #include "lights.h"
 #include "pbr.h"
-
-#ifdef USE_TILED_LIGHTS
-	#include "tiled_lighting.h"
-#endif
+#include "tiled_lighting.h"
 
 layout (local_size_x = 16, local_size_y = 16) in;
 
@@ -20,9 +17,7 @@ layout(push_constant) uniform constants
 {
 	vec4 m_cameraWorldSpacePos;
 	LightsBuffer m_allLights;
-#ifdef USE_TILED_LIGHTS
-	LightTileMetadataBuffer m_lightTileMetadata;
-#endif
+	LightTileMetadataBuffer m_lightTileMetadata;	// only used with USE_TILED_LIGHTS
 } PushConstants;
 
 // Copy all pointlights to shared memory for this work group
@@ -36,7 +31,7 @@ void main()
 	ivec2 size = imageSize(hdrOutput);
 	float depthValue = texelFetch(inDepthBuffer, texelCoord, 0).r;
 	
-	// Copy lights list to shared memory, 4 lights per thread
+	// Copy lights list to shared memory from tile, 4 lights per thread
 #ifdef USE_TILED_LIGHTS
 	LightTileMetadata tileMetadata = PushConstants.m_lightTileMetadata.data[0];
 	uint tileIndex = GetLightTileIndex(uvec2(gl_GlobalInvocationID.xy), tileMetadata.m_tileCount);

@@ -38,12 +38,9 @@ namespace R3
 		// Can't use depth buffer as storage image, sample it as a texture instead
 		VkSampler m_depthSampler = VK_NULL_HANDLE;
 
-		// pipeline for the technique using all lights in one big buffer
-		VkPipelineLayout m_pipelineLayoutAllLights = VK_NULL_HANDLE;
+		// pipelines + layouts
+		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_pipelineAllLights = VK_NULL_HANDLE;
-
-		// pipeline for the tiled lighting technique
-		VkPipelineLayout m_pipelineLayoutTiled = VK_NULL_HANDLE;
 		VkPipeline m_pipelineTiled = VK_NULL_HANDLE;
 	};
 }
