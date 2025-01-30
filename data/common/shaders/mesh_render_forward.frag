@@ -49,9 +49,24 @@ void main() {
 	vec3 directLight = PBRDirectLighting(mat, viewDir, -sunDirectionBrightness.xyz, normal, sunRadiance, 1.0);
 	
 	// Apply point lights (direct)
+#ifdef USE_TILED_LIGHTS
+	LightTileMetadata tileMetadata = PushConstants.m_lightTileMetadata.data[0];
+	vec2 thisFragment = gl_FragCoord.xy;	// always returns pixel center (i.e. offset by 0.5)
+	uint tileIndex = GetLightTileIndex(uvec2(floor(thisFragment)), tileMetadata.m_tileCount);
+	LightTile thisLightTile = tileMetadata.m_lightTiles.data[tileIndex];
+	
+	// tile light count also takes into account global light count (since the light tile data will not be valid when there are 0 lights!)
+	uint pointLightCount = min(lightsData.m_pointlightCount, thisLightTile.m_lightIndexCount);	
+	uint firstLightOffset = thisLightTile.m_firstLightIndex;
+	uint lastLightOffset = firstLightOffset + pointLightCount;
+	for(uint l=firstLightOffset;l<lastLightOffset;++l)
+	{
+		uint p = tileMetadata.m_lightIndices.data[l];
+#else
 	uint pointLightCount = lightsData.m_pointlightCount;
 	for(uint p=0;p<pointLightCount;++p)
 	{
+#endif
 		Pointlight pl = lightsData.m_allPointlights.data[p];
 		vec3 lightRadiance = pl.m_colourBrightness.xyz * pl.m_colourBrightness.w;
 		float attenuation = GetPointlightAttenuation(pl, inWorldSpacePos);

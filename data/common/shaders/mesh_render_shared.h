@@ -2,6 +2,7 @@
 
 #include "mesh_data.h"
 #include "lights.h"
+#include "tiled_lighting.h"
 
 struct GlobalConstants { 
 	mat4 m_projViewTransform;
@@ -24,4 +25,5 @@ layout(push_constant) uniform constants
 {
 	GlobalConstantsBuffer m_globals;
 	InstancesBuffer m_instances;
+	LightTileMetadataBuffer m_lightTileMetadata;	// only used with USE_TILED_LIGHTS in forward pass
 } PushConstants;

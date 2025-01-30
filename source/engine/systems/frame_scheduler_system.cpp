@@ -93,11 +93,13 @@ namespace R3
 				{
 					VkDeviceAddress gpuData = m_tiledLightsCompute->BuildTilesListCompute(*ctx.m_device, ctx.m_graphicsCmds, screenSize, mainCamera);
 					m_deferredLightingCompute->SetTiledLightinMetadataAddress(gpuData);
+					GetSystem<MeshRenderer>()->SetTiledLightinMetadataAddress(gpuData);
 				}
 			}
 			else
 			{
 				m_deferredLightingCompute->SetTiledLightinMetadataAddress(0);
+				GetSystem<MeshRenderer>()->SetTiledLightinMetadataAddress(0);
 			}
 		});
 		return lightTilingPass;
@@ -175,9 +177,9 @@ namespace R3
 			R3_PROF_GPU_EVENT("Forward Pass Begin");
 			GetSystem<ImmediateRenderSystem>()->PrepareForRendering(ctx);
 		});
-		forwardPass->m_onDraw.AddCallback([](RenderPassContext& ctx) {
+		forwardPass->m_onDraw.AddCallback([this](RenderPassContext& ctx) {
 			R3_PROF_GPU_EVENT("Forward Pass");
-			GetSystem<MeshRenderer>()->OnForwardPassDraw(ctx);
+			GetSystem<MeshRenderer>()->OnForwardPassDraw(ctx, m_useTiledLighting);
 			GetSystem<ImmediateRenderSystem>()->OnForwardPassDraw(ctx);
 		});
 		forwardPass->m_onEnd.AddCallback([](RenderPassContext& ctx) {

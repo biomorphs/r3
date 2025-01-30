@@ -23,20 +23,6 @@
 #include "core/log.h"
 #include <imgui.h>
 
-// What should trigger automatic static scene rebuilds?
-//  Modification of static mesh component via inspector hook - done
-//  Static mesh material modifications - done
-//	Model data loading - done 
-//  Setting active world - done
-//	Editor changes
-//		Transform modifications - done
-//		Delete component - done
-//		Add entity from mesh - done
-//		Clone entities - done
-//		Delete entities - done
-//		Import scene - done
-//		Entity parent modifications  - done
-
 namespace R3
 {
 	// stored in a buffer
@@ -53,6 +39,7 @@ namespace R3
 	{
 		VkDeviceAddress m_globalsBufferAddress;
 		VkDeviceAddress m_instanceDataBufferAddress;
+		VkDeviceAddress m_lightTileMetadataAddress;		// only used in tiled lighting forward pass
 	};
 
 	MeshRenderer::MeshRenderer()
@@ -107,6 +94,7 @@ namespace R3
 		m_dynamicMeshInstances.Destroy(d);
 		m_meshRenderBufferPool = nullptr;
 		vkDestroyPipeline(d.GetVkDevice(), m_forwardPipeline, nullptr);
+		vkDestroyPipeline(d.GetVkDevice(), m_forwardTiledPipeline, nullptr);
 		vkDestroyPipeline(d.GetVkDevice(), m_gBufferPipeline, nullptr);
 		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayout, nullptr);
 		if (m_drawIndirectHostVisible.m_allocation)
@@ -250,14 +238,17 @@ namespace R3
 		std::string basePath = "shaders_spirv\\common\\";	// Load the shaders
 		auto vertexShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), basePath + "mesh_render.vert.spv");
 		auto fragShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), basePath + "mesh_render_forward.frag.spv");
-		if (vertexShader == VK_NULL_HANDLE || fragShader == VK_NULL_HANDLE)
+		auto fragShaderTiled = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), basePath + "mesh_render_forward_tiled.frag.spv");
+		if (vertexShader == VK_NULL_HANDLE || fragShader == VK_NULL_HANDLE || fragShaderTiled == VK_NULL_HANDLE)
 		{
 			LogError("Failed to create shader modules");
 			return false;
 		}
 		PipelineBuilder pb;	// Make the pipeline
-		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_VERTEX_BIT, vertexShader));
-		pb.m_shaderStages.push_back(VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_FRAGMENT_BIT, fragShader));
+		pb.m_shaderStages = {
+			VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_VERTEX_BIT, vertexShader),
+			VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_FRAGMENT_BIT, fragShader)
+		};
 		std::vector<VkDynamicState> dynamicStates = {
 			VK_DYNAMIC_STATE_VIEWPORT,
 			VK_DYNAMIC_STATE_SCISSOR
@@ -286,8 +277,21 @@ namespace R3
 			LogError("Failed to create pipeline!");
 			return false;
 		}
+
+		pb.m_shaderStages = {
+			VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_VERTEX_BIT, vertexShader),
+			VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_FRAGMENT_BIT, fragShaderTiled)
+		};
+		m_forwardTiledPipeline = pb.Build(d.GetVkDevice(), m_pipelineLayout, 1, &mainColourFormat, mainDepthFormat);
+		if (m_forwardTiledPipeline == VK_NULL_HANDLE)
+		{
+			LogError("Failed to create pipeline!");
+			return false;
+		}
+
 		vkDestroyShaderModule(d.GetVkDevice(), vertexShader, nullptr);
 		vkDestroyShaderModule(d.GetVkDevice(), fragShader, nullptr);
+		vkDestroyShaderModule(d.GetVkDevice(), fragShaderTiled, nullptr);
 		return true;
 	}
 
@@ -438,10 +442,12 @@ namespace R3
 		vkCmdBindIndexBuffer(ctx.m_graphicsCmds, GetSystem<StaticMeshSystem>()->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 		VkDescriptorSet allTextures = textures->GetAllTexturesSet();
 		vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, nullptr);
+
 		PushConstants pc;
 		pc.m_globalsBufferAddress = m_globalConstantsBuffer.GetDataDeviceAddress() + (m_thisFrameBuffer * sizeof(GlobalConstants));
-
 		pc.m_instanceDataBufferAddress = m_staticMeshInstances.GetBufferDeviceAddress();
+		pc.m_lightTileMetadataAddress = 0;
+
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_staticOpaques.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_staticOpaques.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 
@@ -452,11 +458,11 @@ namespace R3
 		m_frameStats.m_writeGBufferCmdsEndTime = time->GetElapsedTimeReal();
 	}
 
-	void MeshRenderer::OnForwardPassDraw(class RenderPassContext& ctx)
+	void MeshRenderer::OnForwardPassDraw(class RenderPassContext& ctx, bool useTiledLighting)
 	{
 		R3_PROF_EVENT();
 
-		if (m_forwardPipeline == VK_NULL_HANDLE)
+		if (m_forwardPipeline == VK_NULL_HANDLE || m_forwardTiledPipeline == VK_NULL_HANDLE)
 		{
 			auto mainColourTarget = ctx.GetResolvedTarget("MainColour");
 			auto mainDepthTarget = ctx.GetResolvedTarget("MainDepth");
@@ -485,16 +491,25 @@ namespace R3
 		VkRect2D scissor = { 0 };
 		scissor.offset = { 0, 0 };
 		scissor.extent = { (uint32_t)viewport.width, (uint32_t)viewport.height };	// draw the full image
-		vkCmdBindPipeline(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_forwardPipeline);
+		if (useTiledLighting && m_lightTileMetadata != 0)
+		{
+			vkCmdBindPipeline(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_forwardTiledPipeline);
+		}
+		else
+		{
+			vkCmdBindPipeline(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_forwardPipeline);
+		}
 		vkCmdSetViewport(ctx.m_graphicsCmds, 0, 1, &viewport);
 		vkCmdSetScissor(ctx.m_graphicsCmds, 0, 1, &scissor);
 		vkCmdBindIndexBuffer(ctx.m_graphicsCmds, GetSystem<StaticMeshSystem>()->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 		VkDescriptorSet allTextures = textures->GetAllTexturesSet();
 		vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, nullptr);
+
 		PushConstants pc;
 		pc.m_globalsBufferAddress = m_globalConstantsBuffer.GetDataDeviceAddress() + (m_thisFrameBuffer * sizeof(GlobalConstants));
-
 		pc.m_instanceDataBufferAddress = m_staticMeshInstances.GetBufferDeviceAddress();
+		pc.m_lightTileMetadataAddress = useTiledLighting ? m_lightTileMetadata : 0;
+
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_staticTransparents.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_staticTransparents.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 		

@@ -1,4 +1,4 @@
-// Size of light tiles built on gpu
+// Size of light tiles in pixels
 #define COMPUTE_LIGHT_TILE_SIZE 16
 
 // light indices stored in one giant buffer of uints
@@ -7,7 +7,8 @@ layout(buffer_reference, std430) readonly buffer LightTileIndexBuffer {
 	uint data[];
 };
 
-struct LightTile				// one per tile
+// one per tile
+struct LightTile				
 {
 	uint m_firstLightIndex;		// offset into LightTileIndexBuffer
 	uint m_lightIndexCount;		// num indices (i.e. num lights)
@@ -18,12 +19,14 @@ layout(buffer_reference, std430) readonly buffer LightTileBuffer {
 	LightTile data[];
 };
 
+// used in tile building
 struct LightTileFrustum
 {
 	vec4 m_planes[4];			// world-space frustum planes
 };
 
-struct LightTileMetadata		// describes all light tile data
+// describes all light tile data
+struct LightTileMetadata		
 {
 	LightTileBuffer m_lightTiles;	// a buffer of m_tileCount[0] * m_tileCount[1] instances of LightTile
 	LightTileIndexBuffer m_lightIndices;

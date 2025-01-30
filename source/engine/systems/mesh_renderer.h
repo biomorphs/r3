@@ -47,9 +47,10 @@ namespace R3
 		void SetStaticsDirty();										// calling this will trigger a full rebuild of all static instances for 1 frame
 		void PrepareForRendering(class RenderPassContext& ctx);		// call from frame graph before CullInstancesOnGpu or drawing anything
 		void CullInstancesOnGpu(class RenderPassContext& ctx);		// call this after PrepareForRendering
-		void OnForwardPassDraw(class RenderPassContext& ctx);		// call after CullInstancesOnGpu
+		void OnForwardPassDraw(class RenderPassContext& ctx, bool useTiledLighting);	// call after CullInstancesOnGpu
 		void OnGBufferPassDraw(class RenderPassContext& ctx);		// ^^
 		void OnDrawEnd(class RenderPassContext& ctx);				// call once all drawing is complete
+		void SetTiledLightinMetadataAddress(VkDeviceAddress addr) { m_lightTileMetadata = addr; }
 	private:
 		struct GlobalConstants;
 		Frustum GetMainCameraFrustum();
@@ -94,6 +95,9 @@ namespace R3
 		std::atomic<bool> m_staticSceneRebuildRequested = false;		// trigger a scene rebuild. kept separate from m_rebuildingStaticScene so it can be called from anywhere
 		bool m_rebuildingStaticScene = false;							// a scene rebuild is in progress this frame
 
+		// light tile metadata for the next draw, used in forward render only
+		VkDeviceAddress m_lightTileMetadata = 0;
+
 		std::unique_ptr<MeshInstanceCullingCompute> m_computeCulling;
 
 		std::unique_ptr<BufferPool> m_meshRenderBufferPool;				// pool used to allocate all buffers
@@ -122,6 +126,7 @@ namespace R3
 		
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_forwardPipeline = VK_NULL_HANDLE;
+		VkPipeline m_forwardTiledPipeline = VK_NULL_HANDLE;
 		VkPipeline m_gBufferPipeline = VK_NULL_HANDLE;
 	};
 }
