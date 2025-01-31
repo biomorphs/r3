@@ -150,18 +150,7 @@ namespace R3
 		vkCmdDispatch(cmds, (uint32_t)glm::ceil(instanceBucket.m_partInstances.size() / 64.0f), 1, 1);
 
 		// we need a barrier here on the draw indirect buffer
-		VkMemoryBarrier writeBarrier = { 0 };	// maybe a buffer barrier instead?
-		writeBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-		writeBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;	// between shader writes 
-		writeBarrier.dstAccessMask = VK_ACCESS_INDIRECT_COMMAND_READ_BIT;	// and indirect command reads
-		vkCmdPipelineBarrier(cmds,
-			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,		// src stage = compute
-			VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT,		// dst stage = draw indirect
-			0,											// dependency flags
-			1,
-			&writeBarrier,
-			0, nullptr, 0, nullptr
-		);
+		VulkanHelpers::DoMemoryBarrier(cmds, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT, VK_ACCESS_INDIRECT_COMMAND_READ_BIT);
 
 		m_currentCullingTaskOffset++;
 	}

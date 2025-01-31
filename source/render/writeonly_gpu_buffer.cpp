@@ -201,19 +201,8 @@ namespace R3
 				vkCmdCopyBuffer(cmds, m_stagingBuffer.m_buffer.m_buffer, m_pooledBuffer.m_buffer.m_buffer, static_cast<uint32_t>(copyRegions.size()), copyRegions.data());
 			}
 
-			// use a memory barrier to ensure the transfer finishes before any vertex reads
-			VkMemoryBarrier writeBarrier = { 0 };
-			writeBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-			writeBarrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
-			writeBarrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-			vkCmdPipelineBarrier(cmds,
-				VK_PIPELINE_STAGE_TRANSFER_BIT,		// src stage = transfer
-				barrierDst,							// dst stage = vertex shader input by default
-				0,									// dependency flags
-				1,
-				&writeBarrier,
-				0, nullptr, 0, nullptr
-			);
+			// use a memory barrier to ensure the transfer finishes before any reads
+			VulkanHelpers::DoMemoryBarrier(cmds, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_MEMORY_WRITE_BIT, barrierDst, VK_ACCESS_MEMORY_READ_BIT);
 
 			if (!AcquireNewStagingBuffer(d))
 			{

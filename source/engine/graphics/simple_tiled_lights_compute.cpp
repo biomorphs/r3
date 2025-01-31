@@ -189,18 +189,7 @@ namespace R3
 			vkCmdDispatch(cmds, (uint32_t)glm::ceil(c_tilesX / 16.0f), (uint32_t)glm::ceil(c_tilesY / 16.0f), 1);	// one invocation per tile
 
 			// memory barrier between compute stages
-			VkMemoryBarrier writeBarrier = { 0 };
-			writeBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-			writeBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-			writeBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-			vkCmdPipelineBarrier(cmds,
-				VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,		// src stage
-				VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,		// dst stage
-				0,
-				1,
-				&writeBarrier,
-				0, nullptr, 0, nullptr
-			);
+			VulkanHelpers::DoMemoryBarrier(cmds, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT);
 		}
 
 		address = frustumBuffer->m_deviceAddress;
@@ -232,18 +221,7 @@ namespace R3
 		vkCmdDispatch(cmds, c_tilesX, c_tilesY, 1);
 
 		// memory barrier between compute stages
-		VkMemoryBarrier writeBarrier = { 0 };
-		writeBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-		writeBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-		writeBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		vkCmdPipelineBarrier(cmds,
-			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,		// src stage
-			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,		// dst stage
-			0,
-			1,
-			&writeBarrier,
-			0, nullptr, 0, nullptr
-		);
+		VulkanHelpers::DoMemoryBarrier(cmds, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT);
 	}
 
 	// tile list building runs in 2 compute passes
