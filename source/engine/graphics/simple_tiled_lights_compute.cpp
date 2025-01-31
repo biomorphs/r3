@@ -41,7 +41,9 @@ namespace R3
 		vkDestroyPipeline(d.GetVkDevice(), m_pipelineTileData, nullptr);
 		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayoutDebug, nullptr);
 		vkDestroyPipeline(d.GetVkDevice(), m_pipelineDebug, nullptr);
-		vkDestroyDescriptorSetLayout(d.GetVkDevice(), m_descriptorLayout, nullptr);
+		vkDestroyDescriptorSetLayout(d.GetVkDevice(), m_debugDescriptorLayout, nullptr);
+		vkDestroyDescriptorSetLayout(d.GetVkDevice(), m_frustumDescriptorLayout, nullptr);
+		vkDestroySampler(d.GetVkDevice(), m_depthSampler, nullptr);
 		m_descriptorAllocator = {};
 		m_lightTileBufferPool = {};
 	}
@@ -50,9 +52,62 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 
-		if (m_lightTileBufferPool == nullptr)
+		m_lightTileBufferPool = std::make_unique<BufferPool>("Light Tile Buffers");
+
+		m_descriptorAllocator = std::make_unique<DescriptorSetSimpleAllocator>();
+		std::vector<VkDescriptorPoolSize> poolSizes = {
+			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, c_maxSets },
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, c_maxSets }					// input + output images
+		};
+		if (!m_descriptorAllocator->Initialise(d, c_maxSets * 2, poolSizes))
 		{
-			m_lightTileBufferPool = std::make_unique<BufferPool>("Light Tile Buffers");
+			LogError("Failed to create descriptor allocator");
+			return false;
+		}
+		{
+			DescriptorLayoutBuilder layoutBuilder;
+			layoutBuilder.AddBinding(0, 1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);		// output image
+			m_debugDescriptorLayout = layoutBuilder.Create(d, false);				// dont need bindless here
+			if (m_debugDescriptorLayout == nullptr)
+			{
+				LogError("Failed to create descriptor set layout");
+				return false;
+			}
+			for (uint32_t i = 0; i < c_maxSets; ++i)
+			{
+				m_debugDescriptorSets[i] = m_descriptorAllocator->Allocate(d, m_debugDescriptorLayout);
+			}
+		}
+		{
+			DescriptorLayoutBuilder layoutBuilder;
+			layoutBuilder.AddBinding(0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);		// depth buffer
+			m_frustumDescriptorLayout = layoutBuilder.Create(d, false);				// dont need bindless here
+			if (m_frustumDescriptorLayout == nullptr)
+			{
+				LogError("Failed to create descriptor set layout");
+				return false;
+			}
+			for (uint32_t i = 0; i < c_maxSets; ++i)
+			{
+				m_frustumDescriptorSets[i] = m_descriptorAllocator->Allocate(d, m_frustumDescriptorLayout);
+			}
+		}
+		{
+			// create depth sampler
+			VkSamplerCreateInfo sampler = {};
+			sampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+			sampler.magFilter = VK_FILTER_NEAREST;
+			sampler.minFilter = VK_FILTER_NEAREST;
+			sampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+			sampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+			sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+			sampler.maxLod = VK_LOD_CLAMP_NONE;
+			sampler.minLod = 0;
+			if (!VulkanHelpers::CheckResult(vkCreateSampler(d.GetVkDevice(), &sampler, nullptr, &m_depthSampler)))
+			{
+				LogError("Failed to create sampler");
+				return false;
+			}
 		}
 		{
 			auto frustumComputeShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), "shaders_spirv/common/build_light_tile_frustums.comp.spv");
@@ -69,6 +124,8 @@ namespace R3
 			pipelineLayoutInfoFrustums.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 			pipelineLayoutInfoFrustums.pushConstantRangeCount = 1;
 			pipelineLayoutInfoFrustums.pPushConstantRanges = &constantRange;
+			pipelineLayoutInfoFrustums.setLayoutCount = 1;
+			pipelineLayoutInfoFrustums.pSetLayouts = &m_frustumDescriptorLayout;
 			if (!VulkanHelpers::CheckResult(vkCreatePipelineLayout(d.GetVkDevice(), &pipelineLayoutInfoFrustums, nullptr, &m_pipelineLayoutFrustumBuild)))
 			{
 				LogError("Failed to create pipeline layout");
@@ -101,29 +158,6 @@ namespace R3
 			vkDestroyShaderModule(d.GetVkDevice(), tileDataShader, nullptr);
 		}
 		{
-			m_descriptorAllocator = std::make_unique<DescriptorSetSimpleAllocator>();
-			std::vector<VkDescriptorPoolSize> poolSizes = {
-				{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, c_maxSets }					// input + output images
-			};
-			if (!m_descriptorAllocator->Initialise(d, c_maxSets, poolSizes))
-			{
-				LogError("Failed to create descriptor allocator");
-				return false;
-			}
-			DescriptorLayoutBuilder layoutBuilder;
-			layoutBuilder.AddBinding(0, 1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);		// output image
-			m_descriptorLayout = layoutBuilder.Create(d, false);					// dont need bindless here
-			if (m_descriptorLayout == nullptr)
-			{
-				LogError("Failed to create descriptor set layout");
-				return false;
-			}
-			// Create the sets but don't write them yet
-			for (uint32_t i = 0; i < c_maxSets; ++i)
-			{
-				m_descriptorSets[i] = m_descriptorAllocator->Allocate(d, m_descriptorLayout);
-			}
-
 			auto debugShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), "shaders_spirv/common/light_tile_debug_output.comp.spv");
 			if (debugShader == VK_NULL_HANDLE)
 			{
@@ -137,7 +171,7 @@ namespace R3
 			VkPipelineLayoutCreateInfo pipelineLayoutInfo = { 0 };
 			pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 			pipelineLayoutInfo.setLayoutCount = 1;
-			pipelineLayoutInfo.pSetLayouts= &m_descriptorLayout;
+			pipelineLayoutInfo.pSetLayouts= &m_debugDescriptorLayout;
 			pipelineLayoutInfo.pushConstantRangeCount = 1;
 			pipelineLayoutInfo.pPushConstantRanges = &constantRange;
 			if (!VulkanHelpers::CheckResult(vkCreatePipelineLayout(d.GetVkDevice(), &pipelineLayoutInfo, nullptr, &m_pipelineLayoutDebug)))
@@ -153,7 +187,7 @@ namespace R3
 		return true;
 	}
 
-	VkDeviceAddress TiledLightsCompute::BuildTileFrustumsCompute(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, const Camera& camera)
+	VkDeviceAddress TiledLightsCompute::BuildTileFrustumsCompute(Device& d, VkCommandBuffer cmds, RenderTarget& depthBuffer, glm::uvec2 screenDimensions, const Camera& camera)
 	{
 		R3_PROF_EVENT();
 		VkDeviceAddress address = 0;
@@ -176,6 +210,11 @@ namespace R3
 			const glm::mat4 projViewMat = camera.ProjectionMatrix() * camera.ViewMatrix();
 			const glm::mat4 inverseProjView = glm::inverse(projViewMat);
 
+			// Write a descriptor set each frame
+			DescriptorSetWriter writer(m_frustumDescriptorSets[m_currentSet]);
+			writer.WriteImage(0, 0, depthBuffer.m_view, m_depthSampler, depthBuffer.m_lastLayout);
+			writer.FlushWrites();
+
 			// build a frustum for each tile
 			BuildFrustumPushConstants pc;
 			pc.m_tileFrustumBuffer = frustumBuffer->m_deviceAddress;
@@ -186,7 +225,8 @@ namespace R3
 			pc.m_tileCount[1] = c_tilesY;
 			vkCmdBindPipeline(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelineFrustumBuild);
 			vkCmdPushConstants(cmds, m_pipelineLayoutFrustumBuild, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(pc), &pc);
-			vkCmdDispatch(cmds, (uint32_t)glm::ceil(c_tilesX / 16.0f), (uint32_t)glm::ceil(c_tilesY / 16.0f), 1);	// one invocation per tile
+			vkCmdBindDescriptorSets(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelineLayoutFrustumBuild, 0, 1, &m_frustumDescriptorSets[m_currentSet], 0, nullptr);
+			vkCmdDispatch(cmds, c_tilesX, c_tilesY, 1);	// one invocation per pixel
 
 			// memory barrier between compute stages
 			VulkanHelpers::DoMemoryBarrier(cmds, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT);
@@ -227,7 +267,7 @@ namespace R3
 	// tile list building runs in 2 compute passes
 	// the first pass builds a world-space frustum for each screen tile
 	// the 2nd pass tests each light against each frustum and appends indices to the light-list
-	VkDeviceAddress TiledLightsCompute::BuildTilesListCompute(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, const Camera& camera)
+	VkDeviceAddress TiledLightsCompute::BuildTilesListCompute(Device& d, VkCommandBuffer cmds, RenderTarget& depthBuffer, glm::uvec2 screenDimensions, const Camera& camera)
 	{
 		R3_PROF_EVENT();
 		if (!m_initialised)
@@ -242,7 +282,7 @@ namespace R3
 		const uint32_t c_tilesY = (uint32_t)glm::ceil(screenDimensions.y / (float)c_lightTileDimensions);
 
 		// first build frustum for each tile
-		VkDeviceAddress frustumBuffer = BuildTileFrustumsCompute(d, cmds, screenDimensions, camera);
+		VkDeviceAddress frustumBuffer = BuildTileFrustumsCompute(d, cmds, depthBuffer, screenDimensions, camera);
 		if (frustumBuffer == 0)
 		{
 			LogError("Failed to build tile frustums");
@@ -297,6 +337,11 @@ namespace R3
 		lightIndexBuffer.Destroy(d);
 		metadataBuffer.Destroy(d);
 
+		if (++m_currentSet >= c_maxSets)
+		{
+			m_currentSet = 0;
+		}
+
 		return metadataAddress;
 	}
 
@@ -311,7 +356,7 @@ namespace R3
 			}
 		}
 		// Write a descriptor set each frame
-		DescriptorSetWriter writer(m_descriptorSets[m_currentSet]);
+		DescriptorSetWriter writer(m_debugDescriptorSets[m_currentSet]);
 		writer.WriteStorageImage(0, outputTarget.m_view, outputTarget.m_lastLayout);
 		writer.FlushWrites();
 
@@ -319,13 +364,9 @@ namespace R3
 		pc.m_lightTileMetadata = lightTileMetadata;
 
 		vkCmdBindPipeline(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelineDebug);
-		vkCmdBindDescriptorSets(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelineLayoutDebug, 0, 1, &m_descriptorSets[m_currentSet], 0, nullptr);
+		vkCmdBindDescriptorSets(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelineLayoutDebug, 0, 1, &m_debugDescriptorSets[m_currentSet], 0, nullptr);
 		vkCmdPushConstants(cmds, m_pipelineLayoutDebug, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(pc), &pc);
 		vkCmdDispatch(cmds, (uint32_t)glm::ceil(outputDimensions.x / 16.0f), (uint32_t)glm::ceil(outputDimensions.y / 16.0f), 1);
-		if (++m_currentSet >= c_maxSets)
-		{
-			m_currentSet = 0;
-		}
 	}
 
 	VkDeviceAddress TiledLightsCompute::CopyCpuDataToGpu(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, const std::vector<LightTile>& tiles, const std::vector<uint32_t>& indices)

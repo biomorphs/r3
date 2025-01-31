@@ -10,6 +10,8 @@ layout(buffer_reference, std430) writeonly buffer LightTileFrustumBuffer {
 
 layout (local_size_x = 16, local_size_y = 16) in;
 
+layout (set = 0, binding = 0) uniform sampler2D inDepthBuffer;
+
 layout(push_constant) uniform constants
 {
 	mat4 m_inverseProjViewMatrix;
@@ -36,19 +38,41 @@ vec4 PointsToPlane(vec3 p0, vec3 p1, vec3 p2)
 	return plane;
 }
 
+// Keep track of the max depth value for this tile
+shared uint sharedMaxDepth;
+
 void main() 
 {
-	if(gl_GlobalInvocationID.x < PushConstants.m_tileCount[0] && gl_GlobalInvocationID.y < PushConstants.m_tileCount[1])
+	if(gl_LocalInvocationIndex == 0)
 	{
-		uint tileIndex = gl_GlobalInvocationID.x + (gl_GlobalInvocationID.y * PushConstants.m_tileCount[0]);
+		sharedMaxDepth = 0;
+	}
+	groupMemoryBarrier();
+	barrier();
+	
+	// now use each invocation to load the depth of a single pixel and track the min. value (to calculate far plane for this tile)
+	if(gl_GlobalInvocationID.x < PushConstants.m_screenDimensions.x && gl_GlobalInvocationID.y < PushConstants.m_screenDimensions.y)
+	{
+		float depthValue = texelFetch(inDepthBuffer, ivec2(gl_GlobalInvocationID.xy), 0).r;
+		atomicMax(sharedMaxDepth, floatBitsToUint(depthValue));
+	}
+	groupMemoryBarrier();
+	barrier();
+
+	// use a single invocation to build the tile frustum based on the tile position and min depth
+	if(gl_LocalInvocationIndex == 0)
+	{
+		uint tileIndex = gl_WorkGroupID.x + (gl_WorkGroupID.y * PushConstants.m_tileCount[0]);
+		
+		float maxDepth = uintBitsToFloat(sharedMaxDepth);	// use min depth for the tile to build the frustum planes
 		
 		// generate screen-space points on the far clip plane
 		vec3 farPoints[4] =
 		{
-			{ gl_GlobalInvocationID.x * COMPUTE_LIGHT_TILE_SIZE, gl_GlobalInvocationID.y * COMPUTE_LIGHT_TILE_SIZE, 1.0f },					// top left 
-			{ (gl_GlobalInvocationID.x + 1) * COMPUTE_LIGHT_TILE_SIZE, gl_GlobalInvocationID.y * COMPUTE_LIGHT_TILE_SIZE, 1.0f },			// top right
-			{ gl_GlobalInvocationID.x * COMPUTE_LIGHT_TILE_SIZE, (gl_GlobalInvocationID.y + 1) * COMPUTE_LIGHT_TILE_SIZE, 1.0f },			// botton left 
-			{ (gl_GlobalInvocationID.x + 1) * COMPUTE_LIGHT_TILE_SIZE, (gl_GlobalInvocationID.y + 1) * COMPUTE_LIGHT_TILE_SIZE, 1.0f }		// botton right
+			{ gl_WorkGroupID.x * COMPUTE_LIGHT_TILE_SIZE, gl_WorkGroupID.y * COMPUTE_LIGHT_TILE_SIZE, maxDepth },					// top left 
+			{ (gl_WorkGroupID.x + 1) * COMPUTE_LIGHT_TILE_SIZE, gl_WorkGroupID.y * COMPUTE_LIGHT_TILE_SIZE, maxDepth },			// top right
+			{ gl_WorkGroupID.x * COMPUTE_LIGHT_TILE_SIZE, (gl_WorkGroupID.y + 1) * COMPUTE_LIGHT_TILE_SIZE, maxDepth },			// botton left 
+			{ (gl_WorkGroupID.x + 1) * COMPUTE_LIGHT_TILE_SIZE, (gl_WorkGroupID.y + 1) * COMPUTE_LIGHT_TILE_SIZE, maxDepth }		// botton right
 		};
 		
 		// convert each point to world-space. I hope the compiler unrolls this!
@@ -64,5 +88,6 @@ void main()
 		PushConstants.m_tileFrustums.data[tileIndex].m_planes[1] = PointsToPlane(PushConstants.m_eyeWorldSpacePosition.xyz, farPoints[1], farPoints[3]);
 		PushConstants.m_tileFrustums.data[tileIndex].m_planes[2] = PointsToPlane(PushConstants.m_eyeWorldSpacePosition.xyz, farPoints[0], farPoints[1]);
 		PushConstants.m_tileFrustums.data[tileIndex].m_planes[3] = PointsToPlane(PushConstants.m_eyeWorldSpacePosition.xyz, farPoints[3], farPoints[2]);
+		PushConstants.m_tileFrustums.data[tileIndex].m_planes[4] = PointsToPlane(farPoints[0], farPoints[2], farPoints[1]);
 	}
 }

@@ -68,11 +68,12 @@ namespace R3
 		return preparePass;
 	}
 
-	std::unique_ptr<ComputeDrawPass> FrameScheduler::MakeLightTilingPass()
+	std::unique_ptr<ComputeDrawPass> FrameScheduler::MakeLightTilingPass(const RenderTargetInfo& mainDepth)
 	{
 		auto lightTilingPass = std::make_unique<ComputeDrawPass>();
 		lightTilingPass->m_name = "Light Tiling";
-		lightTilingPass->m_onRun.AddCallback([this](RenderPassContext& ctx) {
+		lightTilingPass->m_inputColourAttachments.push_back(mainDepth);
+		lightTilingPass->m_onRun.AddCallback([this, mainDepth](RenderPassContext& ctx) {
 			if (m_useTiledLighting)
 			{
 				auto screenSize = glm::uvec2(GetSystem<RenderSystem>()->GetWindowExtents());
@@ -87,7 +88,8 @@ namespace R3
 				}
 				else
 				{
-					gpuData = m_tiledLightsCompute->BuildTilesListCompute(*ctx.m_device, ctx.m_graphicsCmds, screenSize, mainCamera);
+					auto depthTarget = ctx.GetResolvedTarget(mainDepth);
+					gpuData = m_tiledLightsCompute->BuildTilesListCompute(*ctx.m_device, ctx.m_graphicsCmds, *depthTarget, screenSize, mainCamera);
 				}
 				m_deferredLightingCompute->SetTiledLightinMetadataAddress(gpuData);
 				GetSystem<MeshRenderer>()->SetTiledLightinMetadataAddress(gpuData);
@@ -299,7 +301,7 @@ namespace R3
 		graph.m_allPasses.push_back(MakeRenderPreparePass());
 		graph.m_allPasses.push_back(MakeCullingPass());
 		graph.m_allPasses.push_back(MakeGBufferPass(gBufferPosition, gBufferNormal, gBufferAlbedo, mainDepth));	// write gbuffer
-		graph.m_allPasses.push_back(MakeLightTilingPass());											// light tile determination
+		graph.m_allPasses.push_back(MakeLightTilingPass(mainDepth));											// light tile determination
 		graph.m_allPasses.push_back(MakeDeferredLightingPass(mainDepth, gBufferPosition, gBufferNormal, gBufferAlbedo, mainColour));	// deferred lighting
 		graph.m_allPasses.push_back(MakeForwardPass(mainColour, mainDepth));	// forward render to main colour
 		if (m_useTiledLighting && m_showLightTilesDebug)

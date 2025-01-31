@@ -42,7 +42,7 @@ namespace R3
 		VkDeviceAddress CopyCpuDataToGpu(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, const std::vector<LightTile>& tiles, const std::vector<uint32_t>& indices);
 
 		// Compute-based light tile builder
-		VkDeviceAddress BuildTilesListCompute(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, const Camera& camera);
+		VkDeviceAddress BuildTilesListCompute(Device& d, VkCommandBuffer cmds, RenderTarget& depthBuffer, glm::uvec2 screenDimensions, const Camera& camera);
 
 		// display the light tile debug info to a colour target via compute
 		void ShowTilesDebug(Device& d, VkCommandBuffer cmds, RenderTarget& outputTarget, glm::vec2 outputDimensions, VkDeviceAddress lightTileMetadata);
@@ -50,10 +50,10 @@ namespace R3
 	private:
 		struct LightTileFrustum
 		{
-			glm::vec4 m_planes[4];
+			glm::vec4 m_planes[5];		// top, bottom, left, right, far plane
 		};
 		// returns a buffer containing a LightTileFrustum per tile
-		VkDeviceAddress BuildTileFrustumsCompute(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, const Camera& camera);
+		VkDeviceAddress BuildTileFrustumsCompute(Device& d, VkCommandBuffer cmds, RenderTarget& depthBuffer, glm::uvec2 screenDimensions, const Camera& camera);
 
 		// fills in lightTileBuffer and lightIndexBuffer based on frustums in tileFrustums
 		void BuildTileDataCompute(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, VkDeviceAddress tileFrustums, VkDeviceAddress lightTileBuffer, VkDeviceAddress lightIndexBuffer);
@@ -62,6 +62,17 @@ namespace R3
 
 		bool m_initialised = false;
 		std::unique_ptr<BufferPool> m_lightTileBufferPool;	// tile buffers are allocated/released here
+
+		std::unique_ptr<DescriptorSetSimpleAllocator> m_descriptorAllocator;	
+		static const uint32_t c_maxSets = 3;		// per-frame descriptor sets for frustum build + debug pipelines
+		VkDescriptorSetLayout_T* m_debugDescriptorLayout = nullptr;
+		VkDescriptorSet_T* m_debugDescriptorSets[c_maxSets] = { nullptr };
+		VkDescriptorSetLayout_T* m_frustumDescriptorLayout = nullptr;
+		VkDescriptorSet_T* m_frustumDescriptorSets[c_maxSets] = { nullptr };
+		uint32_t m_currentSet = 0;
+
+		// Can't use depth buffer as storage image, sample it as a texture instead
+		VkSampler m_depthSampler = VK_NULL_HANDLE;
 
 		// pipeline for the frustum builder
 		VkPipelineLayout m_pipelineLayoutFrustumBuild = VK_NULL_HANDLE;
@@ -72,12 +83,6 @@ namespace R3
 		VkPipeline m_pipelineTileData = VK_NULL_HANDLE;
 
 		// data for tile debug display
-		std::unique_ptr<DescriptorSetSimpleAllocator> m_descriptorAllocator;	// per-frame descriptor sets + allocator
-		VkDescriptorSetLayout_T* m_descriptorLayout = nullptr;
-		static const uint32_t c_maxSets = 3;
-		VkDescriptorSet_T* m_descriptorSets[c_maxSets] = { nullptr };
-		uint32_t m_currentSet = 0;
-
 		VkPipelineLayout m_pipelineLayoutDebug = VK_NULL_HANDLE;
 		VkPipeline m_pipelineDebug = VK_NULL_HANDLE;
 	};

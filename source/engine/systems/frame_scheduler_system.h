@@ -28,7 +28,7 @@ namespace R3
 
 		std::unique_ptr<GenericPass> MakeRenderPreparePass();	// sets stuff up before other render passes
 		std::unique_ptr<ComputeDrawPass> MakeCullingPass();
-		std::unique_ptr<ComputeDrawPass> MakeLightTilingPass();
+		std::unique_ptr<ComputeDrawPass> MakeLightTilingPass(const RenderTargetInfo& mainDepth);
 		std::unique_ptr<DrawPass> MakeForwardPass(const RenderTargetInfo& mainColour, const RenderTargetInfo& mainDepth);
 		std::unique_ptr<DrawPass> MakeGBufferPass(const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainDepth);
 		std::unique_ptr<ComputeDrawPass> MakeDeferredLightingPass(const RenderTargetInfo& mainDepth, const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainColour);
@@ -48,6 +48,6 @@ namespace R3
 		bool m_useTiledLighting = true;
 		bool m_buildLightTilesOnCpu = false;
 		bool m_showLightTilesDebug = false;
-		uint64_t m_lightTileDebugMetadataAddress;	// keep track of the main colour buffer light tiles for debugging
+		uint64_t m_lightTileDebugMetadataAddress = 0;	// keep track of the main colour buffer light tiles for debugging
 	};
 }
