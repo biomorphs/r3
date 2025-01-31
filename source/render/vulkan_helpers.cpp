@@ -469,6 +469,22 @@ namespace R3
 			return barrier;
 		}
 
+		void DoMemoryBarrier(VkCommandBuffer cmds, VkPipelineStageFlags2 srcStage, VkAccessFlags2 srcAccess, VkPipelineStageFlags2 destStage, VkAccessFlags2 destAccess)
+		{
+			VkMemoryBarrier2 memoryBarrier = { 0 };
+			memoryBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2;
+			memoryBarrier.srcStageMask = srcStage;
+			memoryBarrier.srcAccessMask = srcAccess;
+			memoryBarrier.dstStageMask = destStage;
+			memoryBarrier.dstAccessMask = destAccess;
+			
+			VkDependencyInfo depencyInfo = { 0 };
+			depencyInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+			depencyInfo.memoryBarrierCount = 1;
+			depencyInfo.pMemoryBarriers = &memoryBarrier;
+			vkCmdPipelineBarrier2(cmds, &depencyInfo);
+		}
+
 		std::vector<const char*> GetSDLRequiredInstanceExtensions(SDL_Window* w)
 		{
 			R3_PROF_EVENT();
@@ -763,20 +779,11 @@ namespace R3
 			deviceCreate.ppEnabledExtensionNames = extensions.data();
 			deviceCreate.pEnabledFeatures = &requiredFeatures;
 
-			// Dynamic rendering is enabled via a feature flag
-			VkPhysicalDeviceDynamicRenderingFeatures pddr = { };
-			if (enablyDynamicRendering)
-			{
-				pddr.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
-				pddr.dynamicRendering = true;
-				deviceCreate.pNext = &pddr;
-			}
-
 			// Enable buffer addresses
 			VkPhysicalDeviceBufferDeviceAddressFeatures bAddr = { };
 			bAddr.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
 			bAddr.bufferDeviceAddress = true;
-			pddr.pNext = &bAddr;
+			deviceCreate.pNext = &bAddr;
 
 			// Force-enable bindless indexing features  (and any other indexing features supported)
 			VkPhysicalDeviceDescriptorIndexingFeatures indexingFeatures = {};
@@ -792,6 +799,13 @@ namespace R3
 			storage16bit.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES;
 			storage16bit.storageBuffer16BitAccess = true;	// allow 16 bit ints in storage buffers
 			indexingFeatures.pNext = &storage16bit;
+
+			// Vulkan 1.3 features
+			VkPhysicalDeviceVulkan13Features vulkan13 = {};
+			vulkan13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
+			vulkan13.synchronization2 = true;
+			vulkan13.dynamicRendering = true;
+			storage16bit.pNext = &vulkan13;
 
 			VkDevice newDevice = nullptr;
 			VkResult r = vkCreateDevice(pdd.m_device, &deviceCreate, nullptr, &newDevice);

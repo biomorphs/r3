@@ -32,7 +32,8 @@ namespace R3
 		VkImage m_image = VK_NULL_HANDLE;
 		VmaAllocation m_allocation = nullptr;	// if set, the cache owns this target
 		VkImageView m_view = VK_NULL_HANDLE;
-		VkAccessFlagBits m_lastAccessMode = VK_ACCESS_NONE;
+		VkAccessFlags2 m_lastAccessMode = VK_ACCESS_2_NONE;
+		VkPipelineStageFlags2 m_lastStageFlags = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
 		VkImageLayout m_lastLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	};
 

@@ -87,6 +87,7 @@ namespace R3
 		// Synchronisation helpers
 		VkImageMemoryBarrier MakeImageBarrier(VkImage image, VkImageAspectFlags aspectFlags, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageLayout oldLayout, VkImageLayout newLayout);
 		VkImageMemoryBarrier MakeImageBarrier(VkImage image, uint32_t miplevels, VkImageAspectFlags aspectFlags, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageLayout oldLayout, VkImageLayout newLayout);
+		void DoMemoryBarrier(VkCommandBuffer cmds, VkPipelineStageFlags2 srcStage, VkAccessFlags2 srcAccess, VkPipelineStageFlags2 destStage, VkAccessFlags2 destAccess);
 
 		// Initialisation helpers
 		struct CreateVkInstanceParams {

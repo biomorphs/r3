@@ -3,19 +3,39 @@
 #include "timestamp_queries_handler.h"
 #include "core/profiler.h"
 #include "core/log.h"
+#include <vulkan/vk_enum_string_helper.h>
 
 namespace R3
 {
 	
 
-	std::optional<VkImageMemoryBarrier> DoTransition(RenderTarget* resource, VkAccessFlagBits access, VkImageLayout layout)
+	std::optional<VkImageMemoryBarrier2> DoTransition(RenderTarget* resource, VkPipelineStageFlags2 stageFlags, VkAccessFlags2 access, VkImageLayout layout)
 	{
-		if (resource->m_lastAccessMode != access || resource->m_lastLayout != layout)
+		if (resource->m_lastAccessMode != access || resource->m_lastLayout != layout || resource->m_lastStageFlags != stageFlags)
 		{
-			auto barrier = VulkanHelpers::MakeImageBarrier(resource->m_image, resource->m_info.m_aspectFlags,
-				resource->m_lastAccessMode, access, resource->m_lastLayout, layout);
+			VkImageMemoryBarrier2 barrier = { 0 };
+			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+			barrier.srcStageMask = resource->m_lastStageFlags;
+			barrier.srcAccessMask = resource->m_lastAccessMode;
+			barrier.dstStageMask = stageFlags;
+			barrier.dstAccessMask = access;
+			barrier.oldLayout = resource->m_lastLayout;
+			barrier.newLayout = layout;
+			barrier.image = resource->m_image;
+			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+			VkImageSubresourceRange range = { 0 };
+			range.aspectMask = resource->m_info.m_aspectFlags;
+			range.layerCount = 1;
+			range.baseArrayLayer = 0;
+			range.levelCount = 1;
+			range.baseMipLevel = 0;
+			barrier.subresourceRange = range;
+
 			resource->m_lastAccessMode = access;
 			resource->m_lastLayout = layout;
+			resource->m_lastStageFlags = stageFlags;
 			return barrier;
 		}
 		return {};
@@ -24,15 +44,14 @@ namespace R3
 	void ComputeDrawPass::ResolveTargets(RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
-		std::vector<VkImageMemoryBarrier> barriers;
-
+		std::vector<VkImageMemoryBarrier2> barriers;
 		for (const auto& it : m_inputColourAttachments)
 		{
 			if (auto inputTarget = ctx.m_targets->GetTarget(it))
 			{
 				ctx.m_resolvedTargets.push_back(inputTarget);
 				// input targets must use GENERAL image layout to allow direct read
-				auto barrier = DoTransition(inputTarget, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_GENERAL);
+				auto barrier = DoTransition(inputTarget, VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_READ_BIT, VK_IMAGE_LAYOUT_GENERAL);
 				if (barrier)
 				{
 					barriers.push_back(*barrier);
@@ -45,7 +64,7 @@ namespace R3
 			{
 				ctx.m_resolvedTargets.push_back(outputTarget);
 				// output targets must use GENERAL image layout to allow direct write
-				auto barrier = DoTransition(outputTarget, VK_ACCESS_SHADER_WRITE_BIT, VK_IMAGE_LAYOUT_GENERAL);
+				auto barrier = DoTransition(outputTarget, VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_WRITE_BIT, VK_IMAGE_LAYOUT_GENERAL);
 				if (barrier)
 				{
 					barriers.push_back(*barrier);
@@ -55,10 +74,11 @@ namespace R3
 		
 		if (barriers.size() > 0)
 		{
-			auto srcStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;	// barrier must happen between output to attachment + before compute
-			auto dstStages = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-			vkCmdPipelineBarrier(ctx.m_graphicsCmds, ctx.m_previousStageFlags, dstStages, 0, 0, nullptr, 0, nullptr, (uint32_t)barriers.size(), barriers.data());
-			ctx.m_previousStageFlags = dstStages;
+			VkDependencyInfo depencyInfo = { 0 };
+			depencyInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+			depencyInfo.imageMemoryBarrierCount = (uint32_t)barriers.size();
+			depencyInfo.pImageMemoryBarriers = barriers.data();
+			vkCmdPipelineBarrier2(ctx.m_graphicsCmds, &depencyInfo);
 		}
 	}
 
@@ -75,14 +95,14 @@ namespace R3
 	void DrawPass::ResolveTargets(RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
-		std::vector<VkImageMemoryBarrier> barriers;	// collect the targets needed + any barriers that need to happen
+		std::vector<VkImageMemoryBarrier2> barriers;	// collect the targets needed + any barriers that need to happen
 		for (const auto& it : m_colourAttachments)
 		{
 			auto target = ctx.m_targets->GetTarget(it.m_info);
 			if (target)
 			{
 				ctx.m_resolvedTargets.push_back(target);
-				auto barrier = DoTransition(target, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+				auto barrier = DoTransition(target, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 				if (barrier)
 				{
 					barriers.push_back(*barrier);
@@ -95,7 +115,7 @@ namespace R3
 			if (target)
 			{
 				ctx.m_resolvedTargets.push_back(target);
-				auto barrier = DoTransition(target, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
+				auto barrier = DoTransition(target, VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
 				if (barrier)
 				{
 					barriers.push_back(*barrier);
@@ -104,9 +124,11 @@ namespace R3
 		}
 		if (barriers.size() > 0)
 		{
-			auto dstStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-			vkCmdPipelineBarrier(ctx.m_graphicsCmds, ctx.m_previousStageFlags, dstStages, 0, 0, nullptr, 0, nullptr, (uint32_t)barriers.size(), barriers.data());
-			ctx.m_previousStageFlags = dstStages;
+			VkDependencyInfo depencyInfo = { 0 };
+			depencyInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+			depencyInfo.imageMemoryBarrierCount = (uint32_t)barriers.size();
+			depencyInfo.pImageMemoryBarriers = barriers.data();
+			vkCmdPipelineBarrier2(ctx.m_graphicsCmds, &depencyInfo);
 		}
 	}
 
@@ -186,17 +208,17 @@ namespace R3
 	void TransferPass::ResolveTargets(RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
-		std::vector<VkImageMemoryBarrier> inBarriers, outBarriers;	// collect the targets needed + any barriers that need to happen
+		std::vector<VkImageMemoryBarrier2> barriers;	// collect the targets needed + any barriers that need to happen
 		for (const auto& it : m_inputs)
 		{
 			auto target = ctx.m_targets->GetTarget(it);
 			if (target)
 			{
 				ctx.m_resolvedTargets.push_back(target);
-				auto barrier = DoTransition(target, VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+				auto barrier = DoTransition(target, VK_PIPELINE_STAGE_2_TRANSFER_BIT, VK_ACCESS_2_TRANSFER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 				if (barrier)
 				{
-					inBarriers.push_back(*barrier);
+					barriers.push_back(*barrier);
 				}
 			}
 		}
@@ -206,23 +228,20 @@ namespace R3
 			if (target)
 			{
 				ctx.m_resolvedTargets.push_back(target);
-				auto barrier = DoTransition(target, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+				auto barrier = DoTransition(target, VK_PIPELINE_STAGE_2_TRANSFER_BIT, VK_ACCESS_2_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 				if (barrier)
 				{
-					outBarriers.push_back(*barrier);
+					barriers.push_back(*barrier);
 				}
 			}
 		}
-		if (inBarriers.size() > 0)	// transition inputs before transfers
+		if (barriers.size() > 0)
 		{
-			auto dstStages = VK_PIPELINE_STAGE_TRANSFER_BIT;
-			vkCmdPipelineBarrier(ctx.m_graphicsCmds, ctx.m_previousStageFlags, dstStages, 0, 0, nullptr, 0, nullptr, (uint32_t)inBarriers.size(), inBarriers.data());
-		}
-		if (outBarriers.size() > 0)	// transition outputs before transfer
-		{
-			auto dstStages = VK_PIPELINE_STAGE_TRANSFER_BIT;
-			vkCmdPipelineBarrier(ctx.m_graphicsCmds, ctx.m_previousStageFlags, dstStages, 0, 0, nullptr, 0, nullptr, (uint32_t)outBarriers.size(), outBarriers.data());
-			ctx.m_previousStageFlags = dstStages;
+			VkDependencyInfo depencyInfo = { 0 };
+			depencyInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+			depencyInfo.imageMemoryBarrierCount = (uint32_t)barriers.size();
+			depencyInfo.pImageMemoryBarriers = barriers.data();
+			vkCmdPipelineBarrier2(ctx.m_graphicsCmds, &depencyInfo);
 		}
 	}
 
@@ -250,7 +269,6 @@ namespace R3
 		rpc.m_device = context.m_device;
 		rpc.m_targets = context.m_targets;
 		rpc.m_graphicsCmds = context.m_graphicsCmds;
-		rpc.m_previousStageFlags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 		for (uint32_t p = 0; p < m_allPasses.size(); ++p)
 		{
 			auto passTimestamp = context.m_timestampHandler->MakeScopedQuery(m_allPasses[p]->m_name);

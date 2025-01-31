@@ -38,7 +38,8 @@ namespace R3
 	{
 		for (int i = 0; i < m_allTargets.size(); ++i)
 		{
-			m_allTargets[i].m_lastAccessMode = VK_ACCESS_NONE;
+			m_allTargets[i].m_lastAccessMode = VK_ACCESS_2_NONE;
+			m_allTargets[i].m_lastStageFlags = VK_PIPELINE_STAGE_2_NONE;
 			m_allTargets[i].m_lastLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		}
 	}
