@@ -39,8 +39,9 @@ namespace R3
 		CollectGarbage(currentFrame, *d);
 		usage |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 		PooledBuffer newBuffer;
-		{	// Find a usable matching buffer
+		{	// Find best-fitting usable buffer
 			ScopedLock lockReleased(m_releasedBuffersMutex);
+			int bestFitBuffer = -1;
 			for (int r = 0; r < m_releasedBuffers.size(); ++r)
 			{
 				auto& buf = m_releasedBuffers[r];
@@ -49,11 +50,18 @@ namespace R3
 					bool mappingMatch = allowMapping ? buf.m_pooledBuffer.m_mappedBuffer != nullptr : true;
 					if (buf.m_pooledBuffer.m_memUsage == memUsage && buf.m_pooledBuffer.m_usage == usage && buf.m_pooledBuffer.sizeBytes >= minSizeBytes && mappingMatch)
 					{
-						newBuffer = std::move(buf.m_pooledBuffer);
-						m_releasedBuffers.erase(m_releasedBuffers.begin() + r);
-						return newBuffer;
+						if (bestFitBuffer == -1 || (buf.m_pooledBuffer.sizeBytes < m_releasedBuffers[bestFitBuffer].m_pooledBuffer.sizeBytes))
+						{
+							bestFitBuffer = r;
+						}
 					}
 				}
+			}
+			if (bestFitBuffer != -1)
+			{
+				newBuffer = std::move(m_releasedBuffers[bestFitBuffer].m_pooledBuffer);
+				m_releasedBuffers.erase(m_releasedBuffers.begin() + bestFitBuffer);
+				return newBuffer;
 			}
 		}
 

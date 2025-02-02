@@ -19,6 +19,7 @@
 #include <SDL.h>
 #include <SDL_events.h>
 #include <imgui.h>
+#include <vma/vk_mem_alloc.h>
 
 namespace R3
 {
@@ -56,7 +57,7 @@ namespace R3
 	RenderSystem::RenderSystem()
 	{
 		m_vk = std::make_unique<VkStuff>();
-		m_stagingBuffers = std::make_unique<BufferPool>("Global staging buffer");
+		m_stagingBuffers = std::make_unique<BufferPool>("Global staging buffer", 8 * 1024 * 1024);
 		m_mainDeleters.PushDeleter([this]() {
 			m_stagingBuffers = nullptr;
 		});
@@ -190,6 +191,32 @@ namespace R3
 				std::string txt = std::format("{} - {:.3f}ms", result.m_name, result.m_endTime - result.m_startTime);
 				ImGui::Text(txt.c_str());
 			}
+			ImGui::Separator();
+
+			std::vector<VmaBudget> budgets(VK_MAX_MEMORY_HEAPS);
+			vmaGetHeapBudgets(m_device->GetVMA(), budgets.data());
+			size_t totalAllocatedBytes = 0, totalAllocations = 0;
+			std::string heapStr;
+
+			auto bytesToMb = [](size_t bytes)
+			{
+				return bytes / (1024 * 1024);
+			};
+
+			for (int memHeap = 0; memHeap < VK_MAX_MEMORY_HEAPS; ++memHeap)
+			{
+				if (budgets[memHeap].usage > 0)
+				{
+					heapStr = std::format("Heap {}:", memHeap);
+					ImGui::Text(heapStr.c_str());
+					heapStr = std::format("\t{}Mb used ({}Mb budget)", bytesToMb(budgets[memHeap].usage), bytesToMb(budgets[memHeap].budget));
+					ImGui::Text(heapStr.c_str());
+					totalAllocatedBytes += budgets[memHeap].usage;
+					totalAllocations += budgets[memHeap].statistics.allocationCount;
+				}
+			}
+			heapStr = std::format("{}Mb total allocated in {} allocations", bytesToMb(totalAllocatedBytes), totalAllocations);
+			ImGui::Text(heapStr.c_str());
 			ImGui::End();
 		}
 		return true;
