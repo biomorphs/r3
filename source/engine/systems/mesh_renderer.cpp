@@ -323,7 +323,7 @@ namespace R3
 		}
 		if (m_meshRenderBufferPool == nullptr)
 		{
-			m_meshRenderBufferPool = std::make_unique<BufferPool>("Mesh renderer buffers", 16 * 1024 * 1024);
+			m_meshRenderBufferPool = std::make_unique<BufferPool>("Mesh renderer buffers", 32 * 1024 * 1024);
 		}
 		if (!m_staticMeshInstances.IsCreated())
 		{

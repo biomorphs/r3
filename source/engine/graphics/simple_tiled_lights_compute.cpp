@@ -52,7 +52,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 
-		m_lightTileBufferPool = std::make_unique<BufferPool>("Light Tile Buffers", 16 * 1024 * 1024);
+		m_lightTileBufferPool = std::make_unique<BufferPool>("Light Tile Buffers", 32 * 1024 * 1024);
 
 		m_descriptorAllocator = std::make_unique<DescriptorSetSimpleAllocator>();
 		std::vector<VkDescriptorPoolSize> poolSizes = {

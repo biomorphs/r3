@@ -57,7 +57,7 @@ namespace R3
 	RenderSystem::RenderSystem()
 	{
 		m_vk = std::make_unique<VkStuff>();
-		m_stagingBuffers = std::make_unique<BufferPool>("Global staging buffer", 8 * 1024 * 1024);
+		m_stagingBuffers = std::make_unique<BufferPool>("Global staging buffer", 64 * 1024 * 1024);
 		m_mainDeleters.PushDeleter([this]() {
 			m_stagingBuffers = nullptr;
 		});
