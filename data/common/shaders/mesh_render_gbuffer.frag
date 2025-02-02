@@ -15,7 +15,6 @@ layout(location = 1) out vec4 outWorldNormalRoughness;	// world space normal + r
 layout(location = 2) out vec4 outAlbedoAO;	// albedo + AO
 
 void main() {
-	GlobalConstants globals = PushConstants.m_globals.data[0];
 	MeshInstanceData thisInstance = PushConstants.m_instances.data[inInstanceIndex];
 	MeshMaterial myMaterial = thisInstance.m_material.data[0];
 	vec3 normal = GetWorldspaceNormal(inWorldspaceNormal, myMaterial.m_normalTexture, inTBN, inUV);

@@ -4,26 +4,16 @@
 #include "lights.h"
 #include "tiled_lighting.h"
 
-struct GlobalConstants { 
-	mat4 m_projViewTransform;
-	vec4 m_cameraWorldSpacePos;
-	VertexBuffer m_vertexBuffer;
-	LightsBuffer m_lightsBuffer;
-};
-
-// global constants stored in an array to allow overlapping frames
-layout(buffer_reference, std430) readonly buffer GlobalConstantsBuffer
-{
-	GlobalConstants data[];
-};
-
 // all textures passed in one big array (index matches cpu-side texture handle)
 layout (set = 0, binding = 0) uniform sampler2D AllTextures[1024];
 
 // Globals buffer sent via push constant
 layout(push_constant) uniform constants
 {
-	GlobalConstantsBuffer m_globals;
+	mat4 m_projViewTransform;
+	vec4 m_cameraWorldSpacePos;
+	VertexBuffer m_vertexBuffer;
+	LightsBuffer m_lightsBuffer;
 	InstancesBuffer m_instances;
 	LightTileMetadataBuffer m_lightTileMetadata;	// only used with USE_TILED_LIGHTS in forward pass
 } PushConstants;

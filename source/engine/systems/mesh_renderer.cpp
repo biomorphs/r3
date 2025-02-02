@@ -25,19 +25,13 @@
 
 namespace R3
 {
-	// stored in a buffer
-	struct MeshRenderer::GlobalConstants
+	// pushed once per drawing pass
+	struct PushConstants 
 	{
 		glm::mat4 m_projViewTransform;
 		glm::vec4 m_cameraWorldSpacePos;
 		VkDeviceAddress m_vertexBufferAddress;
 		VkDeviceAddress m_lightDataBufferAddress;
-	};
-
-	// pushed once per pipeline, provides global constants buffer address for this frame
-	struct PushConstants 
-	{
-		VkDeviceAddress m_globalsBufferAddress;
 		VkDeviceAddress m_instanceDataBufferAddress;
 		VkDeviceAddress m_lightTileMetadataAddress;		// only used in tiled lighting forward pass
 	};
@@ -101,9 +95,7 @@ namespace R3
 		{
 			vmaUnmapMemory(d.GetVMA(), m_drawIndirectHostVisible.m_allocation);
 			vmaDestroyBuffer(d.GetVMA(), m_drawIndirectHostVisible.m_buffer, m_drawIndirectHostVisible.m_allocation);
-		}
-		m_globalConstantsBuffer.Destroy(d);
-		
+		}		
 		Systems::GetSystem<StaticMeshSystem>()->UnregisterModelReadyCallback(m_onModelDataLoadedCbToken);
 	}
 
@@ -312,16 +304,6 @@ namespace R3
 	void MeshRenderer::PrepareForRendering(class RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
-		if (!m_globalConstantsBuffer.IsCreated())
-		{
-			m_globalConstantsBuffer.SetDebugName("Static mesh global constants");
-			if (!m_globalConstantsBuffer.Create(*ctx.m_device, c_maxBuffers, 1, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
-			{
-				LogError("Failed to create constant buffer");
-				return;
-			}
-			m_globalConstantsBuffer.Allocate(c_maxBuffers);
-		}
 		if (m_drawIndirectMappedPtr == nullptr)
 		{
 			m_drawIndirectHostVisible = VulkanHelpers::CreateBuffer(ctx.m_device->GetVMA(),
@@ -382,18 +364,6 @@ namespace R3
 			m_rebuildingStaticScene = false;
 		}
 
-		// write + flush the global constants each frame
-		auto cameras = GetSystem<CameraSystem>();
-		auto staticMeshes = GetSystem<StaticMeshSystem>();
-		auto lights = GetSystem<LightsSystem>();
-		GlobalConstants globals;
-		globals.m_cameraWorldSpacePos = glm::vec4(cameras->GetMainCamera().Position(), 1);
-		globals.m_projViewTransform = cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix();
-		globals.m_vertexBufferAddress = staticMeshes->GetVertexDataDeviceAddress();
-		globals.m_lightDataBufferAddress = lights->GetAllLightsDeviceAddress();
-		m_globalConstantsBuffer.Write(m_thisFrameBuffer, 1, &globals);
-		m_globalConstantsBuffer.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-
 		// Flush dynamic data every frame
 		if ((m_dynamicOpaques.m_partInstances.size() > 0 || m_dynamicTransparents.m_partInstances.size() > 0))
 		{
@@ -417,12 +387,15 @@ namespace R3
 			}
 		}
 
-		auto textures = GetSystem<TextureSystem>();
-		auto time = GetSystem<TimeSystem>();
 		if (m_staticOpaques.m_drawCount == 0 && m_dynamicOpaques.m_drawCount == 0)
 		{
 			return;
 		}
+
+		auto textures = GetSystem<TextureSystem>();
+		auto time = GetSystem<TimeSystem>();
+		auto cameras = GetSystem<CameraSystem>();
+		auto staticMeshes = GetSystem<StaticMeshSystem>();
 
 		m_frameStats.m_writeGBufferCmdsStartTime = time->GetElapsedTimeReal();
 
@@ -444,8 +417,11 @@ namespace R3
 		vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, nullptr);
 
 		PushConstants pc;
-		pc.m_globalsBufferAddress = m_globalConstantsBuffer.GetDataDeviceAddress() + (m_thisFrameBuffer * sizeof(GlobalConstants));
+		pc.m_cameraWorldSpacePos = glm::vec4(cameras->GetMainCamera().Position(), 1);
+		pc.m_projViewTransform = cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix();
+		pc.m_vertexBufferAddress = staticMeshes->GetVertexDataDeviceAddress();
 		pc.m_instanceDataBufferAddress = m_staticMeshInstances.GetBufferDeviceAddress();
+		pc.m_lightDataBufferAddress = 0;	// light data unnused in gbuffer pass
 		pc.m_lightTileMetadataAddress = 0;
 
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
@@ -472,12 +448,16 @@ namespace R3
 			}
 		}
 		
-		auto textures = GetSystem<TextureSystem>();
-		auto time = GetSystem<TimeSystem>();
 		if (m_staticTransparents.m_drawCount == 0 && m_dynamicTransparents.m_drawCount == 0)
 		{
 			return;
 		}
+
+		auto textures = GetSystem<TextureSystem>();
+		auto time = GetSystem<TimeSystem>();
+		auto cameras = GetSystem<CameraSystem>();
+		auto staticMeshes = GetSystem<StaticMeshSystem>();
+		auto lights = GetSystem<LightsSystem>();
 		
 		m_frameStats.m_writeForwardCmdsStartTime = time->GetElapsedTimeReal();
 		
@@ -506,9 +486,12 @@ namespace R3
 		vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, nullptr);
 
 		PushConstants pc;
-		pc.m_globalsBufferAddress = m_globalConstantsBuffer.GetDataDeviceAddress() + (m_thisFrameBuffer * sizeof(GlobalConstants));
+		pc.m_cameraWorldSpacePos = glm::vec4(cameras->GetMainCamera().Position(), 1);
+		pc.m_projViewTransform = cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix();
+		pc.m_vertexBufferAddress = staticMeshes->GetVertexDataDeviceAddress();
 		pc.m_instanceDataBufferAddress = m_staticMeshInstances.GetBufferDeviceAddress();
-		pc.m_lightTileMetadataAddress = useTiledLighting ? m_lightTileMetadata : 0;
+		pc.m_lightDataBufferAddress = lights->GetAllLightsDeviceAddress();
+		pc.m_lightTileMetadataAddress = m_lightTileMetadata;				// should come from lights system/param, eventually there will be multiple
 
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_staticTransparents.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_staticTransparents.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));

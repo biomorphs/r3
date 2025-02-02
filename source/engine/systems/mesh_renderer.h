@@ -114,10 +114,7 @@ namespace R3
 		const uint32_t c_maxInstances = 1024 * 256;		// max static+dynamic instances we support
 		const uint32_t c_maxBuffers = 3;				// we reserve space per-frame in globals, draws + dynamic instance data. this determines how many frames to handle
 		const uint32_t c_maxStaticMaterialOverrides = 1024 * 8;	// max static material overrides we support
-		uint32_t m_thisFrameBuffer = 0;					// determines where to write to globals, draw + dynamic instance data each frame
-
-		WriteOnlyGpuArray<GlobalConstants> m_globalConstantsBuffer;	// globals written here every frame, split into c_maxBuffers sub-buffers
-		int m_currentGlobalConstantsBuffer = 0;
+		uint32_t m_thisFrameBuffer = 0;					// determines where to write to draw + dynamic instance data each frame
 
 		AllocatedBuffer m_drawIndirectHostVisible;	// draw indirect entries for each instance, split into c_maxBuffers sub-buffers. populated every frame from buckets
 		void* m_drawIndirectMappedPtr = nullptr;

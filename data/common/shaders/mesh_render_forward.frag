@@ -13,8 +13,7 @@ layout(location = 4) in mat3 inTBN;
 layout(location = 0) out vec4 outColour;
 
 void main() {
-	GlobalConstants globals = PushConstants.m_globals.data[0];
-	vec3 viewDir = normalize(globals.m_cameraWorldSpacePos.xyz - inWorldSpacePos);
+	vec3 viewDir = normalize(PushConstants.m_cameraWorldSpacePos.xyz - inWorldSpacePos);
 	MeshInstanceData thisInstance = PushConstants.m_instances.data[inInstanceIndex];
 	MeshMaterial myMaterial = thisInstance.m_material.data[0];
 	vec3 normal = GetWorldspaceNormal(inWorldspaceNormal, myMaterial.m_normalTexture, inTBN, inUV);
@@ -41,7 +40,7 @@ void main() {
 	mat.m_metallic = (myMaterial.m_metalnessTexture != -1) ? texture(AllTextures[myMaterial.m_metalnessTexture],inUV).r : myMaterial.m_metallic;
 	mat.m_ao = (myMaterial.m_aoTexture != -1) ? texture(AllTextures[myMaterial.m_aoTexture],inUV).x : 1.0;
 	
-	LightsData lightsData = globals.m_lightsBuffer.data[0];
+	LightsData lightsData = PushConstants.m_lightsBuffer.data[0];
 	
 	// Apply sun direct light
 	vec4 sunDirectionBrightness = lightsData.m_sunDirectionBrightness;
