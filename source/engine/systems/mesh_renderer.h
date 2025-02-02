@@ -23,10 +23,17 @@ namespace R3
 		uint32_t m_partGlobalIndex;			// index into mesh parts array
 	};
 
-	// A bucket of draw calls
-	struct MeshPartDrawBucket
+	// A bucket of instances associated with a particular pass/shader/technique
+	// i.e. one for gbuffer, forward pass, shadows, etc
+	struct MeshPartInstanceBucket
 	{
 		std::vector<BucketPartInstance> m_partInstances;	// collected from entities
+	};
+
+	// Draw data associated with a bucket, this references draw indirects
+	// Built from the MeshPartInstanceBucket instances on cpu or compute, there can be multiple per bucket
+	struct MeshPartBucketDrawIndirects
+	{
 		uint32_t m_firstDrawOffset;							// index into m_globalInstancesMappedPtr
 		uint32_t m_drawCount;								// num. draw indirects
 	};
@@ -57,11 +64,11 @@ namespace R3
 		void RebuildStaticMaterialOverrides();						// re-allocate material indexes for all static material overrides + upload them to gpu. Call before RebuildInstances!
 		// build instance data for a mesh component type
 		template<class MeshCmpType, bool UseInterpolatedTransforms>
-		void RebuildInstances(LinearWriteOnlyGpuArray<MeshInstance>& instanceBuffer, MeshPartDrawBucket& opaques, MeshPartDrawBucket& transparents);
+		void RebuildInstances(LinearWriteOnlyGpuArray<MeshInstance>& instanceBuffer, MeshPartInstanceBucket& opaques, MeshPartInstanceBucket& transparents);
 		void RebuildStaticScene();									// collect static entities, rebuilds static draw buckets
 		void RebuildDynamicScene();
-		void PrepareDrawBucket(MeshPartDrawBucket& bucket);			// write draw indirects with no culling, only used when culling disabled
-		void PrepareAndCullDrawBucketCompute(Device&, VkCommandBuffer cmds, VkDeviceAddress instanceDataBuffer, MeshPartDrawBucket& bucket);	// cull instances + write draw indirects
+		void PrepareDrawBucket(const MeshPartInstanceBucket& bucket, MeshPartBucketDrawIndirects& drawData);	// write draw indirects with no culling, only used when culling disabled
+		void PrepareAndCullDrawBucketCompute(Device&, VkCommandBuffer cmds, VkDeviceAddress instanceDataBuffer, const MeshPartInstanceBucket& bucket, MeshPartBucketDrawIndirects& drawData);	// cull instances + write draw indirects
 		bool ShowGui();
 		bool CollectInstances();									// collects dynamic instances + rebuilds static scene if required. Called from frame graph
 		void Cleanup(Device&);
@@ -103,13 +110,18 @@ namespace R3
 		std::unique_ptr<BufferPool> m_meshRenderBufferPool;				// pool used to allocate all buffers
 
 		LinearWriteOnlyGpuArray<MeshMaterial> m_staticMaterialOverrides;	// all static material overrides written here on scene rebuild
-		LinearWriteOnlyGpuArray<MeshInstance> m_staticMeshInstances;	// all static instance data written here on static scene rebuild
-		MeshPartDrawBucket m_staticOpaques;								// all static opaque instances collected here on scene rebuild
-		MeshPartDrawBucket m_staticTransparents;						// all static transparent instances collected here on scene rebuild
+		LinearWriteOnlyGpuArray<MeshInstance> m_staticMeshInstances;		// all static instance data written here on static scene rebuild
+		LinearWriteOnlyGpuArray<MeshInstance> m_dynamicMeshInstances;		// all dynamic instance data written here every frame
 
-		LinearWriteOnlyGpuArray<MeshInstance> m_dynamicMeshInstances;	// all dynamic instance data written here every frame
-		MeshPartDrawBucket m_dynamicOpaques;							// all dynamic opaque instances collected here every frame
-		MeshPartDrawBucket m_dynamicTransparents;						// all dynamic transparent instances collected here every frame
+		MeshPartInstanceBucket m_staticOpaques;								// all static opaque instances collected here on scene rebuild
+		MeshPartInstanceBucket m_staticTransparents;						// all static transparent instances collected here on scene rebuild
+		MeshPartInstanceBucket m_dynamicOpaques;							// all dynamic opaque instances collected here every frame
+		MeshPartInstanceBucket m_dynamicTransparents;						// all dynamic transparent instances collected here every frame
+
+		MeshPartBucketDrawIndirects m_staticOpaqueDrawData;					// draw calls generated from static opaque bucket
+		MeshPartBucketDrawIndirects m_staticTransparentDrawData;			// draw calls generated from static transparents bucket
+		MeshPartBucketDrawIndirects m_dynamicOpaqueDrawData;				// draw calls generated from dynamic opaque bucket
+		MeshPartBucketDrawIndirects m_dynamicTransparentDrawData;			// draw calls generated from dynamic opaque bucket
 
 		const uint32_t c_maxInstances = 1024 * 256;		// max static+dynamic instances we support
 		const uint32_t c_maxBuffers = 3;				// we reserve space per-frame in globals, draws + dynamic instance data. this determines how many frames to handle

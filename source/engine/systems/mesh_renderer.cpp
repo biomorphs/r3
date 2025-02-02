@@ -293,10 +293,10 @@ namespace R3
 		if (m_enableComputeCulling)
 		{
 			m_frameStats.m_prepareBucketsStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
-			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticOpaques);
-			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticTransparents);
-			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_dynamicMeshInstances.GetBufferDeviceAddress(), m_dynamicOpaques);
-			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_dynamicMeshInstances.GetBufferDeviceAddress(), m_dynamicTransparents);
+			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticOpaques, m_staticOpaqueDrawData);
+			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticTransparents, m_staticTransparentDrawData);
+			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_dynamicMeshInstances.GetBufferDeviceAddress(), m_dynamicOpaques, m_dynamicOpaqueDrawData);
+			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_dynamicMeshInstances.GetBufferDeviceAddress(), m_dynamicTransparents, m_dynamicTransparentDrawData);
 			m_frameStats.m_prepareBucketsEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		}
 	}
@@ -387,7 +387,7 @@ namespace R3
 			}
 		}
 
-		if (m_staticOpaques.m_drawCount == 0 && m_dynamicOpaques.m_drawCount == 0)
+		if (m_staticOpaqueDrawData.m_drawCount == 0 && m_dynamicOpaqueDrawData.m_drawCount == 0)
 		{
 			return;
 		}
@@ -425,11 +425,11 @@ namespace R3
 		pc.m_lightTileMetadataAddress = 0;
 
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_staticOpaques.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_staticOpaques.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
+		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_staticOpaqueDrawData.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_staticOpaqueDrawData.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 
 		pc.m_instanceDataBufferAddress = m_dynamicMeshInstances.GetBufferDeviceAddress();
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_dynamicOpaques.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_dynamicOpaques.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
+		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_dynamicOpaqueDrawData.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_dynamicOpaqueDrawData.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 
 		m_frameStats.m_writeGBufferCmdsEndTime = time->GetElapsedTimeReal();
 	}
@@ -448,7 +448,7 @@ namespace R3
 			}
 		}
 		
-		if (m_staticTransparents.m_drawCount == 0 && m_dynamicTransparents.m_drawCount == 0)
+		if (m_staticTransparentDrawData.m_drawCount == 0 && m_dynamicTransparentDrawData.m_drawCount == 0)
 		{
 			return;
 		}
@@ -494,11 +494,11 @@ namespace R3
 		pc.m_lightTileMetadataAddress = m_lightTileMetadata;				// should come from lights system/param, eventually there will be multiple
 
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_staticTransparents.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_staticTransparents.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
+		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_staticTransparentDrawData.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_staticTransparentDrawData.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 		
 		pc.m_instanceDataBufferAddress = m_dynamicMeshInstances.GetBufferDeviceAddress();
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_dynamicTransparents.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_dynamicTransparents.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
+		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_dynamicTransparentDrawData.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_dynamicTransparentDrawData.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 
 
 		m_frameStats.m_writeForwardCmdsEndTime = time->GetElapsedTimeReal();
@@ -544,7 +544,7 @@ namespace R3
 	}
 
 	template<class MeshCmpType, bool UseInterpolatedTransforms>
-	void MeshRenderer::RebuildInstances(LinearWriteOnlyGpuArray<MeshInstance>& instanceBuffer, MeshPartDrawBucket& opaques, MeshPartDrawBucket& transparents)
+	void MeshRenderer::RebuildInstances(LinearWriteOnlyGpuArray<MeshInstance>& instanceBuffer, MeshPartInstanceBucket& opaques, MeshPartInstanceBucket& transparents)
 	{
 		R3_PROF_EVENT();
 		auto staticMeshes = GetSystem<StaticMeshSystem>();
@@ -633,11 +633,11 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		m_staticOpaques.m_partInstances.clear();
-		m_staticOpaques.m_drawCount = 0;
-		m_staticOpaques.m_firstDrawOffset = 0;
+		m_staticOpaqueDrawData.m_drawCount = 0;
+		m_staticOpaqueDrawData.m_firstDrawOffset = 0;
 		m_staticTransparents.m_partInstances.clear();
-		m_staticTransparents.m_drawCount = 0;
-		m_staticTransparents.m_firstDrawOffset = 0;
+		m_staticTransparentDrawData.m_drawCount = 0;
+		m_staticTransparentDrawData.m_firstDrawOffset = 0;
 		RebuildStaticMaterialOverrides();
 		RebuildInstances<StaticMeshComponent, false>(m_staticMeshInstances, m_staticOpaques, m_staticTransparents);
 	}
@@ -646,22 +646,22 @@ namespace R3
 	void MeshRenderer::RebuildDynamicScene()
 	{
 		m_dynamicOpaques.m_partInstances.clear();
-		m_dynamicOpaques.m_drawCount = 0;
-		m_dynamicOpaques.m_firstDrawOffset = 0;
+		m_dynamicOpaqueDrawData.m_drawCount = 0;
+		m_dynamicOpaqueDrawData.m_firstDrawOffset = 0;
 		m_dynamicTransparents.m_partInstances.clear();
-		m_dynamicTransparents.m_drawCount = 0;
-		m_dynamicTransparents.m_firstDrawOffset = 0;
+		m_dynamicTransparentDrawData.m_drawCount = 0;
+		m_dynamicTransparentDrawData.m_firstDrawOffset = 0;
 		RebuildInstances<DynamicMeshComponent, true>(m_dynamicMeshInstances, m_dynamicOpaques, m_dynamicTransparents);
 	}
 
-	// populates draw calls for all instances in this bucket with no culling
-	void MeshRenderer::PrepareDrawBucket(MeshPartDrawBucket& bucket)
+	// populates draw calls for all instances in this bucket with no culling on cpu
+	void MeshRenderer::PrepareDrawBucket(const MeshPartInstanceBucket& bucket, MeshPartBucketDrawIndirects& drawData)
 	{
 		R3_PROF_EVENT();
 		auto staticMeshes = GetSystem<StaticMeshSystem>();
 		const uint32_t currentDrawBufferStart = m_thisFrameBuffer * c_maxInstances;
-		bucket.m_firstDrawOffset = (currentDrawBufferStart + m_currentDrawBufferOffset);
-		bucket.m_drawCount = (uint32_t)bucket.m_partInstances.size();
+		drawData.m_firstDrawOffset = (currentDrawBufferStart + m_currentDrawBufferOffset);
+		drawData.m_drawCount = (uint32_t)bucket.m_partInstances.size();
 		for (const auto& bucketInstance : bucket.m_partInstances)
 		{
 			const MeshPart* currentPartData = staticMeshes->GetMeshPart(bucketInstance.m_partGlobalIndex);
@@ -676,17 +676,17 @@ namespace R3
 	}
 
 	// use compute to cull and prepare draw calls for instances in this bucket
-	void MeshRenderer::PrepareAndCullDrawBucketCompute(Device& d, VkCommandBuffer cmds, VkDeviceAddress instanceDataBuffer, MeshPartDrawBucket& bucket)
+	void MeshRenderer::PrepareAndCullDrawBucketCompute(Device& d, VkCommandBuffer cmds, VkDeviceAddress instanceDataBuffer, const MeshPartInstanceBucket& bucket, MeshPartBucketDrawIndirects& drawData)
 	{
 		R3_PROF_EVENT();
 
 		Frustum mainFrustum = GetMainCameraFrustum();
 		const uint32_t currentDrawBufferStart = m_thisFrameBuffer * c_maxInstances;
-		bucket.m_firstDrawOffset = (currentDrawBufferStart + m_currentDrawBufferOffset);	// record draw-indirect base offset for this bucket
-		bucket.m_drawCount = (uint32_t)bucket.m_partInstances.size();						// draw-indirects will be populated by compute shader
-		m_currentDrawBufferOffset += bucket.m_drawCount;
+		drawData.m_firstDrawOffset = (currentDrawBufferStart + m_currentDrawBufferOffset);	// record draw-indirect base offset for this bucket
+		drawData.m_drawCount = (uint32_t)bucket.m_partInstances.size();						// draw-indirects will be populated by compute shader
+		m_currentDrawBufferOffset += drawData.m_drawCount;
 
-		m_computeCulling->Run(d, cmds, instanceDataBuffer, m_drawIndirectBufferAddress, bucket, mainFrustum);	// populate the draw-indirect data for this bucket of instances via compute
+		m_computeCulling->Run(d, cmds, instanceDataBuffer, m_drawIndirectBufferAddress, bucket, drawData, mainFrustum);	// populate the draw-indirect data for this bucket of instances via compute
 	}
 
 	Frustum MeshRenderer::GetMainCameraFrustum()
@@ -723,10 +723,10 @@ namespace R3
 		{
 			m_frameStats.m_prepareBucketsStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 			{
-				PrepareDrawBucket(m_staticOpaques);
-				PrepareDrawBucket(m_staticTransparents);
-				PrepareDrawBucket(m_dynamicOpaques);
-				PrepareDrawBucket(m_dynamicTransparents);
+				PrepareDrawBucket(m_staticOpaques, m_staticOpaqueDrawData);
+				PrepareDrawBucket(m_staticTransparents, m_staticTransparentDrawData);
+				PrepareDrawBucket(m_dynamicOpaques, m_dynamicOpaqueDrawData);
+				PrepareDrawBucket(m_dynamicTransparents, m_dynamicTransparentDrawData);
 			}
 			m_frameStats.m_prepareBucketsEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		}

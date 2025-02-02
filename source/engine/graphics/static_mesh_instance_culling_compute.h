@@ -8,7 +8,8 @@ namespace R3
 {
 	class Device;
 	struct RenderTarget;
-	struct MeshPartDrawBucket;
+	struct MeshPartInstanceBucket;
+	struct MeshPartBucketDrawIndirects;
 	struct BucketPartInstance;
 	class Frustum;
 	class MeshInstanceCullingCompute
@@ -18,13 +19,13 @@ namespace R3
 		~MeshInstanceCullingCompute();
 
 		void Reset();	// call at the start or end of each frame
-		void Run(Device& d, VkCommandBuffer cmds, VkDeviceAddress instanceBuffer, VkDeviceAddress drawIndirectBuffer, const MeshPartDrawBucket& instanceBucket, const Frustum& f);
+		void Run(Device& d, VkCommandBuffer cmds, VkDeviceAddress instanceBuffer, VkDeviceAddress drawIndirectBuffer, const MeshPartInstanceBucket& instanceBucket, const MeshPartBucketDrawIndirects& draws,  const Frustum& f);
 		bool Initialise(Device& d);
 		void Cleanup(Device& d);
 
 	private:
 		uint32_t UploadFrustum(const Frustum& f);	// returns absoluet offset index into the frustum buffer
-		uint32_t UploadBucketInstances(const MeshPartDrawBucket& instanceBucket);
+		uint32_t UploadBucketInstances(const MeshPartInstanceBucket& instanceBucket);
 
 		// track if we need to initialise internal state
 		bool m_resourcesInitialised = false;

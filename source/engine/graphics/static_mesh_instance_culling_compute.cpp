@@ -52,14 +52,14 @@ namespace R3
 		}
 	}
 
-	uint32_t MeshInstanceCullingCompute::UploadBucketInstances(const MeshPartDrawBucket& instanceBucket)
+	uint32_t MeshInstanceCullingCompute::UploadBucketInstances(const MeshPartInstanceBucket& instanceBucket)
 	{
 		R3_PROF_EVENT();
-		if ((m_currentBucketPartOffset + instanceBucket.m_drawCount) < c_maxBucketPartInstances)
+		if ((m_currentBucketPartOffset + instanceBucket.m_partInstances.size()) < c_maxBucketPartInstances)
 		{
 			uint32_t newIndex = (m_currentBucketPartBuffer * c_maxBucketPartInstances) + m_currentBucketPartOffset;
-			m_bucketPartInstancesGpu.Write(newIndex, instanceBucket.m_drawCount, instanceBucket.m_partInstances.data());
-			m_currentBucketPartOffset += instanceBucket.m_drawCount;
+			m_bucketPartInstancesGpu.Write(newIndex, instanceBucket.m_partInstances.size(), instanceBucket.m_partInstances.data());
+			m_currentBucketPartOffset += (uint32_t)instanceBucket.m_partInstances.size();
 			return newIndex;
 		}
 		else
@@ -91,10 +91,10 @@ namespace R3
 		}
 	}
 
-	void MeshInstanceCullingCompute::Run(Device& d, VkCommandBuffer cmds, VkDeviceAddress instanceBuffer, VkDeviceAddress drawIndirectBuffer, const MeshPartDrawBucket& instanceBucket, const Frustum& f)
+	void MeshInstanceCullingCompute::Run(Device& d, VkCommandBuffer cmds, VkDeviceAddress instanceBuffer, VkDeviceAddress drawIndirectBuffer, const MeshPartInstanceBucket& instanceBucket, const MeshPartBucketDrawIndirects& draws, const Frustum& f)
 	{
 		R3_PROF_EVENT();
-		if (instanceBucket.m_drawCount == 0)
+		if (draws.m_drawCount == 0)
 		{
 			return;
 		}
@@ -132,7 +132,7 @@ namespace R3
 		uint32_t currentCullingTaskOffset = (m_currentCullingTaskBuffer * c_maxCullingTasks) + m_currentCullingTaskOffset;
 		CullingTaskInfo thisJob;
 		thisJob.m_allBucketInstances = bucketInstancesAddress;
-		thisJob.m_drawIndirects = drawIndirectBuffer + (instanceBucket.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand));
+		thisJob.m_drawIndirects = drawIndirectBuffer + (draws.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand));
 		thisJob.m_thisFrustum = frustumBufferAddress;
 		thisJob.m_allMeshParts = staticMeshes->GetMeshPartsDeviceAddress();
 		thisJob.m_allPerDrawInstances = instanceBuffer;
