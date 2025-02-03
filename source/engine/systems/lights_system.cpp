@@ -49,6 +49,25 @@ namespace R3
 		return m_skyColour;
 	}
 
+	glm::mat4 LightsSystem::GetSunShadowMatrix()
+	{
+		R3_PROF_EVENT();
+		static float s_sunDistance = 300.0f;	// todo, calculate proper params
+		static float s_sunOrthoScale = 100.0f;
+		static float s_sunShadowDistance = 1000.0f;
+
+		auto lights = GetSystem<LightsSystem>();
+		auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
+		glm::vec3 sunDir = glm::normalize(m_sunDirection);
+		glm::vec3 sunPosition = mainCamera.Target() - (sunDir * s_sunDistance);
+
+		const glm::vec3 up = sunDir.y == -1.0f ? glm::vec3(0.0f, 0.0f, 1.0f) : glm::vec3(0.0f, 1.0f, 0.0f);	// todo
+		const glm::mat4 lightProjection = glm::ortho(-s_sunOrthoScale, s_sunOrthoScale, -s_sunOrthoScale, s_sunOrthoScale, 0.01f, s_sunShadowDistance);
+		const glm::mat4 lightView = glm::lookAt(sunPosition, sunPosition + sunDir, up);
+
+		return lightProjection * lightView;
+	}
+
 	bool LightsSystem::CollectAllLights()
 	{
 		R3_PROF_EVENT();
@@ -75,6 +94,7 @@ namespace R3
 		};
 		Entities::Queries::ForEach<EnvironmentSettingsComponent>(activeWorld, collectSunSkySettings);
 		m_skyColour = glm::vec3(thisFrameLightData.m_skyColourAmbient);	
+		m_sunDirection = glm::vec3(thisFrameLightData.m_sunDirectionBrightness);
 
 		auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
 		Frustum viewFrustum(mainCamera.ProjectionMatrix() * mainCamera.ViewMatrix());

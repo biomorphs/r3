@@ -16,6 +16,7 @@ namespace R3
 			RenderTarget& positionMetalTarget,
 			RenderTarget& normalRoughnessTarget,
 			RenderTarget& albedoAOTarget,
+			RenderTarget& sunShadowMap,
 			RenderTarget& outputTarget, glm::vec2 outputDimensions, bool useTiledLighting);
 		bool Initialise(Device& d);
 		void Cleanup(Device& d);
@@ -37,6 +38,9 @@ namespace R3
 
 		// Can't use depth buffer as storage image, sample it as a texture instead
 		VkSampler m_depthSampler = VK_NULL_HANDLE;
+
+		// Shadow sampler
+		VkSampler m_shadowSampler = VK_NULL_HANDLE;
 
 		// pipelines + layouts
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;

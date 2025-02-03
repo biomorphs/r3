@@ -56,6 +56,7 @@ namespace R3
 		void CullInstancesOnGpu(class RenderPassContext& ctx);		// call this after PrepareForRendering
 		void OnForwardPassDraw(class RenderPassContext& ctx, bool useTiledLighting);	// call after CullInstancesOnGpu
 		void OnGBufferPassDraw(class RenderPassContext& ctx);		// ^^
+		void OnSunShadowPassDraw(class RenderPassContext& ctx);		// draw opaques depth-only for sun-shadows
 		void OnDrawEnd(class RenderPassContext& ctx);				// call once all drawing is complete
 		void SetTiledLightinMetadataAddress(VkDeviceAddress addr) { m_lightTileMetadata = addr; }
 	private:
@@ -68,13 +69,14 @@ namespace R3
 		void RebuildStaticScene();									// collect static entities, rebuilds static draw buckets
 		void RebuildDynamicScene();
 		void PrepareDrawBucket(const MeshPartInstanceBucket& bucket, MeshPartBucketDrawIndirects& drawData);	// write draw indirects with no culling, only used when culling disabled
-		void PrepareAndCullDrawBucketCompute(Device&, VkCommandBuffer cmds, VkDeviceAddress instanceDataBuffer, const MeshPartInstanceBucket& bucket, MeshPartBucketDrawIndirects& drawData);	// cull instances + write draw indirects
+		void PrepareAndCullDrawBucketCompute(Device&, VkCommandBuffer cmds, const Frustum& f, VkDeviceAddress instanceDataBuffer, const MeshPartInstanceBucket& bucket, MeshPartBucketDrawIndirects& drawData);	// cull instances + write draw indirects
 		bool ShowGui();
 		bool CollectInstances();									// collects dynamic instances + rebuilds static scene if required. Called from frame graph
 		void Cleanup(Device&);
 		bool CreatePipelineLayout(Device&);
 		bool CreateForwardPipelineData(Device&, VkFormat mainColourFormat, VkFormat mainDepthFormat);
 		bool CreateGBufferPipelineData(Device&, VkFormat positionMetalFormat, VkFormat normalRoughnessFormat, VkFormat albedoAOFormat, VkFormat mainDepthFormat);
+		bool CreateShadowPipelineData(Device&, VkFormat depthBufer);
 		void OnModelReady(const ModelDataHandle& handle);	// called when a model is ready to draw
 
 		struct FrameStats {
@@ -122,6 +124,8 @@ namespace R3
 		MeshPartBucketDrawIndirects m_staticTransparentDrawData;			// draw calls generated from static transparents bucket
 		MeshPartBucketDrawIndirects m_dynamicOpaqueDrawData;				// draw calls generated from dynamic opaque bucket
 		MeshPartBucketDrawIndirects m_dynamicTransparentDrawData;			// draw calls generated from dynamic opaque bucket
+		MeshPartBucketDrawIndirects m_staticSunShaderCastersDrawData;		// draw calls generated from static opaque bucket for sun shadowcasters
+		MeshPartBucketDrawIndirects m_dynamicSunShaderCastersDrawData;		// draw calls generated from dynamic opaque bucket for sun shadowcasters
 
 		const uint32_t c_maxInstances = 1024 * 256;		// max static+dynamic instances we support
 		const uint32_t c_maxBuffers = 3;				// we reserve space per-frame in globals, draws + dynamic instance data. this determines how many frames to handle
@@ -137,5 +141,6 @@ namespace R3
 		VkPipeline m_forwardPipeline = VK_NULL_HANDLE;
 		VkPipeline m_forwardTiledPipeline = VK_NULL_HANDLE;
 		VkPipeline m_gBufferPipeline = VK_NULL_HANDLE;
+		VkPipeline m_shadowPipeline = VK_NULL_HANDLE;
 	};
 }

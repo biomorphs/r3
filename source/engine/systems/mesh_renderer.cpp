@@ -11,6 +11,7 @@
 #include "engine/components/static_mesh.h"
 #include "engine/components/static_mesh_materials.h"
 #include "engine/systems/lua_system.h"
+#include "engine/systems/immediate_render_system.h"
 #include "entities/systems/entity_system.h"
 #include "entities/world.h"
 #include "entities/queries.h"
@@ -90,6 +91,7 @@ namespace R3
 		vkDestroyPipeline(d.GetVkDevice(), m_forwardPipeline, nullptr);
 		vkDestroyPipeline(d.GetVkDevice(), m_forwardTiledPipeline, nullptr);
 		vkDestroyPipeline(d.GetVkDevice(), m_gBufferPipeline, nullptr);
+		vkDestroyPipeline(d.GetVkDevice(), m_shadowPipeline, nullptr);
 		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayout, nullptr);
 		if (m_drawIndirectHostVisible.m_allocation)
 		{
@@ -219,6 +221,57 @@ namespace R3
 		return true;
 	}
 
+	bool MeshRenderer::CreateShadowPipelineData(Device& d, VkFormat depthBuferFormat)
+	{
+		R3_PROF_EVENT();
+		std::string basePath = "shaders_spirv\\common\\";	// Load the shaders
+		auto vertexShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), basePath + "mesh_render.vert.spv");
+		auto fragShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), basePath + "mesh_render_shadow.frag.spv");
+		if (vertexShader == VK_NULL_HANDLE || fragShader == VK_NULL_HANDLE)
+		{
+			LogError("Failed to create shader modules");
+			return false;
+		}
+		PipelineBuilder pb;	// Make the pipeline
+		pb.m_shaderStages = {
+			VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_VERTEX_BIT, vertexShader),
+			VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_FRAGMENT_BIT, fragShader)
+		};
+		std::vector<VkDynamicState> dynamicStates = {
+			VK_DYNAMIC_STATE_VIEWPORT,
+			VK_DYNAMIC_STATE_SCISSOR
+		};
+		pb.m_dynamicState = VulkanHelpers::CreatePipelineDynamicState(dynamicStates);
+		pb.m_vertexInputState = VulkanHelpers::CreatePipelineEmptyVertexInputState();
+		pb.m_inputAssemblyState = VulkanHelpers::CreatePipelineInputAssemblyState(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+		pb.m_viewportState = VulkanHelpers::CreatePipelineDynamicViewportState();
+		pb.m_rasterState = VulkanHelpers::CreatePipelineRasterState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
+		pb.m_multisamplingState = VulkanHelpers::CreatePipelineMultiSampleState_SingleSample();
+		VkPipelineDepthStencilStateCreateInfo depthStencilState = { 0 };	// Enable depth read/write
+		depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		depthStencilState.depthTestEnable = VK_TRUE;
+		depthStencilState.depthWriteEnable = VK_TRUE;
+		depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
+		depthStencilState.depthBoundsTestEnable = VK_FALSE;
+		depthStencilState.stencilTestEnable = VK_FALSE;
+		pb.m_depthStencilState = depthStencilState;
+
+		VkPipelineColorBlendStateCreateInfo blending = { 0 };	// no colour attachments
+		blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+		pb.m_colourBlendState = blending;
+
+		m_shadowPipeline = pb.Build(d.GetVkDevice(), m_pipelineLayout, 0, nullptr, depthBuferFormat);
+		if (m_shadowPipeline == VK_NULL_HANDLE)
+		{
+			LogError("Failed to create pipeline!");
+			return false;
+		}
+
+		vkDestroyShaderModule(d.GetVkDevice(), vertexShader, nullptr);
+		vkDestroyShaderModule(d.GetVkDevice(), fragShader, nullptr);
+		return true;
+	}
+
 	void MeshRenderer::OnModelReady(const ModelDataHandle& handle)
 	{
 		SetStaticsDirty();
@@ -292,11 +345,16 @@ namespace R3
 		R3_PROF_EVENT();
 		if (m_enableComputeCulling)
 		{
+			Frustum mainFrustum = GetMainCameraFrustum();
+			Frustum sunShadowFrustum(GetSystem<LightsSystem>()->GetSunShadowMatrix());
+
 			m_frameStats.m_prepareBucketsStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
-			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticOpaques, m_staticOpaqueDrawData);
-			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticTransparents, m_staticTransparentDrawData);
-			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_dynamicMeshInstances.GetBufferDeviceAddress(), m_dynamicOpaques, m_dynamicOpaqueDrawData);
-			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, m_dynamicMeshInstances.GetBufferDeviceAddress(), m_dynamicTransparents, m_dynamicTransparentDrawData);
+			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, mainFrustum, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticOpaques, m_staticOpaqueDrawData);
+			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, mainFrustum, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticTransparents, m_staticTransparentDrawData);
+			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, mainFrustum, m_dynamicMeshInstances.GetBufferDeviceAddress(), m_dynamicOpaques, m_dynamicOpaqueDrawData);
+			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, mainFrustum, m_dynamicMeshInstances.GetBufferDeviceAddress(), m_dynamicTransparents, m_dynamicTransparentDrawData);
+			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, sunShadowFrustum, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticOpaques, m_staticSunShaderCastersDrawData);
+			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, sunShadowFrustum, m_dynamicMeshInstances.GetBufferDeviceAddress(), m_dynamicOpaques, m_dynamicSunShaderCastersDrawData);
 			m_frameStats.m_prepareBucketsEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		}
 	}
@@ -432,6 +490,66 @@ namespace R3
 		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_dynamicOpaqueDrawData.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_dynamicOpaqueDrawData.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 
 		m_frameStats.m_writeGBufferCmdsEndTime = time->GetElapsedTimeReal();
+	}
+
+	void MeshRenderer::OnSunShadowPassDraw(RenderPassContext& ctx)
+	{
+		R3_PROF_EVENT();
+
+		if (m_shadowPipeline == VK_NULL_HANDLE)
+		{
+			auto depthTarget = ctx.GetResolvedTarget("SunShadowDepth");
+			if (!CreateShadowPipelineData(*ctx.m_device, depthTarget->m_info.m_format))
+			{
+				LogError("Failed to create pipeline data for shadow pass");
+			}
+		}
+
+		if (m_staticSunShaderCastersDrawData.m_drawCount == 0 && m_dynamicSunShaderCastersDrawData.m_drawCount == 0)
+		{
+			return;
+		}
+
+		auto textures = GetSystem<TextureSystem>();
+		auto time = GetSystem<TimeSystem>();
+		auto staticMeshes = GetSystem<StaticMeshSystem>();
+
+		m_frameStats.m_writeForwardCmdsStartTime = time->GetElapsedTimeReal();
+
+		VkViewport viewport = { 0 };
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = ctx.m_renderExtents.x;
+		viewport.height = ctx.m_renderExtents.y;
+		viewport.minDepth = 0.0f;	// normalised! must be between 0 and 1
+		viewport.maxDepth = 1.0f;	// ^^
+		VkRect2D scissor = { 0 };
+		scissor.offset = { 0, 0 };
+		scissor.extent = { (uint32_t)viewport.width, (uint32_t)viewport.height };	// draw the full image
+
+		vkCmdBindPipeline(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_shadowPipeline);
+		vkCmdSetViewport(ctx.m_graphicsCmds, 0, 1, &viewport);
+		vkCmdSetScissor(ctx.m_graphicsCmds, 0, 1, &scissor);
+		vkCmdBindIndexBuffer(ctx.m_graphicsCmds, GetSystem<StaticMeshSystem>()->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+		VkDescriptorSet allTextures = textures->GetAllTexturesSet();
+		vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, nullptr);
+
+		PushConstants pc;
+		pc.m_cameraWorldSpacePos = { 0,0,0,0 };	// unused in shadow pass
+		pc.m_projViewTransform = GetSystem<LightsSystem>()->GetSunShadowMatrix();
+		pc.m_vertexBufferAddress = staticMeshes->GetVertexDataDeviceAddress();
+		pc.m_instanceDataBufferAddress = m_staticMeshInstances.GetBufferDeviceAddress();
+		pc.m_lightDataBufferAddress = 0;	// unused
+		pc.m_lightTileMetadataAddress = 0;	// unused in shadow drawing
+
+		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
+		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_staticSunShaderCastersDrawData.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_staticSunShaderCastersDrawData.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
+
+		pc.m_instanceDataBufferAddress = m_dynamicMeshInstances.GetBufferDeviceAddress();
+		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
+		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_dynamicSunShaderCastersDrawData.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_dynamicSunShaderCastersDrawData.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
+
+		m_frameStats.m_writeForwardCmdsEndTime = time->GetElapsedTimeReal();
 	}
 
 	void MeshRenderer::OnForwardPassDraw(class RenderPassContext& ctx, bool useTiledLighting)
@@ -633,11 +751,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		m_staticOpaques.m_partInstances.clear();
-		m_staticOpaqueDrawData.m_drawCount = 0;
-		m_staticOpaqueDrawData.m_firstDrawOffset = 0;
 		m_staticTransparents.m_partInstances.clear();
-		m_staticTransparentDrawData.m_drawCount = 0;
-		m_staticTransparentDrawData.m_firstDrawOffset = 0;
 		RebuildStaticMaterialOverrides();
 		RebuildInstances<StaticMeshComponent, false>(m_staticMeshInstances, m_staticOpaques, m_staticTransparents);
 	}
@@ -646,11 +760,7 @@ namespace R3
 	void MeshRenderer::RebuildDynamicScene()
 	{
 		m_dynamicOpaques.m_partInstances.clear();
-		m_dynamicOpaqueDrawData.m_drawCount = 0;
-		m_dynamicOpaqueDrawData.m_firstDrawOffset = 0;
 		m_dynamicTransparents.m_partInstances.clear();
-		m_dynamicTransparentDrawData.m_drawCount = 0;
-		m_dynamicTransparentDrawData.m_firstDrawOffset = 0;
 		RebuildInstances<DynamicMeshComponent, true>(m_dynamicMeshInstances, m_dynamicOpaques, m_dynamicTransparents);
 	}
 
@@ -676,17 +786,16 @@ namespace R3
 	}
 
 	// use compute to cull and prepare draw calls for instances in this bucket
-	void MeshRenderer::PrepareAndCullDrawBucketCompute(Device& d, VkCommandBuffer cmds, VkDeviceAddress instanceDataBuffer, const MeshPartInstanceBucket& bucket, MeshPartBucketDrawIndirects& drawData)
+	void MeshRenderer::PrepareAndCullDrawBucketCompute(Device& d, VkCommandBuffer cmds, const Frustum& f, VkDeviceAddress instanceDataBuffer, const MeshPartInstanceBucket& bucket, MeshPartBucketDrawIndirects& drawData)
 	{
 		R3_PROF_EVENT();
 
-		Frustum mainFrustum = GetMainCameraFrustum();
 		const uint32_t currentDrawBufferStart = m_thisFrameBuffer * c_maxInstances;
 		drawData.m_firstDrawOffset = (currentDrawBufferStart + m_currentDrawBufferOffset);	// record draw-indirect base offset for this bucket
 		drawData.m_drawCount = (uint32_t)bucket.m_partInstances.size();						// draw-indirects will be populated by compute shader
 		m_currentDrawBufferOffset += drawData.m_drawCount;
 
-		m_computeCulling->Run(d, cmds, instanceDataBuffer, m_drawIndirectBufferAddress, bucket, drawData, mainFrustum);	// populate the draw-indirect data for this bucket of instances via compute
+		m_computeCulling->Run(d, cmds, instanceDataBuffer, m_drawIndirectBufferAddress, bucket, drawData, f);	// populate the draw-indirect data for this bucket of instances via compute
 	}
 
 	Frustum MeshRenderer::GetMainCameraFrustum()
@@ -727,6 +836,8 @@ namespace R3
 				PrepareDrawBucket(m_staticTransparents, m_staticTransparentDrawData);
 				PrepareDrawBucket(m_dynamicOpaques, m_dynamicOpaqueDrawData);
 				PrepareDrawBucket(m_dynamicTransparents, m_dynamicTransparentDrawData);
+				PrepareDrawBucket(m_staticOpaques, m_staticSunShaderCastersDrawData);
+				PrepareDrawBucket(m_dynamicOpaques, m_dynamicSunShaderCastersDrawData);
 			}
 			m_frameStats.m_prepareBucketsEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		}

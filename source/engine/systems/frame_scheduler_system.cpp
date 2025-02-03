@@ -115,6 +115,26 @@ namespace R3
 		return cullingPass;
 	}
 
+	std::unique_ptr<DrawPass> FrameScheduler::MakeSunShadowPass(const RenderTargetInfo& sunShadowMap)
+	{
+		R3_PROF_EVENT();
+		auto sunShadowPass = std::make_unique<DrawPass>();
+		sunShadowPass->m_name = "Sun Shadows";
+		sunShadowPass->m_depthAttachment = { sunShadowMap, DrawPass::AttachmentLoadOp::Clear };
+		sunShadowPass->m_getExtentsFn = [sunShadowMap]() -> glm::vec2 {
+			return sunShadowMap.m_size;
+		};
+		sunShadowPass->m_getClearDepthFn = []() -> float {
+			return 1.0f;
+		};
+		sunShadowPass->m_onDraw.AddCallback([](RenderPassContext& ctx) {
+			R3_PROF_GPU_EVENT("Sun Shadows");
+			GetSystem<MeshRenderer>()->OnSunShadowPassDraw(ctx);
+		});
+
+		return sunShadowPass;
+	}
+
 	std::unique_ptr<DrawPass> FrameScheduler::MakeGBufferPass(const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainDepth)
 	{
 		R3_PROF_EVENT();
@@ -138,7 +158,7 @@ namespace R3
 		return gbufferPass;
 	}
 
-	std::unique_ptr<ComputeDrawPass> FrameScheduler::MakeDeferredLightingPass(const RenderTargetInfo& mainDepth, const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainColour)
+	std::unique_ptr<ComputeDrawPass> FrameScheduler::MakeDeferredLightingPass(const RenderTargetInfo& mainDepth, const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainColour, const RenderTargetInfo& sunShadows)
 	{
 		R3_PROF_EVENT();
 		auto lightingPass = std::make_unique<ComputeDrawPass>();
@@ -147,15 +167,17 @@ namespace R3
 		lightingPass->m_inputColourAttachments.push_back(normalBuffer);
 		lightingPass->m_inputColourAttachments.push_back(albedoBuffer);
 		lightingPass->m_inputColourAttachments.push_back(mainDepth);
+		lightingPass->m_inputColourAttachments.push_back(sunShadows);
 		lightingPass->m_outputColourAttachments.push_back(mainColour);	// output to HDR colour
-		lightingPass->m_onRun.AddCallback([this, mainDepth, mainColour, positionBuffer, normalBuffer, albedoBuffer](RenderPassContext& ctx) {
+		lightingPass->m_onRun.AddCallback([this, mainDepth, mainColour, positionBuffer, normalBuffer, albedoBuffer, sunShadows](RenderPassContext& ctx) {
 			auto inDepth = ctx.GetResolvedTarget(mainDepth);
 			auto inPosMetal = ctx.GetResolvedTarget(positionBuffer);
 			auto inNormalRoughness = ctx.GetResolvedTarget(normalBuffer);
 			auto inAlbedoAO = ctx.GetResolvedTarget(albedoBuffer);
+			auto inSunShadows = ctx.GetResolvedTarget(sunShadows);
 			auto outTarget = ctx.GetResolvedTarget(mainColour);
 			auto outSize = ctx.m_targets->GetTargetSize(outTarget->m_info);
-			m_deferredLightingCompute->Run(*ctx.m_device, ctx.m_graphicsCmds, *inDepth, *inPosMetal, *inNormalRoughness, *inAlbedoAO, *outTarget, outSize, m_useTiledLighting);
+			m_deferredLightingCompute->Run(*ctx.m_device, ctx.m_graphicsCmds, *inDepth, *inPosMetal, *inNormalRoughness, *inAlbedoAO, *inSunShadows, *outTarget, outSize, m_useTiledLighting);
 		});
 		return lightingPass;
 	}
@@ -296,13 +318,22 @@ namespace R3
 		mainColourLDR.m_usageFlags = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
 		m_allCurrentTargets.push_back(mainColourLDR);
 
+		RenderTargetInfo sunShadowMap("SunShadowDepth");		// Sun shadow map
+		sunShadowMap.m_format = VK_FORMAT_D32_SFLOAT;			// may be overkill
+		sunShadowMap.m_usageFlags = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+		sunShadowMap.m_aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
+		sunShadowMap.m_sizeType = RenderTargetInfo::SizeType::Fixed;
+		sunShadowMap.m_size = { 2048, 2048 };
+		m_allCurrentTargets.push_back(sunShadowMap);
+
 		auto& graph = render->GetRenderGraph();
 		graph.m_allPasses.clear();
 		graph.m_allPasses.push_back(MakeRenderPreparePass());
 		graph.m_allPasses.push_back(MakeCullingPass());
+		graph.m_allPasses.push_back(MakeSunShadowPass(sunShadowMap));
 		graph.m_allPasses.push_back(MakeGBufferPass(gBufferPosition, gBufferNormal, gBufferAlbedo, mainDepth));	// write gbuffer
 		graph.m_allPasses.push_back(MakeLightTilingPass(mainDepth));											// light tile determination
-		graph.m_allPasses.push_back(MakeDeferredLightingPass(mainDepth, gBufferPosition, gBufferNormal, gBufferAlbedo, mainColour));	// deferred lighting
+		graph.m_allPasses.push_back(MakeDeferredLightingPass(mainDepth, gBufferPosition, gBufferNormal, gBufferAlbedo, mainColour, sunShadowMap));	// deferred lighting
 		graph.m_allPasses.push_back(MakeForwardPass(mainColour, mainDepth));	// forward render to main colour
 		if (m_useTiledLighting && m_showLightTilesDebug)
 		{

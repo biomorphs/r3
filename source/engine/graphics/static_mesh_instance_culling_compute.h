@@ -44,14 +44,14 @@ namespace R3
 			glm::vec4 m_planes[6];
 		};
 		WriteOnlyGpuArray<FrustumGpu> m_frustumsGpu;	// frustums uploaded each frame before culling
-		const uint32_t c_maxFrustums = 4;
+		const uint32_t c_maxFrustums = 6;
 		const uint32_t c_maxFrustumBuffers = 3;
 		uint32_t m_currentFrustumBuffer = 0;		// 0 to c_maxFrustumBuffers
 		uint32_t m_currentFrustumOffset = 0;		// 0 to c_maxFrustums
 
 		struct CullingTaskInfo;
 		WriteOnlyGpuArray<CullingTaskInfo> m_cullingTasksGpu;	// one per culling job per frame
-		const uint32_t c_maxCullingTasks = 4;
+		const uint32_t c_maxCullingTasks = 6;
 		const uint32_t c_maxCullingBuffers = 3;
 		uint32_t m_currentCullingTaskBuffer = 0;	// 0 to c_maxCullingBuffers
 		uint32_t m_currentCullingTaskOffset = 0;	// 0 to c_maxCullingTasks

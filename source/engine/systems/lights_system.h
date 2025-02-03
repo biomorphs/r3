@@ -29,6 +29,7 @@ namespace R3
 		void PrepareForDrawing(class RenderPassContext& ctx);		// call this from render graph before accessing light data
 		VkDeviceAddress GetAllLightsDeviceAddress();				// get the address of m_allLightsData for this frame
 		glm::vec3 GetSkyColour();
+		glm::mat4 GetSunShadowMatrix();								// light-space matrix for sun shadows
 		const std::vector<Pointlight>& GetActivePointLights() { return m_allPointLightsCPU; }
 	private:
 		bool CollectAllLights();
@@ -37,6 +38,7 @@ namespace R3
 		bool m_showGui = false;
 		bool m_drawBounds = false;
 		glm::vec3 m_skyColour = { 0,0,0 };		// sky colour from envi
+		glm::vec3 m_sunDirection = { 0,-1,0 };	// sun direction from env
 		const uint32_t c_maxLights = 1024 * 32;
 		const uint32_t c_framesInFlight = 3;	// lights update every frame, need multiple buffers
 		uint32_t m_currentFrame = 0;			// offset into m_allPointlights and m_allLightsData

@@ -12,6 +12,7 @@ namespace R3
 	// Pass lighting data buffer address via push constants
 	struct PushConstants
 	{
+		glm::mat4 m_sunShadowProjection;	// used to calculate shadow map UVs
 		glm::vec4 m_cameraWorldSpacePosition;	// used to calculate view direction
 		VkDeviceAddress m_lightingData;			// address of light data from lights system
 		VkDeviceAddress m_tileMetadata;			// built by TiledLightsCompute
@@ -22,6 +23,7 @@ namespace R3
 		RenderTarget& positionMetalTarget,
 		RenderTarget& normalRoughnessTarget,
 		RenderTarget& albedoAOTarget,
+		RenderTarget& sunShadowMap,
 		RenderTarget& outputTarget, glm::vec2 outputDimensions, bool useTiledLighting)
 	{
 		R3_PROF_EVENT();
@@ -41,10 +43,12 @@ namespace R3
 		writer.WriteStorageImage(1, normalRoughnessTarget.m_view, normalRoughnessTarget.m_lastLayout);
 		writer.WriteStorageImage(2, albedoAOTarget.m_view, albedoAOTarget.m_lastLayout);
 		writer.WriteImage(3, 0, depthBuffer.m_view, m_depthSampler, depthBuffer.m_lastLayout);
-		writer.WriteStorageImage(4, outputTarget.m_view, outputTarget.m_lastLayout);
+		writer.WriteImage(4, 0, sunShadowMap.m_view, m_shadowSampler, sunShadowMap.m_lastLayout);
+		writer.WriteStorageImage(5, outputTarget.m_view, outputTarget.m_lastLayout);
 		writer.FlushWrites();
 
 		PushConstants pc;
+		pc.m_sunShadowProjection = Systems::GetSystem<LightsSystem>()->GetSunShadowMatrix();
 		pc.m_cameraWorldSpacePosition = glm::vec4(Systems::GetSystem<CameraSystem>()->GetMainCamera().Position(), 1);
 		pc.m_lightingData = Systems::GetSystem<LightsSystem>()->GetAllLightsDeviceAddress();
 		pc.m_tileMetadata = useTiledLighting ? m_lightTileMetadata : 0;
@@ -72,7 +76,7 @@ namespace R3
 		m_descriptorAllocator = std::make_unique<DescriptorSetSimpleAllocator>();
 		std::vector<VkDescriptorPoolSize> poolSizes = {
 			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 4 * c_maxSets },					// input + output images
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 * c_maxSets }			// depth buffer
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 * c_maxSets }			// depth buffer
 		};
 		if (!m_descriptorAllocator->Initialise(d, c_maxSets, poolSizes))
 		{
@@ -85,7 +89,8 @@ namespace R3
 		layoutBuilder.AddBinding(1, 1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);		// normal + roughness
 		layoutBuilder.AddBinding(2, 1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);		// albedo + AO
 		layoutBuilder.AddBinding(3, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);		// depth buffer texture
-		layoutBuilder.AddBinding(4, 1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);		// output image
+		layoutBuilder.AddBinding(4, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);		// sun shadow map
+		layoutBuilder.AddBinding(5, 1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);		// output image
 		m_descriptorLayout = layoutBuilder.Create(d, false);					// dont need bindless here
 		if (m_descriptorLayout == nullptr)
 		{
@@ -99,19 +104,41 @@ namespace R3
 		}
 
 		// create depth sampler
-		VkSamplerCreateInfo sampler = {};
-		sampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-		sampler.magFilter = VK_FILTER_NEAREST;
-		sampler.minFilter = VK_FILTER_NEAREST;
-		sampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		sampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-		sampler.maxLod = VK_LOD_CLAMP_NONE;
-		sampler.minLod = 0;
-		if (!VulkanHelpers::CheckResult(vkCreateSampler(d.GetVkDevice(), &sampler, nullptr, &m_depthSampler)))
 		{
-			LogError("Failed to create sampler");
-			return false;
+			VkSamplerCreateInfo sampler = {};
+			sampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+			sampler.magFilter = VK_FILTER_NEAREST;
+			sampler.minFilter = VK_FILTER_NEAREST;
+			sampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+			sampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+			sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+			sampler.maxLod = VK_LOD_CLAMP_NONE;
+			sampler.minLod = 0;
+			if (!VulkanHelpers::CheckResult(vkCreateSampler(d.GetVkDevice(), &sampler, nullptr, &m_depthSampler)))
+			{
+				LogError("Failed to create sampler");
+				return false;
+			}
+		}
+
+		// create shadows sampler
+		{
+			VkSamplerCreateInfo sampler = {};
+			sampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+			sampler.magFilter = VK_FILTER_LINEAR;
+			sampler.minFilter = VK_FILTER_LINEAR;
+			sampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+			sampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+			sampler.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+			sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+			sampler.maxLod = VK_LOD_CLAMP_NONE;
+			sampler.minLod = 0;
+			sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+			if (!VulkanHelpers::CheckResult(vkCreateSampler(d.GetVkDevice(), &sampler, nullptr, &m_shadowSampler)))
+			{
+				LogError("Failed to create sampler");
+				return false;
+			}
 		}
 
 		auto computeShaderTiled = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), "shaders_spirv/common/deferred_lighting_compute_tiled.comp.spv");
@@ -156,6 +183,7 @@ namespace R3
 		R3_PROF_EVENT();
 
 		vkDestroySampler(d.GetVkDevice(), m_depthSampler, nullptr);
+		vkDestroySampler(d.GetVkDevice(), m_shadowSampler, nullptr);
 
 		// cleanup the pipelines
 		vkDestroyPipeline(d.GetVkDevice(), m_pipelineAllLights, nullptr);

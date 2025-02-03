@@ -11,10 +11,12 @@ layout(rgba16f,set = 0, binding = 0) uniform readonly image2D inWorldSpacePositi
 layout(rgba16f,set = 0, binding = 1) uniform readonly image2D inWorldSpaceNormalRoughness;
 layout(rgba8,set = 0, binding = 2) uniform readonly image2D inAlbedoAO;
 layout (set = 0, binding = 3) uniform sampler2D inDepthBuffer;
-layout(set = 0, binding = 4) uniform writeonly image2D hdrOutput;
+layout (set = 0, binding = 4) uniform sampler2D inSunShadowMap;
+layout(set = 0, binding = 5) uniform writeonly image2D hdrOutput;
 
 layout(push_constant) uniform constants
 {
+	mat4 m_sunShadowProjection;
 	vec4 m_cameraWorldSpacePos;
 	LightsBuffer m_allLights;
 	LightTileMetadataBuffer m_lightTileMetadata;	// only used with USE_TILED_LIGHTS
@@ -23,6 +25,16 @@ layout(push_constant) uniform constants
 // Copy all pointlights to shared memory for this work group
 #define MAX_SHARED_LIGHTS 1024
 shared Pointlight sharedLights[MAX_SHARED_LIGHTS];
+
+float CalculateSunShadow(vec3 worldPos, mat4 lightSpaceTransform)
+{
+	vec4 positionLightSpace = lightSpaceTransform * vec4(worldPos,1.0); 
+	vec3 projCoords = positionLightSpace.xyz / positionLightSpace.w;
+	// transform from ndc space to UV space
+	projCoords.xy = projCoords.xy * 0.5 + 0.5;	
+	float distance = texture(inSunShadowMap, projCoords.xy).r;
+	return distance > 0.0 && distance < projCoords.z ? 0.0 : 1.0;
+}
 
 void main() 
 {
@@ -75,9 +87,12 @@ void main()
 			mat.m_metallic = positionMetallic.w;
 			mat.m_ao = albedoAO.w;
 
+			// sun shadows
+			float sunShadow = CalculateSunShadow(positionMetallic.xyz, PushConstants.m_sunShadowProjection);
+			
 			// Apply sun direct light
 			vec4 sunDirectionBrightness = lightsData.m_sunDirectionBrightness;
-			vec3 sunRadiance = lightsData.m_sunColourAmbient.xyz * sunDirectionBrightness.w;
+			vec3 sunRadiance = sunShadow * lightsData.m_sunColourAmbient.xyz * sunDirectionBrightness.w;
 			vec3 directLight = PBRDirectLighting(mat, viewDir, -sunDirectionBrightness.xyz, normalRoughness.xyz, sunRadiance, 1.0);
 			
 			// Apply point lights (direct)

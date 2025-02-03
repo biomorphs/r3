@@ -29,9 +29,10 @@ namespace R3
 		std::unique_ptr<GenericPass> MakeRenderPreparePass();	// sets stuff up before other render passes
 		std::unique_ptr<ComputeDrawPass> MakeCullingPass();
 		std::unique_ptr<ComputeDrawPass> MakeLightTilingPass(const RenderTargetInfo& mainDepth);
+		std::unique_ptr<DrawPass> MakeSunShadowPass(const RenderTargetInfo& sunShadowMap);
 		std::unique_ptr<DrawPass> MakeForwardPass(const RenderTargetInfo& mainColour, const RenderTargetInfo& mainDepth);
 		std::unique_ptr<DrawPass> MakeGBufferPass(const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainDepth);
-		std::unique_ptr<ComputeDrawPass> MakeDeferredLightingPass(const RenderTargetInfo& mainDepth, const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainColour);
+		std::unique_ptr<ComputeDrawPass> MakeDeferredLightingPass(const RenderTargetInfo& mainDepth, const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainColour, const RenderTargetInfo& sunShadows);
 		std::unique_ptr<ComputeDrawPass> MakeTonemapToLDRPass(const RenderTargetInfo& mainColour, const RenderTargetInfo& mainColourLDR);
 		std::unique_ptr<TransferPass> MakeColourBlitToPass(std::string_view name, const RenderTargetInfo& srcTarget, const RenderTargetInfo& destTarget);
 		std::unique_ptr<DrawPass> MakeImguiPass(const RenderTargetInfo& colourTarget);
