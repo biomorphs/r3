@@ -4,6 +4,7 @@
 #include <vector>
 #include <thread>
 #include <optional>
+#include <string_view>
 
 struct VkCommandPool_T;
 struct VkCommandBuffer_T;

@@ -8,8 +8,8 @@ namespace R3
 	{
 	public:
 		virtual void SetModified() {}
-		virtual bool Inspect(std::string label, Tag currentValue, std::function<void(Tag)> setFn);
-		virtual bool Inspect(std::string label, bool currentValue, std::function<void(bool)> setFn);
+		virtual bool Inspect(std::string_view label, Tag currentValue, std::function<void(Tag)> setFn);
+		virtual bool Inspect(std::string_view label, bool currentValue, std::function<void(bool)> setFn);
 		virtual bool Inspect(std::string_view label, std::string_view currentValue, std::function<void(std::string)> setFn);
 		virtual bool Inspect(std::string_view label, int currentValue, std::function<void(int)> setFn, int step, int minv, int maxv);
 		virtual bool Inspect(std::string_view label, float currentValue, std::function<void(float)> setFn, float step, float minv, float maxv);

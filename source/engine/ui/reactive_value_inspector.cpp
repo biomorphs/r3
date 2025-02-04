@@ -15,7 +15,7 @@ namespace R3
 		m_onChanged();
 	}
 
-	bool ReactiveValueInspector::Inspect(std::string label, bool currentValue, std::function<void(bool)> setFn)
+	bool ReactiveValueInspector::Inspect(std::string_view label, bool currentValue, std::function<void(bool)> setFn)
 	{
 		bool modified = m_child->Inspect(label, currentValue, setFn);
 		if(modified)
@@ -25,7 +25,7 @@ namespace R3
 		return modified;
 	}
 
-	bool ReactiveValueInspector::Inspect(std::string label, Tag currentValue, std::function<void(Tag)> newVal)
+	bool ReactiveValueInspector::Inspect(std::string_view label, Tag currentValue, std::function<void(Tag)> newVal)
 	{
 		bool modified = m_child->Inspect(label, currentValue, newVal);
 		if (modified)

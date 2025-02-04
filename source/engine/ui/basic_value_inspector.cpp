@@ -34,7 +34,7 @@ namespace R3
 		return result;
 	}
 
-	bool BasicValueInspector::Inspect(std::string label, Tag currentValue, std::function<void(Tag)> setFn)
+	bool BasicValueInspector::Inspect(std::string_view label, Tag currentValue, std::function<void(Tag)> setFn)
 	{
 		char textBuffer[1024 * 16] = { '\0' };
 		strcpy_s(textBuffer, currentValue.GetString().c_str());
@@ -47,7 +47,7 @@ namespace R3
 		return false;
 	}
 
-	bool BasicValueInspector::Inspect(std::string label, bool currentValue, std::function<void(bool)> setFn)
+	bool BasicValueInspector::Inspect(std::string_view label, bool currentValue, std::function<void(bool)> setFn)
 	{
 		bool newVal = currentValue;
 		if (ImGui::Checkbox(label.data(), &newVal))
