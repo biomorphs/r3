@@ -32,8 +32,23 @@ float CalculateSunShadow(vec3 worldPos, mat4 lightSpaceTransform)
 	vec3 projCoords = positionLightSpace.xyz / positionLightSpace.w;
 	// transform from ndc space to UV space
 	projCoords.xy = projCoords.xy * 0.5 + 0.5;	
-	float distance = texture(inSunShadowMap, projCoords.xy).r;
-	return distance > 0.0 && distance < projCoords.z ? 0.0 : 1.0;
+	
+	// basic bitch PCF
+	float pcfScale = (1.0f / textureSize(inSunShadowMap, 0).x) * 1.0f;
+	int samples = 5;
+	float pcfValue = 0.0f;
+	for(int x=0;x<samples;++x)
+	{
+		for(int y=0;y<samples;++y)
+		{
+			float pcfOffsetX = pcfScale * (x - (samples / 2));
+			float pcfOffsetY = pcfScale * (y - (samples / 2));
+			float distance = texture(inSunShadowMap, projCoords.xy + vec2(pcfOffsetX, pcfOffsetY)).r;
+			pcfValue += distance > 0.0 && distance < projCoords.z ? 0.0 : 1.0;
+		}
+	}
+	pcfValue /= (samples * samples);
+	return pcfValue;
 }
 
 void main() 
