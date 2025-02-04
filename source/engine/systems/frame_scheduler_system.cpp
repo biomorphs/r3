@@ -8,6 +8,7 @@
 #include "engine/graphics/tonemap_compute.h"
 #include "engine/graphics/deferred_lighting_compute.h"
 #include "engine/graphics/simple_tiled_lights_compute.h"
+#include "engine/graphics/depth_texture_visualiser.h"
 #include "engine/components/environment_settings.h"
 #include "engine/systems/camera_system.h"
 #include "engine/ui/imgui_menubar_helper.h"
@@ -47,10 +48,12 @@ namespace R3
 		m_tonemapComputeRenderer = std::make_unique<TonemapCompute>();
 		m_deferredLightingCompute = std::make_unique<DeferredLightingCompute>();
 		m_tiledLightsCompute = std::make_unique<TiledLightsCompute>();
+		m_depthTextureVisualiser = std::make_unique<DepthTextureVisualiser>();
 		GetSystem<RenderSystem>()->m_onShutdownCbs.AddCallback([this](Device& d) {
 			m_tonemapComputeRenderer->Cleanup(d);
 			m_deferredLightingCompute->Cleanup(d);
 			m_tiledLightsCompute->Cleanup(d);
+			m_depthTextureVisualiser->Cleanup(d);
 		});
 		return true;
 	}
@@ -230,6 +233,22 @@ namespace R3
 		return blitPass;
 	}
 
+	std::unique_ptr<ComputeDrawPass> FrameScheduler::MakeDepthTextureDebugPass(const RenderTargetInfo& depthTexture, const RenderTargetInfo& outputTexture)
+	{
+		auto pass = std::make_unique<ComputeDrawPass>();
+		pass->m_name = "Visualise Depth Texture";
+		pass->m_inputColourAttachments.push_back(depthTexture);
+		pass->m_outputColourAttachments.push_back(outputTexture);	// output to HDR colour
+		pass->m_onRun.AddCallback([this, depthTexture, outputTexture](RenderPassContext& ctx) {
+			auto inDepth = ctx.GetResolvedTarget(depthTexture);
+			auto outTarget = ctx.GetResolvedTarget(outputTexture);
+			auto depthSize = ctx.m_targets->GetTargetSize(inDepth->m_info);
+			auto outSize = ctx.m_targets->GetTargetSize(outTarget->m_info);
+			m_depthTextureVisualiser->Run(*ctx.m_device, ctx.m_graphicsCmds, *inDepth, depthSize, *outTarget, outSize);
+		});
+		return pass;
+	}
+
 	std::unique_ptr<DrawPass> FrameScheduler::MakeImguiPass(const RenderTargetInfo& colourTarget)
 	{
 		R3_PROF_EVENT();
@@ -315,7 +334,7 @@ namespace R3
 
 		RenderTargetInfo mainColourLDR("MainColourLDR");		// LDR colour buffer after tonemapping
 		mainColourLDR.m_format = VK_FORMAT_R16G16B16A16_SFLOAT;	// still using floating point storage
-		mainColourLDR.m_usageFlags = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
+		mainColourLDR.m_usageFlags = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
 		m_allCurrentTargets.push_back(mainColourLDR);
 
 		RenderTargetInfo sunShadowMap("SunShadowDepth");		// Sun shadow map
@@ -340,20 +359,24 @@ namespace R3
 			graph.m_allPasses.push_back(MakeLightTileDebugPass(mainColour));
 		}
 		graph.m_allPasses.push_back(MakeTonemapToLDRPass(mainColour, mainColourLDR));	// HDR -> LDR
-		if (m_colourTargetDebuggerEnabled && m_colourDebugTargetName.length() > 0)
+		if (m_renderTargetDebuggerEnabled && m_debugRenderTargetName.length() > 0)
 		{
 			auto srcTarget = std::find_if(m_allCurrentTargets.begin(), m_allCurrentTargets.end(), [&](const RenderTargetInfo& info) {
-				return info.m_name == m_colourDebugTargetName;
+				return info.m_name == m_debugRenderTargetName;
 			});
 			if (srcTarget != m_allCurrentTargets.end())
 			{
-				graph.m_allPasses.push_back(MakeColourBlitToPass("Colour target debug", *srcTarget, swapchainImage));	// blit debug target -> swap
+				if (srcTarget->m_aspectFlags == VK_IMAGE_ASPECT_COLOR_BIT && srcTarget->m_name != mainColourLDR.m_name)
+				{
+					graph.m_allPasses.push_back(MakeColourBlitToPass("Colour target debug", *srcTarget, mainColourLDR));
+				}
+				else if (srcTarget->m_aspectFlags == VK_IMAGE_ASPECT_DEPTH_BIT)
+				{
+					graph.m_allPasses.push_back(MakeDepthTextureDebugPass(*srcTarget, mainColourLDR));
+				}
 			}
 		}
-		else
-		{
-			graph.m_allPasses.push_back(MakeColourBlitToPass("LDR to swap", mainColourLDR, swapchainImage));	// blit LDR -> swap
-		}
+		graph.m_allPasses.push_back(MakeColourBlitToPass("LDR to swap", mainColourLDR, swapchainImage));	// blit LDR -> swap
 		graph.m_allPasses.push_back(MakeImguiPass(swapchainImage));		// imgui to swap
 		
 		return true;
@@ -363,7 +386,7 @@ namespace R3
 	{
 		auto& debugMenu = MenuBar::MainMenu().GetSubmenu("Debug");
 		debugMenu.AddItem("Render target visualiser", [&]() {
-			m_colourTargetDebuggerEnabled = true;
+			m_renderTargetDebuggerEnabled = true;
 		});
 
 		auto& lights = debugMenu.GetSubmenu("Lights");
@@ -381,28 +404,26 @@ namespace R3
 		}
 		
 
-		if (m_colourTargetDebuggerEnabled)
+		if (m_renderTargetDebuggerEnabled)
 		{
-			ImGui::Begin("Render target visualiser", &m_colourTargetDebuggerEnabled);
-			if (ImGui::BeginCombo("Colour Target", m_colourDebugTargetName.c_str()))
+			ImGui::Begin("Render target visualiser", &m_renderTargetDebuggerEnabled);
+			if (ImGui::BeginCombo("Target", m_debugRenderTargetName.c_str()))
 			{
 				for (int target = 0; target < m_allCurrentTargets.size(); ++target)
 				{
-					if (m_allCurrentTargets[target].m_aspectFlags == VK_IMAGE_ASPECT_COLOR_BIT)
+					bool selected = (m_debugRenderTargetName == m_allCurrentTargets[target].m_name);
+					if (ImGui::Selectable(m_allCurrentTargets[target].m_name.c_str(), selected))
 					{
-						bool selected = (m_colourDebugTargetName == m_allCurrentTargets[target].m_name);
-						if (ImGui::Selectable(m_allCurrentTargets[target].m_name.c_str(), selected))
-						{
-							m_colourDebugTargetName = m_allCurrentTargets[target].m_name;
-						}
-						if (selected)
-						{
-							ImGui::SetItemDefaultFocus();	// ensure keyboard/controller navigation works
-						}
+						m_debugRenderTargetName = m_allCurrentTargets[target].m_name;
+					}
+					if (selected)
+					{
+						ImGui::SetItemDefaultFocus();	// ensure keyboard/controller navigation works
 					}
 				}
 				ImGui::EndCombo();
 			}
+			m_depthTextureVisualiser->ShowGui();
 			ImGui::End();
 		}
 		

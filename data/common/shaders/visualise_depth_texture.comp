@@ -1,0 +1,35 @@
+#version 460
+#extension GL_EXT_buffer_reference : require
+
+layout (local_size_x = 16, local_size_y = 16) in;
+
+layout (set = 0, binding = 0) uniform sampler2D inDepthBuffer;
+layout(set = 0, binding = 1) uniform writeonly image2D outputBuffer;
+
+layout(push_constant) uniform constants
+{
+	float m_minDepth;	// used to scale values
+	float m_maxDepth;
+	float m_scale;
+	vec2 m_offset;
+} PushConstants;
+
+void main() 
+{
+	ivec2 depthSize = textureSize(inDepthBuffer, 0);
+	ivec2 outSize = imageSize(outputBuffer);
+	ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
+	if(texelCoord.x < outSize.x && texelCoord.y < outSize.y)
+	{
+		vec3 outColour = vec3(0,0,0);
+		vec2 adjustedCoords = (PushConstants.m_offset * depthSize) + (texelCoord * PushConstants.m_scale);
+		if(adjustedCoords.x >= 0.0 && adjustedCoords.y >= 0.0 && adjustedCoords.x < depthSize.x && adjustedCoords.y < depthSize.y)
+		{
+			vec2 depthUV = vec2(adjustedCoords) / vec2(depthSize);
+			float depthValue = texture(inDepthBuffer, depthUV).r;		// 0 - 1, nonlinear encoded depth
+			depthValue = max(0.0, depthValue - PushConstants.m_minDepth) / (PushConstants.m_maxDepth - PushConstants.m_minDepth + 0.00001f);	// scale based on params
+			outColour = vec3(depthValue,depthValue,depthValue);
+		}
+		imageStore(outputBuffer, texelCoord, vec4(outColour,1.0));
+	}
+}
