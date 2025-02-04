@@ -161,7 +161,7 @@ namespace R3
 		const auto windowSize = renderSys->GetWindowExtents();
 		const float aspectRatio = windowSize.x / windowSize.y;
 		m_flyCam->ApplyToCamera(m_mainCamera);
-		m_mainCamera.SetProjection(70.0f, aspectRatio, 0.1f, 8000.0f);	// sensible-ish defaults?
+		m_mainCamera.SetProjection(70.0f, aspectRatio, 0.1f, 150.0f);	// sensible-ish defaults?
 	}
 
 	bool CameraSystem::Update()

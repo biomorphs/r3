@@ -52,19 +52,47 @@ namespace R3
 	glm::mat4 LightsSystem::GetSunShadowMatrix()
 	{
 		R3_PROF_EVENT();
-		static float s_sunDistance = 300.0f;	// todo, calculate proper params
-		static float s_sunOrthoScale = 100.0f;
-		static float s_sunShadowDistance = 1000.0f;
 
-		auto lights = GetSystem<LightsSystem>();
 		auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
+		Frustum mainFrustum(mainCamera.ProjectionMatrix() * mainCamera.ViewMatrix());
+
+		glm::vec3 frustumCenter(0, 0, 0);	// find center point of frustum
+		for (int frustumPoint = 0; frustumPoint < 8; ++frustumPoint)
+		{
+			const auto thisPoint = mainFrustum.GetPoints()[frustumPoint];
+			frustumCenter += thisPoint;
+		}
+		frustumCenter /= 8.0f;
+
+		// generate up + right basis vectors from sun direction
 		glm::vec3 sunDir = glm::normalize(m_sunDirection);
-		glm::vec3 sunPosition = mainCamera.Target() - (sunDir * s_sunDistance);
+		glm::vec3 right = glm::cross(glm::vec3(0, 1, 0), sunDir);
+		glm::vec3 up = glm::cross(sunDir, right);
 
-		const glm::vec3 up = sunDir.y == -1.0f ? glm::vec3(0.0f, 0.0f, 1.0f) : glm::vec3(0.0f, 1.0f, 0.0f);	// todo
-		const glm::mat4 lightProjection = glm::ortho(-s_sunOrthoScale, s_sunOrthoScale, -s_sunOrthoScale, s_sunOrthoScale, 0.01f, s_sunShadowDistance);
-		const glm::mat4 lightView = glm::lookAt(sunPosition, sunPosition + sunDir, up);
+		// create a view matrix centred on the frustum center, using light direction up vector
+		glm::mat4 lightView = glm::lookAt(frustumCenter, frustumCenter + sunDir, up);
 
+		float minX = FLT_MAX, maxX = -FLT_MAX;
+		float minY = FLT_MAX, maxY = -FLT_MAX;
+		float minZ = FLT_MAX, maxZ = -FLT_MAX;
+
+		// calculate ortho bounds from camera frustum points projected to light space
+		for (int frustumPoint = 0; frustumPoint < 8; ++frustumPoint)
+		{
+			const auto thisPoint = mainFrustum.GetPoints()[frustumPoint];
+			glm::vec4 pointLightSpace = lightView * glm::vec4(thisPoint, 1.0f);
+			minX = glm::min(pointLightSpace.x, minX);
+			maxX = glm::max(pointLightSpace.x, maxX);
+			minY = glm::min(pointLightSpace.y, minY);
+			maxY = glm::max(pointLightSpace.y, maxY);
+			minZ = glm::min(pointLightSpace.z, minZ);
+			maxZ = glm::max(pointLightSpace.z, maxZ);
+		}
+
+		float w = (maxX - minX) / 2.0f;
+		float h = (maxY - minY) / 2.0f;
+		float d = (maxZ - minZ) / 2.0f;
+		const glm::mat4 lightProjection = glm::ortho(-w, w, -h, h, -d, d);
 		return lightProjection * lightView;
 	}
 
