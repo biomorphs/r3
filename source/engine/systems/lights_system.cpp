@@ -98,6 +98,9 @@ namespace R3
 			boundsRadius = glm::max(boundsRadius, distance);
 		}
 
+		// stabilise bounds by rounding extents
+		boundsRadius = ceil(boundsRadius * 16.0f) / 16.0f;
+
 		// AABB centered around frustum mid point
 		glm::vec3 maxExtents(boundsRadius);
 		glm::vec3 minExtents = -maxExtents;
@@ -322,6 +325,13 @@ namespace R3
 			}
 			m_allShadowMaps = m_descriptorAllocator->Allocate(*ctx.m_device, m_shadowMapDescriptorLayout);
 		}
+		m_allPointlights.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+		m_allLightsData.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+	}
+
+	void LightsSystem::PrepareShadowMaps(class RenderPassContext& ctx)
+	{
+		R3_PROF_EVENT();
 
 		// update shadow map descriptor set before drawing anything
 		DescriptorSetWriter writer(m_allShadowMaps);
@@ -334,8 +344,5 @@ namespace R3
 			}
 		}
 		writer.FlushWrites();
-
-		m_allPointlights.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
-		m_allLightsData.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 	}
 }

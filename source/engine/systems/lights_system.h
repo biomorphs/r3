@@ -40,6 +40,7 @@ namespace R3
 		virtual void RegisterTickFns();
 		bool Init();
 		void PrepareForDrawing(class RenderPassContext& ctx);		// call this from render graph before accessing light data
+		void PrepareShadowMaps(class RenderPassContext& ctx);		// call this in a pass with shadow maps as inputs
 		VkDeviceAddress GetAllLightsDeviceAddress();				// get the address of m_allLightsData for this frame
 		glm::vec3 GetSkyColour();
 		glm::mat4 GetSunShadowMatrix(float minDepth, float maxDepth);	// light-space matrix for sun shadows

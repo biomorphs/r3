@@ -66,6 +66,7 @@ namespace R3
 			GetSystem<TextureSystem>()->ProcessLoadedTextures(ctx);
 			GetSystem<StaticMeshSystem>()->PrepareForRendering(ctx);
 			GetSystem<MeshRenderer>()->PrepareForRendering(ctx);
+			GetSystem<LightsSystem>()->PrepareForDrawing(ctx);
 		});
 		return preparePass;
 	}
@@ -187,7 +188,7 @@ namespace R3
 			auto inAlbedoAO = ctx.GetResolvedTarget(albedoBuffer);
 			auto outTarget = ctx.GetResolvedTarget(mainColour);
 			auto outSize = ctx.m_targets->GetTargetSize(outTarget->m_info);
-			GetSystem<LightsSystem>()->PrepareForDrawing(ctx);		// do this here since the shadow maps will resolve properly
+			GetSystem<LightsSystem>()->PrepareShadowMaps(ctx);		// do this here since so shadow maps will resolve properly
 			m_deferredLightingCompute->Run(*ctx.m_device, ctx.m_graphicsCmds, *inDepth, *inPosMetal, *inNormalRoughness, *inAlbedoAO, *outTarget, outSize, m_useTiledLighting);
 		});
 		return lightingPass;
