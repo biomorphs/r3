@@ -43,6 +43,7 @@ namespace R3
 		void AddLines(const PosColourVertex* vertices, int linecount, bool depthTestEnabled = false);
 		void AddAxisAtPoint(glm::vec3 position, float scale = 1.0f, glm::mat4 transform = glm::identity<glm::mat4>(), bool depthTestEnabled = false);
 		void AddFrustum(const Frustum& f, glm::vec4 colour, bool depthTestEnabled = false);
+		void AddFrustum(glm::mat4 projViewTransform, glm::vec4 colour, float nearPlaneDist = 0.0f, float farPlaneDist = 1.0f, bool depthTestEnabled = false);
 		void AddCubeWireframe(glm::mat4 transform, glm::vec4 colour, bool depthTestEnabled = false);
 		void AddSphere(glm::vec3 center, float radius, glm::vec4 colour, glm::mat4 transform = glm::identity<glm::mat4>(), bool depthTestEnabled = false);
 		void DrawAABB(glm::vec3 minbound, glm::vec3 maxbound, glm::mat4 transform, glm::vec4 colour, bool depthTestEnabled = false);

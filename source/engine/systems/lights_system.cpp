@@ -71,21 +71,38 @@ namespace R3
 		R3_PROF_EVENT();
 
 		auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
-		
-		// adjust near + far to match this cascade
-		float clipPlaneDistance = mainCamera.FarPlane() - mainCamera.NearPlane();
-		float newNearPlane = mainCamera.NearPlane() + (clipPlaneDistance * minDepth);
-		float newFarPlane = mainCamera.NearPlane() + (clipPlaneDistance * maxDepth);
-		mainCamera.SetClipPlanes(newNearPlane, newFarPlane);
+		const glm::mat4 inverseProjView = glm::inverse(mainCamera.ProjectionMatrix() * mainCamera.ViewMatrix());
 
-		Frustum mainFrustum(mainCamera.ProjectionMatrix() * mainCamera.ViewMatrix());
+		// build world-space frustum corners from camera projection + view
+		glm::vec3 frustumCorners[] = {
+			{ -1, -1, 0 },
+			{ 1, -1, 0 },
+			{ 1, 1, 0 },
+			{ -1, 1, 0 },
+			{ -1, -1, 1 },
+			{ 1, -1, 1 },
+			{ 1, 1, 1 },
+			{ -1, 1, 1 },
+		};
+		for (int i = 0; i < std::size(frustumCorners); ++i)
+		{
+			auto projected = inverseProjView * glm::vec4(frustumCorners[i], 1.0f);
+			frustumCorners[i] = glm::vec3(projected / projected.w);
+		}
+
+		// rescale based on min + max distance of this cascade
+		for (int i = 0; i < 4; ++i)
+		{
+			glm::vec3 nearToFar = frustumCorners[i + 4] - frustumCorners[i];
+			frustumCorners[i + 4] = frustumCorners[i] + nearToFar * maxDepth;
+			frustumCorners[i] = frustumCorners[i] + nearToFar * minDepth;
+		}
 		
-		// extract corners of frustum in world space + calculate center
+		// calculate center of frustum in world space
 		glm::vec3 frustumCenter(0, 0, 0);	// find center point of frustum
 		for (int frustumPoint = 0; frustumPoint < 8; ++frustumPoint)
 		{
-			const auto thisPoint = mainFrustum.GetPoints()[frustumPoint];
-			frustumCenter += thisPoint;
+			frustumCenter += frustumCorners[frustumPoint];
 		}
 		frustumCenter /= 8.0f;
 
@@ -93,7 +110,7 @@ namespace R3
 		float boundsRadius = 0.0f;
 		for (int frustumPoint = 0; frustumPoint < 8; ++frustumPoint)
 		{
-			const auto thisPoint = mainFrustum.GetPoints()[frustumPoint];
+			const auto thisPoint = frustumCorners[frustumPoint];
 			float distance = glm::length(thisPoint - frustumCenter);
 			boundsRadius = glm::max(boundsRadius, distance);
 		}
@@ -155,20 +172,17 @@ namespace R3
 	bool LightsSystem::CollectAllLights()
 	{
 		R3_PROF_EVENT();
-
 		m_allPointLightsCPU.clear();
-
 		auto activeWorld = Systems::GetSystem<Entities::EntitySystem>()->GetActiveWorld();
 		if (activeWorld == nullptr || !m_allPointlights.IsCreated() || !m_allLightsData.IsCreated())
 		{
 			return true;
 		}
-
 		if (++m_currentFrame >= c_framesInFlight)
 		{
 			m_currentFrame = 0;
 		}
-
+		// Collect global lighting data
 		AllLights thisFrameLightData;
 		auto collectSunSkySettings = [&](const Entities::EntityHandle& e, EnvironmentSettingsComponent& cmp) {
 			thisFrameLightData.m_sunColourAmbient = { cmp.m_sunColour, cmp.m_sunAmbientFactor };
@@ -180,6 +194,7 @@ namespace R3
 		m_skyColour = glm::vec3(thisFrameLightData.m_skyColourAmbient);	
 		m_sunDirection = glm::vec3(thisFrameLightData.m_sunDirectionBrightness);
 
+		// Collect + cull point lights
 		auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
 		Frustum viewFrustum(mainCamera.ProjectionMatrix() * mainCamera.ViewMatrix());
 		const uint32_t pointLightBaseOffset = m_currentFrame * c_maxLights;
@@ -201,7 +216,7 @@ namespace R3
 		};
 		Entities::Queries::ForEach<PointLightComponent, TransformComponent>(activeWorld, collectPointLights);
 
-		// write shadow metadata for this frame
+		// write shadow cascade metadata for this frame
 		float nearFarDistance = mainCamera.FarPlane() - mainCamera.NearPlane();
 		thisFrameLightData.m_shadows.m_sunShadowCascadeCount = (uint32_t)m_sunShadowCascades.size();
 		for (int i = 0; i < m_sunShadowCascades.size(); ++i)
@@ -210,6 +225,7 @@ namespace R3
 			thisFrameLightData.m_shadows.m_sunShadowCascadeDistances[i] = nearFarDistance * m_sunShadowCascades[i];	// pass view-space distance values
 		}
 
+		// Flush to gpu memory
 		if (m_allPointLightsCPU.size() > 0)
 		{
 			m_allPointlights.Write(pointLightBaseOffset, m_allPointLightsCPU.size(), m_allPointLightsCPU.data());
@@ -236,6 +252,8 @@ namespace R3
 			ImGui::Begin("Lights");
 			std::string txt = std::format("Active lights: {}", m_totalPointlightsThisFrame);
 			ImGui::Text(txt.c_str());
+			ImGui::Checkbox("Show Cascaded Shadow Frusta", &m_drawCascadeFrusta);
+			ImGui::Checkbox("Lock Debug Frusta", &m_lockDebugFrustums);
 			ImGui::End();
 		}
 		return true;
@@ -243,11 +261,11 @@ namespace R3
 
 	bool LightsSystem::DrawLightBounds()
 	{
+		auto& imRender = Systems::GetSystem<ImmediateRenderSystem>()->m_imRender;
 		if (m_drawBounds)
 		{
 			auto entities = Systems::GetSystem<Entities::EntitySystem>();
 			auto activeWorld = entities->GetActiveWorld();
-			auto& imRender = Systems::GetSystem<ImmediateRenderSystem>()->m_imRender;
 			auto drawLights = [&](const Entities::EntityHandle& e, PointLightComponent& pl, TransformComponent& t) {
 				imRender->AddSphere(glm::vec3(t.GetWorldspaceInterpolated(e, *activeWorld)[3]), pl.m_distance, { pl.m_colour, pl.m_enabled ? 1.0f : 0.25f });
 				return true;
@@ -257,6 +275,41 @@ namespace R3
 				Entities::Queries::ForEach<PointLightComponent, TransformComponent>(activeWorld, drawLights);
 			}
 		}
+
+		if (m_drawCascadeFrusta)
+		{
+			// keep list around in case we lock the frustums
+			const int cascades = (int)m_sunShadowCascades.size();
+			static Camera mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
+			static glm::mat4 cascadeViewProj[4];
+			if (!m_lockDebugFrustums)
+			{
+				for (int c = 0; c < cascades && c < 4; ++c)
+				{
+					cascadeViewProj[c] = GetShadowCascadeMatrix(c);
+				}
+				mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
+			}
+
+			glm::vec4 cascadeColours[4] = {
+				{ 0,1,0,1 },
+				{ 1,1,0,1 },
+				{ 1,0,0,1 },
+				{ 1,0,1,1 }
+			};
+			for (int c = 0; c < cascades; ++c)
+			{
+				float minDepth = m_sunShadowCascades[c];
+				float maxDepth = c + 1 < cascades ? m_sunShadowCascades[c + 1] : 1.0f;
+
+				// camera frustum
+				imRender->AddFrustum(mainCamera.ProjectionMatrix() * mainCamera.ViewMatrix(), cascadeColours[c] * glm::vec4(1,1,1,0.25f), minDepth, maxDepth);
+
+				// cascade frustum
+				imRender->AddFrustum(cascadeViewProj[c], cascadeColours[c]);
+			}
+		}
+
 		return true;
 	}
 

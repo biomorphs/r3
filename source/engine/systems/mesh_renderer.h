@@ -101,6 +101,7 @@ namespace R3
 		uint64_t m_onModelDataLoadedCbToken = -1;	// trigger static scene rebuild when a model loads
 
 		bool m_enableComputeCulling = true;		// run instance culling in compute
+		bool m_enableLightCascadeCulling = true;	// run instance culling on shadow cascade casters
 		bool m_showGui = false;
 		std::atomic<bool> m_staticSceneRebuildRequested = false;		// trigger a scene rebuild. kept separate from m_rebuildingStaticScene so it can be called from anywhere
 		bool m_rebuildingStaticScene = false;							// a scene rebuild is in progress this frame

@@ -758,6 +758,7 @@ namespace R3
 			VkPhysicalDeviceFeatures requiredFeatures{};
 			requiredFeatures.multiDrawIndirect = true;
 			requiredFeatures.samplerAnisotropy = true;
+			requiredFeatures.depthClamp = true;		// enable depth clamping, required for shadow map clipping
 
 			// Create the device
 			VkDeviceCreateInfo deviceCreate = { 0 };

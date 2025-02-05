@@ -59,6 +59,8 @@ namespace R3
 		bool DrawLightBounds();
 		bool m_showGui = false;
 		bool m_drawBounds = false;
+		bool m_drawCascadeFrusta = false;
+		bool m_lockDebugFrustums = false;
 
 		std::vector<float> m_sunShadowCascades;	// z-distance for each cascade frustum (0-1)
 

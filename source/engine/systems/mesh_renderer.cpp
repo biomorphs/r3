@@ -112,6 +112,7 @@ namespace R3
 		{
 			ImGui::Begin("Static Mesh Renderer");
 			ImGui::Checkbox("Enable Compute Culling", &m_enableComputeCulling);
+			ImGui::Checkbox("Enable Shadow Caster Culling", &m_enableLightCascadeCulling);
 			if (ImGui::Button("Rebuild statics"))
 			{
 				SetStaticsDirty();
@@ -246,6 +247,13 @@ namespace R3
 		pb.m_inputAssemblyState = VulkanHelpers::CreatePipelineInputAssemblyState(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 		pb.m_viewportState = VulkanHelpers::CreatePipelineDynamicViewportState();
 		pb.m_rasterState = VulkanHelpers::CreatePipelineRasterState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
+
+		pb.m_rasterState.depthClampEnable = VK_TRUE;	// disable depth clipping, instead clamp depth values to near/far plane
+		VkPipelineRasterizationDepthClipStateCreateInfoEXT disableDepthClipping = { 0 };
+		disableDepthClipping.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_DEPTH_CLIP_STATE_CREATE_INFO_EXT;
+		disableDepthClipping.depthClipEnable = false;
+		pb.m_rasterState.pNext = &disableDepthClipping;
+
 		pb.m_multisamplingState = VulkanHelpers::CreatePipelineMultiSampleState_SingleSample();
 		VkPipelineDepthStencilStateCreateInfo depthStencilState = { 0 };	// Enable depth read/write
 		depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -353,8 +361,11 @@ namespace R3
 			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, mainFrustum, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticTransparents, m_staticTransparentDrawData);
 			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, mainFrustum, m_dynamicMeshInstances.GetBufferDeviceAddress(), m_dynamicOpaques, m_dynamicOpaqueDrawData);
 			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, mainFrustum, m_dynamicMeshInstances.GetBufferDeviceAddress(), m_dynamicTransparents, m_dynamicTransparentDrawData);
-			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, sunShadowFrustum, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticOpaques, m_staticSunShaderCastersDrawData);
-			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, sunShadowFrustum, m_dynamicMeshInstances.GetBufferDeviceAddress(), m_dynamicOpaques, m_dynamicSunShaderCastersDrawData);
+			if (m_enableLightCascadeCulling)
+			{
+				PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, sunShadowFrustum, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticOpaques, m_staticSunShaderCastersDrawData);
+				PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, sunShadowFrustum, m_dynamicMeshInstances.GetBufferDeviceAddress(), m_dynamicOpaques, m_dynamicSunShaderCastersDrawData);
+			}
 			m_frameStats.m_prepareBucketsEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		}
 	}
@@ -832,19 +843,20 @@ namespace R3
 		m_frameStats.m_totalStaticInstances = (uint32_t)(m_staticOpaques.m_partInstances.size() + m_staticTransparents.m_partInstances.size());
 		m_frameStats.m_totalDynamicInstances = (uint32_t)(m_dynamicOpaques.m_partInstances.size() + m_dynamicTransparents.m_partInstances.size());
 
+		m_frameStats.m_prepareBucketsStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		if (!m_enableComputeCulling)		// do nothing here, gpu culling happens later
 		{
-			m_frameStats.m_prepareBucketsStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
-			{
-				PrepareDrawBucket(m_staticOpaques, m_staticOpaqueDrawData);
-				PrepareDrawBucket(m_staticTransparents, m_staticTransparentDrawData);
-				PrepareDrawBucket(m_dynamicOpaques, m_dynamicOpaqueDrawData);
-				PrepareDrawBucket(m_dynamicTransparents, m_dynamicTransparentDrawData);
-				PrepareDrawBucket(m_staticOpaques, m_staticSunShaderCastersDrawData);
-				PrepareDrawBucket(m_dynamicOpaques, m_dynamicSunShaderCastersDrawData);
-			}
-			m_frameStats.m_prepareBucketsEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
+			PrepareDrawBucket(m_staticOpaques, m_staticOpaqueDrawData);
+			PrepareDrawBucket(m_staticTransparents, m_staticTransparentDrawData);
+			PrepareDrawBucket(m_dynamicOpaques, m_dynamicOpaqueDrawData);
+			PrepareDrawBucket(m_dynamicTransparents, m_dynamicTransparentDrawData);
 		}
+		if(!m_enableLightCascadeCulling)
+		{
+			PrepareDrawBucket(m_staticOpaques, m_staticSunShaderCastersDrawData);
+			PrepareDrawBucket(m_dynamicOpaques, m_dynamicSunShaderCastersDrawData);
+		}
+		m_frameStats.m_prepareBucketsEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 
 		return true;
 	}

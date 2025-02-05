@@ -80,6 +80,48 @@ namespace R3
 		AddLines(vertices, 3, depthTestEnabled);
 	}
 
+	void ImmediateRenderer::AddFrustum(glm::mat4 projViewTransform, glm::vec4 colour, float nearPlaneDist, float farPlaneDist, bool depthTestEnabled)
+	{
+		// build world-space frustum corners from projection + view
+		glm::vec3 frustumCorners[] = {
+			{ -1, -1, 0 },
+			{ 1, -1, 0 },
+			{ 1, 1, 0 },
+			{ -1, 1, 0 },
+			{ -1, -1, 1 },
+			{ 1, -1, 1 },
+			{ 1, 1, 1 },
+			{ -1, 1, 1 },
+		};
+		const glm::mat4 inverseProjView = glm::inverse(projViewTransform);
+		for (int i = 0; i < std::size(frustumCorners); ++i)
+		{
+			auto projected = inverseProjView * glm::vec4(frustumCorners[i], 1.0f);
+			frustumCorners[i] = glm::vec3(projected / projected.w);
+		}
+
+		// rescale based on near + far distances 
+		for (int i = 0; i < 4; ++i)
+		{
+			glm::vec3 nearToFar = frustumCorners[i + 4] - frustumCorners[i];
+			frustumCorners[i + 4] = frustumCorners[i] + nearToFar * farPlaneDist;
+			frustumCorners[i] = frustumCorners[i] + nearToFar * nearPlaneDist;
+		}
+
+		AddLine(frustumCorners[0], frustumCorners[1], colour, depthTestEnabled);
+		AddLine(frustumCorners[1], frustumCorners[2], colour, depthTestEnabled);
+		AddLine(frustumCorners[2], frustumCorners[3], colour, depthTestEnabled);
+		AddLine(frustumCorners[3], frustumCorners[0], colour, depthTestEnabled);
+		AddLine(frustumCorners[4], frustumCorners[5], colour, depthTestEnabled);
+		AddLine(frustumCorners[5], frustumCorners[6], colour, depthTestEnabled);
+		AddLine(frustumCorners[6], frustumCorners[7], colour, depthTestEnabled);
+		AddLine(frustumCorners[7], frustumCorners[4], colour, depthTestEnabled);
+		AddLine(frustumCorners[0], frustumCorners[4], colour, depthTestEnabled);
+		AddLine(frustumCorners[1], frustumCorners[5], colour, depthTestEnabled);
+		AddLine(frustumCorners[2], frustumCorners[6], colour, depthTestEnabled);
+		AddLine(frustumCorners[3], frustumCorners[7], colour, depthTestEnabled);
+	}
+
 	void ImmediateRenderer::AddFrustum(const Frustum& f, glm::vec4 colour, bool depthTestEnabled)
 	{
 		const auto& p = f.GetPoints();
