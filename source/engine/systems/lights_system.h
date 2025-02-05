@@ -19,16 +19,17 @@ namespace R3
 		glm::mat4 m_sunShadowCascadeMatrices[c_maxShadowCascades];	// world->light transform for each cascade
 		float m_sunShadowCascadeDistances[c_maxShadowCascades] = { 0 };	// distance from near plane for each cascade
 		uint32_t m_sunShadowCascadeCount = 0;						// num cascades
+		uint32_t m_padding[3];
 	};
 
 	struct AllLights					// uploaded to gpu every frame
 	{
+		ShadowMetadata m_shadows;						// shadow map data
 		glm::vec4 m_sunDirectionBrightness = { 0,-1,0,0 };
 		glm::vec4 m_sunColourAmbient = { 0,0,0,0 };		// sun colour + ambient factor
 		glm::vec4 m_skyColourAmbient = { 0,0,0,0 };		// sky colour + ambient factor
 		VkDeviceAddress m_pointLightsBufferAddress = 0;		// address of the point light buffer
 		uint32_t m_pointlightCount = 0;						// total point lights this frame
-		ShadowMetadata m_shadows;						// shadow map data
 	};
 
 	class DescriptorSetSimpleAllocator;

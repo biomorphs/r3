@@ -48,9 +48,10 @@ namespace R3
 	{
 		// Cascades defined as a fixed-distance along view frustum z axis
 		m_sunShadowCascades.push_back(0.0f);
-		m_sunShadowCascades.push_back(0.1f);
-		m_sunShadowCascades.push_back(0.5f);
-		assert(m_sunShadowCascades.size() < ShadowMetadata::c_maxShadowCascades);
+		m_sunShadowCascades.push_back(0.15f);
+		m_sunShadowCascades.push_back(0.3f);
+		m_sunShadowCascades.push_back(0.6f);
+		assert(m_sunShadowCascades.size() <= ShadowMetadata::c_maxShadowCascades);
 
 		return true;
 	}
@@ -70,14 +71,16 @@ namespace R3
 		R3_PROF_EVENT();
 
 		auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
-
-		// adjust camera near + far plane based on min + max depth multipliers
+		
+		// adjust near + far to match this cascade
 		float clipPlaneDistance = mainCamera.FarPlane() - mainCamera.NearPlane();
 		float newNearPlane = mainCamera.NearPlane() + (clipPlaneDistance * minDepth);
 		float newFarPlane = mainCamera.NearPlane() + (clipPlaneDistance * maxDepth);
 		mainCamera.SetClipPlanes(newNearPlane, newFarPlane);
 
 		Frustum mainFrustum(mainCamera.ProjectionMatrix() * mainCamera.ViewMatrix());
+		
+		// extract corners of frustum in world space + calculate center
 		glm::vec3 frustumCenter(0, 0, 0);	// find center point of frustum
 		for (int frustumPoint = 0; frustumPoint < 8; ++frustumPoint)
 		{
@@ -86,35 +89,26 @@ namespace R3
 		}
 		frustumCenter /= 8.0f;
 
-		// generate up + right basis vectors from sun direction
-		glm::vec3 sunDir = glm::normalize(m_sunDirection);
-		glm::vec3 right = glm::cross(glm::vec3(0, 1, 0), sunDir);
-		glm::vec3 up = glm::cross(sunDir, right);
-
-		// create a view matrix centred on the frustum center, using light direction up vector
-		glm::mat4 lightView = glm::lookAt(frustumCenter, frustumCenter + sunDir, up);
-
-		float minX = FLT_MAX, maxX = -FLT_MAX;
-		float minY = FLT_MAX, maxY = -FLT_MAX;
-		float minZ = FLT_MAX, maxZ = -FLT_MAX;
-
-		// calculate ortho bounds from camera frustum points projected to light space
+		// calculate distance of each corner from frustum center to get bounds of projection
+		float boundsRadius = 0.0f;
 		for (int frustumPoint = 0; frustumPoint < 8; ++frustumPoint)
 		{
 			const auto thisPoint = mainFrustum.GetPoints()[frustumPoint];
-			glm::vec4 pointLightSpace = lightView * glm::vec4(thisPoint, 1.0f);
-			minX = glm::min(pointLightSpace.x, minX);
-			maxX = glm::max(pointLightSpace.x, maxX);
-			minY = glm::min(pointLightSpace.y, minY);
-			maxY = glm::max(pointLightSpace.y, maxY);
-			minZ = glm::min(pointLightSpace.z, minZ);
-			maxZ = glm::max(pointLightSpace.z, maxZ);
+			float distance = glm::length(thisPoint - frustumCenter);
+			boundsRadius = glm::max(boundsRadius, distance);
 		}
 
-		float w = (maxX - minX) / 2.0f;
-		float h = (maxY - minY) / 2.0f;
-		float d = (maxZ - minZ) / 2.0f;
-		const glm::mat4 lightProjection = glm::ortho(-w, w, -h, h, -d, d);
+		// AABB centered around frustum mid point
+		glm::vec3 maxExtents(boundsRadius);
+		glm::vec3 minExtents = -maxExtents;
+
+		// build view matrix centered around frustum center point
+		glm::vec3 sunDir = glm::normalize(m_sunDirection);
+		glm::mat4 lightView = glm::lookAt(frustumCenter - sunDir * maxExtents.z, frustumCenter, { 0,1,0 });
+
+		// build projection from bounds
+		glm::mat4 lightProjection = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.0f, maxExtents.z - minExtents.z);
+
 		return lightProjection * lightView;
 	}
 

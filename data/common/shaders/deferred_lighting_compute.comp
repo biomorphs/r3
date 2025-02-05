@@ -35,17 +35,14 @@ float CalculateSunShadow(vec3 worldPos)
 	vec3 viewSpacePosition = vec3(PushConstants.m_worldToViewTransform * vec4(worldPos,1.0));
 	float viewDepth = -viewSpacePosition.z;
 	int cascadeCount = int(PushConstants.m_allLights.data[0].m_shadows.m_sunShadowCascadeCount);
-	float thisCascadeDistance = 0.0;
-	int cascadeToSample = 0;
-	for(int i=0;i<cascadeCount-1;i++)
+	int cascadeToSample = -1;
+	for(int i=0;i<cascadeCount;i++)
 	{
-		float nextCascadeDistance = PushConstants.m_allLights.data[0].m_shadows.m_sunShadowCascadeDistances[i + 1];
-		if(viewDepth >= thisCascadeDistance && viewDepth < nextCascadeDistance)
+		float thisCascadeDistance = PushConstants.m_allLights.data[0].m_shadows.m_sunShadowCascadeDistances[i];
+		if(viewDepth > thisCascadeDistance)
 		{
 			cascadeToSample = i;
-			break;
 		}
-		thisCascadeDistance = nextCascadeDistance;
 	}
 	
 	if(cascadeToSample != -1)
