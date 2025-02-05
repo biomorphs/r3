@@ -78,11 +78,11 @@ namespace R3
 		const float timeDeltaF = (float)timeDelta;
 		float forwardAmount = 0.0f;
 		float strafeAmount = 0.0f;
-		float speedMul = 1.0f;
+		float speedMul = m_forwardSpeed;
 		m_mouseLookActive = kbState.m_keyPressed[KEY_LSHIFT];
 		if (kbState.m_keyPressed[KEY_LSHIFT] || kbState.m_keyPressed[KEY_RSHIFT])
 		{ 
-			speedMul = 10.0f;
+			speedMul = m_speedMultiplier;
 		}
 		if (kbState.m_keyPressed[KEY_w])
 		{
