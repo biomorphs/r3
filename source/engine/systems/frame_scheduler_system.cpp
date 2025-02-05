@@ -66,7 +66,6 @@ namespace R3
 			GetSystem<TextureSystem>()->ProcessLoadedTextures(ctx);
 			GetSystem<StaticMeshSystem>()->PrepareForRendering(ctx);
 			GetSystem<MeshRenderer>()->PrepareForRendering(ctx);
-			GetSystem<LightsSystem>()->PrepareForDrawing(ctx);
 		});
 		return preparePass;
 	}
@@ -108,6 +107,28 @@ namespace R3
 		return lightTilingPass;
 	}
 
+	std::unique_ptr<DrawPass> FrameScheduler::MakeShadowCascadePass(const RenderTargetInfo& cascadeTarget, int cascadeIndex)
+	{
+		R3_PROF_EVENT();
+		auto cascadePass = std::make_unique<DrawPass>();
+		cascadePass->m_name = std::format("Shadow cascade {}", cascadeIndex);
+		cascadePass->m_depthAttachment = { cascadeTarget, DrawPass::AttachmentLoadOp::Clear };
+		cascadePass->m_getExtentsFn = [cascadeTarget]() -> glm::vec2 {
+			return cascadeTarget.m_size;
+		};
+		cascadePass->m_getClearDepthFn = []() -> float {
+			return 1.0f;
+		};
+
+		glm::mat4 cascadeMatrix = GetSystem<LightsSystem>()->GetShadowCascadeMatrix(cascadeIndex);
+		cascadePass->m_onDraw.AddCallback([cascadeTarget, cascadeMatrix](RenderPassContext& ctx) {
+			R3_PROF_GPU_EVENT("Shadow Cascade");
+			GetSystem<MeshRenderer>()->OnShadowMapDraw(ctx, cascadeTarget, cascadeMatrix);
+		});
+
+		return cascadePass;
+	}
+
 	std::unique_ptr<ComputeDrawPass> FrameScheduler::MakeCullingPass()
 	{
 		auto cullingPass = std::make_unique<ComputeDrawPass>();
@@ -116,26 +137,6 @@ namespace R3
 			GetSystem<MeshRenderer>()->CullInstancesOnGpu(ctx);
 		});
 		return cullingPass;
-	}
-
-	std::unique_ptr<DrawPass> FrameScheduler::MakeSunShadowPass(const RenderTargetInfo& sunShadowMap)
-	{
-		R3_PROF_EVENT();
-		auto sunShadowPass = std::make_unique<DrawPass>();
-		sunShadowPass->m_name = "Sun Shadows";
-		sunShadowPass->m_depthAttachment = { sunShadowMap, DrawPass::AttachmentLoadOp::Clear };
-		sunShadowPass->m_getExtentsFn = [sunShadowMap]() -> glm::vec2 {
-			return sunShadowMap.m_size;
-		};
-		sunShadowPass->m_getClearDepthFn = []() -> float {
-			return 1.0f;
-		};
-		sunShadowPass->m_onDraw.AddCallback([](RenderPassContext& ctx) {
-			R3_PROF_GPU_EVENT("Sun Shadows");
-			GetSystem<MeshRenderer>()->OnSunShadowPassDraw(ctx);
-		});
-
-		return sunShadowPass;
 	}
 
 	std::unique_ptr<DrawPass> FrameScheduler::MakeGBufferPass(const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainDepth)
@@ -161,7 +162,7 @@ namespace R3
 		return gbufferPass;
 	}
 
-	std::unique_ptr<ComputeDrawPass> FrameScheduler::MakeDeferredLightingPass(const RenderTargetInfo& mainDepth, const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainColour, const RenderTargetInfo& sunShadows)
+	std::unique_ptr<ComputeDrawPass> FrameScheduler::MakeDeferredLightingPass(const RenderTargetInfo& mainDepth, const RenderTargetInfo& positionBuffer, const RenderTargetInfo& normalBuffer, const RenderTargetInfo& albedoBuffer, const RenderTargetInfo& mainColour)
 	{
 		R3_PROF_EVENT();
 		auto lightingPass = std::make_unique<ComputeDrawPass>();
@@ -170,17 +171,24 @@ namespace R3
 		lightingPass->m_inputColourAttachments.push_back(normalBuffer);
 		lightingPass->m_inputColourAttachments.push_back(albedoBuffer);
 		lightingPass->m_inputColourAttachments.push_back(mainDepth);
-		lightingPass->m_inputColourAttachments.push_back(sunShadows);
+
+		// add all shadow cascades as input attachments
+		auto lights = GetSystem<LightsSystem>();
+		for (int i = 0; i < lights->GetShadowCascadeCount(); ++i)
+		{
+			lightingPass->m_inputColourAttachments.push_back(lights->GetShadowCascadeTargetInfo(i));
+		}
+
 		lightingPass->m_outputColourAttachments.push_back(mainColour);	// output to HDR colour
-		lightingPass->m_onRun.AddCallback([this, mainDepth, mainColour, positionBuffer, normalBuffer, albedoBuffer, sunShadows](RenderPassContext& ctx) {
+		lightingPass->m_onRun.AddCallback([this, mainDepth, mainColour, positionBuffer, normalBuffer, albedoBuffer](RenderPassContext& ctx) {
 			auto inDepth = ctx.GetResolvedTarget(mainDepth);
 			auto inPosMetal = ctx.GetResolvedTarget(positionBuffer);
 			auto inNormalRoughness = ctx.GetResolvedTarget(normalBuffer);
 			auto inAlbedoAO = ctx.GetResolvedTarget(albedoBuffer);
-			auto inSunShadows = ctx.GetResolvedTarget(sunShadows);
 			auto outTarget = ctx.GetResolvedTarget(mainColour);
 			auto outSize = ctx.m_targets->GetTargetSize(outTarget->m_info);
-			m_deferredLightingCompute->Run(*ctx.m_device, ctx.m_graphicsCmds, *inDepth, *inPosMetal, *inNormalRoughness, *inAlbedoAO, *inSunShadows, *outTarget, outSize, m_useTiledLighting);
+			GetSystem<LightsSystem>()->PrepareForDrawing(ctx);		// do this here since the shadow maps will resolve properly
+			m_deferredLightingCompute->Run(*ctx.m_device, ctx.m_graphicsCmds, *inDepth, *inPosMetal, *inNormalRoughness, *inAlbedoAO, *outTarget, outSize, m_useTiledLighting);
 		});
 		return lightingPass;
 	}
@@ -337,22 +345,23 @@ namespace R3
 		mainColourLDR.m_usageFlags = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
 		m_allCurrentTargets.push_back(mainColourLDR);
 
-		RenderTargetInfo sunShadowMap("SunShadowDepth");		// Sun shadow map
-		sunShadowMap.m_format = VK_FORMAT_D32_SFLOAT;			// may be overkill
-		sunShadowMap.m_usageFlags = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-		sunShadowMap.m_aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
-		sunShadowMap.m_sizeType = RenderTargetInfo::SizeType::Fixed;
-		sunShadowMap.m_size = { 2048, 2048 };
-		m_allCurrentTargets.push_back(sunShadowMap);
-
 		auto& graph = render->GetRenderGraph();
 		graph.m_allPasses.clear();
 		graph.m_allPasses.push_back(MakeRenderPreparePass());
 		graph.m_allPasses.push_back(MakeCullingPass());
-		graph.m_allPasses.push_back(MakeSunShadowPass(sunShadowMap));
+
+		// shadow cascade passes
+		auto lights = GetSystem<LightsSystem>();
+		const int cascadeCount = lights->GetShadowCascadeCount();
+		for (int i = 0; i < cascadeCount; ++i)
+		{
+			auto cascadeTarget = lights->GetShadowCascadeTargetInfo(i);
+			m_allCurrentTargets.push_back(cascadeTarget);
+			graph.m_allPasses.push_back(MakeShadowCascadePass(cascadeTarget, i));
+		}
 		graph.m_allPasses.push_back(MakeGBufferPass(gBufferPosition, gBufferNormal, gBufferAlbedo, mainDepth));	// write gbuffer
 		graph.m_allPasses.push_back(MakeLightTilingPass(mainDepth));											// light tile determination
-		graph.m_allPasses.push_back(MakeDeferredLightingPass(mainDepth, gBufferPosition, gBufferNormal, gBufferAlbedo, mainColour, sunShadowMap));	// deferred lighting
+		graph.m_allPasses.push_back(MakeDeferredLightingPass(mainDepth, gBufferPosition, gBufferNormal, gBufferAlbedo, mainColour));	// deferred lighting
 		graph.m_allPasses.push_back(MakeForwardPass(mainColour, mainDepth));	// forward render to main colour
 		if (m_useTiledLighting && m_showLightTilesDebug)
 		{

@@ -8,6 +8,13 @@ layout(buffer_reference, std430) readonly buffer PointlightBuffer {
 	Pointlight data[];
 };
 
+struct ShadowMetadata				// all info about shadow maps
+{
+	mat4 m_sunShadowCascadeMatrices[4];			// world->light transform for each cascade
+	float m_sunShadowCascadeDistances[4];		// view-space distance from near plane for each cascade
+	uint m_sunShadowCascadeCount;
+};
+
 struct LightsData
 {
 	vec4 m_sunDirectionBrightness;
@@ -15,6 +22,7 @@ struct LightsData
 	vec4 m_skyColourAmbient;
 	PointlightBuffer m_allPointlights;
 	uint m_pointlightCount;	
+	ShadowMetadata m_shadows;
 };
 
 layout(buffer_reference, std430) readonly buffer LightsBuffer { 

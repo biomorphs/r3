@@ -12,7 +12,7 @@ namespace R3
 	// Pass lighting data buffer address via push constants
 	struct PushConstants
 	{
-		glm::mat4 m_sunShadowProjection;	// used to calculate shadow map UVs
+		glm::mat4 m_worldToViewTransform;		// used to calculate view-space depth for choosing cascades
 		glm::vec4 m_cameraWorldSpacePosition;	// used to calculate view direction
 		VkDeviceAddress m_lightingData;			// address of light data from lights system
 		VkDeviceAddress m_tileMetadata;			// built by TiledLightsCompute
@@ -23,7 +23,6 @@ namespace R3
 		RenderTarget& positionMetalTarget,
 		RenderTarget& normalRoughnessTarget,
 		RenderTarget& albedoAOTarget,
-		RenderTarget& sunShadowMap,
 		RenderTarget& outputTarget, glm::vec2 outputDimensions, bool useTiledLighting)
 	{
 		R3_PROF_EVENT();
@@ -37,19 +36,19 @@ namespace R3
 			}
 		}
 
-		// Write a descriptor set each frame
+		// Write a descriptor set each frame containing the gbuffer + output textures
 		DescriptorSetWriter writer(m_descriptorSets[m_currentSet]);
 		writer.WriteStorageImage(0, positionMetalTarget.m_view, positionMetalTarget.m_lastLayout);
 		writer.WriteStorageImage(1, normalRoughnessTarget.m_view, normalRoughnessTarget.m_lastLayout);
 		writer.WriteStorageImage(2, albedoAOTarget.m_view, albedoAOTarget.m_lastLayout);
 		writer.WriteImage(3, 0, depthBuffer.m_view, m_depthSampler, depthBuffer.m_lastLayout);
-		writer.WriteImage(4, 0, sunShadowMap.m_view, m_shadowSampler, sunShadowMap.m_lastLayout);
-		writer.WriteStorageImage(5, outputTarget.m_view, outputTarget.m_lastLayout);
+		writer.WriteStorageImage(4, outputTarget.m_view, outputTarget.m_lastLayout);
 		writer.FlushWrites();
 
+		auto mainCamera = Systems::GetSystem<CameraSystem>()->GetMainCamera();
 		PushConstants pc;
-		pc.m_sunShadowProjection = Systems::GetSystem<LightsSystem>()->GetSunShadowMatrix();
-		pc.m_cameraWorldSpacePosition = glm::vec4(Systems::GetSystem<CameraSystem>()->GetMainCamera().Position(), 1);
+		pc.m_worldToViewTransform = mainCamera.ViewMatrix();
+		pc.m_cameraWorldSpacePosition = glm::vec4(mainCamera.Position(), 1);
 		pc.m_lightingData = Systems::GetSystem<LightsSystem>()->GetAllLightsDeviceAddress();
 		pc.m_tileMetadata = useTiledLighting ? m_lightTileMetadata : 0;
 
@@ -62,6 +61,8 @@ namespace R3
 			vkCmdBindPipeline(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelineAllLights);
 		}
 		vkCmdBindDescriptorSets(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelineLayout, 0, 1, &m_descriptorSets[m_currentSet], 0, nullptr);
+		auto shadowMapsDescriptorSet = Systems::GetSystem<LightsSystem>()->GetAllShadowMapsSet();
+		vkCmdBindDescriptorSets(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelineLayout, 1, 1, &shadowMapsDescriptorSet, 0, nullptr);
 		vkCmdPushConstants(cmds, m_pipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(pc), &pc);
 		vkCmdDispatch(cmds, (uint32_t)glm::ceil(outputDimensions.x / 16.0f), (uint32_t)glm::ceil(outputDimensions.y / 16.0f), 1);
 		if (++m_currentSet >= c_maxSets)
@@ -76,7 +77,7 @@ namespace R3
 		m_descriptorAllocator = std::make_unique<DescriptorSetSimpleAllocator>();
 		std::vector<VkDescriptorPoolSize> poolSizes = {
 			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 4 * c_maxSets },					// input + output images
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 * c_maxSets }			// depth buffer
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, c_maxSets }			// depth buffer
 		};
 		if (!m_descriptorAllocator->Initialise(d, c_maxSets, poolSizes))
 		{
@@ -89,8 +90,7 @@ namespace R3
 		layoutBuilder.AddBinding(1, 1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);		// normal + roughness
 		layoutBuilder.AddBinding(2, 1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);		// albedo + AO
 		layoutBuilder.AddBinding(3, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);		// depth buffer texture
-		layoutBuilder.AddBinding(4, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);		// sun shadow map
-		layoutBuilder.AddBinding(5, 1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);		// output image
+		layoutBuilder.AddBinding(4, 1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);		// output image
 		m_descriptorLayout = layoutBuilder.Create(d, false);					// dont need bindless here
 		if (m_descriptorLayout == nullptr)
 		{
@@ -155,10 +155,12 @@ namespace R3
 		constantRange.size = sizeof(PushConstants);
 		constantRange.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
 
+		VkDescriptorSetLayout setLayouts[] = { m_descriptorLayout, Systems::GetSystem<LightsSystem>()->GetShadowMapDescriptorLayout() };
+
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo = { 0 };
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.pSetLayouts = &m_descriptorLayout;
-		pipelineLayoutInfo.setLayoutCount = 1;
+		pipelineLayoutInfo.pSetLayouts = setLayouts;
+		pipelineLayoutInfo.setLayoutCount = std::size(setLayouts);
 		pipelineLayoutInfo.pushConstantRangeCount = 1;
 		pipelineLayoutInfo.pPushConstantRanges = &constantRange;
 		if (!VulkanHelpers::CheckResult(vkCreatePipelineLayout(d.GetVkDevice(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout)))

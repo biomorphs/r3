@@ -346,7 +346,7 @@ namespace R3
 		if (m_enableComputeCulling)
 		{
 			Frustum mainFrustum = GetMainCameraFrustum();
-			Frustum sunShadowFrustum(GetSystem<LightsSystem>()->GetSunShadowMatrix());
+			Frustum sunShadowFrustum(GetSystem<LightsSystem>()->GetSunShadowMatrix(0.0f, 1.0f));
 
 			m_frameStats.m_prepareBucketsStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, mainFrustum, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticOpaques, m_staticOpaqueDrawData);
@@ -492,17 +492,21 @@ namespace R3
 		m_frameStats.m_writeGBufferCmdsEndTime = time->GetElapsedTimeReal();
 	}
 
-	void MeshRenderer::OnSunShadowPassDraw(RenderPassContext& ctx)
+	void MeshRenderer::OnShadowMapDraw(class RenderPassContext& ctx, const RenderTargetInfo& target, glm::mat4 shadowMatrix)
 	{
 		R3_PROF_EVENT();
 
-		if (m_shadowPipeline == VK_NULL_HANDLE)
+		auto actualTarget = ctx.GetResolvedTarget(target);
+		if (actualTarget == nullptr)
 		{
-			auto depthTarget = ctx.GetResolvedTarget("SunShadowDepth");
-			if (!CreateShadowPipelineData(*ctx.m_device, depthTarget->m_info.m_format))
-			{
-				LogError("Failed to create pipeline data for shadow pass");
-			}
+			LogError("Failed to get resolved target");
+			return;
+		}
+
+		if (m_shadowPipeline == VK_NULL_HANDLE && !CreateShadowPipelineData(*ctx.m_device, actualTarget->m_info.m_format))
+		{
+			LogError("Failed to create pipeline data for shadow pass");
+			return;
 		}
 
 		if (m_staticSunShaderCastersDrawData.m_drawCount == 0 && m_dynamicSunShaderCastersDrawData.m_drawCount == 0)
@@ -536,7 +540,7 @@ namespace R3
 
 		PushConstants pc;
 		pc.m_cameraWorldSpacePos = { 0,0,0,0 };	// unused in shadow pass
-		pc.m_projViewTransform = GetSystem<LightsSystem>()->GetSunShadowMatrix();
+		pc.m_projViewTransform = shadowMatrix;
 		pc.m_vertexBufferAddress = staticMeshes->GetVertexDataDeviceAddress();
 		pc.m_instanceDataBufferAddress = m_staticMeshInstances.GetBufferDeviceAddress();
 		pc.m_lightDataBufferAddress = 0;	// unused

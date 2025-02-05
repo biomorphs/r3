@@ -11,12 +11,14 @@ layout(rgba16f,set = 0, binding = 0) uniform readonly image2D inWorldSpacePositi
 layout(rgba16f,set = 0, binding = 1) uniform readonly image2D inWorldSpaceNormalRoughness;
 layout(rgba8,set = 0, binding = 2) uniform readonly image2D inAlbedoAO;
 layout (set = 0, binding = 3) uniform sampler2D inDepthBuffer;
-layout (set = 0, binding = 4) uniform sampler2D inSunShadowMap;
-layout(set = 0, binding = 5) uniform writeonly image2D hdrOutput;
+layout(set = 0, binding = 4) uniform writeonly image2D hdrOutput;
+
+// shadow maps passed in texture arrays
+layout (set = 1, binding = 0) uniform sampler2D AllShadowMaps[4];
 
 layout(push_constant) uniform constants
 {
-	mat4 m_sunShadowProjection;
+	mat4 m_worldToViewTransform;
 	vec4 m_cameraWorldSpacePos;
 	LightsBuffer m_allLights;
 	LightTileMetadataBuffer m_lightTileMetadata;	// only used with USE_TILED_LIGHTS
@@ -26,29 +28,49 @@ layout(push_constant) uniform constants
 #define MAX_SHARED_LIGHTS 1024
 shared Pointlight sharedLights[MAX_SHARED_LIGHTS];
 
-float CalculateSunShadow(vec3 worldPos, mat4 lightSpaceTransform)
+float CalculateSunShadow(vec3 worldPos)
 {
-	vec4 positionLightSpace = lightSpaceTransform * vec4(worldPos,1.0); 
-	vec3 projCoords = positionLightSpace.xyz / positionLightSpace.w;
-	// transform from ndc space to UV space
-	projCoords.xy = projCoords.xy * 0.5 + 0.5;	
-	
-	// basic bitch PCF
-	float pcfScale = (1.0f / textureSize(inSunShadowMap, 0).x) * 1.0f;
-	int samples = 5;
-	float pcfValue = 0.0f;
-	for(int x=0;x<samples;++x)
+	// figure out which cascade to use based on view-space depth value
+	float shadowValue = 1.0;
+	vec3 viewSpacePosition = vec3(PushConstants.m_worldToViewTransform * vec4(worldPos,1.0));
+	float viewDepth = -viewSpacePosition.z;
+	int cascadeCount = int(PushConstants.m_allLights.data[0].m_shadows.m_sunShadowCascadeCount);
+	float thisCascadeDistance = 0.0;
+	int cascadeToSample = 0;
+	for(int i=0;i<cascadeCount-1;i++)
 	{
-		for(int y=0;y<samples;++y)
+		float nextCascadeDistance = PushConstants.m_allLights.data[0].m_shadows.m_sunShadowCascadeDistances[i + 1];
+		if(viewDepth >= thisCascadeDistance && viewDepth < nextCascadeDistance)
 		{
-			float pcfOffsetX = pcfScale * (x - (samples / 2));
-			float pcfOffsetY = pcfScale * (y - (samples / 2));
-			float distance = texture(inSunShadowMap, projCoords.xy + vec2(pcfOffsetX, pcfOffsetY)).r;
-			pcfValue += distance > 0.0 && distance < projCoords.z ? 0.0 : 1.0;
+			cascadeToSample = i;
+			break;
 		}
+		thisCascadeDistance = nextCascadeDistance;
 	}
-	pcfValue /= (samples * samples);
-	return pcfValue;
+	
+	if(cascadeToSample != -1)
+	{
+		vec4 positionLightSpace = PushConstants.m_allLights.data[0].m_shadows.m_sunShadowCascadeMatrices[cascadeToSample] * vec4(worldPos,1.0); 
+		vec3 projCoords = positionLightSpace.xyz / positionLightSpace.w;
+		projCoords.xy = projCoords.xy * 0.5 + 0.5;		// transform from ndc space to UV space
+		
+		float pcfScale = (1.0f / textureSize(AllShadowMaps[cascadeToSample], 0).x) * 1.0f;
+		const int pcfSamples = 4;
+		float pcfValue = 0.0f;
+		for(int x=0;x<pcfSamples;++x)
+		{
+			for(int y=0;y<pcfSamples;++y)
+			{
+				float pcfOffsetX = pcfScale * (x - (pcfSamples / 2));
+				float pcfOffsetY = pcfScale * (y - (pcfSamples / 2));
+				float distance = texture(AllShadowMaps[cascadeToSample], projCoords.xy + vec2(pcfOffsetX, pcfOffsetY)).r;
+				pcfValue += distance > 0.0 && distance < projCoords.z ? 0.0 : 1.0;
+			}
+		}
+		shadowValue = pcfValue / (pcfSamples * pcfSamples);
+	}
+	
+	return shadowValue;
 }
 
 void main() 
@@ -103,7 +125,7 @@ void main()
 			mat.m_ao = albedoAO.w;
 
 			// sun shadows
-			float sunShadow = CalculateSunShadow(positionMetallic.xyz, PushConstants.m_sunShadowProjection);
+			float sunShadow = CalculateSunShadow(positionMetallic.xyz);
 			
 			// Apply sun direct light
 			vec4 sunDirectionBrightness = lightsData.m_sunDirectionBrightness;

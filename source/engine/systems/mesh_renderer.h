@@ -41,6 +41,7 @@ namespace R3
 	class Device;
 	class MeshInstanceCullingCompute;
 	class Frustum;
+	struct RenderTargetInfo;
 	struct MeshMaterial;
 	struct ModelDataHandle;
 	class MeshRenderer : public System
@@ -56,7 +57,7 @@ namespace R3
 		void CullInstancesOnGpu(class RenderPassContext& ctx);		// call this after PrepareForRendering
 		void OnForwardPassDraw(class RenderPassContext& ctx, bool useTiledLighting);	// call after CullInstancesOnGpu
 		void OnGBufferPassDraw(class RenderPassContext& ctx);		// ^^
-		void OnSunShadowPassDraw(class RenderPassContext& ctx);		// draw opaques depth-only for sun-shadows
+		void OnShadowMapDraw(class RenderPassContext& ctx, const RenderTargetInfo& target, glm::mat4 shadowMatrix);		// draw opaques depth-only
 		void OnDrawEnd(class RenderPassContext& ctx);				// call once all drawing is complete
 		void SetTiledLightinMetadataAddress(VkDeviceAddress addr) { m_lightTileMetadata = addr; }
 	private:

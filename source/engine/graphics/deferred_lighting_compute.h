@@ -16,7 +16,6 @@ namespace R3
 			RenderTarget& positionMetalTarget,
 			RenderTarget& normalRoughnessTarget,
 			RenderTarget& albedoAOTarget,
-			RenderTarget& sunShadowMap,
 			RenderTarget& outputTarget, glm::vec2 outputDimensions, bool useTiledLighting);
 		bool Initialise(Device& d);
 		void Cleanup(Device& d);

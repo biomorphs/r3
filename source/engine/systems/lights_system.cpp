@@ -11,6 +11,8 @@
 #include "entities/systems/entity_system.h"
 #include "render/render_system.h"
 #include "render/render_pass_context.h"
+#include "render/descriptors.h"
+#include "render/device.h"
 #include "core/log.h"
 #include "core/profiler.h"
 #include <imgui.h>
@@ -36,7 +38,21 @@ namespace R3
 		render->m_onShutdownCbs.AddCallback([this](Device& d) {
 			m_allPointlights.Destroy(d);
 			m_allLightsData.Destroy(d);
+			vkDestroySampler(d.GetVkDevice(), m_shadowSampler, nullptr);
+			m_descriptorAllocator = {};
+			vkDestroyDescriptorSetLayout(d.GetVkDevice(), m_shadowMapDescriptorLayout, nullptr);
 		});
+	}
+
+	bool LightsSystem::Init()
+	{
+		// Cascades defined as a fixed-distance along view frustum z axis
+		m_sunShadowCascades.push_back(0.0f);
+		m_sunShadowCascades.push_back(0.1f);
+		m_sunShadowCascades.push_back(0.5f);
+		assert(m_sunShadowCascades.size() < ShadowMetadata::c_maxShadowCascades);
+
+		return true;
 	}
 
 	VkDeviceAddress LightsSystem::GetAllLightsDeviceAddress()
@@ -49,13 +65,19 @@ namespace R3
 		return m_skyColour;
 	}
 
-	glm::mat4 LightsSystem::GetSunShadowMatrix()
+	glm::mat4 LightsSystem::GetSunShadowMatrix(float minDepth, float maxDepth)
 	{
 		R3_PROF_EVENT();
 
 		auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
-		Frustum mainFrustum(mainCamera.ProjectionMatrix() * mainCamera.ViewMatrix());
 
+		// adjust camera near + far plane based on min + max depth multipliers
+		float clipPlaneDistance = mainCamera.FarPlane() - mainCamera.NearPlane();
+		float newNearPlane = mainCamera.NearPlane() + (clipPlaneDistance * minDepth);
+		float newFarPlane = mainCamera.NearPlane() + (clipPlaneDistance * maxDepth);
+		mainCamera.SetClipPlanes(newNearPlane, newFarPlane);
+
+		Frustum mainFrustum(mainCamera.ProjectionMatrix() * mainCamera.ViewMatrix());
 		glm::vec3 frustumCenter(0, 0, 0);	// find center point of frustum
 		for (int frustumPoint = 0; frustumPoint < 8; ++frustumPoint)
 		{
@@ -94,6 +116,43 @@ namespace R3
 		float d = (maxZ - minZ) / 2.0f;
 		const glm::mat4 lightProjection = glm::ortho(-w, w, -h, h, -d, d);
 		return lightProjection * lightView;
+	}
+
+	int LightsSystem::GetShadowCascadeCount()
+	{
+		return (int)m_sunShadowCascades.size();
+	}
+
+	glm::mat4 LightsSystem::GetShadowCascadeMatrix(int cascade)
+	{
+		glm::mat4 finalMatrix;
+		if (cascade < m_sunShadowCascades.size())
+		{
+			float maxDepth = (cascade + 1) < m_sunShadowCascades.size() ? m_sunShadowCascades[cascade + 1] : 1.0f;
+			finalMatrix = GetSunShadowMatrix(m_sunShadowCascades[cascade], maxDepth);
+		}
+		return finalMatrix;
+	}
+
+	RenderTargetInfo LightsSystem::GetShadowCascadeTargetInfo(int cascade)
+	{
+		RenderTargetInfo cascadeTarget(std::format("Shadow cascade {}", cascade));
+		cascadeTarget.m_format = VK_FORMAT_D32_SFLOAT;			// may be overkill
+		cascadeTarget.m_usageFlags = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+		cascadeTarget.m_aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
+		cascadeTarget.m_sizeType = RenderTargetInfo::SizeType::Fixed;
+		cascadeTarget.m_size = { 2048, 2048 };
+		return cascadeTarget;
+	}
+
+	VkDescriptorSetLayout_T* LightsSystem::GetShadowMapDescriptorLayout()
+	{
+		return m_shadowMapDescriptorLayout;
+	}
+
+	VkDescriptorSet_T* LightsSystem::GetAllShadowMapsSet()
+	{
+		return m_allShadowMaps;
 	}
 
 	bool LightsSystem::CollectAllLights()
@@ -144,6 +203,16 @@ namespace R3
 			return true;
 		};
 		Entities::Queries::ForEach<PointLightComponent, TransformComponent>(activeWorld, collectPointLights);
+
+		// write shadow metadata for this frame
+		float nearFarDistance = mainCamera.FarPlane() - mainCamera.NearPlane();
+		thisFrameLightData.m_shadows.m_sunShadowCascadeCount = (uint32_t)m_sunShadowCascades.size();
+		for (int i = 0; i < m_sunShadowCascades.size(); ++i)
+		{
+			thisFrameLightData.m_shadows.m_sunShadowCascadeMatrices[i] = GetShadowCascadeMatrix(i);
+			thisFrameLightData.m_shadows.m_sunShadowCascadeDistances[i] = nearFarDistance * m_sunShadowCascades[i];	// pass view-space distance values
+		}
+
 		if (m_allPointLightsCPU.size() > 0)
 		{
 			m_allPointlights.Write(pointLightBaseOffset, m_allPointLightsCPU.size(), m_allPointLightsCPU.data());
@@ -216,6 +285,61 @@ namespace R3
 			}
 			m_allLightsData.Allocate(c_framesInFlight);
 		}
+		if (m_shadowSampler == nullptr)
+		{
+			VkSamplerCreateInfo sampler = {};
+			sampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+			sampler.magFilter = VK_FILTER_NEAREST;		// no filtering of depth values
+			sampler.minFilter = VK_FILTER_NEAREST;
+			sampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;		// return border colour if we sample outside (0,1)
+			sampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+			sampler.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+			sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+			sampler.maxLod = VK_LOD_CLAMP_NONE;
+			sampler.minLod = 0;
+			sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;	// white = return depth of 1.0 at boundaries
+			if (!VulkanHelpers::CheckResult(vkCreateSampler(ctx.m_device->GetVkDevice(), &sampler, nullptr, &m_shadowSampler)))
+			{
+				LogError("Failed to create shadow sampler");
+				return;
+			}
+		}
+		if (m_shadowMapDescriptorLayout == nullptr)
+		{
+			DescriptorLayoutBuilder layoutBuilder;
+			layoutBuilder.AddBinding(0, ShadowMetadata::c_maxShadowCascades, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);		// one array of all shadow maps
+			m_shadowMapDescriptorLayout = layoutBuilder.Create(*ctx.m_device, true);	// true = enable bindless descriptors
+			if (m_shadowMapDescriptorLayout == nullptr)
+			{
+				LogError("Failed to create descriptor set layout for shadow maps");
+				return;
+			}
+		}
+		if (m_descriptorAllocator == nullptr)
+		{
+			m_descriptorAllocator = std::make_unique<DescriptorSetSimpleAllocator>();
+			std::vector<VkDescriptorPoolSize> poolSizes = {
+				{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, (uint32_t)ShadowMetadata::c_maxShadowCascades }
+			};
+			if (!m_descriptorAllocator->Initialise(*ctx.m_device, ShadowMetadata::c_maxShadowCascades, poolSizes))
+			{
+				LogError("Failed to create descriptor allocator");
+				return;
+			}
+			m_allShadowMaps = m_descriptorAllocator->Allocate(*ctx.m_device, m_shadowMapDescriptorLayout);
+		}
+
+		// update shadow map descriptor set before drawing anything
+		DescriptorSetWriter writer(m_allShadowMaps);
+		for (int i = 0; i < m_sunShadowCascades.size() && i < ShadowMetadata::c_maxShadowCascades; ++i)
+		{
+			auto shadowMap = ctx.GetResolvedTarget(GetShadowCascadeTargetInfo(i));
+			if (shadowMap)
+			{
+				writer.WriteImage(0, i, shadowMap->m_view, m_shadowSampler, shadowMap->m_lastLayout);
+			}
+		}
+		writer.FlushWrites();
 
 		m_allPointlights.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 		m_allLightsData.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
