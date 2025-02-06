@@ -31,7 +31,7 @@ void main() {
 		mat.m_albedo = myMaterial.m_albedoOpacity.xyz;
 	}
 	
-	if(finalAlpha < 0.25)	// punch-through alpha, may want a material param for this?
+	if((myMaterial.m_flags & MESH_MATERIAL_ALPHA_PUNCH_FLAG) != 0 && finalAlpha < 0.5)
 	{
 		discard;
 	}

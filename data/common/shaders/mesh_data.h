@@ -20,7 +20,10 @@ struct MeshMaterial
 	uint m_metalnessTexture;
 	uint m_normalTexture;
 	uint m_aoTexture;
+	uint m_flags;
 };
+
+#define MESH_MATERIAL_ALPHA_PUNCH_FLAG 1
 
 layout(buffer_reference, std430) readonly buffer MaterialBuffer { 
 	MeshMaterial data[];

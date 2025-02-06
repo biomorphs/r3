@@ -28,7 +28,7 @@ void main() {
 		finalAlpha = finalAlpha * albedoTex.a;
 	}
 	
-	if(finalAlpha < 0.9)
+	if((myMaterial.m_flags & MESH_MATERIAL_ALPHA_PUNCH_FLAG) != 0 && finalAlpha < 0.5)
 	{
 		discard;
 	}

@@ -19,6 +19,7 @@ namespace R3
 		s("Metallic", smm.m_metallic);
 		s("Roughness", smm.m_roughness);
 		s("UVOffsetScale", smm.m_uvOffsetScale);
+		s("Flags", smm.m_flags);
 		doTexture("AlbedoTex", smm.m_albedoTexture);
 		doTexture("RoughnessTex", smm.m_roughnessTexture);
 		doTexture("MetalTex", smm.m_metalnessTexture);
@@ -55,6 +56,7 @@ namespace R3
 				newMat.m_albedoOpacity = { srcMats[m].m_albedo, srcMats[m].m_opacity };
 				newMat.m_metallic = srcMats[m].m_metallic;
 				newMat.m_roughness = srcMats[m].m_roughness;
+				newMat.m_flags = 0;
 				if (srcMats[m].m_diffuseMaps.size() > 0)
 				{
 					newMat.m_albedoTexture = textures->LoadTexture(srcMats[m].m_diffuseMaps[0]).m_index;
@@ -96,6 +98,14 @@ namespace R3
 				if (m < cmp.m_materials.size())
 				{
 					cmp.m_materials[m].m_albedoOpacity = v;
+				}
+			});
+			auto inspectAlphaPunch = InspectComponentCustom<StaticMeshMaterialsComponent, bool>
+			(e, w, [m](const Entities::EntityHandle&, StaticMeshMaterialsComponent& cmp, Entities::World*, bool v)
+			{
+				if (m < cmp.m_materials.size())
+				{
+					cmp.m_materials[m].m_flags ^= v ? (uint32_t)MeshMaterialFlags::EnablePunchThroughAlpha : 0;
 				}
 			});
 			auto inspectMetallic = InspectComponentCustom<StaticMeshMaterialsComponent, float>
@@ -163,6 +173,7 @@ namespace R3
 			i.Inspect(std::format("Metallic##{}", m), m_materials[m].m_metallic, inspectMetallic, 0.01f, 0.0f, 1.0f);
 			i.Inspect(std::format("Roughness##{}", m), m_materials[m].m_roughness, inspectRoughness, 0.01f, 0.0f, 1.0f);
 			i.Inspect(std::format("UV Offset/Scale##{}", m), m_materials[m].m_uvOffsetScale, inspectUVOffsetScale, glm::vec4(-100000.0f), glm::vec4(100000.0f));
+			i.Inspect(std::format("Punch-through Alpha##{}", m), m_materials[m].m_flags & (uint32_t)MeshMaterialFlags::EnablePunchThroughAlpha, inspectAlphaPunch);
 			i.InspectTexture(std::format("Albedo Texture##{}", m), TextureHandle(m_materials[m].m_albedoTexture), inspectAlbedoTex);
 			i.InspectTexture(std::format("Roughness Texture##{}", m), TextureHandle(m_materials[m].m_roughnessTexture), inspectRoughnessTex);
 			i.InspectTexture(std::format("Metal Texture##{}", m), TextureHandle(m_materials[m].m_metalnessTexture), inspectMetalTex);

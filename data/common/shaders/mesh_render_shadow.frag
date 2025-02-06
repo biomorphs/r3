@@ -13,16 +13,14 @@ layout(location = 4) in mat3 inTBN;
 void main() {
 	MeshInstanceData thisInstance = PushConstants.m_instances.data[inInstanceIndex];
 	MeshMaterial myMaterial = thisInstance.m_material.data[0];
-	float finalAlpha = myMaterial.m_albedoOpacity.a;
-	if(myMaterial.m_albedoTexture != -1)
+	if((myMaterial.m_flags & MESH_MATERIAL_ALPHA_PUNCH_FLAG) != 0 && myMaterial.m_albedoTexture != -1)
 	{
 		vec4 albedoTex = texture(AllTextures[myMaterial.m_albedoTexture],inUV);
-		finalAlpha = finalAlpha * albedoTex.a;
-	}
-	
-	if(finalAlpha < 0.25)	// punch-through alpha
-	{
-		discard;
+		float finalAlpha = myMaterial.m_albedoOpacity.a * albedoTex.a;
+		if(finalAlpha < 0.5)
+		{
+			discard;
+		}
 	}
 	
 	// only output depth

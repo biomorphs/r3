@@ -27,6 +27,11 @@ namespace R3
 		uint32_t m_vertexDataOffset;			// used when generating draw calls
 	};
 
+	enum class MeshMaterialFlags
+	{
+		EnablePunchThroughAlpha = 1
+	};
+
 	struct MeshMaterial							// uploaded to GPU in m_allMaterialsGpu
 	{
 		glm::vec4 m_albedoOpacity;
@@ -38,6 +43,7 @@ namespace R3
 		uint32_t m_metalnessTexture = -1;
 		uint32_t m_normalTexture = -1;
 		uint32_t m_aoTexture = -1;
+		uint32_t m_flags = 0;
 	};
 
 	struct MeshDrawData
