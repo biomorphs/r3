@@ -154,12 +154,13 @@ namespace R3
 	RenderTargetInfo LightsSystem::GetShadowCascadeTargetInfo(int cascade)
 	{
 		assert(cascade < ShadowMetadata::c_maxShadowCascades);
-		RenderTargetInfo cascadeTarget(std::format("Shadow cascade {}", cascade));
+		RenderTargetInfo cascadeTarget;
 		cascadeTarget.m_format = VK_FORMAT_D32_SFLOAT;			// may be overkill
 		cascadeTarget.m_usageFlags = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 		cascadeTarget.m_aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
 		cascadeTarget.m_sizeType = RenderTargetInfo::SizeType::Fixed;
 		cascadeTarget.m_size = { m_sunShadowCascades[cascade].m_resolution, m_sunShadowCascades[cascade].m_resolution };
+		cascadeTarget.m_name = std::format("Shadow cascade {}_{}", cascade, m_sunShadowCascades[cascade].m_resolution);		// append resolution since RT lookup is by name
 		return cascadeTarget;
 	}
 
