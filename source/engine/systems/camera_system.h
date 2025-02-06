@@ -31,10 +31,7 @@ namespace R3
 		bool ShowGui();
 		bool Update();
 		bool m_drawFrustums = false;
-		bool m_showFlyCamGui = false;
-		float m_flyCamNearPlane = 0.1f;
 		float m_flyCamFarPlane = 120.0f;
-		float m_flyCamFOV = 70.0f;
 		std::unique_ptr<Flycam> m_flyCam;
 		std::unordered_map<std::string, Entities::EntityHandle> m_activeCameras;	// per-world active camera entity, key = world ID
 		Camera m_mainCamera;	// updated each frame from active world/entity

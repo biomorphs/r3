@@ -73,6 +73,16 @@ namespace R3
 		m_vk = nullptr;
 	}
 
+	RenderTargetInfo RenderSystem::GetSwapchainTargetInfo()
+	{
+		RenderTargetInfo swapInfo;
+		swapInfo.m_format = m_swapChain->GetFormat().format;
+		swapInfo.m_name = "Swapchain";
+		swapInfo.m_size = { m_swapChain->GetExtents().width, m_swapChain->GetExtents().height };
+		swapInfo.m_sizeType = RenderTargetInfo::SizeType::Fixed;
+		return swapInfo;
+	}
+
 	void RenderSystem::RunGraph(RenderGraph& r, VkCommandBuffer_T* cmdBuffer, VkImage_T* swapImage, VkImageView_T* swapImageView)
 	{
 		R3_PROF_EVENT();
@@ -93,11 +103,7 @@ namespace R3
 			auto thisFrameTime = timestamps.MakeScopedQuery("Total Render Time");
 
 			// Pass the current swap chain info to the target cache (so it can be accessed from the graph)
-			RenderTargetInfo swapInfo("Swapchain");
-			swapInfo.m_format = m_swapChain->GetFormat().format;
-			swapInfo.m_name = "Swapchain";
-			swapInfo.m_size = { m_swapChain->GetExtents().width, m_swapChain->GetExtents().height };
-			swapInfo.m_sizeType = RenderTargetInfo::SizeType::Fixed;
+			RenderTargetInfo swapInfo = GetSwapchainTargetInfo();
 			m_renderTargets->AddTarget(swapInfo, swapImage, swapImageView);
 
 			RenderGraph::GraphContext ctx;

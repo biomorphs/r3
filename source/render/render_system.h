@@ -18,6 +18,7 @@ namespace R3
 	class ImmediateRenderer;
 	class BufferPool;
 	class CommandBufferAllocator;
+	struct RenderTargetInfo;
 	class RenderSystem : public System
 	{
 	public:
@@ -35,6 +36,7 @@ namespace R3
 		BufferPool* GetStagingBufferPool();
 		CommandBufferAllocator* GetCommandBufferAllocator();
 		RenderGraph& GetRenderGraph() { return *m_renderGraph; }
+		RenderTargetInfo GetSwapchainTargetInfo();		// required when render graph nodes need to use the swap chain
 
 		// Run some graphics code immediately
 		void RunGraphicsCommandsImmediate(std::function<void(VkCommandBuffer_T*)> fn);

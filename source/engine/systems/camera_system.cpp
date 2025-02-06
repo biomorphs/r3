@@ -7,6 +7,7 @@
 #include "engine/systems/immediate_render_system.h"
 #include "engine/components/camera.h"
 #include "engine/components/transform.h"
+#include "engine/components/environment_settings.h"
 #include "engine/ui/imgui_menubar_helper.h"
 #include "engine/utils/frustum.h"
 #include "engine/graphics/flycam.h"
@@ -64,20 +65,6 @@ namespace R3
 		cameraMenu.AddItem(m_drawFrustums ? "Hide Camera Frustums" : "Show Camera Frustums", [this]() {
 			m_drawFrustums = !m_drawFrustums;
 		});
-		cameraMenu.AddItem("FlyCam Settings", [this]() {
-			m_showFlyCamGui = true;
-		});
-
-		if (m_showFlyCamGui)
-		{
-			ImGui::Begin("Flycam Settings", &m_showFlyCamGui);
-			ImGui::DragFloat("Near Plane", &m_flyCamNearPlane, 0.01f, 0.001f, m_flyCamFarPlane - 0.01f);
-			ImGui::DragFloat("Far Plane", &m_flyCamFarPlane, 0.01f, m_flyCamNearPlane + 0.01f, FLT_MAX);
-			ImGui::DragFloat("Move Speed", &m_flyCam->m_forwardSpeed, 0.1f, 0.1f, 100.0f);
-			ImGui::DragFloat("Fast Move Multiplier", &m_flyCam->m_speedMultiplier, 0.1f, 0.1f, 100.0f);
-			ImGui::End();
-		}
-
 		return true;
 	}
 
@@ -175,7 +162,7 @@ namespace R3
 		const auto windowSize = renderSys->GetWindowExtents();
 		const float aspectRatio = windowSize.x / windowSize.y;
 		m_flyCam->ApplyToCamera(m_mainCamera);
-		m_mainCamera.SetProjection(m_flyCamFOV, aspectRatio, m_flyCamNearPlane, m_flyCamFarPlane);
+		m_mainCamera.SetProjection(70.0f, aspectRatio, 0.1f, m_flyCamFarPlane);
 	}
 
 	bool CameraSystem::Update()
@@ -203,6 +190,15 @@ namespace R3
 					return true;
 				}
 			}
+
+			// Get flycam settings from environment components
+			auto forEachEnv = [this](Entities::EntityHandle e, EnvironmentSettingsComponent& cmp)
+			{
+				m_flyCamFarPlane = cmp.m_flyCamFarPlane;
+				m_flyCam->m_forwardSpeed = cmp.m_flyCamMoveSpeed;
+				return true;
+			};
+			Entities::Queries::ForEach<EnvironmentSettingsComponent>(activeWorld, forEachEnv);
 		}
 
 		ApplyFlycamToCamera();

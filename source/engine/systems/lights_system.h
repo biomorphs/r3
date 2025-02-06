@@ -62,7 +62,14 @@ namespace R3
 		bool m_drawCascadeFrusta = false;
 		bool m_lockDebugFrustums = false;
 
-		std::vector<float> m_sunShadowCascades;	// z-distance for each cascade frustum (0-1)
+		struct ShadowCascadeSettings {
+			float m_distance = 0.0f;		// 0 - 1, fraction of near-far plane of main camera
+			int m_resolution = 2048;		// texture size
+			float m_depthBiasConstantFactor = 0.0f;	// constant bias
+			float m_depthBiasClamp = 0.0f;	// bias clamp
+			float m_depthSlopeBias = 0.0f;	// slope bias
+		};
+		std::vector<ShadowCascadeSettings> m_sunShadowCascades;
 
 		// maintain a descriptor set containing all shadow map textures, and a buffer of data describing the shadow maps
 		VkSampler_T* m_shadowSampler = nullptr;		// passed via descriptor set

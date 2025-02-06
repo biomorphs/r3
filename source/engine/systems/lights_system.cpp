@@ -47,10 +47,13 @@ namespace R3
 	bool LightsSystem::Init()
 	{
 		// Cascades defined as a fixed-distance along view frustum z axis
-		m_sunShadowCascades.push_back(0.0f);
-		m_sunShadowCascades.push_back(0.15f);
-		m_sunShadowCascades.push_back(0.3f);
-		m_sunShadowCascades.push_back(0.6f);
+		// Set up some defaults
+		ShadowCascadeSettings cascade;
+		m_sunShadowCascades.push_back(cascade);
+		cascade.m_distance = 0.15f;
+		m_sunShadowCascades.push_back(cascade);
+		cascade.m_distance = 0.5f;
+		m_sunShadowCascades.push_back(cascade);
 		assert(m_sunShadowCascades.size() <= ShadowMetadata::c_maxShadowCascades);
 
 		return true;
@@ -139,23 +142,24 @@ namespace R3
 
 	glm::mat4 LightsSystem::GetShadowCascadeMatrix(int cascade)
 	{
-		glm::mat4 finalMatrix;
+		glm::mat4 finalMatrix(1.0f);
 		if (cascade < m_sunShadowCascades.size())
 		{
-			float maxDepth = (cascade + 1) < m_sunShadowCascades.size() ? m_sunShadowCascades[cascade + 1] : 1.0f;
-			finalMatrix = GetSunShadowMatrix(m_sunShadowCascades[cascade], maxDepth);
+			float maxDepth = (cascade + 1) < m_sunShadowCascades.size() ? m_sunShadowCascades[cascade + 1].m_distance : 1.0f;
+			finalMatrix = GetSunShadowMatrix(m_sunShadowCascades[cascade].m_distance, maxDepth);
 		}
 		return finalMatrix;
 	}
 
 	RenderTargetInfo LightsSystem::GetShadowCascadeTargetInfo(int cascade)
 	{
+		assert(cascade < ShadowMetadata::c_maxShadowCascades);
 		RenderTargetInfo cascadeTarget(std::format("Shadow cascade {}", cascade));
 		cascadeTarget.m_format = VK_FORMAT_D32_SFLOAT;			// may be overkill
 		cascadeTarget.m_usageFlags = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 		cascadeTarget.m_aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
 		cascadeTarget.m_sizeType = RenderTargetInfo::SizeType::Fixed;
-		cascadeTarget.m_size = { 2048, 2048 };
+		cascadeTarget.m_size = { m_sunShadowCascades[cascade].m_resolution, m_sunShadowCascades[cascade].m_resolution };
 		return cascadeTarget;
 	}
 
@@ -188,6 +192,18 @@ namespace R3
 			thisFrameLightData.m_sunColourAmbient = { cmp.m_sunColour, cmp.m_sunAmbientFactor };
 			thisFrameLightData.m_skyColourAmbient = { cmp.m_skyColour, cmp.m_skyAmbientFactor };
 			thisFrameLightData.m_sunDirectionBrightness = { glm::normalize(cmp.m_sunDirection), cmp.m_sunBrightness };
+			if (cmp.m_shadowCascadeCount < ShadowMetadata::c_maxShadowCascades)		// collect cascade data
+			{
+				m_sunShadowCascades.resize(cmp.m_shadowCascadeCount);
+				for (int c = 0; c < cmp.m_shadowCascadeCount; ++c)
+				{
+					m_sunShadowCascades[c].m_resolution = cmp.m_shadowCascades[c].m_textureResolution;
+					m_sunShadowCascades[c].m_distance = cmp.m_shadowCascades[c].m_depth;
+					m_sunShadowCascades[c].m_depthBiasConstantFactor = cmp.m_shadowCascades[c].m_depthBiasConstantFactor;
+					m_sunShadowCascades[c].m_depthBiasClamp = cmp.m_shadowCascades[c].m_depthBiasClamp;
+					m_sunShadowCascades[c].m_depthSlopeBias = cmp.m_shadowCascades[c].m_depthSlopeBias;
+				}
+			}
 			return true;
 		};
 		Entities::Queries::ForEach<EnvironmentSettingsComponent>(activeWorld, collectSunSkySettings);
@@ -222,7 +238,7 @@ namespace R3
 		for (int i = 0; i < m_sunShadowCascades.size(); ++i)
 		{
 			thisFrameLightData.m_shadows.m_sunShadowCascadeMatrices[i] = GetShadowCascadeMatrix(i);
-			thisFrameLightData.m_shadows.m_sunShadowCascadeDistances[i] = nearFarDistance * m_sunShadowCascades[i];	// pass view-space distance values
+			thisFrameLightData.m_shadows.m_sunShadowCascadeDistances[i] = nearFarDistance * m_sunShadowCascades[i].m_distance;	// pass view-space distance values
 		}
 
 		// Flush to gpu memory
@@ -299,8 +315,8 @@ namespace R3
 			};
 			for (int c = 0; c < cascades; ++c)
 			{
-				float minDepth = m_sunShadowCascades[c];
-				float maxDepth = c + 1 < cascades ? m_sunShadowCascades[c + 1] : 1.0f;
+				float minDepth = m_sunShadowCascades[c].m_distance;
+				float maxDepth = c + 1 < cascades ? m_sunShadowCascades[c + 1].m_distance : 1.0f;
 
 				// camera frustum
 				imRender->AddFrustum(mainCamera.ProjectionMatrix() * mainCamera.ViewMatrix(), cascadeColours[c] * glm::vec4(1,1,1,0.25f), minDepth, maxDepth);

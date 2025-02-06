@@ -94,7 +94,7 @@ namespace R3
 	{
 		auto found = std::find_if(m_allTargets.begin(), m_allTargets.end(), [&](RenderTarget& t)
 		{
-			return t.m_info.m_name == info.m_name;	// risky?
+			return t.m_info == info;
 		});
 		if (found != m_allTargets.end())
 		{

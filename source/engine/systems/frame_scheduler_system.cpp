@@ -314,7 +314,8 @@ namespace R3
 		auto render = GetSystem<RenderSystem>();
 		m_allCurrentTargets.clear();
 
-		RenderTargetInfo swapchainImage("Swapchain");	// Swap chain image, this will be presented to the screen each frame
+		RenderTargetInfo swapChain = render->GetSwapchainTargetInfo();
+
 		RenderTargetInfo mainColour("MainColour");		// HDR colour buffer, linear encoding
 		mainColour.m_format = VK_FORMAT_R16G16B16A16_SFLOAT;
 		mainColour.m_usageFlags = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
@@ -386,8 +387,8 @@ namespace R3
 				}
 			}
 		}
-		graph.m_allPasses.push_back(MakeColourBlitToPass("LDR to swap", mainColourLDR, swapchainImage));	// blit LDR -> swap
-		graph.m_allPasses.push_back(MakeImguiPass(swapchainImage));		// imgui to swap
+		graph.m_allPasses.push_back(MakeColourBlitToPass("LDR to swap", mainColourLDR, swapChain));	// blit LDR -> swap
+		graph.m_allPasses.push_back(MakeImguiPass(swapChain));		// imgui to swap
 		
 		return true;
 	}

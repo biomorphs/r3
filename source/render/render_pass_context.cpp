@@ -5,7 +5,14 @@ namespace R3
 {
 	RenderTarget* RenderPassContext::GetResolvedTarget(const RenderTargetInfo& info)
 	{
-		return GetResolvedTarget(info.m_name);
+		auto found = std::find_if(m_resolvedTargets.begin(), m_resolvedTargets.end(), [&](RenderTarget* t) {
+			return t->m_info == info;
+		});
+		if (found != m_resolvedTargets.end())
+		{
+			return *found;
+		}
+		return nullptr;
 	}
 
 	RenderTarget* RenderPassContext::GetResolvedTarget(std::string_view targetName)
