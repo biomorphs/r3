@@ -105,7 +105,7 @@ namespace R3
 			{
 				if (m < cmp.m_materials.size())
 				{
-					cmp.m_materials[m].m_flags ^= v ? (uint32_t)MeshMaterialFlags::EnablePunchThroughAlpha : 0;
+					cmp.m_materials[m].m_flags ^= (uint32_t)MeshMaterialFlags::EnablePunchThroughAlpha;
 				}
 			});
 			auto inspectMetallic = InspectComponentCustom<StaticMeshMaterialsComponent, float>
