@@ -1,6 +1,6 @@
 # r3		
  
- ![Screenshot of the editor with a basic scene loaded](screenshots/materialoverrides.jpg)
+ ![Screenshot of the editor with the Bistro scene loaded](screenshots/bistro_shadowcascades.jpg)
 
 # Setup
 1. Install cmake v3.8 or higher
