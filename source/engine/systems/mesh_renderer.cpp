@@ -356,8 +356,6 @@ namespace R3
 		if (m_enableComputeCulling)
 		{
 			Frustum mainFrustum = GetMainCameraFrustum();
-			Frustum sunShadowFrustum(GetSystem<LightsSystem>()->GetSunShadowMatrix(0.0f, 1.0f));
-
 			m_frameStats.m_prepareBucketsStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, mainFrustum, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticOpaques, m_staticOpaqueDrawData);
 			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, mainFrustum, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticTransparents, m_staticTransparentDrawData);
@@ -365,8 +363,14 @@ namespace R3
 			PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, mainFrustum, m_dynamicMeshInstances.GetBufferDeviceAddress(), m_dynamicTransparents, m_dynamicTransparentDrawData);
 			if (m_enableLightCascadeCulling)
 			{
-				PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, sunShadowFrustum, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticOpaques, m_staticSunShaderCastersDrawData);
-				PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, sunShadowFrustum, m_dynamicMeshInstances.GetBufferDeviceAddress(), m_dynamicOpaques, m_dynamicSunShaderCastersDrawData);
+				auto lights = GetSystem<LightsSystem>();
+				const int cascades = lights->GetShadowCascadeCount();
+				for (int i = 0; i < cascades; ++i)
+				{
+					Frustum sunShadowFrustum(lights->GetShadowCascadeMatrix(i));
+					PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, sunShadowFrustum, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticOpaques, m_staticSunShadowCastersDrawData[i]);
+					PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, sunShadowFrustum, m_dynamicMeshInstances.GetBufferDeviceAddress(), m_dynamicOpaques, m_dynamicSunShadowCastersDrawData[i]);
+				}
 			}
 			m_frameStats.m_prepareBucketsEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		}
@@ -505,7 +509,18 @@ namespace R3
 		m_frameStats.m_writeGBufferCmdsEndTime = time->GetElapsedTimeReal();
 	}
 
-	void MeshRenderer::OnShadowMapDraw(class RenderPassContext& ctx, const RenderTargetInfo& target, glm::mat4 shadowMatrix, float depthBiasConstant, float depthBiasClamp, float depthBiasSlope)
+	void MeshRenderer::OnShadowCascadeDraw(RenderPassContext& ctx, const RenderTargetInfo& target, int cascade)
+	{
+		R3_PROF_EVENT();
+
+		auto lights = GetSystem<LightsSystem>();
+		glm::mat4 cascadeMatrix = GetSystem<LightsSystem>()->GetShadowCascadeMatrix(cascade);
+		float biasConstant = 0.0f, biasClamp = 0.0f, biasSlope = 0.0f;
+		lights->GetShadowCascadeDepthBiasSettings(cascade, biasConstant, biasClamp, biasSlope);
+		OnShadowMapDraw(ctx, target, cascadeMatrix, biasConstant, biasClamp, biasSlope, m_staticSunShadowCastersDrawData[cascade], m_dynamicSunShadowCastersDrawData[cascade]);
+	}
+
+	void MeshRenderer::OnShadowMapDraw(class RenderPassContext& ctx, const RenderTargetInfo& target, glm::mat4 shadowMatrix, float depthBiasConstant, float depthBiasClamp, float depthBiasSlope, const MeshPartBucketDrawIndirects& staticDraws, const MeshPartBucketDrawIndirects& dynamicDraws)
 	{
 		R3_PROF_EVENT();
 
@@ -522,7 +537,7 @@ namespace R3
 			return;
 		}
 
-		if (m_staticSunShaderCastersDrawData.m_drawCount == 0 && m_dynamicSunShaderCastersDrawData.m_drawCount == 0)
+		if (staticDraws.m_drawCount == 0 && dynamicDraws.m_drawCount == 0)
 		{
 			return;
 		}
@@ -562,11 +577,11 @@ namespace R3
 		pc.m_lightTileMetadataAddress = 0;	// unused in shadow drawing
 
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_staticSunShaderCastersDrawData.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_staticSunShaderCastersDrawData.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
+		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, staticDraws.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), staticDraws.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 
 		pc.m_instanceDataBufferAddress = m_dynamicMeshInstances.GetBufferDeviceAddress();
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_dynamicSunShaderCastersDrawData.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_dynamicSunShaderCastersDrawData.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
+		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, dynamicDraws.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), dynamicDraws.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 
 		m_frameStats.m_writeForwardCmdsEndTime = time->GetElapsedTimeReal();
 	}
@@ -857,8 +872,13 @@ namespace R3
 		}
 		if(!m_enableLightCascadeCulling)
 		{
-			PrepareDrawBucket(m_staticOpaques, m_staticSunShaderCastersDrawData);
-			PrepareDrawBucket(m_dynamicOpaques, m_dynamicSunShaderCastersDrawData);
+			auto lights = GetSystem<LightsSystem>();
+			const int cascades = lights->GetShadowCascadeCount();
+			for (int i = 0; i < cascades; ++i)
+			{
+				PrepareDrawBucket(m_staticOpaques, m_staticSunShadowCastersDrawData[i]);
+				PrepareDrawBucket(m_dynamicOpaques, m_dynamicSunShadowCastersDrawData[i]);
+			}
 		}
 		m_frameStats.m_prepareBucketsEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 

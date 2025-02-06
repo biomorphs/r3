@@ -57,7 +57,7 @@ namespace R3
 		void CullInstancesOnGpu(class RenderPassContext& ctx);		// call this after PrepareForRendering
 		void OnForwardPassDraw(class RenderPassContext& ctx, bool useTiledLighting);	// call after CullInstancesOnGpu
 		void OnGBufferPassDraw(class RenderPassContext& ctx);		// ^^
-		void OnShadowMapDraw(class RenderPassContext& ctx, const RenderTargetInfo& target, glm::mat4 shadowMatrix, float depthBiasConstant, float depthBiasClamp, float depthBiasSlope);
+		void OnShadowCascadeDraw(class RenderPassContext& ctx, const RenderTargetInfo& target, int cascade);
 		void OnDrawEnd(class RenderPassContext& ctx);				// call once all drawing is complete
 		void SetTiledLightinMetadataAddress(VkDeviceAddress addr) { m_lightTileMetadata = addr; }
 	private:
@@ -79,6 +79,9 @@ namespace R3
 		bool CreateGBufferPipelineData(Device&, VkFormat positionMetalFormat, VkFormat normalRoughnessFormat, VkFormat albedoAOFormat, VkFormat mainDepthFormat);
 		bool CreateShadowPipelineData(Device&, VkFormat depthBufer);
 		void OnModelReady(const ModelDataHandle& handle);	// called when a model is ready to draw
+		void OnShadowMapDraw(class RenderPassContext& ctx, const RenderTargetInfo& target, 
+							glm::mat4 shadowMatrix, float depthBiasConstant, float depthBiasClamp, float depthBiasSlope,
+							const MeshPartBucketDrawIndirects& staticDraws, const MeshPartBucketDrawIndirects& dynamicDraws);
 
 		struct FrameStats {
 			uint32_t m_totalPartInstances = 0;
@@ -111,7 +114,7 @@ namespace R3
 
 		std::unique_ptr<MeshInstanceCullingCompute> m_computeCulling;
 
-		std::unique_ptr<BufferPool> m_meshRenderBufferPool;				// pool used to allocate all buffers
+		std::unique_ptr<BufferPool> m_meshRenderBufferPool;					// pool used to allocate all buffers
 
 		LinearWriteOnlyGpuArray<MeshMaterial> m_staticMaterialOverrides;	// all static material overrides written here on scene rebuild
 		LinearWriteOnlyGpuArray<MeshInstance> m_staticMeshInstances;		// all static instance data written here on static scene rebuild
@@ -126,8 +129,9 @@ namespace R3
 		MeshPartBucketDrawIndirects m_staticTransparentDrawData;			// draw calls generated from static transparents bucket
 		MeshPartBucketDrawIndirects m_dynamicOpaqueDrawData;				// draw calls generated from dynamic opaque bucket
 		MeshPartBucketDrawIndirects m_dynamicTransparentDrawData;			// draw calls generated from dynamic opaque bucket
-		MeshPartBucketDrawIndirects m_staticSunShaderCastersDrawData;		// draw calls generated from static opaque bucket for sun shadowcasters
-		MeshPartBucketDrawIndirects m_dynamicSunShaderCastersDrawData;		// draw calls generated from dynamic opaque bucket for sun shadowcasters
+
+		MeshPartBucketDrawIndirects m_staticSunShadowCastersDrawData[4];		// draw calls generated from static opaque bucket for sun shadowcasters, 1 per cascade
+		MeshPartBucketDrawIndirects m_dynamicSunShadowCastersDrawData[4];		// draw calls generated from dynamic opaque bucket for sun shadowcasters, 1 per cascade
 
 		const uint32_t c_maxInstances = 1024 * 256;		// max static+dynamic instances we support
 		const uint32_t c_maxBuffers = 3;				// we reserve space per-frame in globals, draws + dynamic instance data. this determines how many frames to handle
