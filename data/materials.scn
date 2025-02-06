@@ -2,6 +2,37 @@
  "AllEntities": [
   {
    "EnvironmentSettings": {
+    "Cascade_0": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.0,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Cascade_1": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.25,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Cascade_2": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.5,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Cascade_3": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.0,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Flycam Draw Distance": 30.0,
+    "Flycam Speed": 2.0,
+    "Shadow Cascades": 1,
     "Sky Ambient": 0.01249999925494194,
     "Sky Colour": {
      "X": 0.013169873505830765,
@@ -9,7 +40,7 @@
      "Z": 0.18145161867141724
     },
     "Sun Ambient": 0.03799999877810478,
-    "Sun Brightness": 4.0,
+    "Sun Brightness": 6.0,
     "Sun Colour": {
      "X": 1.0,
      "Y": 1.0,

@@ -164,6 +164,22 @@ namespace R3
 		return cascadeTarget;
 	}
 
+	void LightsSystem::GetShadowCascadeDepthBiasSettings(int cascade, float& constant, float& clamp, float& slope)
+	{
+		if (cascade < m_sunShadowCascades.size())
+		{
+			constant = m_sunShadowCascades[cascade].m_depthBiasConstantFactor;
+			clamp = m_sunShadowCascades[cascade].m_depthBiasClamp;
+			slope = m_sunShadowCascades[cascade].m_depthSlopeBias;
+		}
+		else
+		{
+			constant = 0.0f;
+			clamp = 0.0f;
+			slope = 0.0f;
+		}
+	}
+
 	VkDescriptorSetLayout_T* LightsSystem::GetShadowMapDescriptorLayout()
 	{
 		return m_shadowMapDescriptorLayout;

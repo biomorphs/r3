@@ -122,9 +122,11 @@ namespace R3
 		};
 
 		glm::mat4 cascadeMatrix = GetSystem<LightsSystem>()->GetShadowCascadeMatrix(cascadeIndex);
-		cascadePass->m_onDraw.AddCallback([cascadeTarget, cascadeMatrix](RenderPassContext& ctx) {
+		cascadePass->m_onDraw.AddCallback([cascadeTarget, cascadeIndex, cascadeMatrix](RenderPassContext& ctx) {
 			R3_PROF_GPU_EVENT("Shadow Cascade");
-			GetSystem<MeshRenderer>()->OnShadowMapDraw(ctx, cascadeTarget, cascadeMatrix);
+			float biasConstant = 0.0f, biasClamp = 0.0f, biasSlope = 0.0f;
+			GetSystem<LightsSystem>()->GetShadowCascadeDepthBiasSettings(cascadeIndex, biasConstant, biasClamp, biasSlope);
+			GetSystem<MeshRenderer>()->OnShadowMapDraw(ctx, cascadeTarget, cascadeMatrix, biasConstant, biasClamp, biasSlope);
 		});
 
 		return cascadePass;

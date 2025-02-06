@@ -49,6 +49,7 @@ namespace R3
 		int GetShadowCascadeCount();
 		glm::mat4 GetShadowCascadeMatrix(int cascade);
 		RenderTargetInfo GetShadowCascadeTargetInfo(int cascade);
+		void GetShadowCascadeDepthBiasSettings(int cascade, float& constant, float& clamp, float& slope);
 
 		VkDescriptorSetLayout_T* GetShadowMapDescriptorLayout();		// used to create pipelines that accept the array of shadow maps
 		VkDescriptorSet_T* GetAllShadowMapsSet();						// descriptor set for this frame containing all shadow maps

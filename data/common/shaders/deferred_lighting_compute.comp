@@ -66,7 +66,7 @@ float CalculateSunShadow(vec3 worldPos)
 				float pcfOffsetX = pcfScale * (x - (pcfSamples / 2));
 				float pcfOffsetY = pcfScale * (y - (pcfSamples / 2));
 #ifdef USE_HW_PCF
-				pcfValue += texture(AllShadowMaps[cascadeToSample], projCoords).r;
+				pcfValue += texture(AllShadowMaps[cascadeToSample], projCoords + vec3(pcfOffsetX, pcfOffsetY, 0)).r;
 #else
 				float distance = texture(AllShadowMaps[cascadeToSample], projCoords.xy + vec2(pcfOffsetX, pcfOffsetY)).r;
 				pcfValue += distance > 0.0 && distance < projCoords.z ? 0.0 : 1.0;

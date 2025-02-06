@@ -2,23 +2,54 @@
  "AllEntities": [
   {
    "EnvironmentSettings": {
+    "Cascade_0": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.0,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Cascade_1": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.15000000596046448,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 1.0
+    },
+    "Cascade_2": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.4000000059604645,
+     "ConstantBias": 0.0,
+     "Resolution": 1024,
+     "SlopeBias": 2.0
+    },
+    "Cascade_3": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.75,
+     "ConstantBias": 0.0,
+     "Resolution": 1024,
+     "SlopeBias": 0.0
+    },
+    "Flycam Draw Distance": 120.0,
+    "Flycam Speed": 2.0,
+    "Shadow Cascades": 3,
     "Sky Ambient": 0.05000000074505806,
     "Sky Colour": {
-     "X": 0.013169873505830765,
-     "Y": 0.04709765687584877,
-     "Z": 0.18145161867141724
+     "X": 0.21370965242385864,
+     "Y": 0.6195371150970459,
+     "Z": 1.0
     },
     "Sun Ambient": 0.05000000074505806,
-    "Sun Brightness": 0.20000000298023224,
+    "Sun Brightness": 16.0,
     "Sun Colour": {
      "X": 1.0,
      "Y": 1.0,
      "Z": 1.0
     },
     "Sun Direction": {
-     "X": 0.4000000059604645,
+     "X": 0.25,
      "Y": -0.800000011920929,
-     "Z": 1.0
+     "Z": 0.25
     },
     "Tonemap Type": 7
    },
@@ -28,13 +59,13 @@
   },
   {
    "ID": 1,
-   "Name": "New World",
+   "Name": "Paris Sucks",
    "Parent": 4294967295
   },
   {
    "ID": 2,
    "Name": "BistroExterior.fbx",
-   "Parent": 4294967295,
+   "Parent": 27,
    "StaticMesh": {
     "Draw": true,
     "MaterialsOverride": {
@@ -4163,7 +4194,7 @@
   {
    "ID": 3,
    "Name": "BistroInterior.fbx",
-   "Parent": 4294967295,
+   "Parent": 27,
    "StaticMesh": {
     "Draw": true,
     "MaterialsOverride": {
@@ -6370,7 +6401,7 @@
   {
    "ID": 4,
    "Name": "Point Light",
-   "Parent": 4294967295,
+   "Parent": 26,
    "PointLight": {
     "Brightness": 128.0,
     "Colour": {
@@ -6404,7 +6435,7 @@
   {
    "ID": 5,
    "Name": "Point Light",
-   "Parent": 4294967295,
+   "Parent": 26,
    "PointLight": {
     "Brightness": 128.0,
     "Colour": {
@@ -6438,7 +6469,7 @@
   {
    "ID": 6,
    "Name": "Point Light",
-   "Parent": 4294967295,
+   "Parent": 26,
    "PointLight": {
     "Brightness": 128.0,
     "Colour": {
@@ -6472,7 +6503,7 @@
   {
    "ID": 7,
    "Name": "Point Light",
-   "Parent": 4294967295,
+   "Parent": 26,
    "PointLight": {
     "Brightness": 128.0,
     "Colour": {
@@ -6506,7 +6537,7 @@
   {
    "ID": 8,
    "Name": "Point Light",
-   "Parent": 4294967295,
+   "Parent": 26,
    "PointLight": {
     "Brightness": 128.0,
     "Colour": {
@@ -6540,7 +6571,7 @@
   {
    "ID": 9,
    "Name": "Point Light",
-   "Parent": 4294967295,
+   "Parent": 26,
    "PointLight": {
     "Brightness": 128.0,
     "Colour": {
@@ -6574,7 +6605,7 @@
   {
    "ID": 10,
    "Name": "Point Light",
-   "Parent": 4294967295,
+   "Parent": 26,
    "PointLight": {
     "Brightness": 128.0,
     "Colour": {
@@ -6608,7 +6639,7 @@
   {
    "ID": 11,
    "Name": "Point Light",
-   "Parent": 4294967295,
+   "Parent": 26,
    "PointLight": {
     "Brightness": 128.0,
     "Colour": {
@@ -6642,7 +6673,7 @@
   {
    "ID": 12,
    "Name": "Point Light",
-   "Parent": 4294967295,
+   "Parent": 26,
    "PointLight": {
     "Brightness": 128.0,
     "Colour": {
@@ -6676,7 +6707,7 @@
   {
    "ID": 13,
    "Name": "Point Light",
-   "Parent": 4294967295,
+   "Parent": 26,
    "PointLight": {
     "Brightness": 128.0,
     "Colour": {
@@ -6710,7 +6741,7 @@
   {
    "ID": 14,
    "Name": "Point Light",
-   "Parent": 4294967295,
+   "Parent": 26,
    "PointLight": {
     "Brightness": 128.0,
     "Colour": {
@@ -6744,7 +6775,7 @@
   {
    "ID": 15,
    "Name": "Point Light",
-   "Parent": 4294967295,
+   "Parent": 26,
    "PointLight": {
     "Brightness": 64.0,
     "Colour": {
@@ -6778,7 +6809,7 @@
   {
    "ID": 16,
    "Name": "Point Light",
-   "Parent": 4294967295,
+   "Parent": 26,
    "PointLight": {
     "Brightness": 8.0,
     "Colour": {
@@ -6812,7 +6843,7 @@
   {
    "ID": 17,
    "Name": "Point Light",
-   "Parent": 4294967295,
+   "Parent": 26,
    "PointLight": {
     "Brightness": 8.0,
     "Colour": {
@@ -6846,7 +6877,7 @@
   {
    "ID": 18,
    "Name": "Point Light",
-   "Parent": 4294967295,
+   "Parent": 26,
    "PointLight": {
     "Brightness": 8.0,
     "Colour": {
@@ -6880,7 +6911,7 @@
   {
    "ID": 19,
    "Name": "Point Light",
-   "Parent": 4294967295,
+   "Parent": 26,
    "PointLight": {
     "Brightness": 8.0,
     "Colour": {
@@ -6914,7 +6945,7 @@
   {
    "ID": 20,
    "Name": "Point Light",
-   "Parent": 4294967295,
+   "Parent": 26,
    "PointLight": {
     "Brightness": 8.0,
     "Colour": {
@@ -6948,7 +6979,7 @@
   {
    "ID": 21,
    "Name": "Point Light",
-   "Parent": 4294967295,
+   "Parent": 26,
    "PointLight": {
     "Brightness": 8.0,
     "Colour": {
@@ -6982,7 +7013,7 @@
   {
    "ID": 22,
    "Name": "Point Light",
-   "Parent": 4294967295,
+   "Parent": 26,
    "PointLight": {
     "Brightness": 32.0,
     "Colour": {
@@ -7016,7 +7047,7 @@
   {
    "ID": 23,
    "Name": "Point Light",
-   "Parent": 4294967295,
+   "Parent": 26,
    "PointLight": {
     "Brightness": 32.0,
     "Colour": {
@@ -7050,7 +7081,7 @@
   {
    "ID": 24,
    "Name": "Point Light",
-   "Parent": 4294967295,
+   "Parent": 26,
    "PointLight": {
     "Brightness": 32.0,
     "Colour": {
@@ -7084,7 +7115,7 @@
   {
    "ID": 25,
    "Name": "Point Light",
-   "Parent": 4294967295,
+   "Parent": 26,
    "PointLight": {
     "Brightness": 32.0,
     "Colour": {
@@ -7114,6 +7145,16 @@
      "Z": 1.0
     }
    }
+  },
+  {
+   "ID": 26,
+   "Name": "Lights",
+   "Parent": 4294967295
+  },
+  {
+   "ID": 27,
+   "Name": "Geometry And Crap",
+   "Parent": 4294967295
   }
  ],
  "WorldName": "New World"

@@ -240,7 +240,8 @@ namespace R3
 		};
 		std::vector<VkDynamicState> dynamicStates = {
 			VK_DYNAMIC_STATE_VIEWPORT,
-			VK_DYNAMIC_STATE_SCISSOR
+			VK_DYNAMIC_STATE_SCISSOR,
+			VK_DYNAMIC_STATE_DEPTH_BIAS	// we need to set this per cascade, but the enable flag can be set for the pipeline itself
 		};
 		pb.m_dynamicState = VulkanHelpers::CreatePipelineDynamicState(dynamicStates);
 		pb.m_vertexInputState = VulkanHelpers::CreatePipelineEmptyVertexInputState();
@@ -253,6 +254,7 @@ namespace R3
 		disableDepthClipping.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_DEPTH_CLIP_STATE_CREATE_INFO_EXT;
 		disableDepthClipping.depthClipEnable = false;
 		pb.m_rasterState.pNext = &disableDepthClipping;
+		pb.m_rasterState.depthBiasEnable = VK_TRUE;		// always enable depth bias
 
 		pb.m_multisamplingState = VulkanHelpers::CreatePipelineMultiSampleState_SingleSample();
 		VkPipelineDepthStencilStateCreateInfo depthStencilState = { 0 };	// Enable depth read/write
@@ -503,7 +505,7 @@ namespace R3
 		m_frameStats.m_writeGBufferCmdsEndTime = time->GetElapsedTimeReal();
 	}
 
-	void MeshRenderer::OnShadowMapDraw(class RenderPassContext& ctx, const RenderTargetInfo& target, glm::mat4 shadowMatrix)
+	void MeshRenderer::OnShadowMapDraw(class RenderPassContext& ctx, const RenderTargetInfo& target, glm::mat4 shadowMatrix, float depthBiasConstant, float depthBiasClamp, float depthBiasSlope)
 	{
 		R3_PROF_EVENT();
 
@@ -545,6 +547,8 @@ namespace R3
 		vkCmdBindPipeline(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_shadowPipeline);
 		vkCmdSetViewport(ctx.m_graphicsCmds, 0, 1, &viewport);
 		vkCmdSetScissor(ctx.m_graphicsCmds, 0, 1, &scissor);
+		vkCmdSetDepthBias(ctx.m_graphicsCmds, depthBiasConstant, depthBiasClamp, depthBiasSlope);
+		
 		vkCmdBindIndexBuffer(ctx.m_graphicsCmds, GetSystem<StaticMeshSystem>()->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 		VkDescriptorSet allTextures = textures->GetAllTexturesSet();
 		vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, nullptr);

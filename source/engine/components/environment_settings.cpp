@@ -94,7 +94,7 @@ namespace R3
 				i.Inspect(std::format("Resolution##{}", cascade), m_shadowCascades[cascade].m_textureResolution, inspectResolution, 1024, 1024, 4096);
 				i.Inspect(std::format("Constant Bias##{}", cascade), m_shadowCascades[cascade].m_depthBiasConstantFactor, inspectConstBias, 0.01f, 0.0f, 10.0f);
 				i.Inspect(std::format("Bias Clamp##{}", cascade), m_shadowCascades[cascade].m_depthBiasClamp, inspectBiasClamp, 0.01f, 0.0f, 10.0f);
-				i.Inspect(std::format("Slope Clamp##{}", cascade), m_shadowCascades[cascade].m_depthSlopeBias, inspectSlopeBias, 0.01f, 0.0f, 1.0f);
+				i.Inspect(std::format("Slope Clamp##{}", cascade), m_shadowCascades[cascade].m_depthSlopeBias, inspectSlopeBias, 0.01f, 0.0f, 10.0f);
 			}
 		}
 	}
