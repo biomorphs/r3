@@ -2,6 +2,37 @@
  "AllEntities": [
   {
    "EnvironmentSettings": {
+    "Cascade_0": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.0,
+     "ConstantBias": 0.0,
+     "Resolution": 4096,
+     "SlopeBias": 1.0
+    },
+    "Cascade_1": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.5,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 1.0
+    },
+    "Cascade_2": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.5,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Cascade_3": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.0,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Flycam Draw Distance": 100.0,
+    "Flycam Speed": 2.0,
+    "Shadow Cascades": 2,
     "Sky Ambient": 0.00800000037997961,
     "Sky Colour": {
      "X": 0.0,
@@ -9,16 +40,16 @@
      "Z": 0.0
     },
     "Sun Ambient": 0.0010000000474974513,
-    "Sun Brightness": 0.05000000074505806,
+    "Sun Brightness": 0.10000000149011612,
     "Sun Colour": {
      "X": 1.0,
      "Y": 1.0,
      "Z": 1.0
     },
     "Sun Direction": {
-     "X": -0.10000000149011612,
-     "Y": -1.0,
-     "Z": -0.10000000149011612
+     "X": -0.30000001192092896,
+     "Y": -0.699999988079071,
+     "Z": -0.30000001192092896
     },
     "Tonemap Type": 2
    },
@@ -91,8 +122,8 @@
   {
    "Camera": {
     "FOV": 70.0,
-    "Far Plane": 5000.0,
-    "Near Plane": 0.10000000149011612
+    "Far Plane": 250.0,
+    "Near Plane": 1.0
    },
    "ID": 4,
    "LuaScript": {

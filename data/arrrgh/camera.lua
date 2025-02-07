@@ -25,8 +25,8 @@ function Dungeons_UpdateCamera(e)
 	if(camHeight < 20) then 
 		camHeight = 20
 	end
-	if(camHeight > 200) then 
-		camHeight = 200
+	if(camHeight > 100) then 
+		camHeight = 100
 	end
 	Arrrgh_Globals.CameraHeight = camHeight
 

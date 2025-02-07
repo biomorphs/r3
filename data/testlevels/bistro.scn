@@ -466,10 +466,10 @@
        "PathName": "invalid"
       },
       "AlbedoOpacity": {
-       "W": 1.0,
+       "W": 0.5,
        "X": 1.0,
        "Y": 1.0,
-       "Z": 1.0
+       "Z": 0.0
       },
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Emissive_StreetLight_BaseColor.dds"
