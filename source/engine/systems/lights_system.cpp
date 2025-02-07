@@ -44,21 +44,6 @@ namespace R3
 		});
 	}
 
-	bool LightsSystem::Init()
-	{
-		// Cascades defined as a fixed-distance along view frustum z axis
-		// Set up some defaults
-		ShadowCascadeSettings cascade;
-		m_sunShadowCascades.push_back(cascade);
-		cascade.m_distance = 0.15f;
-		m_sunShadowCascades.push_back(cascade);
-		cascade.m_distance = 0.5f;
-		m_sunShadowCascades.push_back(cascade);
-		assert(m_sunShadowCascades.size() <= ShadowMetadata::c_maxShadowCascades);
-
-		return true;
-	}
-
 	VkDeviceAddress LightsSystem::GetAllLightsDeviceAddress()
 	{
 		return m_allLightsData.GetDataDeviceAddress() + (m_currentFrame * sizeof(AllLights));

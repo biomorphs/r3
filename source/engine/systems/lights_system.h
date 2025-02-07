@@ -38,7 +38,6 @@ namespace R3
 	public:
 		static std::string_view GetName() { return "LightsSystem"; }
 		virtual void RegisterTickFns();
-		bool Init();
 		void PrepareForDrawing(class RenderPassContext& ctx);		// call this from render graph before accessing light data
 		void PrepareShadowMaps(class RenderPassContext& ctx);		// call this in a pass with shadow maps as inputs
 		VkDeviceAddress GetAllLightsDeviceAddress();				// get the address of m_allLightsData for this frame

@@ -50,7 +50,7 @@ namespace R3
 	private:
 		struct LightTileFrustum
 		{
-			glm::vec4 m_planes[5];		// top, bottom, left, right, far plane
+			glm::vec4 m_planes[6];		// top, bottom, left, right, far, near
 		};
 		// returns a buffer containing a LightTileFrustum per tile
 		VkDeviceAddress BuildTileFrustumsCompute(Device& d, VkCommandBuffer cmds, RenderTarget& depthBuffer, glm::uvec2 screenDimensions, const Camera& camera);
