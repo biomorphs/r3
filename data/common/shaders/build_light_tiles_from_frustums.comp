@@ -38,7 +38,7 @@ shared LightTileFrustum sharedThisFrustum;	// load frustum once for entire group
 bool IsSphereInFrustum(vec3 center, float radius)
 {
 	bool inFrustum = true;
-	for (int i = 0; (i < 5) && inFrustum; ++i)
+	for (int i = 0; (i < 6) && inFrustum; ++i)
 	{
 		float d = dot(sharedThisFrustum.m_planes[i].xyz, center) - sharedThisFrustum.m_planes[i].w;
 		inFrustum = (d >= -radius);

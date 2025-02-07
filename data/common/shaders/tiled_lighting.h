@@ -22,7 +22,7 @@ layout(buffer_reference, std430) readonly buffer LightTileBuffer {
 // used in tile building
 struct LightTileFrustum
 {
-	vec4 m_planes[5];			// world-space frustum planes, top, bottom, left, right, far plane
+	vec4 m_planes[6];			// world-space frustum planes, top, bottom, left, right, far plane, near plane
 };
 
 // describes all light tile data

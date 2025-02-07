@@ -38,14 +38,16 @@ vec4 PointsToPlane(vec3 p0, vec3 p1, vec3 p2)
 	return plane;
 }
 
-// Keep track of the max depth value for this tile
+// Keep track of the min + max depth value for this tile
 shared uint sharedMaxDepth;
+shared uint sharedMinDepth;
 
 void main() 
 {
 	if(gl_LocalInvocationIndex == 0)
 	{
 		sharedMaxDepth = 0;
+		sharedMinDepth = 0xffffffff;
 	}
 	groupMemoryBarrier();
 	barrier();
@@ -54,7 +56,9 @@ void main()
 	if(gl_GlobalInvocationID.x < PushConstants.m_screenDimensions.x && gl_GlobalInvocationID.y < PushConstants.m_screenDimensions.y)
 	{
 		float depthValue = texelFetch(inDepthBuffer, ivec2(gl_GlobalInvocationID.xy), 0).r;
-		atomicMax(sharedMaxDepth, floatBitsToUint(depthValue));
+		uint depthFloatToUint = floatBitsToUint(depthValue);
+		atomicMax(sharedMaxDepth, depthFloatToUint);
+		atomicMin(sharedMinDepth, depthFloatToUint);
 	}
 	groupMemoryBarrier();
 	barrier();
@@ -64,30 +68,35 @@ void main()
 	{
 		uint tileIndex = gl_WorkGroupID.x + (gl_WorkGroupID.y * PushConstants.m_tileCount[0]);
 		
-		float maxDepth = uintBitsToFloat(sharedMaxDepth);	// use min depth for the tile to build the frustum planes
+		float maxDepth = uintBitsToFloat(sharedMaxDepth);	
+		float minDepth = uintBitsToFloat(sharedMinDepth);
 		
-		// generate screen-space points on the far clip plane
-		vec3 farPoints[4] =
+		// generate screen-space points on the far + near clip plane
+		vec3 points[7] =
 		{
 			{ gl_WorkGroupID.x * COMPUTE_LIGHT_TILE_SIZE, gl_WorkGroupID.y * COMPUTE_LIGHT_TILE_SIZE, maxDepth },					// top left 
 			{ (gl_WorkGroupID.x + 1) * COMPUTE_LIGHT_TILE_SIZE, gl_WorkGroupID.y * COMPUTE_LIGHT_TILE_SIZE, maxDepth },			// top right
 			{ gl_WorkGroupID.x * COMPUTE_LIGHT_TILE_SIZE, (gl_WorkGroupID.y + 1) * COMPUTE_LIGHT_TILE_SIZE, maxDepth },			// botton left 
-			{ (gl_WorkGroupID.x + 1) * COMPUTE_LIGHT_TILE_SIZE, (gl_WorkGroupID.y + 1) * COMPUTE_LIGHT_TILE_SIZE, maxDepth }		// botton right
+			{ (gl_WorkGroupID.x + 1) * COMPUTE_LIGHT_TILE_SIZE, (gl_WorkGroupID.y + 1) * COMPUTE_LIGHT_TILE_SIZE, maxDepth },		// botton right
+			{ gl_WorkGroupID.x * COMPUTE_LIGHT_TILE_SIZE, gl_WorkGroupID.y * COMPUTE_LIGHT_TILE_SIZE, minDepth },					
+			{ (gl_WorkGroupID.x + 1) * COMPUTE_LIGHT_TILE_SIZE, gl_WorkGroupID.y * COMPUTE_LIGHT_TILE_SIZE, minDepth },			
+			{ gl_WorkGroupID.x * COMPUTE_LIGHT_TILE_SIZE, (gl_WorkGroupID.y + 1) * COMPUTE_LIGHT_TILE_SIZE, minDepth }
 		};
 		
 		// convert each point to world-space. I hope the compiler unrolls this!
-		for(int i=0; i<4; ++i)
+		for(int i=0; i<7; ++i)
 		{
-			farPoints[i] = TilePointToClipSpace(farPoints[i]);
-			vec4 projected = PushConstants.m_inverseProjViewMatrix * vec4(farPoints[i], 1.0f);
-			farPoints[i] = vec3(projected / projected.w);	// perspective divide
+			points[i] = TilePointToClipSpace(points[i]);
+			vec4 projected = PushConstants.m_inverseProjViewMatrix * vec4(points[i], 1.0f);
+			points[i] = vec3(projected / projected.w);	// perspective divide
 		}
 		
 		// compute planes + write to the frustum buffer
-		PushConstants.m_tileFrustums.data[tileIndex].m_planes[0] = PointsToPlane(PushConstants.m_eyeWorldSpacePosition.xyz, farPoints[2], farPoints[0]);
-		PushConstants.m_tileFrustums.data[tileIndex].m_planes[1] = PointsToPlane(PushConstants.m_eyeWorldSpacePosition.xyz, farPoints[1], farPoints[3]);
-		PushConstants.m_tileFrustums.data[tileIndex].m_planes[2] = PointsToPlane(PushConstants.m_eyeWorldSpacePosition.xyz, farPoints[0], farPoints[1]);
-		PushConstants.m_tileFrustums.data[tileIndex].m_planes[3] = PointsToPlane(PushConstants.m_eyeWorldSpacePosition.xyz, farPoints[3], farPoints[2]);
-		PushConstants.m_tileFrustums.data[tileIndex].m_planes[4] = PointsToPlane(farPoints[0], farPoints[2], farPoints[1]);
+		PushConstants.m_tileFrustums.data[tileIndex].m_planes[0] = PointsToPlane(PushConstants.m_eyeWorldSpacePosition.xyz, points[2], points[0]);
+		PushConstants.m_tileFrustums.data[tileIndex].m_planes[1] = PointsToPlane(PushConstants.m_eyeWorldSpacePosition.xyz, points[1], points[3]);
+		PushConstants.m_tileFrustums.data[tileIndex].m_planes[2] = PointsToPlane(PushConstants.m_eyeWorldSpacePosition.xyz, points[0], points[1]);
+		PushConstants.m_tileFrustums.data[tileIndex].m_planes[3] = PointsToPlane(PushConstants.m_eyeWorldSpacePosition.xyz, points[3], points[2]);
+		PushConstants.m_tileFrustums.data[tileIndex].m_planes[4] = PointsToPlane(points[0], points[2], points[1]);
+		PushConstants.m_tileFrustums.data[tileIndex].m_planes[5] = PointsToPlane(points[4], points[5], points[6]);
 	}
 }
