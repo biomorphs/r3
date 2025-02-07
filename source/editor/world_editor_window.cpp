@@ -19,6 +19,7 @@
 #include "commands/world_editor_set_entity_parent_cmd.h"
 #include "commands/world_editor_import_scene_cmd.h"
 #include "commands/world_editor_convert_mesh_components_cmd.h"
+#include "commands/world_editor_add_mesh_material_override_cmd.h"
 #include "engine/systems.h"
 #include "engine/ui/entity_list_widget.h"
 #include "engine/ui/entity_inspector_widget.h"
@@ -133,10 +134,12 @@ namespace R3
 	{
 		bool containsStatics = false;
 		bool containsDynamics = false;
+		bool containsMaterialOverrides = false;
 		for (auto sel = 0; sel < m_selectedEntities.size() && !(containsStatics && containsDynamics); ++sel)
 		{
 			containsStatics |= w.GetComponent<StaticMeshComponent>(m_selectedEntities[sel]) != nullptr;
 			containsDynamics |= w.GetComponent<DynamicMeshComponent>(m_selectedEntities[sel]) != nullptr;
+			containsMaterialOverrides |= w.GetComponent<StaticMeshMaterialsComponent>(m_selectedEntities[sel]) != nullptr;
 		}
 
 		if (containsStatics || containsDynamics)
@@ -154,6 +157,13 @@ namespace R3
 				meshMenu.AddItem("Convert to Static Meshes", [&]()
 				{
 					m_cmds->Push(std::make_unique<WorldEditorConvertMeshComponentsCmd>(this, m_selectedEntities, WorldEditorConvertMeshComponentsCmd::DynamicToStatic));
+				});
+			}
+			if (!containsMaterialOverrides)
+			{
+				meshMenu.AddItem("Add Material Overrides", [&]()
+				{
+					m_cmds->Push(std::make_unique<WorldEditorAddMeshMaterialOverrideCommand>(this, m_selectedEntities));
 				});
 			}
 		}

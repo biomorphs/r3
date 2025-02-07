@@ -127,9 +127,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\dirty-brick-wall-bl\\dirty-brick-wall_albedo.png"
       },
-      "HeightmapTex": {
-       "PathName": "downloaded\\textures\\dirty-brick-wall-bl\\dirty-brick-wall_height.png"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "downloaded\\textures\\dirty-brick-wall-bl\\dirty-brick-wall_metallic.png"
       },
@@ -137,8 +135,6 @@
       "NormalTex": {
        "PathName": "downloaded\\textures\\dirty-brick-wall-bl\\dirty-brick-wall_normal-ogl.png"
       },
-      "ParalaxAmount": 0.17000001668930054,
-      "ParalaxShadows": 0,
       "Roughness": 0.3999999761581421,
       "RoughnessTex": {
        "PathName": "downloaded\\textures\\dirty-brick-wall-bl\\dirty-brick-wall_roughness.png"
@@ -200,9 +196,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\older-wood-flooring-bl\\older-wood-flooring_albedo.png"
       },
-      "HeightmapTex": {
-       "PathName": "downloaded\\textures\\older-wood-flooring-bl\\older-wood-flooring_height.png"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "downloaded\\textures\\older-wood-flooring-bl\\older-wood-flooring_metallic.png"
       },
@@ -210,8 +204,6 @@
       "NormalTex": {
        "PathName": "downloaded\\textures\\older-wood-flooring-bl\\older-wood-flooring_normal-ogl.png"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.3999999761581421,
       "RoughnessTex": {
        "PathName": "downloaded\\textures\\older-wood-flooring-bl\\older-wood-flooring_roughness.png"
@@ -438,9 +430,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\rocky_dirt1-bl\\rocky_dirt1-albedo.png"
       },
-      "HeightmapTex": {
-       "PathName": "downloaded\\textures\\rocky_dirt1-bl\\rocky_dirt1_Height.png"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "downloaded\\textures\\rocky_dirt1-bl\\rocky_dirt1-metallic.png"
       },
@@ -448,8 +438,6 @@
       "NormalTex": {
        "PathName": "downloaded\\textures\\rocky_dirt1-bl\\rocky_dirt1-normal-ogl.png"
       },
-      "ParalaxAmount": 0.02500000037252903,
-      "ParalaxShadows": 0,
       "Roughness": 0.3999999761581421,
       "RoughnessTex": {
        "PathName": "downloaded\\textures\\rocky_dirt1-bl\\rocky_dirt1_Roughness.png"
@@ -775,9 +763,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\colored-concrete-wall-bl\\colored-concrete-wall_albedo.png"
       },
-      "HeightmapTex": {
-       "PathName": "downloaded\\textures\\colored-concrete-wall-bl\\colored-concrete-wall_height.png"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "downloaded\\textures\\colored-concrete-wall-bl\\colored-concrete-wall_metallic.png"
       },
@@ -785,8 +771,6 @@
       "NormalTex": {
        "PathName": "downloaded\\textures\\colored-concrete-wall-bl\\colored-concrete-wall_normal-ogl.png"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.3999999761581421,
       "RoughnessTex": {
        "PathName": "downloaded\\textures\\colored-concrete-wall-bl\\colored-concrete-wall_roughness.png"
@@ -947,9 +931,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\conifer_tree_high-poly\\textures\\nature_bark_fir_07_l_0001.jpg_baseColor.jpeg"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -957,8 +939,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.800000011920929,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -983,9 +963,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\conifer_tree_high-poly\\textures\\nature_leaves_thuja_01_l_0001.jpg_baseColor.png"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 1,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -993,8 +971,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -1019,9 +995,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\conifer_tree_high-poly\\textures\\nature_leaves_thuja_01_l_0002.jpg_baseColor.png"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 1,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1029,8 +1003,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -1055,9 +1027,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\conifer_tree_high-poly\\textures\\nature_leaves_thuja_01_l_0003.jpg_baseColor.png"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 1,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1065,8 +1035,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -1091,9 +1059,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\conifer_tree_high-poly\\textures\\nature_leaves_thuja_01_l_0004.jpg_baseColor.png"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 1,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1101,8 +1067,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -1127,9 +1091,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\conifer_tree_high-poly\\textures\\nature_leaves_thuja_01_l_0005.jpg_baseColor.png"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 1,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1137,8 +1099,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -1163,9 +1123,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\conifer_tree_high-poly\\textures\\nature_leaves_thuja_01_l_0006.jpg_baseColor.png"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 1,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1173,8 +1131,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -1199,9 +1155,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\conifer_tree_high-poly\\textures\\nature_leaves_thuja_01_l_0007.jpg_baseColor.png"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 1,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1209,8 +1163,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -1235,9 +1187,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1245,8 +1195,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -1287,11 +1235,207 @@
    "StaticMesh": {
     "Draw": true,
     "MaterialsOverride": {
-     "ID": 4294967295
+     "ID": 24
     },
     "Model": {
      "Path": "downloaded\\tree_gn\\scene.gltf"
     }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\tree_gn\\textures\\ClusterB_diffuse.png"
+      },
+      "Flags": 1,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\tree_gn\\textures\\ClusterB_normal.png"
+      },
+      "Roughness": 1.0,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\tree_gn\\textures\\VinesB_diffuse.png"
+      },
+      "Flags": 1,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\tree_gn\\textures\\VinesB_normal.png"
+      },
+      "Roughness": 1.0,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\tree_gn\\textures\\ClusterB2_diffuse.png"
+      },
+      "Flags": 1,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\tree_gn\\textures\\ClusterB_normal.png"
+      },
+      "Roughness": 1.0,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\tree_gn\\textures\\BarkB_diffuse.png"
+      },
+      "Flags": 1,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\tree_gn\\textures\\BarkB_normal.png"
+      },
+      "Roughness": 1.0,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\tree_gn\\textures\\PruneB_diffuse.png"
+      },
+      "Flags": 0,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\tree_gn\\textures\\PruneB_normal.png"
+      },
+      "Roughness": 1.0,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\tree_gn\\textures\\CortexB_diffuse.png"
+      },
+      "Flags": 1,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\tree_gn\\textures\\CortexB_normal.png"
+      },
+      "Roughness": 1.0,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
    },
    "Transform": {
     "Orientation": {
@@ -1341,9 +1485,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\italian_cypress_tree\\textures\\trunk_2_1_0Mat_baseColor.png"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1351,8 +1493,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.800000011920929,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -1377,9 +1517,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\italian_cypress_tree\\textures\\pine_2_1Mat_baseColor.png"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 1,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1387,8 +1525,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.9577051401138306,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -1413,9 +1549,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1423,8 +1557,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -1493,6 +1625,37 @@
   },
   {
    "EnvironmentSettings": {
+    "Cascade_0": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.0,
+     "ConstantBias": 0.0,
+     "Resolution": 4096,
+     "SlopeBias": 0.0
+    },
+    "Cascade_1": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.25,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Cascade_2": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.5,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Cascade_3": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.0,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Flycam Draw Distance": 64.0,
+    "Flycam Speed": 2.0,
+    "Shadow Cascades": 1,
     "Sky Ambient": 0.019999999552965164,
     "Sky Colour": {
      "X": 0.0021136815194040537,
@@ -1500,7 +1663,7 @@
      "Z": 0.007920537143945694
     },
     "Sun Ambient": 0.05000000074505806,
-    "Sun Brightness": 0.800000011920929,
+    "Sun Brightness": 2.0,
     "Sun Colour": {
      "X": 0.9032257795333862,
      "Y": 0.9695629477500916,
@@ -1510,7 +1673,8 @@
      "X": -0.699999988079071,
      "Y": -0.5,
      "Z": 0.5
-    }
+    },
+    "Tonemap Type": 0
    },
    "ID": 27,
    "Name": "Globals",
@@ -1544,9 +1708,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\bigger_mossy_tree_stump\\textures\\Baumpstump03-290k_Material_u1_v1_baseColor.jpeg"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1554,8 +1716,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -1580,9 +1740,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\bigger_mossy_tree_stump\\textures\\Baumpstump03-290k_Material_u2_v1_baseColor.jpeg"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1590,8 +1748,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -1616,9 +1772,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1626,8 +1780,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -1689,9 +1841,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_01_baseColor.jpeg"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_01_metallicRoughness.png"
       },
@@ -1699,8 +1849,6 @@
       "NormalTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_01_normal.png"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_01_metallicRoughness.png"
@@ -1725,9 +1873,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_02_baseColor.jpeg"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_02_metallicRoughness.png"
       },
@@ -1735,8 +1881,6 @@
       "NormalTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_02_normal.png"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_02_metallicRoughness.png"
@@ -1761,9 +1905,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_03_baseColor.jpeg"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_03_metallicRoughness.png"
       },
@@ -1771,8 +1913,6 @@
       "NormalTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_03_normal.png"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_03_metallicRoughness.png"
@@ -1797,9 +1937,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1807,8 +1945,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -1870,9 +2006,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_01_baseColor.jpeg"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_01_metallicRoughness.png"
       },
@@ -1880,8 +2014,6 @@
       "NormalTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_01_normal.png"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_01_metallicRoughness.png"
@@ -1906,9 +2038,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_02_baseColor.jpeg"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_02_metallicRoughness.png"
       },
@@ -1916,8 +2046,6 @@
       "NormalTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_02_normal.png"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_02_metallicRoughness.png"
@@ -1942,9 +2070,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_03_baseColor.jpeg"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_03_metallicRoughness.png"
       },
@@ -1952,8 +2078,6 @@
       "NormalTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_03_normal.png"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_03_metallicRoughness.png"
@@ -1978,9 +2102,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1988,8 +2110,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -2129,11 +2249,47 @@
    "StaticMesh": {
     "Draw": true,
     "MaterialsOverride": {
-     "ID": 4294967295
+     "ID": 34
     },
     "Model": {
      "Path": "downloaded\\lupine_plant\\scene.gltf"
     }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\lupine_plant\\textures\\lambert2SG_baseColor.png"
+      },
+      "Flags": 1,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\lupine_plant\\textures\\lambert2SG_normal.png"
+      },
+      "Roughness": 1.0,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
    },
    "Transform": {
     "Orientation": {
@@ -2162,7 +2318,7 @@
    "StaticMesh": {
     "Draw": true,
     "MaterialsOverride": {
-     "ID": 4294967295
+     "ID": 45
     },
     "Model": {
      "Path": "downloaded\\plant(1)\\scene.gltf"
@@ -2195,11 +2351,47 @@
    "StaticMesh": {
     "Draw": true,
     "MaterialsOverride": {
-     "ID": 4294967295
+     "ID": 36
     },
     "Model": {
      "Path": "downloaded\\plant_bush\\scene.gltf"
     }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\plant_bush\\textures\\Plant1_baseColor.png"
+      },
+      "Flags": 1,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\plant_bush\\textures\\Plant1_normal.png"
+      },
+      "Roughness": 0.571363627910614,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
    },
    "Transform": {
     "Orientation": {
@@ -2294,11 +2486,111 @@
    "StaticMesh": {
     "Draw": true,
     "MaterialsOverride": {
-     "ID": 4294967295
+     "ID": 39
     },
     "Model": {
      "Path": "downloaded\\tropical_plant(1)\\scene.gltf"
     }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\tropical_plant(1)\\textures\\Material_trunk.dds_baseColor.png"
+      },
+      "Flags": 1,
+      "MetalTex": {
+       "PathName": "downloaded\\tropical_plant(1)\\textures\\Material_trunk.dds_metallicRoughness.png"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\tropical_plant(1)\\textures\\Material_trunk.dds_normal.png"
+      },
+      "Roughness": 1.0,
+      "RoughnessTex": {
+       "PathName": "downloaded\\tropical_plant(1)\\textures\\Material_trunk.dds_metallicRoughness.png"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\tropical_plant(1)\\textures\\Material.001_trunk.dds_baseColor.jpeg"
+      },
+      "Flags": 0,
+      "MetalTex": {
+       "PathName": "downloaded\\tropical_plant(1)\\textures\\Material.001_trunk.dds_metallicRoughness.png"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\tropical_plant(1)\\textures\\Material.001_trunk.dds_normal.png"
+      },
+      "Roughness": 1.0,
+      "RoughnessTex": {
+       "PathName": "downloaded\\tropical_plant(1)\\textures\\Material.001_trunk.dds_metallicRoughness.png"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\tropical_plant(1)\\textures\\Material.002_leaves.dds_baseColor.png"
+      },
+      "Flags": 1,
+      "MetalTex": {
+       "PathName": "downloaded\\tropical_plant(1)\\textures\\Material.002_leaves.dds_metallicRoughness.png"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\tropical_plant(1)\\textures\\Material.002_leaves.dds_normal.png"
+      },
+      "Roughness": 1.0,
+      "RoughnessTex": {
+       "PathName": "downloaded\\tropical_plant(1)\\textures\\Material.002_leaves.dds_metallicRoughness.png"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
    },
    "Transform": {
     "Orientation": {
@@ -2360,7 +2652,7 @@
    "StaticMesh": {
     "Draw": true,
     "MaterialsOverride": {
-     "ID": 4294967295
+     "ID": 45
     },
     "Model": {
      "Path": "downloaded\\plant(1)\\scene.gltf"
@@ -2393,7 +2685,7 @@
    "StaticMesh": {
     "Draw": true,
     "MaterialsOverride": {
-     "ID": 4294967295
+     "ID": 45
     },
     "Model": {
      "Path": "downloaded\\plant(1)\\scene.gltf"
@@ -2426,7 +2718,7 @@
    "StaticMesh": {
     "Draw": true,
     "MaterialsOverride": {
-     "ID": 4294967295
+     "ID": 45
     },
     "Model": {
      "Path": "downloaded\\plant(1)\\scene.gltf"
@@ -2459,7 +2751,7 @@
    "StaticMesh": {
     "Draw": true,
     "MaterialsOverride": {
-     "ID": 4294967295
+     "ID": 45
     },
     "Model": {
      "Path": "downloaded\\plant(1)\\scene.gltf"
@@ -2492,11 +2784,47 @@
    "StaticMesh": {
     "Draw": true,
     "MaterialsOverride": {
-     "ID": 4294967295
+     "ID": 45
     },
     "Model": {
      "Path": "downloaded\\plant(1)\\scene.gltf"
     }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\plant(1)\\textures\\Material.001_diffuse.png"
+      },
+      "Flags": 1,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "downloaded\\plant(1)\\textures\\Material.001_normal.png"
+      },
+      "Roughness": 1.0,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
    },
    "Transform": {
     "Orientation": {
@@ -2723,11 +3051,47 @@
    "StaticMesh": {
     "Draw": true,
     "MaterialsOverride": {
-     "ID": 4294967295
+     "ID": 52
     },
     "Model": {
      "Path": "downloaded\\plant_bush\\scene.gltf"
     }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\plant_bush\\textures\\Plant1_baseColor.png"
+      },
+      "Flags": 1,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\plant_bush\\textures\\Plant1_normal.png"
+      },
+      "Roughness": 0.571363627910614,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
    },
    "Transform": {
     "Orientation": {
@@ -2843,9 +3207,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_albedo.png"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_metallic.png"
       },
@@ -2853,8 +3215,6 @@
       "NormalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_normal-ogl.png"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.3999999761581421,
       "RoughnessTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_roughness.png"
@@ -2916,9 +3276,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2926,8 +3284,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -2972,7 +3328,8 @@
      "Y": 0.6095863580703735,
      "Z": 0.16532260179519653
     },
-    "Distance": 16.0
+    "Distance": 16.0,
+    "Enabled": true
    },
    "Transform": {
     "Orientation": {
@@ -3005,7 +3362,8 @@
      "Y": 0.6095863580703735,
      "Z": 0.16532260179519653
     },
-    "Distance": 16.0
+    "Distance": 16.0,
+    "Enabled": true
    },
    "Transform": {
     "Orientation": {
@@ -3055,9 +3413,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3065,8 +3421,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -3128,9 +3482,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_albedo.png"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_metallic.png"
       },
@@ -3138,8 +3490,6 @@
       "NormalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_normal-ogl.png"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.3999999761581421,
       "RoughnessTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_roughness.png"
@@ -3184,7 +3534,8 @@
      "Y": 0.6095863580703735,
      "Z": 0.16532260179519653
     },
-    "Distance": 16.0
+    "Distance": 16.0,
+    "Enabled": true
    },
    "Transform": {
     "Orientation": {
@@ -3234,9 +3585,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3244,8 +3593,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -3307,9 +3654,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_albedo.png"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_metallic.png"
       },
@@ -3317,8 +3662,6 @@
       "NormalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_normal-ogl.png"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.3999999761581421,
       "RoughnessTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_roughness.png"
@@ -3363,7 +3706,8 @@
      "Y": 0.6095863580703735,
      "Z": 0.16532260179519653
     },
-    "Distance": 16.0
+    "Distance": 16.0,
+    "Enabled": true
    },
    "Transform": {
     "Orientation": {
@@ -3413,9 +3757,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3423,8 +3765,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -3486,9 +3826,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_albedo.png"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_metallic.png"
       },
@@ -3496,8 +3834,6 @@
       "NormalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_normal-ogl.png"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.3999999761581421,
       "RoughnessTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_roughness.png"
@@ -3542,7 +3878,8 @@
      "Y": 0.6095863580703735,
      "Z": 0.16532260179519653
     },
-    "Distance": 16.0
+    "Distance": 16.0,
+    "Enabled": true
    },
    "Transform": {
     "Orientation": {
@@ -3592,9 +3929,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3602,8 +3937,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -3665,9 +3998,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_albedo.png"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_metallic.png"
       },
@@ -3675,8 +4006,6 @@
       "NormalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_normal-ogl.png"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.3999999761581421,
       "RoughnessTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_roughness.png"
@@ -3721,7 +4050,8 @@
      "Y": 0.6095863580703735,
      "Z": 0.16532260179519653
     },
-    "Distance": 16.0
+    "Distance": 16.0,
+    "Enabled": true
    },
    "Transform": {
     "Orientation": {
@@ -3771,9 +4101,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3781,8 +4109,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -3844,9 +4170,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_albedo.png"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_metallic.png"
       },
@@ -3854,8 +4178,6 @@
       "NormalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_normal-ogl.png"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.3999999761581421,
       "RoughnessTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_roughness.png"
@@ -3900,7 +4222,8 @@
      "Y": 0.6095863580703735,
      "Z": 0.16532260179519653
     },
-    "Distance": 16.0
+    "Distance": 16.0,
+    "Enabled": true
    },
    "Transform": {
     "Orientation": {
@@ -3950,9 +4273,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3960,8 +4281,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -4023,9 +4342,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_albedo.png"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_metallic.png"
       },
@@ -4033,8 +4350,6 @@
       "NormalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_normal-ogl.png"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.3999999761581421,
       "RoughnessTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_roughness.png"
@@ -4079,7 +4394,8 @@
      "Y": 0.6095863580703735,
      "Z": 0.16532260179519653
     },
-    "Distance": 16.0
+    "Distance": 16.0,
+    "Enabled": true
    },
    "Transform": {
     "Orientation": {
@@ -4129,9 +4445,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4139,8 +4453,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -4202,9 +4514,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_albedo.png"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_metallic.png"
       },
@@ -4212,8 +4522,6 @@
       "NormalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_normal-ogl.png"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.3999999761581421,
       "RoughnessTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_roughness.png"
@@ -4258,7 +4566,8 @@
      "Y": 0.6095863580703735,
      "Z": 0.16532260179519653
     },
-    "Distance": 16.0
+    "Distance": 16.0,
+    "Enabled": true
    },
    "Transform": {
     "Orientation": {
@@ -4308,9 +4617,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4318,8 +4625,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -4381,9 +4686,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_albedo.png"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_metallic.png"
       },
@@ -4391,8 +4694,6 @@
       "NormalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_normal-ogl.png"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.3999999761581421,
       "RoughnessTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_roughness.png"
@@ -4437,7 +4738,8 @@
      "Y": 0.6095863580703735,
      "Z": 0.16532260179519653
     },
-    "Distance": 16.0
+    "Distance": 16.0,
+    "Enabled": true
    },
    "Transform": {
     "Orientation": {
@@ -4487,9 +4789,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4497,8 +4797,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 1.0,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -4560,9 +4858,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_albedo.png"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 0,
       "MetalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_metallic.png"
       },
@@ -4570,8 +4866,6 @@
       "NormalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_normal-ogl.png"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.3999999761581421,
       "RoughnessTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_roughness.png"

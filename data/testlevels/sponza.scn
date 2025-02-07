@@ -445,24 +445,24 @@
     "InputParams": {
      "Floats": [
       {
-       "Key": "X Min",
-       "Value": -11.0
-      },
-      {
        "Key": "Z Max",
        "Value": 6.0
       },
       {
-       "Key": "X Max",
-       "Value": 11.0
+       "Key": "X Min",
+       "Value": -11.0
+      },
+      {
+       "Key": "Max Radius",
+       "Value": 6.0
       },
       {
        "Key": "Z Min",
        "Value": -6.0
       },
       {
-       "Key": "Max Radius",
-       "Value": 6.0
+       "Key": "X Max",
+       "Value": 11.0
       },
       {
        "Key": "Max Brightness",
@@ -473,12 +473,12 @@
        "Value": 1.0
       },
       {
-       "Key": "Y Max",
-       "Value": 12.0
-      },
-      {
        "Key": "Min Brightness",
        "Value": 1.0
+      },
+      {
+       "Key": "Y Max",
+       "Value": 12.0
       },
       {
        "Key": "Min Radius",
@@ -501,7 +501,7 @@
      "Ints": [
       {
        "Key": "Light Count",
-       "Value": 256
+       "Value": 1024
       }
      ]
     },
@@ -524,6 +524,37 @@
   },
   {
    "EnvironmentSettings": {
+    "Cascade_0": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.0,
+     "ConstantBias": 0.0,
+     "Resolution": 4096,
+     "SlopeBias": 0.0
+    },
+    "Cascade_1": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.25,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Cascade_2": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.5,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Cascade_3": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.0,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Flycam Draw Distance": 50.0,
+    "Flycam Speed": 2.0,
+    "Shadow Cascades": 1,
     "Sky Ambient": 0.06750000268220901,
     "Sky Colour": {
      "X": 0.0,

@@ -15,11 +15,9 @@ namespace R3
 		static std::string_view GetTypeName() { return "StaticMeshMaterials"; }
 		void SerialiseJson(JsonSerialiser& s);
 		void Inspect(const Entities::EntityHandle& e, Entities::World* w, ValueInspector& i);
+		void PopulateFromMesh(const Entities::EntityHandle& e, Entities::World* w);
 
 		std::vector<MeshMaterial> m_materials;
 		uint32_t m_gpuDataIndex = -1;	// indexes into StaticMeshSystem::m_allMaterialsGpu
-
-	private:
-		void PopulateFromMesh(const Entities::EntityHandle& e, Entities::World* w);
 	};
 }

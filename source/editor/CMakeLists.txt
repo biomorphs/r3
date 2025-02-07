@@ -22,6 +22,8 @@ set(EditorLib_SourceFiles
 	world_runner_window.cpp
 	systems/editor_system.h
 	systems/editor_system.cpp
+	commands/world_editor_add_mesh_material_override_cmd.h
+	commands/world_editor_add_mesh_material_override_cmd.cpp
 	commands/world_editor_set_entity_positions_cmd.h
 	commands/world_editor_set_entity_positions_cmd.cpp
 	commands/world_editor_save_cmd.h
