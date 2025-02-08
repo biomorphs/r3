@@ -52,11 +52,11 @@ namespace R3
 		{
 			std::string activeWorldId = entitySys->GetActiveWorldID();
 			entityMenu.AddItem("No Entity", [this, activeWorldId]() {
-				m_activeCameras.erase(activeWorldId);
+				SetActiveCamera({});
 			});
 			auto forEachCamera = [&](const Entities::EntityHandle& parent, CameraComponent& c, TransformComponent& t) {
 				entityMenu.AddItem(activeWorld->GetEntityDisplayName(parent), [this, activeWorldId, parent]() {
-					m_activeCameras[activeWorldId] = parent;
+					SetActiveCamera(parent);
 				});
 				return true;
 			};
@@ -99,6 +99,22 @@ namespace R3
 	{
 		auto entitySys = GetSystem<Entities::EntitySystem>();
 		std::string activeWorldId = entitySys->GetActiveWorldID();
+		auto world = entitySys->GetWorld(activeWorldId);
+
+		auto currentCamEntity = m_activeCameras.find(activeWorldId);
+		if (currentCamEntity != m_activeCameras.end())
+		{
+			CameraComponent* activeCamera = entitySys->GetWorld(activeWorldId)->GetComponent<CameraComponent>(currentCamEntity->second);
+			if (activeCamera)
+			{
+				TransformComponent* camTransform = world->GetComponent<TransformComponent>(currentCamEntity->second);
+				if (camTransform)
+				{
+					m_flyCam->SetPosition(camTransform->GetPosition());
+				}
+			}
+		}
+
 		m_activeCameras[activeWorldId] = e;
 	}
 
