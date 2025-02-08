@@ -759,6 +759,7 @@ namespace R3
 			requiredFeatures.multiDrawIndirect = true;
 			requiredFeatures.samplerAnisotropy = true;
 			requiredFeatures.depthClamp = true;		// enable depth clamping, required for shadow map clipping
+			requiredFeatures.depthBiasClamp = true;
 
 			// Create the device
 			VkDeviceCreateInfo deviceCreate = { 0 };

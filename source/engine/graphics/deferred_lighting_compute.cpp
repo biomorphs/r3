@@ -121,26 +121,6 @@ namespace R3
 			}
 		}
 
-		// create shadows sampler
-		{
-			VkSamplerCreateInfo sampler = {};
-			sampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-			sampler.magFilter = VK_FILTER_NEAREST;
-			sampler.minFilter = VK_FILTER_NEAREST;
-			sampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-			sampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-			sampler.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-			sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-			sampler.maxLod = VK_LOD_CLAMP_NONE;
-			sampler.minLod = 0;
-			sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-			if (!VulkanHelpers::CheckResult(vkCreateSampler(d.GetVkDevice(), &sampler, nullptr, &m_shadowSampler)))
-			{
-				LogError("Failed to create sampler");
-				return false;
-			}
-		}
-
 		auto computeShaderTiled = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), "shaders_spirv/common/deferred_lighting_compute_tiled.comp.spv");
 		auto computeShaderAllLights = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), "shaders_spirv/common/deferred_lighting_compute_all_lights.comp.spv");
 		if (computeShaderAllLights == VK_NULL_HANDLE || computeShaderTiled == VK_NULL_HANDLE)
@@ -185,7 +165,6 @@ namespace R3
 		R3_PROF_EVENT();
 
 		vkDestroySampler(d.GetVkDevice(), m_depthSampler, nullptr);
-		vkDestroySampler(d.GetVkDevice(), m_shadowSampler, nullptr);
 
 		// cleanup the pipelines
 		vkDestroyPipeline(d.GetVkDevice(), m_pipelineAllLights, nullptr);

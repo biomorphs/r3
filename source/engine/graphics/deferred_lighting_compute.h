@@ -38,9 +38,6 @@ namespace R3
 		// Can't use depth buffer as storage image, sample it as a texture instead
 		VkSampler m_depthSampler = VK_NULL_HANDLE;
 
-		// Shadow sampler
-		VkSampler m_shadowSampler = VK_NULL_HANDLE;
-
 		// pipelines + layouts
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_pipelineAllLights = VK_NULL_HANDLE;

@@ -357,7 +357,7 @@ namespace R3
 		{
 			VkSamplerCreateInfo sampler = {};
 			sampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-			sampler.magFilter = VK_FILTER_LINEAR;		// no filtering of depth values unless we are using h/w pcf
+			sampler.magFilter = VK_FILTER_LINEAR;
 			sampler.minFilter = VK_FILTER_LINEAR;
 			sampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;		// return border colour if we sample outside (0,1)
 			sampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
@@ -365,7 +365,7 @@ namespace R3
 			sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
 			sampler.maxLod = VK_LOD_CLAMP_NONE;
 			sampler.minLod = 0;
-			sampler.compareEnable = true;
+			sampler.compareEnable = VK_TRUE;
 			sampler.compareOp = VK_COMPARE_OP_LESS;
 			sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;	// white = return depth of 1.0 at boundaries
 			if (!VulkanHelpers::CheckResult(vkCreateSampler(ctx.m_device->GetVkDevice(), &sampler, nullptr, &m_shadowSampler)))
