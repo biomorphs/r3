@@ -7,7 +7,7 @@
      "CascadeDepth": 0.0,
      "ConstantBias": 0.0,
      "Resolution": 2048,
-     "SlopeBias": 0.0
+     "SlopeBias": 1.0
     },
     "Cascade_1": {
      "BiasClamp": 0.0,

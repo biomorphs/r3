@@ -1,0 +1,1656 @@
+{
+ "AllEntities": [
+  {
+   "EnvironmentSettings": {
+    "Cascade_0": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.0,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Cascade_1": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.5,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Cascade_2": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.5,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Cascade_3": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.0,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Flycam Draw Distance": 32.0,
+    "Flycam Speed": 2.0,
+    "Shadow Cascades": 2,
+    "Sky Ambient": 0.09499997645616531,
+    "Sky Colour": {
+     "X": 0.2620967626571655,
+     "Y": 0.535835325717926,
+     "Z": 1.0
+    },
+    "Sun Ambient": 0.1199999526143074,
+    "Sun Brightness": 8.0,
+    "Sun Colour": {
+     "X": 1.0,
+     "Y": 0.8692768216133118,
+     "Z": 0.7580645084381104
+    },
+    "Sun Direction": {
+     "X": 0.25,
+     "Y": -0.6000000238418579,
+     "Z": -0.6000000238418579
+    },
+    "Tonemap Type": 7
+   },
+   "ID": 0,
+   "Name": "Globals",
+   "Parent": 2
+  },
+  {
+   "ID": 1,
+   "Name": "Cube",
+   "Parent": 3,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 1
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\tiger_rock_4k.gltf\\textures\\tiger_rock_diff_4k.jpg"
+      },
+      "Flags": 0,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\tiger_rock_4k.gltf\\textures\\tiger_rock_nor_gl_4k.jpg"
+      },
+      "Roughness": 0.3999999761581421,
+      "RoughnessTex": {
+       "PathName": "downloaded\\tiger_rock_4k.gltf\\textures\\tiger_rock_roughness_4k.png"
+      },
+      "UVOffsetScale": {
+       "W": 6.0,
+       "X": 4.0,
+       "Y": 0.20000000298023224,
+       "Z": 6.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": -0.35850003361701965,
+     "Z": 0.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 32.0,
+     "Y": 1.0,
+     "Z": 32.0
+    }
+   }
+  },
+  {
+   "ID": 2,
+   "Name": "New World",
+   "Parent": 4294967295
+  },
+  {
+   "ID": 3,
+   "Name": "Geometry",
+   "Parent": 4294967295
+  },
+  {
+   "ID": 13,
+   "Name": "namaqualand_boulder_04_4k.gltf",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "downloaded\\namaqualand_boulder_04_4k.gltf\\namaqualand_boulder_04_4k.gltf"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 2.836414098739624,
+     "Y": 0.0,
+     "Z": -0.5531013011932373
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 14,
+   "Name": "namaqualand_boulder_05_4k.gltf",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "downloaded\\namaqualand_boulder_05_4k.gltf\\namaqualand_boulder_05_4k.gltf"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 0.965925931930542,
+     "X": 0.0,
+     "Y": 0.2588190734386444,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.32846105098724365,
+     "Y": 0.0,
+     "Z": 1.4156348705291748
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 15,
+   "Name": "namaqualand_boulder_05_4k.gltf",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "downloaded\\namaqualand_boulder_05_4k.gltf\\namaqualand_boulder_05_4k.gltf"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 0.766044557094574,
+     "X": 0.0,
+     "Y": 0.6427876353263855,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.32846105098724365,
+     "Y": 0.0,
+     "Z": 2.2366437911987305
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 16,
+   "Name": "namaqualand_boulder_05_4k.gltf",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "downloaded\\namaqualand_boulder_05_4k.gltf\\namaqualand_boulder_05_4k.gltf"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 0.9396927356719971,
+     "X": 0.0,
+     "Y": -0.3420201539993286,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.7615014314651489,
+     "Y": 0.0,
+     "Z": 3.1484029293060303
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 17,
+   "Name": "namaqualand_boulder_06_4k.gltf",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "downloaded\\namaqualand_boulder_06_4k.gltf\\namaqualand_boulder_06_4k.gltf"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 0.9762960076332092,
+     "X": 0.0,
+     "Y": 0.2164396196603775,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 1.362022876739502,
+     "Y": 0.0,
+     "Z": -2.3861584663391113
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 18,
+   "Name": "namaqualand_cliff_02_4k.gltf",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "downloaded\\namaqualand_cliff_02_4k.gltf\\namaqualand_cliff_02_4k.gltf"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 0.7071068286895752,
+     "X": 0.0,
+     "Y": -0.7071068286895752,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 4.205071926116943,
+     "Y": 0.0,
+     "Z": -6.542023658752441
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 19,
+   "Name": "rock_09_4k.gltf",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "downloaded\\rock_09_4k.gltf\\rock_09_4k.gltf"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 0.9848078489303589,
+     "X": 0.0,
+     "Y": 0.1736481934785843,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.8409487009048462,
+     "Y": 0.35110965371131897,
+     "Z": 4.816897392272949
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 12.0,
+     "Y": 12.0,
+     "Z": 12.0
+    }
+   }
+  },
+  {
+   "ID": 20,
+   "Name": "rock_09_4k.gltf",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "downloaded\\rock_09_4k.gltf\\rock_09_4k.gltf"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 0.766044557094574,
+     "X": 0.0,
+     "Y": -0.6427876353263855,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 1.629356026649475,
+     "Y": 0.35110965371131897,
+     "Z": 0.6493372917175293
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 12.0,
+     "Y": 12.0,
+     "Z": 12.0
+    }
+   }
+  },
+  {
+   "ID": 21,
+   "Name": "boulder_01_4k.gltf",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "downloaded\\boulder_01_4k.gltf\\boulder_01_4k.gltf"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 2.8021039962768555,
+     "Y": -0.13405899703502655,
+     "Z": -2.4254345893859863
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 22,
+   "Name": "boulder_01_4k.gltf",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "downloaded\\boulder_01_4k.gltf\\boulder_01_4k.gltf"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 0.08715580403804779,
+     "X": 3.973535456225363e-08,
+     "Y": 0.9961947202682495,
+     "Z": 3.973535456225363e-08
+    },
+    "Position": {
+     "X": 2.8021039962768555,
+     "Y": -0.13405899703502655,
+     "Z": -3.4241690635681152
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 23,
+   "Name": "namaqualand_boulder_06_4k.gltf",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "downloaded\\namaqualand_boulder_06_4k.gltf\\namaqualand_boulder_06_4k.gltf"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 0.9762960076332092,
+     "X": 0.0,
+     "Y": 0.2164396196603775,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 2.717822551727295,
+     "Y": 0.10329161584377289,
+     "Z": -4.802963733673096
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 24,
+   "Name": "coast_rocks_05_4k.gltf",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "downloaded\\coast_rocks_05_4k.gltf\\coast_rocks_05_4k.gltf"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 2.7261338233947754,
+     "Y": -0.16977909207344055,
+     "Z": -6.229942321777344
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 25,
+   "Name": "namaqualand_boulder_04_4k.gltf",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "downloaded\\namaqualand_boulder_04_4k.gltf\\namaqualand_boulder_04_4k.gltf"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 0.9762960076332092,
+     "X": 0.0,
+     "Y": -0.2164396196603775,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 1.3581417798995972,
+     "Y": 0.0,
+     "Z": 6.4026007652282715
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 26,
+   "Name": "namaqualand_boulder_02_4k.gltf",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "downloaded\\namaqualand_boulder_02_4k.gltf\\namaqualand_boulder_02_4k.gltf"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 0.766044557094574,
+     "X": 0.0,
+     "Y": -0.6427876353263855,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.5567868947982788,
+     "Y": 0.0,
+     "Z": -5.470346927642822
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 27,
+   "Name": "namaqualand_boulder_02_4k.gltf",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "downloaded\\namaqualand_boulder_02_4k.gltf\\namaqualand_boulder_02_4k.gltf"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 0.7431448698043823,
+     "X": 3.2352662771018004e-09,
+     "Y": 0.6691305637359619,
+     "Z": 3.2352662771018004e-09
+    },
+    "Position": {
+     "X": -0.512794017791748,
+     "Y": 0.0,
+     "Z": 6.825664520263672
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 28,
+   "Name": "namaqualand_boulder_03_4k.gltf",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "downloaded\\namaqualand_boulder_03_4k.gltf\\namaqualand_boulder_03_4k.gltf"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 1.6836121082305908,
+     "Y": -0.2197272777557373,
+     "Z": 2.28310489654541
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 30,
+   "Name": "Japanese_Maple.fbx",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 30
+    },
+    "Model": {
+     "Path": "downloaded\\SpeedTree_v2\\Japanese Maple\\HighPoly\\Japanese_Maple.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\Japanese Maple\\HighPoly\\Textures\\T_Cap_02_BaseColor.dds"
+      },
+      "Flags": 0,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\Japanese Maple\\HighPoly\\Textures\\T_Cap_02_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\Japanese Maple\\HighPoly\\Textures\\T_JapaneseMapleLeaf_1_BaseColor.dds"
+      },
+      "Flags": 1,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\Japanese Maple\\HighPoly\\Textures\\T_JapaneseMapleLeaf_1_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\Japanese Maple\\HighPoly\\Textures\\T_JapaneseMapleLeaf_2_BaseColor.dds"
+      },
+      "Flags": 1,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\Japanese Maple\\HighPoly\\Textures\\T_JapaneseMapleLeaf_2_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\Japanese Maple\\HighPoly\\Textures\\T_JapaneseMapleBark_BaseColor.dds"
+      },
+      "Flags": 0,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\Japanese Maple\\HighPoly\\Textures\\T_JapaneseMapleBark_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -0.7060141563415527,
+     "Y": 0.12407873570919037,
+     "Z": -5.119165420532227
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 32,
+   "Name": "European_Linden.fbx",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 32
+    },
+    "Model": {
+     "Path": "downloaded\\SpeedTree_v2\\European Linden\\HighPoly\\European_Linden.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\European Linden\\HighPoly\\Textures\\T_Cap_03_BaseColor.dds"
+      },
+      "Flags": 0,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\European Linden\\HighPoly\\Textures\\T_Cap_03_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\European Linden\\HighPoly\\Textures\\T_EuropeanLindenBark_BaseColor.dds"
+      },
+      "Flags": 0,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\European Linden\\HighPoly\\Textures\\T_EuropeanLindenBark_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\European Linden\\HighPoly\\Textures\\T_EuropeanLindenLeaf_BaseColor.dds"
+      },
+      "Flags": 1,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\European Linden\\HighPoly\\Textures\\T_EuropeanLindenLeaf_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\European Linden\\HighPoly\\Textures\\T_EuropeanLindenLeaf_2_BaseColor.dds"
+      },
+      "Flags": 1,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\European Linden\\HighPoly\\Textures\\T_EuropeanLindenLeaf_2_Normal.dds"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -2.24528431892395,
+     "Y": 0.14984825253486633,
+     "Z": 5.037921905517578
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 33,
+   "Name": "Azalea.fbx",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 33
+    },
+    "Model": {
+     "Path": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Azalea.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_Pink_Flower_BaseColor.dds"
+      },
+      "Flags": 1,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_Azalea_Leaves_2_BaseColor.dds"
+      },
+      "Flags": 1,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_Azalea_Leaves_1_BaseColor.dds"
+      },
+      "Flags": 1,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_Cap_01_BaseColor.dds"
+      },
+      "Flags": 0,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_FlowerStem_05_BaseColor.dds"
+      },
+      "Flags": 0,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -0.5551038980484009,
+     "Y": 0.10882192105054855,
+     "Z": 1.8217072486877441
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 2.0,
+     "Y": 2.0,
+     "Z": 2.0
+    }
+   }
+  },
+  {
+   "ID": 34,
+   "Name": "Azalea.fbx",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 34
+    },
+    "Model": {
+     "Path": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Azalea.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_Pink_Flower_BaseColor.dds"
+      },
+      "Flags": 1,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_Azalea_Leaves_2_BaseColor.dds"
+      },
+      "Flags": 1,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_Azalea_Leaves_1_BaseColor.dds"
+      },
+      "Flags": 1,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_Cap_01_BaseColor.dds"
+      },
+      "Flags": 0,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_FlowerStem_05_BaseColor.dds"
+      },
+      "Flags": 0,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 0.9238795042037964,
+     "X": 0.0,
+     "Y": 0.3826834559440613,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.2749335765838623,
+     "Y": 0.10882192105054855,
+     "Z": 4.646376609802246
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 2.0,
+     "Y": 2.0,
+     "Z": 2.0
+    }
+   }
+  },
+  {
+   "ID": 35,
+   "Name": "namaqualand_cliff_02_4k.gltf",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "downloaded\\namaqualand_cliff_02_4k.gltf\\namaqualand_cliff_02_4k.gltf"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 0.4999999701976776,
+     "X": 5.97108638089594e-08,
+     "Y": -0.866025447845459,
+     "Z": 5.97108638089594e-08
+    },
+    "Position": {
+     "X": 2.394796371459961,
+     "Y": 0.0,
+     "Z": 4.864718437194824
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 36,
+   "Name": "Azalea.fbx",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 36
+    },
+    "Model": {
+     "Path": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Azalea.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_Pink_Flower_BaseColor.dds"
+      },
+      "Flags": 1,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_Azalea_Leaves_2_BaseColor.dds"
+      },
+      "Flags": 1,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_Azalea_Leaves_1_BaseColor.dds"
+      },
+      "Flags": 1,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_Cap_01_BaseColor.dds"
+      },
+      "Flags": 0,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     },
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "AlbedoTex": {
+       "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_FlowerStem_05_BaseColor.dds"
+      },
+      "Flags": 0,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.5527864098548889,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 1.8789931535720825,
+     "Y": 0.10882192105054855,
+     "Z": -3.6597626209259033
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 2.0,
+     "Y": 2.0,
+     "Z": 2.0
+    }
+   }
+  },
+  {
+   "ID": 38,
+   "Name": "namaqualand_boulder_04_4k.gltf",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "downloaded\\namaqualand_boulder_04_4k.gltf\\namaqualand_boulder_04_4k.gltf"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -1.0970587730407715,
+     "Y": 0.0,
+     "Z": 9.493603706359863
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  }
+ ],
+ "WorldName": "New World"
+}
