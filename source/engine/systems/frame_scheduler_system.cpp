@@ -65,8 +65,8 @@ namespace R3
 		preparePass->m_onRun.AddCallback([](RenderPassContext& ctx) {
 			GetSystem<TextureSystem>()->ProcessLoadedTextures(ctx);
 			GetSystem<StaticMeshSystem>()->PrepareForRendering(ctx);
-			GetSystem<MeshRenderer>()->PrepareForRendering(ctx);
 			GetSystem<LightsSystem>()->PrepareForDrawing(ctx);
+			GetSystem<MeshRenderer>()->PrepareForRendering(ctx);
 		});
 		return preparePass;
 	}

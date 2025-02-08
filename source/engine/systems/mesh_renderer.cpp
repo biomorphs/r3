@@ -26,15 +26,21 @@
 
 namespace R3
 {
+	struct MeshRenderer::ShaderGlobals
+	{
+		glm::mat4 m_projViewTransform;
+		glm::mat4 m_worldToViewTransform;
+		glm::vec4 m_cameraWorldSpacePos;				// w unused
+		VkDeviceAddress m_vertexBufferAddress;
+		VkDeviceAddress m_lightDataBufferAddress;
+		VkDeviceAddress m_lightTileMetadataAddress;		// only used in tiled lighting forward pass
+	};
+
 	// pushed once per drawing pass
 	struct PushConstants 
 	{
-		glm::mat4 m_projViewTransform;
-		glm::vec4 m_cameraWorldSpacePos;
-		VkDeviceAddress m_vertexBufferAddress;
-		VkDeviceAddress m_lightDataBufferAddress;
-		VkDeviceAddress m_instanceDataBufferAddress;
-		VkDeviceAddress m_lightTileMetadataAddress;		// only used in tiled lighting forward pass
+		VkDeviceAddress m_globalsBuffer;				// globals address for this pass
+		VkDeviceAddress m_instanceDataBufferAddress;	// instances for this set of draws
 	};
 
 	MeshRenderer::MeshRenderer()
@@ -87,12 +93,14 @@ namespace R3
 		m_staticMaterialOverrides.Destroy(d);
 		m_staticMeshInstances.Destroy(d);
 		m_dynamicMeshInstances.Destroy(d);
+		m_globalsBuffer.Destroy(d);
 		m_meshRenderBufferPool = nullptr;
 		vkDestroyPipeline(d.GetVkDevice(), m_forwardPipeline, nullptr);
 		vkDestroyPipeline(d.GetVkDevice(), m_forwardTiledPipeline, nullptr);
 		vkDestroyPipeline(d.GetVkDevice(), m_gBufferPipeline, nullptr);
 		vkDestroyPipeline(d.GetVkDevice(), m_shadowPipeline, nullptr);
 		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayout, nullptr);
+		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayoutWithShadowmaps, nullptr);
 		if (m_drawIndirectHostVisible.m_allocation)
 		{
 			vmaUnmapMemory(d.GetVMA(), m_drawIndirectHostVisible.m_allocation);
@@ -142,10 +150,11 @@ namespace R3
 		return true;
 	}
 
-	bool MeshRenderer::CreatePipelineLayout(Device& d)
+	bool MeshRenderer::CreatePipelineLayouts(Device& d)
 	{
 		R3_PROF_EVENT();
 		auto textures = GetSystem<TextureSystem>();
+		auto lights = GetSystem<LightsSystem>();
 		VkPushConstantRange constantRange;	// Create pipeline layout
 		constantRange.offset = 0;	// needs to match in the shader if >0!
 		constantRange.size = sizeof(PushConstants);
@@ -154,14 +163,22 @@ namespace R3
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipelineLayoutInfo.pushConstantRangeCount = 1;
 		pipelineLayoutInfo.pPushConstantRanges = &constantRange;
-		VkDescriptorSetLayout setLayouts[] = { textures->GetDescriptorsLayout() };
+		VkDescriptorSetLayout setLayouts[] = { textures->GetDescriptorsLayout(), lights->GetShadowMapDescriptorLayout()};
 		pipelineLayoutInfo.pSetLayouts = setLayouts;
-		pipelineLayoutInfo.setLayoutCount = (uint32_t)std::size(setLayouts);
+		pipelineLayoutInfo.setLayoutCount = 1;	// textures only
 		if (!VulkanHelpers::CheckResult(vkCreatePipelineLayout(d.GetVkDevice(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout)))
 		{
 			LogError("Failed to create pipeline layout");
 			return false;
 		}
+
+		pipelineLayoutInfo.setLayoutCount = 2;	// textures + shadow maps
+		if (!VulkanHelpers::CheckResult(vkCreatePipelineLayout(d.GetVkDevice(), &pipelineLayoutInfo, nullptr, &m_pipelineLayoutWithShadowmaps)))
+		{
+			LogError("Failed to create pipeline layout");
+			return false;
+		}
+		
 		return true;
 	}
 
@@ -326,7 +343,7 @@ namespace R3
 			VulkanHelpers::CreatePipelineColourBlendAttachment_AlphaBlending()	//alpha blending
 		};
 		pb.m_colourBlendState = VulkanHelpers::CreatePipelineColourBlendState(allAttachments);
-		m_forwardPipeline = pb.Build(d.GetVkDevice(), m_pipelineLayout, 1, &mainColourFormat, mainDepthFormat);
+		m_forwardPipeline = pb.Build(d.GetVkDevice(), m_pipelineLayoutWithShadowmaps, 1, &mainColourFormat, mainDepthFormat);
 		if (m_forwardPipeline == VK_NULL_HANDLE)
 		{
 			LogError("Failed to create pipeline!");
@@ -337,7 +354,7 @@ namespace R3
 			VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_VERTEX_BIT, vertexShader),
 			VulkanHelpers::CreatePipelineShaderState(VK_SHADER_STAGE_FRAGMENT_BIT, fragShaderTiled)
 		};
-		m_forwardTiledPipeline = pb.Build(d.GetVkDevice(), m_pipelineLayout, 1, &mainColourFormat, mainDepthFormat);
+		m_forwardTiledPipeline = pb.Build(d.GetVkDevice(), m_pipelineLayoutWithShadowmaps, 1, &mainColourFormat, mainDepthFormat);
 		if (m_forwardTiledPipeline == VK_NULL_HANDLE)
 		{
 			LogError("Failed to create pipeline!");
@@ -388,9 +405,9 @@ namespace R3
 			vmaMapMemory(ctx.m_device->GetVMA(), m_drawIndirectHostVisible.m_allocation, &m_drawIndirectMappedPtr);
 			m_drawIndirectBufferAddress = VulkanHelpers::GetBufferDeviceAddress(ctx.m_device->GetVkDevice(), m_drawIndirectHostVisible);
 		}
-		if (m_pipelineLayout == VK_NULL_HANDLE)
+		if (m_pipelineLayout == VK_NULL_HANDLE || m_pipelineLayoutWithShadowmaps == VK_NULL_HANDLE)
 		{
-			if (!CreatePipelineLayout(*ctx.m_device))
+			if (!CreatePipelineLayouts(*ctx.m_device))
 			{
 				LogError("Failed to create static mesh pipeline layout");
 				return;
@@ -427,6 +444,15 @@ namespace R3
 				return;
 			}
 		}
+		if (!m_globalsBuffer.IsCreated())
+		{
+			m_globalsBuffer.SetDebugName("Mesh render globals");
+			if (!m_globalsBuffer.Create(*ctx.m_device, c_maxGlobalsPerFrame, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_meshRenderBufferPool.get()))
+			{
+				LogError("Failed to create mesh reder globals bufer");
+				return;
+			}
+		}
 
 		// old static data buffers have been retired, flush writes to the new ones
 		if (m_rebuildingStaticScene)
@@ -444,6 +470,39 @@ namespace R3
 		{
 			m_dynamicMeshInstances.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 		}
+
+		// Sadly we cannot globals during rendering, so we do them all now. Different passes need different globals data
+		auto cameras = GetSystem<CameraSystem>();
+		auto staticMeshes = GetSystem<StaticMeshSystem>();
+		auto lights = GetSystem<LightsSystem>();
+
+		ShaderGlobals globals;
+		// main camera + lights globals
+		globals.m_worldToViewTransform = cameras->GetMainCamera().ViewMatrix();
+		globals.m_projViewTransform = cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix();
+		globals.m_cameraWorldSpacePos = glm::vec4(cameras->GetMainCamera().Position(), 1);
+		globals.m_vertexBufferAddress = staticMeshes->GetVertexDataDeviceAddress();
+		globals.m_lightDataBufferAddress = lights->GetAllLightsDeviceAddress();
+		globals.m_lightTileMetadataAddress = m_lightTileMetadata;
+		m_globalsBuffer.Write(1, &globals);
+		m_thisFrameMainCameraGlobals = m_globalsBuffer.GetBufferDeviceAddress();
+
+		// shadow cascade globals
+		globals.m_cameraWorldSpacePos = { 0,0,0,0 };	// unused in shadow passes
+		globals.m_worldToViewTransform = {};			// ^^ 
+		globals.m_lightDataBufferAddress = 0;			// ^^
+		globals.m_lightTileMetadataAddress = 0;			// ^^
+		assert(lights->GetShadowCascadeCount() <= 4);
+		for (int cascade = 0; cascade < lights->GetShadowCascadeCount(); ++cascade)
+		{
+			globals.m_projViewTransform = lights->GetShadowCascadeMatrix(cascade);
+			m_globalsBuffer.Write(1, &globals);
+			m_shadowCascadeGlobals[cascade] = m_globalsBuffer.GetBufferDeviceAddress() + (sizeof(ShaderGlobals) * (cascade + 1));
+		}
+		
+		// flush all writes in one go
+		m_globalsBuffer.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+		m_globalsBuffer.RetirePooledBuffer(*ctx.m_device);	// aquire new buffer after write
 	}
 
 	void MeshRenderer::OnGBufferPassDraw(class RenderPassContext& ctx)
@@ -492,12 +551,8 @@ namespace R3
 		vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, nullptr);
 
 		PushConstants pc;
-		pc.m_cameraWorldSpacePos = glm::vec4(cameras->GetMainCamera().Position(), 1);
-		pc.m_projViewTransform = cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix();
-		pc.m_vertexBufferAddress = staticMeshes->GetVertexDataDeviceAddress();
+		pc.m_globalsBuffer = m_thisFrameMainCameraGlobals;
 		pc.m_instanceDataBufferAddress = m_staticMeshInstances.GetBufferDeviceAddress();
-		pc.m_lightDataBufferAddress = 0;	// light data unnused in gbuffer pass
-		pc.m_lightTileMetadataAddress = 0;
 
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_staticOpaqueDrawData.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_staticOpaqueDrawData.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
@@ -517,10 +572,10 @@ namespace R3
 		glm::mat4 cascadeMatrix = GetSystem<LightsSystem>()->GetShadowCascadeMatrix(cascade);
 		float biasConstant = 0.0f, biasClamp = 0.0f, biasSlope = 0.0f;
 		lights->GetShadowCascadeDepthBiasSettings(cascade, biasConstant, biasClamp, biasSlope);
-		OnShadowMapDraw(ctx, target, cascadeMatrix, biasConstant, biasClamp, biasSlope, m_staticSunShadowCastersDrawData[cascade], m_dynamicSunShadowCastersDrawData[cascade]);
+		OnShadowMapDraw(ctx, target, cascadeMatrix, biasConstant, biasClamp, biasSlope, m_staticSunShadowCastersDrawData[cascade], m_dynamicSunShadowCastersDrawData[cascade], m_shadowCascadeGlobals[cascade]);
 	}
 
-	void MeshRenderer::OnShadowMapDraw(class RenderPassContext& ctx, const RenderTargetInfo& target, glm::mat4 shadowMatrix, float depthBiasConstant, float depthBiasClamp, float depthBiasSlope, const MeshPartBucketDrawIndirects& staticDraws, const MeshPartBucketDrawIndirects& dynamicDraws)
+	void MeshRenderer::OnShadowMapDraw(class RenderPassContext& ctx, const RenderTargetInfo& target, glm::mat4 shadowMatrix, float depthBiasConstant, float depthBiasClamp, float depthBiasSlope, const MeshPartBucketDrawIndirects& staticDraws, const MeshPartBucketDrawIndirects& dynamicDraws, VkDeviceAddress globals)
 	{
 		R3_PROF_EVENT();
 
@@ -569,12 +624,8 @@ namespace R3
 		vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, nullptr);
 
 		PushConstants pc;
-		pc.m_cameraWorldSpacePos = { 0,0,0,0 };	// unused in shadow pass
-		pc.m_projViewTransform = shadowMatrix;
-		pc.m_vertexBufferAddress = staticMeshes->GetVertexDataDeviceAddress();
+		pc.m_globalsBuffer = globals;
 		pc.m_instanceDataBufferAddress = m_staticMeshInstances.GetBufferDeviceAddress();
-		pc.m_lightDataBufferAddress = 0;	// unused
-		pc.m_lightTileMetadataAddress = 0;	// unused in shadow drawing
 
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, staticDraws.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), staticDraws.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
@@ -635,23 +686,20 @@ namespace R3
 		vkCmdSetScissor(ctx.m_graphicsCmds, 0, 1, &scissor);
 		vkCmdBindIndexBuffer(ctx.m_graphicsCmds, GetSystem<StaticMeshSystem>()->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 		VkDescriptorSet allTextures = textures->GetAllTexturesSet();
-		vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &allTextures, 0, nullptr);
+		VkDescriptorSet allShadowMaps = lights->GetAllShadowMapsSet();
+		vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayoutWithShadowmaps, 0, 1, &allTextures, 0, nullptr);
+		vkCmdBindDescriptorSets(ctx.m_graphicsCmds, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayoutWithShadowmaps,1, 1, &allShadowMaps, 0, nullptr);
 
 		PushConstants pc;
-		pc.m_cameraWorldSpacePos = glm::vec4(cameras->GetMainCamera().Position(), 1);
-		pc.m_projViewTransform = cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix();
-		pc.m_vertexBufferAddress = staticMeshes->GetVertexDataDeviceAddress();
+		pc.m_globalsBuffer = m_thisFrameMainCameraGlobals;
 		pc.m_instanceDataBufferAddress = m_staticMeshInstances.GetBufferDeviceAddress();
-		pc.m_lightDataBufferAddress = lights->GetAllLightsDeviceAddress();
-		pc.m_lightTileMetadataAddress = m_lightTileMetadata;				// should come from lights system/param, eventually there will be multiple
 
-		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
+		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayoutWithShadowmaps, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_staticTransparentDrawData.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_staticTransparentDrawData.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 		
 		pc.m_instanceDataBufferAddress = m_dynamicMeshInstances.GetBufferDeviceAddress();
-		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
+		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayoutWithShadowmaps, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
 		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_dynamicTransparentDrawData.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_dynamicTransparentDrawData.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
-
 
 		m_frameStats.m_writeForwardCmdsEndTime = time->GetElapsedTimeReal();
 	}

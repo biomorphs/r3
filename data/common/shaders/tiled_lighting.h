@@ -42,5 +42,12 @@ layout(buffer_reference, std430) readonly buffer LightTileMetadataBuffer {
 uint GetLightTileIndex(uvec2 pos, uint tileCount[2])
 {
 	uvec2 tileIndex2D = pos / COMPUTE_LIGHT_TILE_SIZE;
-	return tileIndex2D.x + (tileIndex2D.y * tileCount[0]);
+	if(tileIndex2D.x >= tileCount[0] || tileIndex2D.y >= tileCount[1])
+	{
+		return 0;
+	}
+	else
+	{
+		return tileIndex2D.x + (tileIndex2D.y * tileCount[0]);
+	}
 }

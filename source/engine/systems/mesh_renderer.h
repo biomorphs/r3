@@ -74,14 +74,14 @@ namespace R3
 		bool ShowGui();
 		bool CollectInstances();									// collects dynamic instances + rebuilds static scene if required. Called from frame graph
 		void Cleanup(Device&);
-		bool CreatePipelineLayout(Device&);
+		bool CreatePipelineLayouts(Device&);
 		bool CreateForwardPipelineData(Device&, VkFormat mainColourFormat, VkFormat mainDepthFormat);
 		bool CreateGBufferPipelineData(Device&, VkFormat positionMetalFormat, VkFormat normalRoughnessFormat, VkFormat albedoAOFormat, VkFormat mainDepthFormat);
 		bool CreateShadowPipelineData(Device&, VkFormat depthBufer);
 		void OnModelReady(const ModelDataHandle& handle);	// called when a model is ready to draw
 		void OnShadowMapDraw(class RenderPassContext& ctx, const RenderTargetInfo& target, 
 							glm::mat4 shadowMatrix, float depthBiasConstant, float depthBiasClamp, float depthBiasSlope,
-							const MeshPartBucketDrawIndirects& staticDraws, const MeshPartBucketDrawIndirects& dynamicDraws);
+							const MeshPartBucketDrawIndirects& staticDraws, const MeshPartBucketDrawIndirects& dynamicDraws, VkDeviceAddress globals);
 
 		struct FrameStats {
 			uint32_t m_totalPartInstances = 0;
@@ -99,6 +99,8 @@ namespace R3
 			double m_prepareBucketsEndTime = 0.0;
 		};
 
+		struct ShaderGlobals;	// Passed to each mesh drawing shader
+
 		FrameStats m_frameStats;
 
 		uint64_t m_onModelDataLoadedCbToken = -1;	// trigger static scene rebuild when a model loads
@@ -111,6 +113,8 @@ namespace R3
 
 		// light tile metadata for the next draw, used in forward render only
 		VkDeviceAddress m_lightTileMetadata = 0;
+		VkDeviceAddress m_thisFrameMainCameraGlobals;					// globals used when drawing from main camera (gbuffer, forward pass)
+		VkDeviceAddress m_shadowCascadeGlobals[4];						// globals used when drawing shadow cascades
 
 		std::unique_ptr<MeshInstanceCullingCompute> m_computeCulling;
 
@@ -119,6 +123,7 @@ namespace R3
 		LinearWriteOnlyGpuArray<MeshMaterial> m_staticMaterialOverrides;	// all static material overrides written here on scene rebuild
 		LinearWriteOnlyGpuArray<MeshInstance> m_staticMeshInstances;		// all static instance data written here on static scene rebuild
 		LinearWriteOnlyGpuArray<MeshInstance> m_dynamicMeshInstances;		// all dynamic instance data written here every frame
+		LinearWriteOnlyGpuArray<ShaderGlobals> m_globalsBuffer;				// globals for this frame, one written per pass
 
 		MeshPartInstanceBucket m_staticOpaques;								// all static opaque instances collected here on scene rebuild
 		MeshPartInstanceBucket m_staticTransparents;						// all static transparent instances collected here on scene rebuild
@@ -133,6 +138,7 @@ namespace R3
 		MeshPartBucketDrawIndirects m_staticSunShadowCastersDrawData[4];		// draw calls generated from static opaque bucket for sun shadowcasters, 1 per cascade
 		MeshPartBucketDrawIndirects m_dynamicSunShadowCastersDrawData[4];		// draw calls generated from dynamic opaque bucket for sun shadowcasters, 1 per cascade
 
+		const uint32_t c_maxGlobalsPerFrame = 8;		// need one per drawing pass
 		const uint32_t c_maxInstances = 1024 * 256;		// max static+dynamic instances we support
 		const uint32_t c_maxBuffers = 3;				// we reserve space per-frame in globals, draws + dynamic instance data. this determines how many frames to handle
 		const uint32_t c_maxStaticMaterialOverrides = 1024 * 8;	// max static material overrides we support
@@ -144,6 +150,7 @@ namespace R3
 		uint32_t m_currentDrawBufferOffset = 0;		// next write offset for draw data, resets each frame
 		
 		VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
+		VkPipelineLayout m_pipelineLayoutWithShadowmaps = VK_NULL_HANDLE;
 		VkPipeline m_forwardPipeline = VK_NULL_HANDLE;
 		VkPipeline m_forwardTiledPipeline = VK_NULL_HANDLE;
 		VkPipeline m_gBufferPipeline = VK_NULL_HANDLE;

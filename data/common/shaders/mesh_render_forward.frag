@@ -4,6 +4,7 @@
 #include "mesh_render_shared.h"
 #include "pbr.h"
 #include "utils.h"
+#include "sun_shadows.h"
 
 layout(location = 0) in vec3 inWorldSpacePos;
 layout(location = 1) in vec3 inWorldspaceNormal;
@@ -13,7 +14,8 @@ layout(location = 4) in mat3 inTBN;
 layout(location = 0) out vec4 outColour;
 
 void main() {
-	vec3 viewDir = normalize(PushConstants.m_cameraWorldSpacePos.xyz - inWorldSpacePos);
+	Globals globals = PushConstants.m_globals.data[0];
+	vec3 viewDir = normalize(globals.m_cameraWorldSpacePos.xyz - inWorldSpacePos);
 	MeshInstanceData thisInstance = PushConstants.m_instances.data[inInstanceIndex];
 	MeshMaterial myMaterial = thisInstance.m_material.data[0];
 	vec3 normal = GetWorldspaceNormal(inWorldspaceNormal, myMaterial.m_normalTexture, inTBN, inUV);
@@ -40,16 +42,17 @@ void main() {
 	mat.m_metallic = (myMaterial.m_metalnessTexture != -1) ? texture(AllTextures[myMaterial.m_metalnessTexture],inUV).r : myMaterial.m_metallic;
 	mat.m_ao = (myMaterial.m_aoTexture != -1) ? texture(AllTextures[myMaterial.m_aoTexture],inUV).x : 1.0;
 	
-	LightsData lightsData = PushConstants.m_lightsBuffer.data[0];
+	LightsData lightsData = globals.m_lightsBuffer.data[0];
 	
 	// Apply sun direct light
+	float sunShadow = CalculateSunShadow(lightsData.m_shadows, globals.m_worldToViewTransform, inWorldSpacePos);
 	vec4 sunDirectionBrightness = lightsData.m_sunDirectionBrightness;
-	vec3 sunRadiance = lightsData.m_sunColourAmbient.xyz * sunDirectionBrightness.w;
+	vec3 sunRadiance = sunShadow * lightsData.m_sunColourAmbient.xyz * sunDirectionBrightness.w;
 	vec3 directLight = PBRDirectLighting(mat, viewDir, -sunDirectionBrightness.xyz, normal, sunRadiance, 1.0);
 	
 	// Apply point lights (direct)
 #ifdef USE_TILED_LIGHTS
-	LightTileMetadata tileMetadata = PushConstants.m_lightTileMetadata.data[0];
+	LightTileMetadata tileMetadata = globals.m_lightTileMetadata.data[0];
 	vec2 thisFragment = gl_FragCoord.xy;	// always returns pixel center (i.e. offset by 0.5)
 	uint tileIndex = GetLightTileIndex(uvec2(floor(thisFragment)), tileMetadata.m_tileCount);
 	LightTile thisLightTile = tileMetadata.m_lightTiles.data[tileIndex];
