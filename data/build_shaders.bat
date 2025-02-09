@@ -5,6 +5,7 @@ cd ..\common\shaders
 glslc immediate_render.vert -g -o ..\..\shaders_spirv\common\immediate_render.vert.spv
 glslc immediate_render.frag -g -o ..\..\shaders_spirv\common\immediate_render.frag.spv
 glslc mesh_render.vert -g -o ..\..\shaders_spirv\common\mesh_render.vert.spv
+glslc mesh_render_shadow.vert -g -o ..\..\shaders_spirv\common\mesh_render_shadow.vert.spv
 glslc mesh_render_forward.frag -g -o ..\..\shaders_spirv\common\mesh_render_forward.frag.spv
 glslc mesh_render_forward.frag -DUSE_TILED_LIGHTS -g -o ..\..\shaders_spirv\common\mesh_render_forward_tiled.frag.spv
 glslc mesh_render_gbuffer.frag -g -o ..\..\shaders_spirv\common\mesh_render_gbuffer.frag.spv

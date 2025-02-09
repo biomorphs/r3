@@ -215,7 +215,7 @@ namespace R3
 		if (!m_allIndices.IsCreated())
 		{
 			m_allIndices.SetDebugName("Static mesh indices");
-			if (!m_allIndices.Create(*ctx.m_device, c_maxIndicesToStore, c_maxIndicesToStore / 2, VK_BUFFER_USAGE_INDEX_BUFFER_BIT))
+			if (!m_allIndices.Create(*ctx.m_device, c_maxIndicesToStore, c_maxIndicesToStore, VK_BUFFER_USAGE_INDEX_BUFFER_BIT))
 			{
 				LogError("Failed to create index buffer");
 			}

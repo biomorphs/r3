@@ -4,11 +4,8 @@
 #include "mesh_render_shared.h"
 #include "utils.h"
 
-layout(location = 0) in vec3 inWorldSpacePos;
-layout(location = 1) in vec3 inWorldspaceNormal;
-layout(location = 2) in vec2 inUV;
-layout(location = 3) in flat uint inInstanceIndex;
-layout(location = 4) in mat3 inTBN;
+layout(location = 0) in vec2 inUV;
+layout(location = 1) in flat uint inInstanceIndex;
 
 void main() {
 	MeshInstanceData thisInstance = PushConstants.m_instances.data[inInstanceIndex];

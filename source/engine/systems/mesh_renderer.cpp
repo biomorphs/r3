@@ -243,7 +243,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		std::string basePath = "shaders_spirv\\common\\";	// Load the shaders
-		auto vertexShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), basePath + "mesh_render.vert.spv");
+		auto vertexShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), basePath + "mesh_render_shadow.vert.spv");
 		auto fragShader = VulkanHelpers::LoadShaderModule(d.GetVkDevice(), basePath + "mesh_render_shadow.frag.spv");
 		if (vertexShader == VK_NULL_HANDLE || fragShader == VK_NULL_HANDLE)
 		{
