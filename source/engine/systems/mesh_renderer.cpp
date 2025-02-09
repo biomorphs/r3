@@ -31,7 +31,8 @@ namespace R3
 		glm::mat4 m_projViewTransform;
 		glm::mat4 m_worldToViewTransform;
 		glm::vec4 m_cameraWorldSpacePos;				// w unused
-		VkDeviceAddress m_vertexBufferAddress;
+		VkDeviceAddress m_vertexPosUVBufferAddress;
+		VkDeviceAddress m_verteNormTangentBufferAddress;
 		VkDeviceAddress m_lightDataBufferAddress;
 		VkDeviceAddress m_lightTileMetadataAddress;		// only used in tiled lighting forward pass
 	};
@@ -481,7 +482,8 @@ namespace R3
 		globals.m_worldToViewTransform = cameras->GetMainCamera().ViewMatrix();
 		globals.m_projViewTransform = cameras->GetMainCamera().ProjectionMatrix() * cameras->GetMainCamera().ViewMatrix();
 		globals.m_cameraWorldSpacePos = glm::vec4(cameras->GetMainCamera().Position(), 1);
-		globals.m_vertexBufferAddress = staticMeshes->GetVertexDataDeviceAddress();
+		globals.m_vertexPosUVBufferAddress = staticMeshes->GetVertexPosUVDeviceAddress();
+		globals.m_verteNormTangentBufferAddress = staticMeshes->GetVertexNormTangentDeviceAddress();
 		globals.m_lightDataBufferAddress = lights->GetAllLightsDeviceAddress();
 		globals.m_lightTileMetadataAddress = m_lightTileMetadata;
 		m_globalsBuffer.Write(1, &globals);

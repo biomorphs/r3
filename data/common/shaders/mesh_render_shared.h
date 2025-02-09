@@ -13,7 +13,8 @@ struct Globals
 	mat4 m_projViewTransform;
 	mat4 m_worldToViewTransform;
 	vec4 m_cameraWorldSpacePos;
-	VertexBuffer m_vertexBuffer;
+	VertexPosUVBuffer m_vertexPosUVBuffer;
+	VertexNormTangentBuffer m_vertexNormTangentBuffer;
 	LightsBuffer m_lightsBuffer;
 	LightTileMetadataBuffer m_lightTileMetadata;	// only used with USE_TILED_LIGHTS in forward pass
 };

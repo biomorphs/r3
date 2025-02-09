@@ -61,8 +61,9 @@ namespace R3
 		uint32_t m_materialCount;
 	};
 
-	struct ModelVertex;
 	struct ModelDataHandle;
+	struct BakedModelVertexPosUV;
+	struct BakedModelVertexNormalTangent;
 	class StaticMeshSystem : public System
 	{
 	public:
@@ -74,7 +75,8 @@ namespace R3
 		virtual void Shutdown();
 		void PrepareForRendering(class RenderPassContext& ctx);		// call from frame graph before drawing anything
 
-		VkDeviceAddress GetVertexDataDeviceAddress();
+		VkDeviceAddress GetVertexPosUVDeviceAddress();
+		VkDeviceAddress GetVertexNormTangentDeviceAddress();
 		VkDeviceAddress GetMeshPartsDeviceAddress();
 		VkDeviceAddress GetMaterialsDeviceAddress();
 		VkBuffer GetIndexBuffer();
@@ -108,7 +110,8 @@ namespace R3
 
 		WriteOnlyGpuArray<MeshMaterial> m_allMaterialsGpu;	// gpu buffer of materials
 		WriteOnlyGpuArray<MeshPart> m_allMeshPartsGpu;		// gpu buffer of mesh parts
-		WriteOnlyGpuArray<ModelVertex> m_allVertices;
+		WriteOnlyGpuArray<BakedModelVertexPosUV> m_allVertsPosUV;	// split buffers for position + uv and normal + tangent
+		WriteOnlyGpuArray<BakedModelVertexNormalTangent> m_allVertsNormalTangent;	// ^^ 
 		WriteOnlyGpuArray<uint32_t> m_allIndices;
 
 		const uint32_t c_maxVerticesToStore = 1024 * 1024 * 16;		// ~800mb

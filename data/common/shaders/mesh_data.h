@@ -1,12 +1,23 @@
-struct MeshVertex
+#extension GL_EXT_shader_16bit_storage : require
+
+struct MeshVertexPosUV
 {
-	vec4 m_positionU0;
-	vec4 m_normalV0;
-	vec4 m_tangentPad;
+	vec3 m_position;
+	float16_t m_uv[2];
 };
 
-layout(buffer_reference, std430) readonly buffer VertexBuffer { 
-	MeshVertex data[];
+struct MeshVertexNormTangent
+{
+	float16_t m_normal[3];
+	float16_t m_tangent[3];
+};
+
+layout(buffer_reference, std430) readonly buffer VertexPosUVBuffer { 
+	MeshVertexPosUV data[];
+};
+
+layout(buffer_reference, std430) readonly buffer VertexNormTangentBuffer { 
+	MeshVertexNormTangent data[];
 };
 
 struct MeshMaterial

@@ -14,7 +14,7 @@
 
 namespace R3
 {
-	const uint32_t c_bakedModelVersion = 1;		// change this to force rebake
+	const uint32_t c_bakedModelVersion = 2;		// change this to force rebake
 	const uint32_t c_bakedMaterialTexturePathLength = 128;	// avoid std::string in materials
 	const std::string c_bakedModelExtension = ".bmdl";
 	const std::string c_bakeSettingsExtension = ".bakesettings.json";
@@ -454,11 +454,22 @@ namespace R3
 		};
 		progCb(5);
 		uint32_t vertexCount = loadedFile->m_header["VertexCount"];
-		auto vertexBlob = loadedFile->GetBlob("Vertices");
-		if ((vertexCount * sizeof(ModelVertex)) == vertexBlob->m_data.size())
+		auto vertexPosUVBlob = loadedFile->GetBlob("VerticesPosUV");
+		if ((vertexCount * sizeof(BakedModelVertexPosUV)) == vertexPosUVBlob->m_data.size())
 		{
-			result.m_vertices.resize(vertexCount);
-			memcpy(result.m_vertices.data(), vertexBlob->m_data.data(), vertexCount * sizeof(ModelVertex));
+			result.m_bakedVerticesPosUV.resize(vertexCount);
+			memcpy(result.m_bakedVerticesPosUV.data(), vertexPosUVBlob->m_data.data(), vertexCount * sizeof(BakedModelVertexPosUV));
+		}
+		else
+		{
+			LogError("Unexpected vertex data size");
+			return false;
+		}
+		auto vertexNormTanBlob = loadedFile->GetBlob("VerticesNormTan");
+		if ((vertexCount * sizeof(BakedModelVertexNormalTangent)) == vertexNormTanBlob->m_data.size())
+		{
+			result.m_bakedVerticesNormTan.resize(vertexCount);
+			memcpy(result.m_bakedVerticesNormTan.data(), vertexNormTanBlob->m_data.data(), vertexCount * sizeof(BakedModelVertexNormalTangent));
 		}
 		else
 		{
@@ -538,10 +549,67 @@ namespace R3
 		boundsMaxJson["Y"] = modelData.m_boundsMax.y;
 		boundsMaxJson["Z"] = modelData.m_boundsMax.z;
 
-		AssetFile::Blob& vertexBlob = bakedFile.m_blobs.emplace_back();
-		vertexBlob.m_name = "Vertices";
-		vertexBlob.m_data.resize(sizeof(ModelVertex) * modelData.m_vertices.size());
-		memcpy(vertexBlob.m_data.data(), modelData.m_vertices.data(), sizeof(ModelVertex) * modelData.m_vertices.size());
+		// quantise vertices here
+		struct QuantisedValueStats {
+			float m_minValue = FLT_MAX;
+			float m_maxValue = -FLT_MAX;
+			double m_minError = DBL_MAX;
+			double m_maxError = -DBL_MAX;
+		};
+		auto quantiseToF16 = [](const float v, QuantisedValueStats& stats) -> uint16_t {
+			const uint16_t quantised = meshopt_quantizeHalf(v);
+			const float decompressed = meshopt_dequantizeHalf(quantised);
+			const double errorVal = fabs((double)decompressed - (double)v);
+			stats.m_minValue = glm::min(v, stats.m_minValue);
+			stats.m_maxValue = glm::max(v, stats.m_maxValue);
+			stats.m_minError = glm::min(errorVal, stats.m_minError);
+			stats.m_maxError = glm::max(errorVal, stats.m_maxError);
+			return quantised;
+		};
+		auto logStats = [](std::string_view name, const QuantisedValueStats& stats)
+		{
+			if (stats.m_maxError > 0.001)		// 0.1% error threshold
+			{
+				LogInfo("Quantised {} has error > 0.001", name);
+				LogInfo("\tMin Value: {}, Max Value: {}", stats.m_minValue, stats.m_maxValue);
+				LogInfo("\tMin Error: {:.6f}, Max Error: {:.6f}", stats.m_minError, stats.m_maxError);
+			}
+		};
+		std::vector<BakedModelVertexPosUV> bakedVerticesPosUV(modelData.m_vertices.size());
+		std::vector<BakedModelVertexNormalTangent> bakedVerticesNormTan(modelData.m_vertices.size());
+		QuantisedValueStats quantUV_x, quantUV_y;
+		QuantisedValueStats quantNormals;
+		QuantisedValueStats quantTangents;
+		for (int v = 0; v < modelData.m_vertices.size(); ++v)
+		{
+			BakedModelVertexPosUV& posUV = bakedVerticesPosUV[v];
+			BakedModelVertexNormalTangent& normTan = bakedVerticesNormTan[v];
+			posUV.m_position[0] = modelData.m_vertices[v].m_positionU0[0];
+			posUV.m_position[1] = modelData.m_vertices[v].m_positionU0[1];
+			posUV.m_position[2] = modelData.m_vertices[v].m_positionU0[2];
+			posUV.m_uv0[0] = quantiseToF16(modelData.m_vertices[v].m_positionU0[3], quantUV_x);
+			posUV.m_uv0[1] = quantiseToF16(modelData.m_vertices[v].m_normalV0[3], quantUV_y);
+			normTan.m_normal[0] = quantiseToF16(modelData.m_vertices[v].m_normalV0[0], quantNormals);
+			normTan.m_normal[1] = quantiseToF16(modelData.m_vertices[v].m_normalV0[1], quantNormals);
+			normTan.m_normal[2] = quantiseToF16(modelData.m_vertices[v].m_normalV0[2], quantNormals);
+			normTan.m_tangent[0] = quantiseToF16(modelData.m_vertices[v].m_tangentPad[0], quantTangents);
+			normTan.m_tangent[1] = quantiseToF16(modelData.m_vertices[v].m_tangentPad[1], quantTangents);
+			normTan.m_tangent[2] = quantiseToF16(modelData.m_vertices[v].m_tangentPad[2], quantTangents);
+		}
+		logStats("UV X", quantUV_x);
+		logStats("UV Y", quantUV_y);
+		logStats("Normals", quantNormals);
+		logStats("Tangents", quantTangents);
+
+		AssetFile::Blob& vertexPosUVBlob = bakedFile.m_blobs.emplace_back();
+		vertexPosUVBlob.m_name = "VerticesPosUV";
+		vertexPosUVBlob.m_data.resize(sizeof(BakedModelVertexPosUV) * bakedVerticesPosUV.size());
+		memcpy(vertexPosUVBlob.m_data.data(), bakedVerticesPosUV.data(), sizeof(BakedModelVertexPosUV) * bakedVerticesPosUV.size());
+
+		AssetFile::Blob& vertexPosNormTan = bakedFile.m_blobs.emplace_back();
+		vertexPosNormTan.m_name = "VerticesNormTan";
+		vertexPosNormTan.m_data.resize(sizeof(BakedModelVertexNormalTangent)* bakedVerticesNormTan.size());
+		memcpy(vertexPosNormTan.m_data.data(), bakedVerticesNormTan.data(), sizeof(BakedModelVertexNormalTangent)* bakedVerticesNormTan.size());
 
 		AssetFile::Blob& indexBlob = bakedFile.m_blobs.emplace_back();
 		indexBlob.m_name = "Indices";

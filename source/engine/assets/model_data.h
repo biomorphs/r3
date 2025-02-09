@@ -28,6 +28,18 @@ namespace R3
 		float m_tangentPad[4];
 	};
 
+	struct BakedModelVertexPosUV
+	{
+		float m_position[3];
+		uint16_t m_uv0[2];
+	};
+
+	struct BakedModelVertexNormalTangent
+	{
+		uint16_t m_normal[3];
+		uint16_t m_tangent[3];
+	};
+
 	struct ModelMaterial
 	{
 		std::vector<std::string> m_diffuseMaps;
@@ -56,7 +68,9 @@ namespace R3
 
 	struct ModelData
 	{
-		std::vector<ModelVertex> m_vertices;	// verts are in mesh space
+		std::vector<ModelVertex> m_vertices;	// verts are in mesh space, only stored for non-baked models
+		std::vector<BakedModelVertexPosUV> m_bakedVerticesPosUV;	// verts are in mesh space + quantised
+		std::vector<BakedModelVertexNormalTangent> m_bakedVerticesNormTan;	// verts are in mesh space + quantised
 		std::vector<uint32_t> m_indices;
 		std::vector<ModelMaterial> m_materials;
 		std::vector<ModelPart> m_parts;

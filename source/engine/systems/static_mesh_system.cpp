@@ -38,9 +38,14 @@ namespace R3
 		Systems::GetSystem<ModelDataSystem>()->UnregisterLoadedCallback(m_onModelDataLoadedCbToken);
 	}
 
-	VkDeviceAddress StaticMeshSystem::GetVertexDataDeviceAddress()
+	VkDeviceAddress StaticMeshSystem::GetVertexPosUVDeviceAddress()
 	{
-		return m_allVertices.GetDataDeviceAddress();
+		return m_allVertsPosUV.GetDataDeviceAddress();
+	}
+
+	VkDeviceAddress StaticMeshSystem::GetVertexNormTangentDeviceAddress()
+	{
+		return m_allVertsNormalTangent.GetDataDeviceAddress();
 	}
 
 	VkDeviceAddress StaticMeshSystem::GetMeshPartsDeviceAddress()
@@ -119,7 +124,13 @@ namespace R3
 
 			// allocate the mesh data + fill in what we can while we have the lock
 			MeshDrawData newMesh;
-			newMesh.m_vertexDataOffset = static_cast<uint32_t>(m_allVertices.Allocate(m->m_vertices.size()));
+			newMesh.m_vertexDataOffset = static_cast<uint32_t>(m_allVertsPosUV.Allocate(m->m_bakedVerticesPosUV.size()));
+			const uint32_t normTanVertsOffset = static_cast<uint32_t>(m_allVertsNormalTangent.Allocate(m->m_bakedVerticesNormTan.size()));
+			if (newMesh.m_vertexDataOffset != normTanVertsOffset)
+			{
+				LogError("Mismatch with split vertex data buffers! Aborting");
+				return;
+			}
 			newMesh.m_indexDataOffset = static_cast<uint32_t>(m_allIndices.Allocate(m->m_indices.size()));
 			if (newMesh.m_vertexDataOffset == -1 || newMesh.m_indexDataOffset == -1)
 			{
@@ -130,7 +141,7 @@ namespace R3
 			newMesh.m_materialCount = static_cast<uint32_t>(m->m_materials.size());
 			newMesh.m_meshPartCount = static_cast<uint32_t>(m->m_parts.size());
 			newMesh.m_totalIndices = static_cast<uint32_t>(m->m_indices.size());
-			newMesh.m_totalVertices = static_cast<uint32_t>(m->m_vertices.size());
+			newMesh.m_totalVertices = static_cast<uint32_t>(m->m_bakedVerticesPosUV.size());
 			newMesh.m_boundsMax = m->m_boundsMax;
 			newMesh.m_boundsMin = m->m_boundsMin;
 			newMesh.m_modelHandleIndex = handle.m_index;
@@ -188,7 +199,8 @@ namespace R3
 			// now copy the vertex + index data to staging
 			{
 				R3_PROF_EVENT("WriteGpuDataToStaging");
-				m_allVertices.Write(newMesh.m_vertexDataOffset, m->m_vertices.size(), m->m_vertices.data());
+				m_allVertsPosUV.Write(newMesh.m_vertexDataOffset, m->m_bakedVerticesPosUV.size(), m->m_bakedVerticesPosUV.data());
+				m_allVertsNormalTangent.Write(newMesh.m_vertexDataOffset, m->m_bakedVerticesNormTan.size(), m->m_bakedVerticesNormTan.data());
 				m_allIndices.Write(newMesh.m_indexDataOffset, m->m_indices.size(), m->m_indices.data());
 			}
 			{
@@ -204,10 +216,18 @@ namespace R3
 	void StaticMeshSystem::PrepareForRendering(class RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
-		if (!m_allVertices.IsCreated())
+		if (!m_allVertsPosUV.IsCreated())
 		{
-			m_allVertices.SetDebugName("Static mesh vertices");
-			if (!m_allVertices.Create(*ctx.m_device, c_maxVerticesToStore, c_maxVerticesToStore / 2, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT))
+			m_allVertsPosUV.SetDebugName("Static mesh vertex pos/uv");
+			if (!m_allVertsPosUV.Create(*ctx.m_device, c_maxVerticesToStore, c_maxVerticesToStore / 2, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT))
+			{
+				LogError("Failed to create vertex buffer");
+			}
+		}
+		if (!m_allVertsNormalTangent.IsCreated())
+		{
+			m_allVertsNormalTangent.SetDebugName("Static mesh vertex normal/tangent");
+			if (!m_allVertsNormalTangent.Create(*ctx.m_device, c_maxVerticesToStore, c_maxVerticesToStore / 2, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT))
 			{
 				LogError("Failed to create vertex buffer");
 			}
@@ -239,7 +259,8 @@ namespace R3
 		}
 		{
 			R3_PROF_EVENT("FlushStagingWrites");
-			m_allVertices.Flush(*ctx.m_device, ctx.m_graphicsCmds);
+			m_allVertsPosUV.Flush(*ctx.m_device, ctx.m_graphicsCmds);
+			m_allVertsNormalTangent.Flush(*ctx.m_device, ctx.m_graphicsCmds);
 			m_allIndices.Flush(*ctx.m_device, ctx.m_graphicsCmds);
 			m_allMaterialsGpu.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 			m_allMeshPartsGpu.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT);	// mesh parts used in compute culling/bucket prep before vertex shader
@@ -267,10 +288,10 @@ namespace R3
 					ImGui::Text(txt.c_str());
 					txt = std::format("{} parts", m_allParts.size());
 					ImGui::Text(txt.c_str());
-					txt = std::format("{} / {} vertices", m_allVertices.GetAllocated(), m_allVertices.GetMaxAllocated());
+					txt = std::format("{} / {} vertices", m_allVertsPosUV.GetAllocated(), m_allVertsPosUV.GetMaxAllocated());
 					ImGui::Text(txt.c_str());
 					ImGui::SameLine();
-					ImGui::ProgressBar((float)m_allVertices.GetAllocated() / (float)m_allVertices.GetMaxAllocated());
+					ImGui::ProgressBar((float)m_allVertsPosUV.GetAllocated() / (float)m_allVertsPosUV.GetMaxAllocated());
 					txt = std::format("{} / {} indices", m_allIndices.GetAllocated(), m_allIndices.GetMaxAllocated());
 					ImGui::Text(txt.c_str());
 					ImGui::SameLine();
@@ -320,7 +341,8 @@ namespace R3
 		GetSystem<RenderSystem>()->m_onShutdownCbs.AddCallback([this](Device& d) {
 			m_allMeshPartsGpu.Destroy(d);
 			m_allMaterialsGpu.Destroy(d);
-			m_allVertices.Destroy(d);
+			m_allVertsPosUV.Destroy(d);
+			m_allVertsNormalTangent.Destroy(d);
 			m_allIndices.Destroy(d);
 		});
 		return true;
