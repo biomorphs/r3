@@ -252,12 +252,16 @@ namespace R3
 				glm::mat4 worldSpaceTransform = t.GetWorldspaceInterpolated(e, *activeWorld);
 				glm::vec3 lightPosition = glm::vec3(worldSpaceTransform[3]);
 				glm::vec3 lightDirection = glm::normalize(glm::vec3(0, 0, 1) * glm::mat3(worldSpaceTransform));
-				Spotlight newLight;
-				newLight.m_positionDistance = glm::vec4(lightPosition, sl.m_distance);
-				newLight.m_directionInnerAngle = glm::vec4(lightDirection, glm::cos(glm::radians(sl.m_innerAngle)));
-				newLight.m_colourOuterAngle = glm::vec4(sl.m_colour * sl.m_brightness, glm::cos(glm::radians(sl.m_outerAngle)));
-				activeSpotLights.emplace_back(newLight);
-				thisFrameLightData.m_spotlightCount++;
+				Frustum lightFrustum(CalculateSpotlightMatrix(lightPosition, lightDirection, sl.m_distance, sl.m_outerAngle));
+				if (viewFrustum.IsFrustumVisible(lightFrustum))
+				{
+					Spotlight newLight;
+					newLight.m_positionDistance = glm::vec4(lightPosition, sl.m_distance);
+					newLight.m_directionInnerAngle = glm::vec4(lightDirection, glm::cos(glm::radians(sl.m_innerAngle)));
+					newLight.m_colourOuterAngle = glm::vec4(sl.m_colour * sl.m_brightness, glm::cos(glm::radians(sl.m_outerAngle)));
+					activeSpotLights.emplace_back(newLight);
+					thisFrameLightData.m_spotlightCount++;
+				}
 			}
 			return true;
 		};
