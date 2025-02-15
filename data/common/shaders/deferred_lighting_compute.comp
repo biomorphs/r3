@@ -23,8 +23,55 @@ layout(push_constant) uniform constants
 } PushConstants;
 
 // Copy all pointlights to shared memory for this work group
-#define MAX_SHARED_LIGHTS 1024
-shared Pointlight sharedLights[MAX_SHARED_LIGHTS];
+#define MAX_SHARED_POINTLIGHTS 512
+shared Pointlight sharedPointLights[MAX_SHARED_POINTLIGHTS];
+
+#define MAX_SHARED_SPOTLIGHTS 512
+shared Spotlight sharedSpotlights[MAX_SHARED_SPOTLIGHTS];
+
+// populate sharedPointLights, returns num. active pointlights for this pixel
+// no synchronisation here, you must call barriers afterwards!
+uint PopulateSharedPointlights(LightsData lightsData)
+{
+	// Copy lights list to shared memory from tile, 4 lights per thread
+#ifdef USE_TILED_LIGHTS
+	LightTileMetadata tileMetadata = PushConstants.m_lightTileMetadata.data[0];
+	uint tileIndex = GetLightTileIndex(uvec2(gl_GlobalInvocationID.xy), tileMetadata.m_tileCount);
+	LightTile thisLightTile = tileMetadata.m_lightTiles.data[tileIndex];
+	
+	// tile light count also takes into account global light count (since the light tile data will not be valid when there are 0 lights!)
+	uint pointLightCount = min(lightsData.m_pointlightCount, min(uint(thisLightTile.m_lightIndexCount), MAX_SHARED_POINTLIGHTS));	
+	uint firstLightOffset = thisLightTile.m_firstLightIndex;
+	uint firstLightIndex = firstLightOffset + (gl_LocalInvocationIndex * 4);
+	uint lastLightIndex = min(firstLightIndex + 4, firstLightOffset + pointLightCount);
+	for(uint l=firstLightIndex;l<lastLightIndex;++l)
+	{
+		uint lightIndex = tileMetadata.m_lightIndices.data[l];
+		sharedPointLights[l-firstLightOffset] = lightsData.m_allPointlights.data[lightIndex];
+	}
+#else
+	uint pointLightCount = min(lightsData.m_pointlightCount, MAX_SHARED_POINTLIGHTS);
+	uint firstLightIndex = gl_LocalInvocationIndex * 4;
+	uint lastLightIndex = min(firstLightIndex + 4, pointLightCount);
+	for(uint p=firstLightIndex;p<lastLightIndex;++p)
+	{
+		sharedPointLights[p] = lightsData.m_allPointlights.data[p];
+	}
+#endif
+	return pointLightCount;
+}
+
+uint PopulateSharedSpotlights(LightsData lightsData)
+{
+	uint spotLightCount = min(lightsData.m_spotlightCount, MAX_SHARED_SPOTLIGHTS);
+	uint firstLightIndex = gl_LocalInvocationIndex * 4;
+	uint lastLightIndex = min(firstLightIndex + 4, spotLightCount);
+	for(uint p=firstLightIndex;p<lastLightIndex;++p)
+	{
+		sharedSpotlights[p] = lightsData.m_allSpotlights.data[p];
+	}
+	return spotLightCount;
+}
 
 void main() 
 {
@@ -33,31 +80,9 @@ void main()
 	ivec2 size = imageSize(hdrOutput);
 	float depthValue = texelFetch(inDepthBuffer, texelCoord, 0).r;
 	
-	// Copy lights list to shared memory from tile, 4 lights per thread
-#ifdef USE_TILED_LIGHTS
-	LightTileMetadata tileMetadata = PushConstants.m_lightTileMetadata.data[0];
-	uint tileIndex = GetLightTileIndex(uvec2(gl_GlobalInvocationID.xy), tileMetadata.m_tileCount);
-	LightTile thisLightTile = tileMetadata.m_lightTiles.data[tileIndex];
+	uint pointLightCount = PopulateSharedPointlights(lightsData);
+	uint spotLightCount = PopulateSharedSpotlights(lightsData);
 	
-	// tile light count also takes into account global light count (since the light tile data will not be valid when there are 0 lights!)
-	uint pointLightCount = min(lightsData.m_pointlightCount, min(uint(thisLightTile.m_lightIndexCount), MAX_SHARED_LIGHTS));	
-	uint firstLightOffset = thisLightTile.m_firstLightIndex;
-	uint firstLightIndex = firstLightOffset + (gl_LocalInvocationIndex * 4);
-	uint lastLightIndex = min(firstLightIndex + 4, firstLightOffset + pointLightCount);
-	for(uint l=firstLightIndex;l<lastLightIndex;++l)
-	{
-		uint lightIndex = tileMetadata.m_lightIndices.data[l];
-		sharedLights[l-firstLightOffset] = lightsData.m_allPointlights.data[lightIndex];
-	}
-#else
-	uint pointLightCount = min(lightsData.m_pointlightCount, MAX_SHARED_LIGHTS);
-	uint firstLightIndex = gl_LocalInvocationIndex * 4;
-	uint lastLightIndex = min(firstLightIndex + 4, pointLightCount);
-	for(uint p=firstLightIndex;p<lastLightIndex;++p)
-	{
-		sharedLights[p] = lightsData.m_allPointlights.data[p];
-	}
-#endif
 	groupMemoryBarrier();		// ensure all writes to shared memory complete for this group
 	barrier();					// synchronise all invocations in this group (required since not all invocations touch shared memory!)
 
@@ -88,11 +113,21 @@ void main()
 			// Apply point lights (direct)
 			for(uint p=0;p<pointLightCount;++p)
 			{
-				Pointlight pl = sharedLights[p];
+				Pointlight pl = sharedPointLights[p];
+				vec3 pixelToLight = pl.m_positionDistance.xyz - positionMetallic.xyz;
+				float attenuation = GetPointlightAttenuation(pl, pixelToLight);
 				vec3 lightRadiance = pl.m_colourBrightness.xyz * pl.m_colourBrightness.w;
-				float attenuation = GetPointlightAttenuation(pl, positionMetallic.xyz);
-				vec3 lightToPixel = normalize(pl.m_positionDistance.xyz - positionMetallic.xyz);
-				directLight += PBRDirectLighting(mat, viewDir, lightToPixel, normalRoughness.xyz, lightRadiance, attenuation);
+				directLight += PBRDirectLighting(mat, viewDir, normalize(pixelToLight), normalRoughness.xyz, lightRadiance, attenuation);
+			}
+			
+			// Apply spot lights (direct)
+			for(uint s=0;s<spotLightCount;++s)
+			{
+				Spotlight sl = sharedSpotlights[s];
+				vec3 pixelToLight = sl.m_positionDistance.xyz - positionMetallic.xyz;
+				vec3 pixelToLightDir = normalize(pixelToLight);
+				float attenuation = GetSpotlightAttenuation(sl, pixelToLight, pixelToLightDir);
+				directLight += PBRDirectLighting(mat, viewDir, pixelToLightDir, normalRoughness.xyz, sl.m_colourOuterAngle.xyz, attenuation);
 			}
 			
 			// Ambient is a hack, tries to combine sky + sun colour somehow

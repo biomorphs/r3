@@ -3,6 +3,7 @@
 #include "engine/systems/immediate_render_system.h"
 #include "engine/systems/camera_system.h"
 #include "engine/components/point_light.h"
+#include "engine/components/spot_light.h"
 #include "engine/components/environment_settings.h"
 #include "engine/components/transform.h"
 #include "engine/utils/frustum.h"
@@ -53,6 +54,13 @@ namespace R3
 	glm::vec3 LightsSystem::GetSkyColour()
 	{
 		return m_skyColour;
+	}
+
+	glm::mat4 LightsSystem::CalculateSpotlightMatrix(glm::vec3 position, glm::vec3 direction, float maxDistance, float outerAngle)
+	{
+		const glm::vec3 up = direction.y == -1.0f ? glm::vec3(0.0f, 0.0f, 1.0f) : glm::vec3(0.0f, 1.0f, 0.0f);
+		const glm::mat4 lightView = glm::lookAt(glm::vec3(position), glm::vec3(position) + direction, up);
+		return glm::perspective(glm::radians(outerAngle) * 2.0f, 1.0f, 0.01f, maxDistance) * lightView;
 	}
 
 	glm::mat4 LightsSystem::GetSunShadowMatrix(float minDepth, float maxDepth, int shadowMapResolution)
@@ -174,6 +182,7 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		m_activePointLights = 0;
+		m_activeSpotLights = 0;
 		auto activeWorld = Systems::GetSystem<Entities::EntitySystem>()->GetActiveWorld();
 		if (activeWorld == nullptr || !m_allPointlights.IsCreated() || !m_allLightsData.IsCreated() || !m_allSpotlights.IsCreated())
 		{
@@ -212,6 +221,9 @@ namespace R3
 		Frustum viewFrustum(mainCamera.ProjectionMatrix() * mainCamera.ViewMatrix());
 		const uint32_t pointLightBaseOffset = m_currentFrame * c_maxPointLights;
 		thisFrameLightData.m_pointLightsBufferAddress = m_allPointlights.GetDataDeviceAddress() + pointLightBaseOffset * sizeof(Pointlight);
+		const uint32_t spotLightBaseOffset = m_currentFrame * c_maxSpotLights;
+		thisFrameLightData.m_spotLightsBufferAddress = m_allSpotlights.GetDataDeviceAddress() + spotLightBaseOffset * sizeof(Spotlight);
+
 		std::vector<Pointlight> activePointLights;
 		activePointLights.reserve(c_maxPointLights / 4);
 		auto collectPointLights = [&](const Entities::EntityHandle& e, PointLightComponent& pl, TransformComponent& t) {
@@ -231,6 +243,26 @@ namespace R3
 		};
 		Entities::Queries::ForEach<PointLightComponent, TransformComponent>(activeWorld, collectPointLights);
 
+		// Collect + cull spot lights
+		std::vector<Spotlight> activeSpotLights;
+		activeSpotLights.reserve(c_maxPointLights / 4);
+		auto collectSpotLights = [&](const Entities::EntityHandle& e, SpotLightComponent& sl, TransformComponent& t) {
+			if (sl.m_enabled)
+			{
+				glm::mat4 worldSpaceTransform = t.GetWorldspaceInterpolated(e, *activeWorld);
+				glm::vec3 lightPosition = glm::vec3(worldSpaceTransform[3]);
+				glm::vec3 lightDirection = glm::normalize(glm::vec3(0, 0, 1) * glm::mat3(worldSpaceTransform));
+				Spotlight newLight;
+				newLight.m_positionDistance = glm::vec4(lightPosition, sl.m_distance);
+				newLight.m_directionInnerAngle = glm::vec4(lightDirection, glm::cos(glm::radians(sl.m_innerAngle)));
+				newLight.m_colourOuterAngle = glm::vec4(sl.m_colour * sl.m_brightness, glm::cos(glm::radians(sl.m_outerAngle)));
+				activeSpotLights.emplace_back(newLight);
+				thisFrameLightData.m_spotlightCount++;
+			}
+			return true;
+		};
+		Entities::Queries::ForEach<SpotLightComponent, TransformComponent>(activeWorld, collectSpotLights);
+
 		// write shadow cascade metadata for this frame
 		float nearFarDistance = mainCamera.FarPlane() - mainCamera.NearPlane();
 		thisFrameLightData.m_shadows.m_sunShadowCascadeCount = (uint32_t)m_sunShadowCascades.size();
@@ -240,14 +272,19 @@ namespace R3
 			thisFrameLightData.m_shadows.m_sunShadowCascadeDistances[i] = nearFarDistance * m_sunShadowCascades[i].m_distance;	// pass view-space distance values
 		}
 
-		// Flush to gpu memory
+		// prepare writes to gpu memory
 		if (activePointLights.size() > 0)
 		{
 			m_allPointlights.Write(pointLightBaseOffset, activePointLights.size(), activePointLights.data());
 			m_activePointLights = static_cast<uint32_t>(activePointLights.size());
 		}
+		if (activeSpotLights.size() > 0)
+		{
+			m_allSpotlights.Write(spotLightBaseOffset, activeSpotLights.size(), activeSpotLights.data());
+			m_activeSpotLights = static_cast<uint32_t>(activeSpotLights.size());
+		}
+
 		m_allLightsData.Write(m_currentFrame, 1, &thisFrameLightData);
-		m_totalPointlightsThisFrame = thisFrameLightData.m_pointlightCount;
 
 		return true;
 	}
@@ -266,7 +303,9 @@ namespace R3
 		if (m_showGui)
 		{
 			ImGui::Begin("Lights");
-			std::string txt = std::format("Active lights: {}", m_totalPointlightsThisFrame);
+			std::string txt = std::format("Active point lights: {}", m_activePointLights);
+			ImGui::Text(txt.c_str());
+			txt = std::format("Active spot lights: {}", m_activeSpotLights);
 			ImGui::Text(txt.c_str());
 			ImGui::Checkbox("Show Cascaded Shadow Frusta", &m_drawCascadeFrusta);
 			ImGui::Checkbox("Lock Debug Frusta", &m_lockDebugFrustums);
@@ -282,13 +321,23 @@ namespace R3
 		{
 			auto entities = Systems::GetSystem<Entities::EntitySystem>();
 			auto activeWorld = entities->GetActiveWorld();
-			auto drawLights = [&](const Entities::EntityHandle& e, PointLightComponent& pl, TransformComponent& t) {
+			auto drawPointLights = [&](const Entities::EntityHandle& e, PointLightComponent& pl, TransformComponent& t) {
 				imRender->AddSphere(glm::vec3(t.GetWorldspaceInterpolated(e, *activeWorld)[3]), pl.m_distance, { pl.m_colour, pl.m_enabled ? 1.0f : 0.25f });
+				return true;
+			};
+			auto drawSpotLights = [&](const Entities::EntityHandle& e, SpotLightComponent& sl, TransformComponent& t) {
+				glm::mat4 worldSpaceTransform = t.GetWorldspaceInterpolated(e, *activeWorld);
+				glm::vec3 lightPosition = glm::vec3(worldSpaceTransform[3]);
+				glm::vec3 lightDirection = glm::normalize(glm::vec3(0, 0, 1) * glm::mat3(worldSpaceTransform));
+				glm::mat4 lightMatrix = CalculateSpotlightMatrix(lightPosition, lightDirection, sl.m_distance, sl.m_outerAngle);
+				Frustum f(lightMatrix);
+				imRender->AddFrustum(f, { 1,1,0,1 });
 				return true;
 			};
 			if (activeWorld)
 			{
-				Entities::Queries::ForEach<PointLightComponent, TransformComponent>(activeWorld, drawLights);
+				Entities::Queries::ForEach<PointLightComponent, TransformComponent>(activeWorld, drawPointLights);
+				Entities::Queries::ForEach<SpotLightComponent, TransformComponent>(activeWorld, drawSpotLights);
 			}
 		}
 

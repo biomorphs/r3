@@ -87,6 +87,8 @@ set(EngineLib_SourceFiles
 	systems/lua_system.cpp
 	systems/transform_system.h
 	systems/transform_system.cpp
+	components/spot_light.h
+	components/spot_light.cpp
 	components/point_light.h
 	components/point_light.cpp
 	components/environment_settings.h

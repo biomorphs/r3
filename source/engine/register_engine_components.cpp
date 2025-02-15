@@ -5,6 +5,7 @@
 #include "components/static_mesh.h"
 #include "components/static_mesh_materials.h"
 #include "components/point_light.h"
+#include "components/spot_light.h"
 #include "components/lua_script.h"
 #include "entities/systems/entity_system.h"
 
@@ -20,7 +21,8 @@ namespace R3
 		entities->RegisterComponentType<StaticMeshComponent>(1024 * 32);
 		entities->RegisterComponentType<DynamicMeshComponent>(1024 * 32);
 		entities->RegisterComponentType<StaticMeshMaterialsComponent>(1024);
-		entities->RegisterComponentType<PointLightComponent>(1024 * 16);
+		entities->RegisterComponentType<PointLightComponent>(1024 * 4);
+		entities->RegisterComponentType<SpotLightComponent>(1024 * 4);
 		entities->RegisterComponentType<LuaScriptComponent>(1024 * 8);
 	}
 }

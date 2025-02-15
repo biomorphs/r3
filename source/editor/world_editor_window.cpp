@@ -35,6 +35,7 @@
 #include "engine/components/static_mesh.h"
 #include "engine/components/static_mesh_materials.h"
 #include "engine/components/point_light.h"
+#include "engine/components/spot_light.h"
 #include "entities/systems/entity_system.h"
 #include "entities/component_type_registry.h"
 #include "render/render_system.h"
@@ -197,6 +198,15 @@ namespace R3
 			};
 			auto addCmd = std::make_unique<WorldEditorAddEmptyEntityCommand>(this, "Point Light");
 			addCmd->SetOnCreate(addPointlight);
+			m_cmds->Push(std::move(addCmd));
+		});
+		addEntityMenu.AddItem("Spot Light", [this, world]() {
+			auto addlight = [world](const Entities::EntityHandle& e) {
+				world->AddComponent<SpotLightComponent>(e);
+				world->AddComponent<TransformComponent>(e);
+			};
+			auto addCmd = std::make_unique<WorldEditorAddEmptyEntityCommand>(this, "Spot Light");
+			addCmd->SetOnCreate(addlight);
 			m_cmds->Push(std::move(addCmd));
 		});
 		contextMenu.AddItem("Import Scene", [this]() {

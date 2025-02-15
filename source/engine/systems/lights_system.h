@@ -13,11 +13,11 @@ namespace R3
 		glm::vec4 m_colourBrightness;	// w = brightness, could be pre-multiplied
 	};
 
-	struct Spotlight
+	struct Spotlight					// uploaded to gpu
 	{
 		glm::vec4 m_positionDistance;		// w = distance used for attenuation/culling
 		glm::vec4 m_colourOuterAngle;		// colour is premultiplied by brightness, w = outer angle
-		glm::vec4 m_directionInnerAngle;	// direction is normalized, w = inner ange
+		glm::vec4 m_directionInnerAngle;	// direction is normalized, w = inner angle
 	};
 
 	struct ShadowMetadata				// all info about shadow maps, uploaded as part of AllLights data
@@ -35,8 +35,10 @@ namespace R3
 		glm::vec4 m_sunDirectionBrightness = { 0,-1,0,0 };
 		glm::vec4 m_sunColourAmbient = { 0,0,0,0 };		// sun colour + ambient factor
 		glm::vec4 m_skyColourAmbient = { 0,0,0,0 };		// sky colour + ambient factor
-		VkDeviceAddress m_pointLightsBufferAddress = 0;		// address of the point light buffer
-		uint32_t m_pointlightCount = 0;						// total point lights this frame
+		VkDeviceAddress m_pointLightsBufferAddress = 0;	// address of the point light buffer
+		VkDeviceAddress m_spotLightsBufferAddress = 0;	// address of the spot lights buffer
+		uint32_t m_pointlightCount = 0;					// total point lights this frame
+		uint32_t m_spotlightCount = 0;					// total spot lights this frame
 	};
 
 	class DescriptorSetSimpleAllocator;
@@ -61,6 +63,7 @@ namespace R3
 		VkDescriptorSet_T* GetAllShadowMapsSet();						// descriptor set for this frame containing all shadow maps
 
 	private:
+		glm::mat4 CalculateSpotlightMatrix(glm::vec3 position, glm::vec3 direction, float maxDistance, float outerAngle);	// returns a projection*view matrix for a given spotlight
 		bool CollectAllLights();
 		bool ShowGui();
 		bool DrawLightBounds();
@@ -86,14 +89,14 @@ namespace R3
 
 		glm::vec3 m_skyColour = { 0,0,0 };		// sky colour from envi
 		glm::vec3 m_sunDirection = { 0,-1,0 };	// sun direction from env
-		const uint32_t c_maxPointLights = 1024 * 8;
-		const uint32_t c_maxSpotLights = 1024 * 8;
+		const uint32_t c_maxPointLights = 1024 * 4;
+		const uint32_t c_maxSpotLights = 1024 * 4;
 		const uint32_t c_framesInFlight = 3;	// lights update every frame, need multiple buffers
 		uint32_t m_currentFrame = 0;			// offset into m_allPointlights and m_allLightsData
 		uint32_t m_activePointLights = 0;		// track how many point lights are active this frame
+		uint32_t m_activeSpotLights = 0;
 		WriteOnlyGpuArray<Pointlight> m_allPointlights;	// c_maxPointLights x c_framesInFlight point lights
-		WriteOnlyGpuArray<Pointlight> m_allSpotlights;	// c_maxSpotLights x c_framesInFlight spot lights
+		WriteOnlyGpuArray<Spotlight> m_allSpotlights;	// c_maxSpotLights x c_framesInFlight spot lights
 		WriteOnlyGpuArray<AllLights> m_allLightsData;	// c_framesInFlight * AllLights
-		uint32_t m_totalPointlightsThisFrame = 0;
 	};
 }
