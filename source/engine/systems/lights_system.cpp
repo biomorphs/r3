@@ -54,15 +54,15 @@ namespace R3
 		return m_skyColour;
 	}
 
-	glm::mat4 LightsSystem::GetSunShadowMatrix(float minDepth, float maxDepth)
+	glm::mat4 LightsSystem::GetSunShadowMatrix(float minDepth, float maxDepth, int shadowMapResolution)
 	{
 		R3_PROF_EVENT();
 
 		auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
 		const glm::mat4 inverseProjView = glm::inverse(mainCamera.ProjectionMatrix() * mainCamera.ViewMatrix());
 
-		// build world-space frustum corners from camera projection + view
-		glm::vec3 frustumCorners[] = {
+		// build world-space frustum corners from camera frustum
+		glm::vec3 frustumCorners[] = {	// clip space
 			{ -1, -1, 0 },
 			{ 1, -1, 0 },
 			{ 1, 1, 0 },
@@ -74,48 +74,42 @@ namespace R3
 		};
 		for (int i = 0; i < std::size(frustumCorners); ++i)
 		{
-			auto projected = inverseProjView * glm::vec4(frustumCorners[i], 1.0f);
+			auto projected = inverseProjView * glm::vec4(frustumCorners[i], 1.0f);		// camera -> world space
 			frustumCorners[i] = glm::vec3(projected / projected.w);
 		}
 
+		// build light view matrix centered around world origin
+		glm::vec3 sunDir = glm::normalize(m_sunDirection);
+		static float s_lightDistance = 100.0f;	// parameter?
+		glm::mat4 lightView = glm::lookAt(-sunDir * s_lightDistance, { 0,0,0 }, { 0,1,0 });
+
 		// rescale based on min + max distance of this cascade
+		glm::vec3 lightSpaceFrustumMin(FLT_MAX);		// calculate min/max points of view frustum in light space
+		glm::vec3 lightSpaceFrustumMax(-FLT_MAX);
+		float near = FLT_MAX, far = -FLT_MAX;
 		for (int i = 0; i < 4; ++i)
 		{
 			glm::vec3 nearToFar = frustumCorners[i + 4] - frustumCorners[i];
 			frustumCorners[i + 4] = frustumCorners[i] + nearToFar * maxDepth;
 			frustumCorners[i] = frustumCorners[i] + nearToFar * minDepth;
-		}
-		
-		// calculate center of frustum in world space
-		glm::vec3 frustumCenter(0, 0, 0);	// find center point of frustum
-		for (int frustumPoint = 0; frustumPoint < 8; ++frustumPoint)
-		{
-			frustumCenter += frustumCorners[frustumPoint];
-		}
-		frustumCenter /= 8.0f;
 
-		// calculate distance of each corner from frustum center to get bounds of projection
-		float boundsRadius = 0.0f;
-		for (int frustumPoint = 0; frustumPoint < 8; ++frustumPoint)
-		{
-			const auto thisPoint = frustumCorners[frustumPoint];
-			float distance = glm::length(thisPoint - frustumCenter);
-			boundsRadius = glm::max(boundsRadius, distance);
+			glm::vec4 frustumPointInLightSpace = lightView * glm::vec4(frustumCorners[i], 1.0f);
+			lightSpaceFrustumMin = glm::min(lightSpaceFrustumMin, glm::vec3(frustumPointInLightSpace));
+			lightSpaceFrustumMax = glm::max(lightSpaceFrustumMax, glm::vec3(frustumPointInLightSpace));
+			frustumPointInLightSpace = lightView * glm::vec4(frustumCorners[i + 4], 1.0f);
+			lightSpaceFrustumMin = glm::min(lightSpaceFrustumMin, glm::vec3(frustumPointInLightSpace));
+			lightSpaceFrustumMax = glm::max(lightSpaceFrustumMax, glm::vec3(frustumPointInLightSpace));
 		}
 
-		// stabilise bounds by rounding extents
-		boundsRadius = ceil(boundsRadius * 16.0f) / 16.0f;
+		// calculate size of map texels in world space
+		glm::vec3 worldUnitsPerTexel = (lightSpaceFrustumMax - lightSpaceFrustumMin) / (float)shadowMapResolution;
 
-		// AABB centered around frustum mid point
-		glm::vec3 maxExtents(boundsRadius);
-		glm::vec3 minExtents = -maxExtents;
-
-		// build view matrix centered around frustum center point
-		glm::vec3 sunDir = glm::normalize(m_sunDirection);
-		glm::mat4 lightView = glm::lookAt(frustumCenter - sunDir * maxExtents.z, frustumCenter, { 0,1,0 });
-
-		// build projection from bounds
-		glm::mat4 lightProjection = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.0f, maxExtents.z - minExtents.z);
+		// snap the min/max to texel size to avoid shimmering
+		lightSpaceFrustumMin = glm::floor(lightSpaceFrustumMin / worldUnitsPerTexel) * worldUnitsPerTexel;
+		lightSpaceFrustumMax = glm::floor(lightSpaceFrustumMax / worldUnitsPerTexel) * worldUnitsPerTexel;
+	
+		// build projection from bounds, note min + max z are flipped since camera looks down -z
+		glm::mat4 lightProjection = glm::ortho(lightSpaceFrustumMin.x, lightSpaceFrustumMax.x, lightSpaceFrustumMin.y, lightSpaceFrustumMax.y, -lightSpaceFrustumMax.z, -lightSpaceFrustumMin.z);
 
 		return lightProjection * lightView;
 	}
@@ -131,7 +125,7 @@ namespace R3
 		if (cascade < m_sunShadowCascades.size())
 		{
 			float maxDepth = (cascade + 1) < m_sunShadowCascades.size() ? m_sunShadowCascades[cascade + 1].m_distance : 1.0f;
-			finalMatrix = GetSunShadowMatrix(m_sunShadowCascades[cascade].m_distance, maxDepth);
+			finalMatrix = GetSunShadowMatrix(m_sunShadowCascades[cascade].m_distance, maxDepth, m_sunShadowCascades[cascade].m_resolution);
 		}
 		return finalMatrix;
 	}

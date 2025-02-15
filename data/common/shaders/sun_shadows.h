@@ -36,7 +36,7 @@ float CalculateSunShadow(ShadowMetadata shadowMetadata, mat4 worldToView, vec3 w
 		projCoords.xy = projCoords.xy * 0.5 + 0.5;		// transform from ndc space to UV space
 		
 #ifdef USE_SW_PCF
-		float pcfScale = (1.0f / textureSize(SunShadowMaps[cascadeToSample], 0).x) * 0.5f;
+		float pcfScale = (1.0f / textureSize(SunShadowMaps[cascadeToSample], 0).x) * 1.0f;
 		float pcfValue = 0.0f;
 		for(int x=0;x<MY_PCF_SAMPLES;++x)
 		{

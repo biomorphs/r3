@@ -42,7 +42,7 @@ namespace R3
 		void PrepareShadowMaps(class RenderPassContext& ctx);		// call this in a pass with shadow maps as inputs
 		VkDeviceAddress GetAllLightsDeviceAddress();				// get the address of m_allLightsData for this frame
 		glm::vec3 GetSkyColour();
-		glm::mat4 GetSunShadowMatrix(float minDepth, float maxDepth);	// light-space matrix for sun shadows
+		glm::mat4 GetSunShadowMatrix(float minDepth, float maxDepth, int shadowMapResolution);	// light-space matrix for sun shadows
 		const std::vector<Pointlight>& GetActivePointLights() { return m_allPointLightsCPU; }
 		
 		int GetShadowCascadeCount();
