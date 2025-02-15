@@ -37,11 +37,7 @@ namespace R3
 
 		void Cleanup(Device&);
 
-		// Cpu-based light tile builder. CopyCpuDataToGpu returns an address to a LightTileMetaData buffer. Only for debugging
-		void BuildLightTilesCpu(glm::uvec2 screenDimensions, const Camera& camera, std::vector<LightTile>& tiles, std::vector<uint32_t>& indices);
-		VkDeviceAddress CopyCpuDataToGpu(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, const std::vector<LightTile>& tiles, const std::vector<uint32_t>& indices);
-
-		// Compute-based light tile builder
+		// Compute-based light tile builder, returns bufer to a LightTileMetaData object
 		VkDeviceAddress BuildTilesListCompute(Device& d, VkCommandBuffer cmds, RenderTarget& depthBuffer, glm::uvec2 screenDimensions, const Camera& camera);
 
 		// display the light tile debug info to a colour target via compute

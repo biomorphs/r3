@@ -203,7 +203,7 @@ namespace R3
 		}
 
 		// If there are no lights, just allocate the buffer
-		if (Systems::GetSystem<LightsSystem>()->GetActivePointLights().size() > 0)
+		if (Systems::GetSystem<LightsSystem>()->GetActivePointLights() > 0)
 		{
 			VulkanHelpers::CommandBufferRegionLabel cmdLabel(cmds, "BuildTileFrustums", { 1,1,0,1 });
 
@@ -308,7 +308,7 @@ namespace R3
 		lightIndexBuffer.Flush(d, cmds, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 
 		// build light tile data in compute...
-		if (Systems::GetSystem<LightsSystem>()->GetActivePointLights().size() > 0)
+		if (Systems::GetSystem<LightsSystem>()->GetActivePointLights() > 0)
 		{
 			BuildTileDataCompute(d, cmds, screenDimensions, frustumBuffer, lightTileBuffer->m_deviceAddress, lightIndexBuffer.GetDataDeviceAddress());
 		}
@@ -367,156 +367,5 @@ namespace R3
 		vkCmdBindDescriptorSets(cmds, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelineLayoutDebug, 0, 1, &m_debugDescriptorSets[m_currentSet], 0, nullptr);
 		vkCmdPushConstants(cmds, m_pipelineLayoutDebug, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(pc), &pc);
 		vkCmdDispatch(cmds, (uint32_t)glm::ceil(outputDimensions.x / 16.0f), (uint32_t)glm::ceil(outputDimensions.y / 16.0f), 1);
-	}
-
-	VkDeviceAddress TiledLightsCompute::CopyCpuDataToGpu(Device& d, VkCommandBuffer cmds, glm::uvec2 screenDimensions, const std::vector<LightTile>& tiles, const std::vector<uint32_t>& indices)
-	{
-		R3_PROF_EVENT();
-		if (!m_initialised)
-		{
-			if (!Initialise(d))
-			{
-				return 0;
-			}
-		}
-
-		LightTileMetaData metadata;
-		const uint32_t c_tilesX = (uint32_t)glm::ceil(screenDimensions.x / (float)c_lightTileDimensions);
-		const uint32_t c_tilesY = (uint32_t)glm::ceil(screenDimensions.y / (float)c_lightTileDimensions);
-		assert(tiles.size() == (c_tilesX * c_tilesY));
-		metadata.m_tileCount[0] = c_tilesX;
-		metadata.m_tileCount[1] = c_tilesY;
-
-		// upload the light tile data, indices, and metadata
-		LinearWriteOnlyGpuArray<LightTile> lightTileBuffer;
-		if (lightTileBuffer.Create(d, c_tilesX * c_tilesY, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_lightTileBufferPool.get()))
-		{
-			lightTileBuffer.Write((uint32_t)tiles.size(), tiles.data());
-			lightTileBuffer.Flush(d, cmds, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-			metadata.m_lightTileBuffer = lightTileBuffer.GetBufferDeviceAddress();
-			lightTileBuffer.Destroy(d);	// this does not actually destroy anything, but it releases the buffers back to the pools
-		}
-		else
-		{
-			LogError("Failed to allocate light tile buffer");
-		}
-
-		LinearWriteOnlyGpuArray<uint32_t> lightIndexBuffer;		// first index reserved for total index counter, only used in compute
-		if (lightIndexBuffer.Create(d, 1 + c_maxTiledLights, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_lightTileBufferPool.get()))
-		{
-			if (indices.size() > 0)
-			{
-				uint32_t dummyCount = 0;
-				lightIndexBuffer.Write(1, &dummyCount);
-				lightIndexBuffer.Write((uint32_t)indices.size(), indices.data());
-				lightIndexBuffer.Flush(d, cmds, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-			}
-			metadata.m_lightIndexBuffer = lightIndexBuffer.GetBufferDeviceAddress();
-			lightIndexBuffer.Destroy(d);	// this does not actually destroy anything, but it releases the buffers back to the pools
-		}
-		else
-		{
-			LogError("Failed to allocate light index buffer");
-		}
-
-		LinearWriteGpuBuffer metadataBuffer;
-		VkDeviceAddress address = 0;
-		if (metadataBuffer.Create(d, sizeof(LightTileMetaData), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_lightTileBufferPool.get()))
-		{
-			metadataBuffer.Write(sizeof(LightTileMetaData), &metadata);
-			metadataBuffer.Flush(d, cmds, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-			address = metadataBuffer.GetBufferDeviceAddress();
-			metadataBuffer.Destroy(d);	// release the buffer back to the pool
-		}
-		else
-		{
-			LogError("Failed to allocate light tile metadata buffer");
-		}
-
-		return address;
-	}
-
-	void TiledLightsCompute::BuildLightTilesCpu(glm::uvec2 screenDimensions, const Camera& camera, std::vector<LightTile>& tiles, std::vector<uint32_t>& indices)
-	{
-		R3_PROF_EVENT();
-		const std::vector<Pointlight>& activePointlights = Systems::GetSystem<LightsSystem>()->GetActivePointLights();
-		const uint32_t c_tilesX = (uint32_t)glm::ceil(screenDimensions.x / (float)c_lightTileDimensions);
-		const uint32_t c_tilesY = (uint32_t)glm::ceil(screenDimensions.y / (float)c_lightTileDimensions);
-		tiles.resize(c_tilesX * c_tilesY);
-		indices.clear();
-		indices.reserve(c_maxTiledLights);
-		if (activePointlights.size() > 0)
-		{
-			// we need inverse of view-projection matrix to go from clip-space to world-space
-			const glm::mat4 projViewMat = camera.ProjectionMatrix() * camera.ViewMatrix();
-			const glm::mat4 inverseProjView = glm::inverse(projViewMat);
-			const glm::vec3 eyePosition = camera.Position();
-			for (uint32_t tileY = 0; tileY < c_tilesY; ++tileY)
-			{
-				for (uint32_t tileX = 0; tileX < c_tilesX; ++tileX)
-				{
-					// start in screen space to ensure tiles are actually c_lightTileDimensions x c_lightTileDimensions
-					glm::vec3 farPoints[4] =
-					{
-						{ tileX * c_lightTileDimensions, tileY * c_lightTileDimensions, 1.0f },					// top left 
-						{ (tileX + 1) * c_lightTileDimensions, tileY * c_lightTileDimensions, 1.0f },			// top right
-						{ tileX * c_lightTileDimensions, (tileY + 1) * c_lightTileDimensions, 1.0f },			// botton left 
-						{ (tileX + 1) * c_lightTileDimensions, (tileY + 1) * c_lightTileDimensions, 1.0f },		// botton right
-					};
-
-					// convert screen x,y to clip space, z is already on far clip plane!
-					auto screenToClip = [&screenDimensions](glm::vec3 p)
-					{
-						return glm::vec3(((p.x / (float)screenDimensions.x) * 2.0f) - 1.0f, ((p.y / (float)screenDimensions.y) * 2.0f) - 1.0f, p.z);
-					};
-
-					// convert the points clip-space, then to world-space
-					for (int i = 0; i < 4; ++i)
-					{
-						farPoints[i] = screenToClip(farPoints[i]);
-						glm::vec4 projected = inverseProjView * glm::vec4(farPoints[i], 1.0f);
-						farPoints[i] = glm::vec3(projected / projected.w);	// perspective divide
-					}
-
-					// build frustum planes from the world-space points
-					auto PointsToPlane = [](glm::vec3 p0, glm::vec3 p1, glm::vec3 p2) -> glm::vec4
-					{
-						glm::vec3 v0 = p1 - p0;
-						glm::vec3 v1 = p2 - p0;
-						glm::vec4 plane = glm::vec4(glm::normalize(glm::cross(v0, v1)), 0.0f);
-						plane.w = glm::dot(glm::vec3(plane), p0);
-						return plane;
-					};
-					glm::vec4 frustumPlanes[4] =
-					{
-						PointsToPlane(eyePosition, farPoints[2], farPoints[0]),	// left
-						PointsToPlane(eyePosition, farPoints[1], farPoints[3]),	// right
-						PointsToPlane(eyePosition, farPoints[0], farPoints[1]),	// top
-						PointsToPlane(eyePosition, farPoints[3], farPoints[2])	// bottom
-					};
-
-					// now determine which lights intersect the frustum for this tile
-					LightTile& thisTileLightData = tiles[tileX + (tileY * c_tilesX)];
-					thisTileLightData.m_lightIndexCount = 0;
-					thisTileLightData.m_firstLightIndex = (uint32_t)indices.size();
-					for (uint32_t l = 0; l < activePointlights.size() && (indices.size() < c_maxTiledLights-1); ++l)
-					{
-						const glm::vec3 center = glm::vec3(activePointlights[l].m_positionDistance);
-						const float radius = activePointlights[l].m_positionDistance.w;
-						bool inFrustum = true;
-						for (int i = 0; (i < 4) && inFrustum; ++i)
-						{
-							float d = glm::dot(glm::vec3(frustumPlanes[i]), center) - frustumPlanes[i].w;
-							inFrustum = (d >= -radius);
-						}
-						if (inFrustum)
-						{
-							indices.push_back(l);
-							thisTileLightData.m_lightIndexCount++;
-						}
-					}
-				}
-			}
-		}
 	}
 }

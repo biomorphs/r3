@@ -52,7 +52,6 @@ namespace R3
 		std::string m_debugRenderTargetName;
 		
 		bool m_useTiledLighting = true;
-		bool m_buildLightTilesOnCpu = false;
 		bool m_showLightTilesDebug = false;
 		uint64_t m_lightTileDebugMetadataAddress = 0;	// keep track of the main colour buffer light tiles for debugging
 	};

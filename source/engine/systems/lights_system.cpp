@@ -37,6 +37,7 @@ namespace R3
 		auto render = Systems::GetSystem<RenderSystem>();
 		render->m_onShutdownCbs.AddCallback([this](Device& d) {
 			m_allPointlights.Destroy(d);
+			m_allSpotlights.Destroy(d);
 			m_allLightsData.Destroy(d);
 			vkDestroySampler(d.GetVkDevice(), m_shadowSampler, nullptr);
 			m_descriptorAllocator = {};
@@ -172,9 +173,9 @@ namespace R3
 	bool LightsSystem::CollectAllLights()
 	{
 		R3_PROF_EVENT();
-		m_allPointLightsCPU.clear();
+		m_activePointLights = 0;
 		auto activeWorld = Systems::GetSystem<Entities::EntitySystem>()->GetActiveWorld();
-		if (activeWorld == nullptr || !m_allPointlights.IsCreated() || !m_allLightsData.IsCreated())
+		if (activeWorld == nullptr || !m_allPointlights.IsCreated() || !m_allLightsData.IsCreated() || !m_allSpotlights.IsCreated())
 		{
 			return true;
 		}
@@ -209,8 +210,10 @@ namespace R3
 		// Collect + cull point lights
 		auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
 		Frustum viewFrustum(mainCamera.ProjectionMatrix() * mainCamera.ViewMatrix());
-		const uint32_t pointLightBaseOffset = m_currentFrame * c_maxLights;
+		const uint32_t pointLightBaseOffset = m_currentFrame * c_maxPointLights;
 		thisFrameLightData.m_pointLightsBufferAddress = m_allPointlights.GetDataDeviceAddress() + pointLightBaseOffset * sizeof(Pointlight);
+		std::vector<Pointlight> activePointLights;
+		activePointLights.reserve(c_maxPointLights / 4);
 		auto collectPointLights = [&](const Entities::EntityHandle& e, PointLightComponent& pl, TransformComponent& t) {
 			if (pl.m_enabled)
 			{
@@ -220,7 +223,7 @@ namespace R3
 					Pointlight newlight;
 					newlight.m_colourBrightness = { pl.m_colour, pl.m_brightness };
 					newlight.m_positionDistance = { lightCenter, pl.m_distance };
-					m_allPointLightsCPU.emplace_back(newlight);
+					activePointLights.emplace_back(newlight);
 					thisFrameLightData.m_pointlightCount++;
 				}
 			}
@@ -238,9 +241,10 @@ namespace R3
 		}
 
 		// Flush to gpu memory
-		if (m_allPointLightsCPU.size() > 0)
+		if (activePointLights.size() > 0)
 		{
-			m_allPointlights.Write(pointLightBaseOffset, m_allPointLightsCPU.size(), m_allPointLightsCPU.data());
+			m_allPointlights.Write(pointLightBaseOffset, activePointLights.size(), activePointLights.data());
+			m_activePointLights = static_cast<uint32_t>(activePointLights.size());
 		}
 		m_allLightsData.Write(m_currentFrame, 1, &thisFrameLightData);
 		m_totalPointlightsThisFrame = thisFrameLightData.m_pointlightCount;
@@ -332,11 +336,20 @@ namespace R3
 		if (!m_allPointlights.IsCreated())
 		{
 			m_allPointlights.SetDebugName("Point lights");
-			if (!m_allPointlights.Create(*ctx.m_device, c_maxLights * c_framesInFlight, c_maxLights, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+			if (!m_allPointlights.Create(*ctx.m_device, c_maxPointLights * c_framesInFlight, c_maxPointLights, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 			{
 				LogError("Failed to create point light buffer");
 			}
-			m_allPointlights.Allocate(c_maxLights * c_framesInFlight);
+			m_allPointlights.Allocate(c_maxPointLights * c_framesInFlight);
+		}
+		if (!m_allSpotlights.IsCreated())
+		{
+			m_allSpotlights.SetDebugName("Spot lights");
+			if (!m_allSpotlights.Create(*ctx.m_device, c_maxSpotLights * c_framesInFlight, c_maxSpotLights, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+			{
+				LogError("Failed to create spot light buffer");
+			}
+			m_allSpotlights.Allocate(c_maxSpotLights * c_framesInFlight);
 		}
 		if (!m_allLightsData.IsCreated())
 		{
@@ -392,6 +405,7 @@ namespace R3
 			}
 			m_allShadowMaps = m_descriptorAllocator->Allocate(*ctx.m_device, m_shadowMapDescriptorLayout);
 		}
+		m_allSpotlights.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 		m_allPointlights.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 		m_allLightsData.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 	}

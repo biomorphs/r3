@@ -81,19 +81,8 @@ namespace R3
 			{
 				auto screenSize = glm::uvec2(GetSystem<RenderSystem>()->GetWindowExtents());
 				auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
-				VkDeviceAddress gpuData = 0;
-				if (m_buildLightTilesOnCpu)
-				{
-					std::vector<TiledLightsCompute::LightTile> lightTiles;
-					std::vector<uint32_t> lightIndices;
-					m_tiledLightsCompute->BuildLightTilesCpu(screenSize, mainCamera, lightTiles, lightIndices);
-					gpuData = m_tiledLightsCompute->CopyCpuDataToGpu(*ctx.m_device, ctx.m_graphicsCmds, screenSize, lightTiles, lightIndices);
-				}
-				else
-				{
-					auto depthTarget = ctx.GetResolvedTarget(mainDepth);
-					gpuData = m_tiledLightsCompute->BuildTilesListCompute(*ctx.m_device, ctx.m_graphicsCmds, *depthTarget, screenSize, mainCamera);
-				}
+				auto depthTarget = ctx.GetResolvedTarget(mainDepth);
+				VkDeviceAddress gpuData = m_tiledLightsCompute->BuildTilesListCompute(*ctx.m_device, ctx.m_graphicsCmds, *depthTarget, screenSize, mainCamera);
 				m_deferredLightingCompute->SetTiledLightinMetadataAddress(gpuData);
 				GetSystem<MeshRenderer>()->SetTiledLightinMetadataAddress(gpuData);
 				m_lightTileDebugMetadataAddress = gpuData;
@@ -406,14 +395,10 @@ namespace R3
 		});
 		if (m_useTiledLighting)
 		{
-			lights.AddItem(m_buildLightTilesOnCpu ? "Build lights using compute" : "Build lights on CPU", [this] {
-				m_buildLightTilesOnCpu = !m_buildLightTilesOnCpu;
-			});
 			lights.AddItem(m_showLightTilesDebug ? "Hide light tiles debug" : "Show light tiles debug", [this]() {
 				m_showLightTilesDebug = !m_showLightTilesDebug;
 			});
 		}
-		
 
 		if (m_renderTargetDebuggerEnabled)
 		{

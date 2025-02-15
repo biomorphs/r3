@@ -10,7 +10,14 @@ namespace R3
 	struct Pointlight					// uploaded to gpu every frame
 	{
 		glm::vec4 m_positionDistance;	// w = distance used for attenuation/culling
-		glm::vec4 m_colourBrightness;	// w = brightness
+		glm::vec4 m_colourBrightness;	// w = brightness, could be pre-multiplied
+	};
+
+	struct Spotlight
+	{
+		glm::vec4 m_positionDistance;		// w = distance used for attenuation/culling
+		glm::vec4 m_colourOuterAngle;		// colour is premultiplied by brightness, w = outer angle
+		glm::vec4 m_directionInnerAngle;	// direction is normalized, w = inner ange
 	};
 
 	struct ShadowMetadata				// all info about shadow maps, uploaded as part of AllLights data
@@ -43,7 +50,7 @@ namespace R3
 		VkDeviceAddress GetAllLightsDeviceAddress();				// get the address of m_allLightsData for this frame
 		glm::vec3 GetSkyColour();
 		glm::mat4 GetSunShadowMatrix(float minDepth, float maxDepth, int shadowMapResolution);	// light-space matrix for sun shadows
-		const std::vector<Pointlight>& GetActivePointLights() { return m_allPointLightsCPU; }
+		uint32_t GetActivePointLights() { return m_activePointLights; }
 		
 		int GetShadowCascadeCount();
 		glm::mat4 GetShadowCascadeMatrix(int cascade);
@@ -79,11 +86,13 @@ namespace R3
 
 		glm::vec3 m_skyColour = { 0,0,0 };		// sky colour from envi
 		glm::vec3 m_sunDirection = { 0,-1,0 };	// sun direction from env
-		const uint32_t c_maxLights = 1024 * 32;
+		const uint32_t c_maxPointLights = 1024 * 8;
+		const uint32_t c_maxSpotLights = 1024 * 8;
 		const uint32_t c_framesInFlight = 3;	// lights update every frame, need multiple buffers
 		uint32_t m_currentFrame = 0;			// offset into m_allPointlights and m_allLightsData
-		std::vector<Pointlight> m_allPointLightsCPU;	// keep a cpu-side array of all active point lights for this frame
-		WriteOnlyGpuArray<Pointlight> m_allPointlights;	// c_maxLights x c_framesInFlight point lights
+		uint32_t m_activePointLights = 0;		// track how many point lights are active this frame
+		WriteOnlyGpuArray<Pointlight> m_allPointlights;	// c_maxPointLights x c_framesInFlight point lights
+		WriteOnlyGpuArray<Pointlight> m_allSpotlights;	// c_maxSpotLights x c_framesInFlight spot lights
 		WriteOnlyGpuArray<AllLights> m_allLightsData;	// c_framesInFlight * AllLights
 		uint32_t m_totalPointlightsThisFrame = 0;
 	};
