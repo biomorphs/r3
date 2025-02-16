@@ -18,5 +18,6 @@ namespace R3
 		float m_innerAngle = 10.0f;		// inner angle controls bright spot in the cone
 		float m_brightness = 1.0f;
 		bool m_enabled = true;
+		bool m_castShadows = false;
 	};
 }

@@ -95,13 +95,17 @@ namespace R3
 			{
 				auto& renderUpdate = updateSequence.AddSequence("RenderUpdate");
 				renderUpdate.AddFn("Cameras::PreRenderUpdate");
+				renderUpdate.AddFn("LightsSystem::PreRenderUpdate");
 				{
 					auto& renderASyncUpdate = renderUpdate.AddAsync("UpdateAsync");
 					renderASyncUpdate.AddFn("MeshRenderer::CollectInstances");
-					renderASyncUpdate.AddFn("LightsSystem::CollectAllLights");
+					renderASyncUpdate.AddFn("LightsSystem::CollectPointLights");
+					renderASyncUpdate.AddFn("LightsSystem::CollectSpotLights");
 					renderASyncUpdate.AddFn("FrameScheduler::UpdateTonemapper");
-					renderASyncUpdate.AddFn("FrameScheduler::BuildRenderGraph");
 				}
+				renderUpdate.AddFn("LightsSystem::CollectShadowCasters");	// must happen after CollectSpotLights / CollectPointLights
+				renderUpdate.AddFn("LightsSystem::CollectAllLightsData");
+				renderUpdate.AddFn("FrameScheduler::BuildRenderGraph");		// must happen after LightsSystem::CollectAllLightsData
 			}
 			{
 				auto& endUpdate = updateSequence.AddSequence("EndFrame");

@@ -24,8 +24,20 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 
-		RegisterTick("LightsSystem::CollectAllLights", [this]() {
-			return CollectAllLights();
+		RegisterTick("LightsSystem::PreRenderUpdate", [this]() {
+			return PreRenderUpdate();
+		});
+		RegisterTick("LightsSystem::CollectPointLights", [this]() {
+			return CollectPointLights();
+		});
+		RegisterTick("LightsSystem::CollectSpotLights", [this]() {
+			return CollectSpotLights();
+		});
+		RegisterTick("LightsSystem::CollectShadowCasters", [this]() {
+			return CollectShadowCasters();
+		});
+		RegisterTick("LightsSystem::CollectAllLightsData", [this]() {
+			return CollectAllLightsData();
 		});
 		RegisterTick("LightsSystem::DrawLightBounds", [this]() {
 			return DrawLightBounds();
@@ -178,20 +190,25 @@ namespace R3
 		return m_allShadowMaps;
 	}
 
-	bool LightsSystem::CollectAllLights()
+	bool LightsSystem::PreRenderUpdate()
 	{
 		R3_PROF_EVENT();
-		m_activePointLights = 0;
-		m_activeSpotLights = 0;
+		if (++m_currentFrame >= c_framesInFlight)
+		{
+			m_currentFrame = 0;
+		}
+		return true;
+	}
+
+	bool LightsSystem::CollectAllLightsData()
+	{
+		R3_PROF_EVENT();
 		auto activeWorld = Systems::GetSystem<Entities::EntitySystem>()->GetActiveWorld();
 		if (activeWorld == nullptr || !m_allPointlights.IsCreated() || !m_allLightsData.IsCreated() || !m_allSpotlights.IsCreated())
 		{
 			return true;
 		}
-		if (++m_currentFrame >= c_framesInFlight)
-		{
-			m_currentFrame = 0;
-		}
+		
 		// Collect global lighting data
 		AllLights thisFrameLightData;
 		auto collectSunSkySettings = [&](const Entities::EntityHandle& e, EnvironmentSettingsComponent& cmp) {
@@ -216,17 +233,50 @@ namespace R3
 		m_skyColour = glm::vec3(thisFrameLightData.m_skyColourAmbient);	
 		m_sunDirection = glm::vec3(thisFrameLightData.m_sunDirectionBrightness);
 
+		// Collect light buffers
+		const uint32_t pointLightBaseOffset = m_currentFrame * c_maxPointLights;
+		thisFrameLightData.m_pointlightCount = m_activePointLights;
+		thisFrameLightData.m_pointLightsBufferAddress = m_allPointlights.GetDataDeviceAddress() + pointLightBaseOffset * sizeof(Pointlight);
+		const uint32_t spotLightBaseOffset = m_currentFrame * c_maxSpotLights;
+		thisFrameLightData.m_spotlightCount = m_activeSpotLights;
+		thisFrameLightData.m_spotLightsBufferAddress = m_allSpotlights.GetDataDeviceAddress() + spotLightBaseOffset * sizeof(Spotlight);
+
+		// Collect shadow cascade metadata for this frame
+		auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
+		Frustum viewFrustum(mainCamera.ProjectionMatrix() * mainCamera.ViewMatrix());
+		float nearFarDistance = mainCamera.FarPlane() - mainCamera.NearPlane();
+		thisFrameLightData.m_shadows.m_sunShadowCascadeCount = (uint32_t)m_sunShadowCascades.size();
+		for (int i = 0; i < m_sunShadowCascades.size(); ++i)
+		{
+			thisFrameLightData.m_shadows.m_sunShadowCascadeMatrices[i] = GetShadowCascadeMatrix(i);
+			thisFrameLightData.m_shadows.m_sunShadowCascadeDistances[i] = nearFarDistance * m_sunShadowCascades[i].m_distance;	// pass view-space distance values
+		}
+
+		// Write to gpu buffer
+		m_allLightsData.Write(m_currentFrame, 1, &thisFrameLightData);
+
+		return true;
+	}
+
+	bool LightsSystem::CollectPointLights()
+	{
+		R3_PROF_EVENT();
+		m_activePointLights = 0;
+
+		auto activeWorld = Systems::GetSystem<Entities::EntitySystem>()->GetActiveWorld();
+		if (activeWorld == nullptr || !m_allPointlights.IsCreated())
+		{
+			return true;
+		}
+
 		// Collect + cull point lights
 		auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
 		Frustum viewFrustum(mainCamera.ProjectionMatrix() * mainCamera.ViewMatrix());
-		const uint32_t pointLightBaseOffset = m_currentFrame * c_maxPointLights;
-		thisFrameLightData.m_pointLightsBufferAddress = m_allPointlights.GetDataDeviceAddress() + pointLightBaseOffset * sizeof(Pointlight);
-		const uint32_t spotLightBaseOffset = m_currentFrame * c_maxSpotLights;
-		thisFrameLightData.m_spotLightsBufferAddress = m_allSpotlights.GetDataDeviceAddress() + spotLightBaseOffset * sizeof(Spotlight);
-
-		std::vector<Pointlight> activePointLights;
+		static std::vector<Pointlight> activePointLights;
+		activePointLights.clear();
 		activePointLights.reserve(c_maxPointLights / 4);
-		auto collectPointLights = [&](const Entities::EntityHandle& e, PointLightComponent& pl, TransformComponent& t) {
+		auto collectPointLights = [&](const Entities::EntityHandle& e, PointLightComponent& pl, TransformComponent& t) 
+		{
 			if (pl.m_enabled)
 			{
 				glm::vec3 lightCenter = glm::vec3(t.GetWorldspaceInterpolated(e, *activeWorld)[3]);
@@ -236,16 +286,40 @@ namespace R3
 					newlight.m_colourBrightness = { pl.m_colour, pl.m_brightness };
 					newlight.m_positionDistance = { lightCenter, pl.m_distance };
 					activePointLights.emplace_back(newlight);
-					thisFrameLightData.m_pointlightCount++;
 				}
 			}
 			return true;
 		};
 		Entities::Queries::ForEach<PointLightComponent, TransformComponent>(activeWorld, collectPointLights);
 
+		// write to gpu memory
+		if (activePointLights.size() > 0)
+		{
+			const uint32_t pointLightBaseOffset = m_currentFrame * c_maxPointLights;
+			m_allPointlights.Write(pointLightBaseOffset, activePointLights.size(), activePointLights.data());
+			m_activePointLights = static_cast<uint32_t>(activePointLights.size());
+		}
+
+		return true;
+	}
+
+	bool LightsSystem::CollectSpotLights()
+	{
+		R3_PROF_EVENT();
+		m_activeSpotLights = 0;
+
+		auto activeWorld = Systems::GetSystem<Entities::EntitySystem>()->GetActiveWorld();
+		if (activeWorld == nullptr || !m_allSpotlights.IsCreated())
+		{
+			return true;
+		}
+
 		// Collect + cull spot lights
-		std::vector<Spotlight> activeSpotLights;
-		activeSpotLights.reserve(c_maxPointLights / 4);
+		auto mainCamera = GetSystem<CameraSystem>()->GetMainCamera();
+		Frustum viewFrustum(mainCamera.ProjectionMatrix() * mainCamera.ViewMatrix());
+		static std::vector<Spotlight> activeSpotLights;
+		activeSpotLights.clear();
+		activeSpotLights.reserve(c_maxSpotLights / 4);
 		auto collectSpotLights = [&](const Entities::EntityHandle& e, SpotLightComponent& sl, TransformComponent& t) {
 			if (sl.m_enabled)
 			{
@@ -260,36 +334,26 @@ namespace R3
 					newLight.m_directionInnerAngle = glm::vec4(lightDirection, glm::cos(glm::radians(sl.m_innerAngle)));
 					newLight.m_colourOuterAngle = glm::vec4(sl.m_colour * sl.m_brightness, glm::cos(glm::radians(sl.m_outerAngle)));
 					activeSpotLights.emplace_back(newLight);
-					thisFrameLightData.m_spotlightCount++;
 				}
 			}
 			return true;
 		};
 		Entities::Queries::ForEach<SpotLightComponent, TransformComponent>(activeWorld, collectSpotLights);
-
-		// write shadow cascade metadata for this frame
-		float nearFarDistance = mainCamera.FarPlane() - mainCamera.NearPlane();
-		thisFrameLightData.m_shadows.m_sunShadowCascadeCount = (uint32_t)m_sunShadowCascades.size();
-		for (int i = 0; i < m_sunShadowCascades.size(); ++i)
-		{
-			thisFrameLightData.m_shadows.m_sunShadowCascadeMatrices[i] = GetShadowCascadeMatrix(i);
-			thisFrameLightData.m_shadows.m_sunShadowCascadeDistances[i] = nearFarDistance * m_sunShadowCascades[i].m_distance;	// pass view-space distance values
-		}
-
-		// prepare writes to gpu memory
-		if (activePointLights.size() > 0)
-		{
-			m_allPointlights.Write(pointLightBaseOffset, activePointLights.size(), activePointLights.data());
-			m_activePointLights = static_cast<uint32_t>(activePointLights.size());
-		}
+		
+		// write to gpu buffer
 		if (activeSpotLights.size() > 0)
 		{
+			const uint32_t spotLightBaseOffset = m_currentFrame * c_maxSpotLights;
 			m_allSpotlights.Write(spotLightBaseOffset, activeSpotLights.size(), activeSpotLights.data());
 			m_activeSpotLights = static_cast<uint32_t>(activeSpotLights.size());
 		}
 
-		m_allLightsData.Write(m_currentFrame, 1, &thisFrameLightData);
+		return true;
+	}
 
+	bool LightsSystem::CollectShadowCasters()
+	{
+		R3_PROF_EVENT();
 		return true;
 	}
 

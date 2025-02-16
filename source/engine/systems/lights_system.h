@@ -64,7 +64,11 @@ namespace R3
 
 	private:
 		glm::mat4 CalculateSpotlightMatrix(glm::vec3 position, glm::vec3 direction, float maxDistance, float outerAngle);	// returns a projection*view matrix for a given spotlight
-		bool CollectAllLights();
+		bool PreRenderUpdate();			// call before any Collect* fns
+		bool CollectPointLights();
+		bool CollectSpotLights();
+		bool CollectShadowCasters();	// must be called after CollectPointLights/CollectShadowCasters
+		bool CollectAllLightsData();	// call after the above Collect() fns
 		bool ShowGui();
 		bool DrawLightBounds();
 		bool m_showGui = false;
