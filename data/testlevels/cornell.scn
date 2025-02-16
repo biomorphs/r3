@@ -1,0 +1,555 @@
+{
+ "AllEntities": [
+  {
+   "EnvironmentSettings": {
+    "Cascade_0": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.0,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Cascade_1": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.5,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Cascade_2": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.5,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Cascade_3": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.0,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Flycam Draw Distance": 64.0,
+    "Flycam Speed": 2.0,
+    "Shadow Cascades": 0,
+    "Sky Ambient": 0.0,
+    "Sky Colour": {
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Sun Ambient": 0.0,
+    "Sun Brightness": 0.0,
+    "Sun Colour": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    },
+    "Sun Direction": {
+     "X": 0.5,
+     "Y": -0.5,
+     "Z": 0.6000000238418579
+    },
+    "Tonemap Type": 7
+   },
+   "ID": 0,
+   "Name": "Globals",
+   "Parent": 2
+  },
+  {
+   "ID": 1,
+   "Name": "Cube",
+   "Parent": 3,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 16.0,
+     "Y": 1.0,
+     "Z": 16.0
+    }
+   }
+  },
+  {
+   "ID": 2,
+   "Name": "New World",
+   "Parent": 4294967295
+  },
+  {
+   "ID": 3,
+   "Name": "Geometry",
+   "Parent": 4294967295
+  },
+  {
+   "ID": 13,
+   "Name": "Cube",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 16.0,
+     "Z": 0.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 14.0,
+     "Y": 1.0,
+     "Z": 16.0
+    }
+   }
+  },
+  {
+   "ID": 14,
+   "Name": "Cube",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 14
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.16129028797149658,
+       "Y": 1.0,
+       "Z": 0.0
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 0,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.3999999761581421,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -7.5,
+     "Y": 8.5,
+     "Z": 0.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 16.0,
+     "Z": 16.0
+    }
+   }
+  },
+  {
+   "ID": 15,
+   "Name": "Cube",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 15
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 1.0,
+       "Y": 0.0,
+       "Z": 0.0
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 0,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.3999999761581421,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 7.5,
+     "Y": 8.5,
+     "Z": 0.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 16.0,
+     "Z": 16.0
+    }
+   }
+  },
+  {
+   "ID": 16,
+   "Name": "Cube",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 8.5,
+     "Z": 7.5
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 16.0,
+     "Y": 16.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 19,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 300.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 0.7421306371688843,
+     "Z": 0.47580647468566895
+    },
+    "Distance": 32.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 12.849610328674316,
+     "Z": 0.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 20,
+   "Name": "Cube",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 0.9914448857307434,
+     "X": 0.0,
+     "Y": 0.13052619993686676,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 3.1224007606506348,
+     "Y": 4.44829797744751,
+     "Z": 3.933349132537842
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 4.0,
+     "Y": 8.0,
+     "Z": 4.0
+    }
+   }
+  },
+  {
+   "ID": 21,
+   "Name": "Cube",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 0.9914448857307434,
+     "X": 0.0,
+     "Y": -0.13052619993686676,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -1.0965527296066284,
+     "Y": 2.4740395545959473,
+     "Z": -1.2076876163482666
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 4.0,
+     "Y": 4.0,
+     "Z": 4.0
+    }
+   }
+  },
+  {
+   "ID": 22,
+   "Name": "Spot Light",
+   "Parent": 24,
+   "SpotLight": {
+    "Brightness": 100.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 0.8169875144958496,
+     "Z": 0.6612902879714966
+    },
+    "Distance": 16.0,
+    "Enabled": true,
+    "InnerAngle": 0.10000000149011612,
+    "OuterAngle": 90.0
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 6.976448059082031,
+     "Z": -9.668603897094727
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 23,
+   "Name": "Spot Light",
+   "Parent": 24,
+   "SpotLight": {
+    "Brightness": 10.0,
+    "Colour": {
+     "X": 0.40322577953338623,
+     "Y": 1.0,
+     "Z": 0.0
+    },
+    "Distance": 16.0,
+    "Enabled": true,
+    "InnerAngle": 0.10000000149011612,
+    "OuterAngle": 90.0
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 0.7071068286895752,
+     "X": 0.0,
+     "Y": -0.7071068286895752,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -7.270103454589844,
+     "Y": 4.090546607971191,
+     "Z": -0.37897396087646484
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 24,
+   "Name": "Fake GI",
+   "Parent": 4294967295
+  },
+  {
+   "ID": 25,
+   "Name": "Spot Light",
+   "Parent": 4294967295,
+   "SpotLight": {
+    "Brightness": 30.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Distance": 32.0,
+    "Enabled": true,
+    "InnerAngle": 0.10000000149011612,
+    "OuterAngle": 90.0
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 0.7071068286895752,
+     "X": 0.0,
+     "Y": 0.7071068286895752,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 11.092586517333984,
+     "Y": 4.090546607971191,
+     "Z": 3.408121109008789
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 26,
+   "Name": "Cube",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 15.495113372802734,
+     "Z": 0.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 3.0,
+     "Y": 0.15000000596046448,
+     "Z": 2.0
+    }
+   }
+  }
+ ],
+ "WorldName": "New World"
+}
