@@ -95,7 +95,6 @@ namespace R3
 		m_staticMeshInstances.Destroy(d);
 		m_dynamicMeshInstances.Destroy(d);
 		m_globalsBuffer.Destroy(d);
-		m_meshRenderBufferPool = nullptr;
 		vkDestroyPipeline(d.GetVkDevice(), m_forwardPipeline, nullptr);
 		vkDestroyPipeline(d.GetVkDevice(), m_forwardTiledPipeline, nullptr);
 		vkDestroyPipeline(d.GetVkDevice(), m_gBufferPipeline, nullptr);
@@ -414,14 +413,9 @@ namespace R3
 				return;
 			}
 		}
-		if (m_meshRenderBufferPool == nullptr)
-		{
-			m_meshRenderBufferPool = std::make_unique<BufferPool>("Mesh renderer buffers", 32 * 1024 * 1024);
-		}
 		if (!m_staticMeshInstances.IsCreated())
 		{
-			m_staticMeshInstances.SetDebugName("Static mesh instances");
-			if (!m_staticMeshInstances.Create(*ctx.m_device, c_maxInstances, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_meshRenderBufferPool.get()))
+			if (!m_staticMeshInstances.Create("Static mesh instances", *ctx.m_device, c_maxInstances, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 			{
 				LogError("Failed to create static mesh instance buffer");
 				return;
@@ -429,8 +423,7 @@ namespace R3
 		}
 		if (!m_staticMaterialOverrides.IsCreated())
 		{
-			m_staticMeshInstances.SetDebugName("Static material overrides");
-			if (!m_staticMaterialOverrides.Create(*ctx.m_device, c_maxStaticMaterialOverrides, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_meshRenderBufferPool.get()))
+			if (!m_staticMaterialOverrides.Create("Static material overrides", *ctx.m_device, c_maxStaticMaterialOverrides, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 			{
 				LogError("Failed to create static mesh instance buffer");
 				return;
@@ -438,8 +431,7 @@ namespace R3
 		}
 		if (!m_dynamicMeshInstances.IsCreated())
 		{
-			m_dynamicMeshInstances.SetDebugName("Dynamic mesh instances");
-			if (!m_dynamicMeshInstances.Create(*ctx.m_device, c_maxInstances, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_meshRenderBufferPool.get()))
+			if (!m_dynamicMeshInstances.Create("Dynamic mesh instances", *ctx.m_device, c_maxInstances, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 			{
 				LogError("Failed to create dynamic mesh instance buffer");
 				return;
@@ -447,8 +439,7 @@ namespace R3
 		}
 		if (!m_globalsBuffer.IsCreated())
 		{
-			m_globalsBuffer.SetDebugName("Mesh render globals");
-			if (!m_globalsBuffer.Create(*ctx.m_device, c_maxGlobalsPerFrame, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_meshRenderBufferPool.get()))
+			if (!m_globalsBuffer.Create("Mesh render globals", *ctx.m_device, c_maxGlobalsPerFrame, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 			{
 				LogError("Failed to create mesh reder globals bufer");
 				return;

@@ -33,7 +33,7 @@ namespace R3
 		Device* GetDevice();
 		Window* GetMainWindow();
 		Swapchain* GetSwapchain();
-		BufferPool* GetStagingBufferPool();
+		BufferPool* GetBufferPool();
 		CommandBufferAllocator* GetCommandBufferAllocator();
 		RenderGraph& GetRenderGraph() { return *m_renderGraph; }
 		RenderTargetInfo GetSwapchainTargetInfo();		// required when render graph nodes need to use the swap chain
@@ -69,7 +69,7 @@ namespace R3
 		std::unique_ptr<Window> m_mainWindow;
 		std::unique_ptr<Device> m_device;
 		std::unique_ptr<Swapchain> m_swapChain;
-		std::unique_ptr<BufferPool> m_stagingBuffers;
+		std::unique_ptr<BufferPool> m_bufferPool;
 		std::unique_ptr<CommandBufferAllocator> m_cmdBufferAllocator;
 		struct VkStuff;
 		std::unique_ptr<VkStuff> m_vk;

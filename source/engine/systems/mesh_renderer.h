@@ -118,8 +118,6 @@ namespace R3
 
 		std::unique_ptr<MeshInstanceCullingCompute> m_computeCulling;
 
-		std::unique_ptr<BufferPool> m_meshRenderBufferPool;					// pool used to allocate all buffers
-
 		LinearWriteOnlyGpuArray<MeshMaterial> m_staticMaterialOverrides;	// all static material overrides written here on scene rebuild
 		LinearWriteOnlyGpuArray<MeshInstance> m_staticMeshInstances;		// all static instance data written here on static scene rebuild
 		LinearWriteOnlyGpuArray<MeshInstance> m_dynamicMeshInstances;		// all dynamic instance data written here every frame

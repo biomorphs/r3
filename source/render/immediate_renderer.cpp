@@ -360,7 +360,7 @@ namespace R3
 		size_t dataToCopy = glm::min(m_maxVertices, m_thisFramePosColVertices.size()) * sizeof(PosColourVertex);
 		if (dataToCopy > 0)
 		{
-			auto staging = stagingBuffers.GetBuffer(dataToCopy, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO, true);
+			auto staging = stagingBuffers.GetBuffer("IMRender staging", dataToCopy, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO, true);
 			if (staging)
 			{
 				// host write is coherant, so no flush is required, just memcpy the current frame data

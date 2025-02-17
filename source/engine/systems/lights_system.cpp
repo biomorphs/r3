@@ -452,8 +452,7 @@ namespace R3
 
 		if (!m_allPointlights.IsCreated())
 		{
-			m_allPointlights.SetDebugName("Point lights");
-			if (!m_allPointlights.Create(*ctx.m_device, c_maxPointLights * c_framesInFlight, c_maxPointLights, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+			if (!m_allPointlights.Create("Point lights", *ctx.m_device, c_maxPointLights * c_framesInFlight, c_maxPointLights, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 			{
 				LogError("Failed to create point light buffer");
 			}
@@ -461,8 +460,7 @@ namespace R3
 		}
 		if (!m_allSpotlights.IsCreated())
 		{
-			m_allSpotlights.SetDebugName("Spot lights");
-			if (!m_allSpotlights.Create(*ctx.m_device, c_maxSpotLights * c_framesInFlight, c_maxSpotLights, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+			if (!m_allSpotlights.Create("Spot lights", *ctx.m_device, c_maxSpotLights * c_framesInFlight, c_maxSpotLights, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 			{
 				LogError("Failed to create spot light buffer");
 			}
@@ -470,8 +468,7 @@ namespace R3
 		}
 		if (!m_allLightsData.IsCreated())
 		{
-			m_allLightsData.SetDebugName("All Light Data");
-			if (!m_allLightsData.Create(*ctx.m_device, c_framesInFlight, 1, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+			if (!m_allLightsData.Create("All Light Data", *ctx.m_device, c_framesInFlight, 1, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 			{
 				LogError("Failed to create all light buffer");
 			}

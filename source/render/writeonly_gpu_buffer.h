@@ -22,9 +22,8 @@ namespace R3
 		WriteOnlyGpuBuffer() = default;
 		WriteOnlyGpuBuffer(const WriteOnlyGpuBuffer&) = delete;
 		WriteOnlyGpuBuffer(WriteOnlyGpuBuffer&&) = delete;
-		void RetirePooledBuffer(Device&);		// old buffer is retired + a new one is created, pooled buffers only. call this before flushing writes
-		void SetDebugName(std::string_view);		// call this before create!
-		bool Create(Device& d, uint64_t dataMaxSize, uint64_t stagingMaxSize, VkBufferUsageFlags usageFlags, BufferPool* pool=nullptr);	// allocates memory, pool is optional
+		void RetirePooledBuffer(Device&);			// old buffer is retired + a new one is created, pooled buffers only. call this before flushing writes
+		bool Create(std::string_view name, Device& d, uint64_t dataMaxSize, uint64_t stagingMaxSize, VkBufferUsageFlags usageFlags);	// allocates memory
 		uint64_t Allocate(uint64_t sizeBytes);									// allocate from internal data
 		bool Write(uint64_t writeStartOffset, uint64_t sizeBytes, const void* data);	// writes to staging buffer + schedules copy
 		void Flush(Device& d, VkCommandBuffer cmds, VkPipelineStageFlags barrierDst = VK_PIPELINE_STAGE_VERTEX_INPUT_BIT);	// schedules all copies from staging->alldata, issues pipeline barrier
@@ -41,13 +40,8 @@ namespace R3
 		// keep track of flags used during creation
 		VkBufferUsageFlags m_usageFlags;
 
-		// non-pooled buffer data
-		AllocatedBuffer m_allData;
-		VkDeviceAddress m_allDataAddress;
-
 		// pooled buffer data
 		PooledBuffer m_pooledBuffer;
-		BufferPool* m_bufferPool = nullptr;	// if set, this will acquire buffers from the pool
 
 		uint64_t m_allDataMaxSize = 0;		// bytes
 		std::atomic<uint64_t> m_allDataCurrentSizeBytes;
@@ -72,15 +66,11 @@ namespace R3
 		WriteOnlyGpuArray() = default;
 		WriteOnlyGpuArray(const WriteOnlyGpuArray&) = delete;
 		WriteOnlyGpuArray(WriteOnlyGpuArray&&) = delete;
-		void SetDebugName(std::string_view n)	// call before create!
+		bool Create(std::string_view name, Device& d, uint64_t maxStored, uint64_t maxStaging, VkBufferUsageFlags usageFlags)
 		{
-			m_buffer.SetDebugName(n);
+			return m_buffer.Create(name, d, maxStored * sizeof(Type), maxStaging * sizeof(Type), usageFlags);
 		}
-		bool Create(Device& d, uint64_t maxStored, uint64_t maxStaging, VkBufferUsageFlags usageFlags, BufferPool* pool = nullptr)
-		{
-			return m_buffer.Create(d, maxStored * sizeof(Type), maxStaging * sizeof(Type), usageFlags, pool);
-		}
-		void RetirePooledBuffer(Device& d)	// releases old target buffer, acquires a new one. pooled buffers only
+		void RetirePooledBuffer(Device& d)	// releases old target buffer, acquires a new one.
 		{
 			m_buffer.RetirePooledBuffer(d);
 		}

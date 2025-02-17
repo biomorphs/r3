@@ -57,9 +57,9 @@ namespace R3
 	RenderSystem::RenderSystem()
 	{
 		m_vk = std::make_unique<VkStuff>();
-		m_stagingBuffers = std::make_unique<BufferPool>("Global staging buffer", 64 * 1024 * 1024);
+		m_bufferPool = std::make_unique<BufferPool>("Global buffer pool", 64 * 1024 * 1024);
 		m_mainDeleters.PushDeleter([this]() {
-			m_stagingBuffers = nullptr;
+			m_bufferPool = nullptr;
 		});
 		m_cmdBufferAllocator = std::make_unique<CommandBufferAllocator>();
 		m_mainDeleters.PushDeleter([this]() {
@@ -150,9 +150,9 @@ namespace R3
 		return m_swapChain.get();
 	}
 
-	BufferPool* RenderSystem::GetStagingBufferPool()
+	BufferPool* RenderSystem::GetBufferPool()
 	{
-		return m_stagingBuffers.get();
+		return m_bufferPool.get();
 	}
 
 	CommandBufferAllocator* RenderSystem::GetCommandBufferAllocator()

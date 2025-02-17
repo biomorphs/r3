@@ -443,7 +443,7 @@ namespace R3
 			vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &readbarrier);
 
 			dst.m_imGuiDescSet = ImGui_ImplVulkan_AddTexture(m_defaultSampler, dst.m_imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-			render->GetStagingBufferPool()->Release(t->m_stagingBuffer);
+			render->GetBufferPool()->Release(t->m_stagingBuffer);
 			m_descriptorsNeedUpdate = true;	// update the descriptors now
 		}
 
@@ -523,7 +523,7 @@ namespace R3
 		}
 		// upload the entire buffer to staging + use the mip offsets to do the appropriate copies later on
 		const size_t stagingSize = srcTexture->m_imgData.size();
-		auto stagingBuffer = render->GetStagingBufferPool()->GetBuffer(stagingSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO, true);
+		auto stagingBuffer = render->GetBufferPool()->GetBuffer("Texture Staging Buffer", stagingSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO, true);
 		if (!stagingBuffer.has_value())
 		{
 			LogError("Failed to get staging buffer of size {}", stagingSize);

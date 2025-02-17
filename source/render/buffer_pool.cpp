@@ -4,6 +4,7 @@
 #include "render/device.h"
 #include "core/log.h"
 #include "core/profiler.h"
+#include <algorithm>
 
 namespace R3
 {
@@ -30,7 +31,7 @@ namespace R3
 		}
 	}
 
-	std::optional<PooledBuffer> BufferPool::GetBuffer(uint64_t minSizeBytes, VkBufferUsageFlags usage, VmaMemoryUsage memUsage, bool allowMapping)
+	std::optional<PooledBuffer> BufferPool::GetBuffer(std::string_view name, uint64_t minSizeBytes, VkBufferUsageFlags usage, VmaMemoryUsage memUsage, bool allowMapping)
 	{
 		R3_PROF_EVENT();
 		auto time = Systems::GetSystem<TimeSystem>();
@@ -60,7 +61,16 @@ namespace R3
 			if (bestFitBuffer != -1)
 			{
 				newBuffer = std::move(m_releasedBuffers[bestFitBuffer].m_pooledBuffer);
+				newBuffer.m_name = name;
+				VulkanHelpers::SetBufferName(d->GetVkDevice(), newBuffer.m_buffer, name);
 				m_releasedBuffers.erase(m_releasedBuffers.begin() + bestFitBuffer);
+				{
+					ScopedLock lockStats(m_debugBuffersMutex);
+					m_totalCachedBytes -= newBuffer.sizeBytes;
+					m_totalCached--;
+					m_cachedBuffers.erase((uint64_t)newBuffer.m_deviceAddress);
+					m_allocatedBuffers[(uint64_t)newBuffer.m_deviceAddress] = newBuffer;
+				}
 				return newBuffer;
 			}
 		}
@@ -85,7 +95,57 @@ namespace R3
 		newBuffer.m_memUsage = memUsage;
 		newBuffer.m_usage = usage;
 		newBuffer.sizeBytes = minSizeBytes;
+		newBuffer.m_name = name;
+		VulkanHelpers::SetBufferName(d->GetVkDevice(), newBuffer.m_buffer, name);
+
+		{
+			ScopedLock lockStats(m_debugBuffersMutex);
+			m_totalAllocatedBytes += minSizeBytes;
+			m_totalAllocated++;
+			m_allocatedBuffers[(uint64_t)newBuffer.m_deviceAddress] = newBuffer;
+		}
+		
 		return newBuffer;
+	}
+
+	void BufferPool::CollectAllocatedBufferStats(CollectBufferStatFn fn)
+	{
+		R3_PROF_EVENT();
+		std::vector<PooledBuffer> buffers;
+		{
+			ScopedLock lockStats(m_debugBuffersMutex);
+			for (const auto& it : m_allocatedBuffers)
+			{
+				buffers.emplace_back(it.second);
+			}
+		}
+		std::sort(buffers.begin(), buffers.end(), [](const PooledBuffer& b0, const PooledBuffer& b1) {
+			return b0.sizeBytes > b1.sizeBytes;
+		});
+		for (const auto& it : buffers)
+		{
+			fn(it);
+		}
+	}
+
+	void BufferPool::CollectCachedBufferStats(CollectBufferStatFn fn)
+	{
+		R3_PROF_EVENT();
+		std::vector<PooledBuffer> buffers;
+		{
+			ScopedLock lockStats(m_debugBuffersMutex);
+			for (const auto& it : m_cachedBuffers)
+			{
+				buffers.emplace_back(it.second);
+			}
+		}
+		std::sort(buffers.begin(), buffers.end(), [](const PooledBuffer& b0, const PooledBuffer& b1) {
+			return b0.sizeBytes > b1.sizeBytes;
+		});
+		for (const auto& it : buffers)
+		{
+			fn(it);
+		}
 	}
 
 	void BufferPool::CollectGarbage(uint64_t frameIndex, class Device& d)
@@ -100,6 +160,14 @@ namespace R3
 				totalBytes += buf.m_pooledBuffer.sizeBytes;
 				if (totalBytes > m_totalBudget && buf.m_frameReleased + c_framesBeforeAvailable < frameIndex)
 				{
+					{
+						ScopedLock lockStats(m_debugBuffersMutex);
+						m_totalAllocatedBytes -= buf.m_pooledBuffer.sizeBytes;
+						m_totalAllocated--;
+						m_totalCachedBytes -= buf.m_pooledBuffer.sizeBytes;
+						m_totalCached--;
+						m_cachedBuffers.erase((uint64_t)buf.m_pooledBuffer.m_deviceAddress);
+					}
 					if (buf.m_pooledBuffer.m_mappedBuffer != nullptr)
 					{
 						vmaUnmapMemory(d.GetVMA(), buf.m_pooledBuffer.m_buffer.m_allocation);
@@ -122,7 +190,11 @@ namespace R3
 		r.m_pooledBuffer = buf;
 		{
 			ScopedLock lockReleased(m_releasedBuffersMutex);
-			m_releasedBuffers.push_back(r);
+			m_totalCachedBytes += buf.sizeBytes;
+			m_totalCached++;
+			m_allocatedBuffers.erase((uint64_t)buf.m_deviceAddress);
+			m_cachedBuffers[(uint64_t)buf.m_deviceAddress] = buf;
 		}
+		m_releasedBuffers.push_back(r);
 	}
 }

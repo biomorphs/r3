@@ -10,17 +10,13 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 
-		if (m_bufferPool == nullptr)
-		{
-			LogWarn("RetirePooledBuffer called on a non-pooled buffer!");
-			return;
-		}
+		auto pool = Systems::GetSystem<RenderSystem>()->GetBufferPool();
 
 		// retire the old buffer
-		m_bufferPool->Release(m_pooledBuffer);
+		pool->Release(m_pooledBuffer);
 		m_pooledBuffer = {};
 
-		auto newBuffer = m_bufferPool->GetBuffer(m_allDataMaxSize, m_usageFlags, VMA_MEMORY_USAGE_AUTO, false);
+		auto newBuffer = pool->GetBuffer(m_debugName, m_allDataMaxSize, m_usageFlags, VMA_MEMORY_USAGE_AUTO, false);
 		if (!newBuffer)
 		{
 			LogError("Failed to get buffer from pool");
@@ -36,14 +32,14 @@ namespace R3
 
 		m_stagingEndOffset.store(0);
 
-		auto stagingPool = Systems::GetSystem<RenderSystem>()->GetStagingBufferPool();
+		auto stagingPool = Systems::GetSystem<RenderSystem>()->GetBufferPool();
 		if (m_stagingBuffer.m_buffer.m_buffer != VK_NULL_HANDLE)	// release the old buffer
 		{
 			stagingPool->Release(m_stagingBuffer);
 			m_stagingBuffer = {};
 		}
 
-		auto newStagingBuffer = stagingPool->GetBuffer(m_stagingMaxSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO, true);
+		auto newStagingBuffer = stagingPool->GetBuffer(m_debugName + "_staging", m_stagingMaxSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO, true);
 		if (!newStagingBuffer.has_value())
 		{
 			LogError("Failed to aquire new staging buffer");
@@ -58,32 +54,25 @@ namespace R3
 		return true;
 	}
 
-	bool WriteOnlyGpuBuffer::Create(Device& d, uint64_t dataMaxSize, uint64_t stagingMaxSize, VkBufferUsageFlags usageFlags, BufferPool* pool)
+	bool WriteOnlyGpuBuffer::Create(std::string_view name, Device& d, uint64_t dataMaxSize, uint64_t stagingMaxSize, VkBufferUsageFlags usageFlags)
 	{
 		R3_PROF_EVENT();
+
+		auto pool = Systems::GetSystem<RenderSystem>()->GetBufferPool();
+		m_usageFlags = usageFlags | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+		m_debugName = name; 
 
 		ScopedLock doLock(m_mutex);
 
 		// we always want transfer dst (to copy staging -> buffer) and device address bit
-		m_usageFlags = usageFlags | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
-		if (pool == nullptr)
+		auto newBuffer = pool->GetBuffer(m_debugName, dataMaxSize, m_usageFlags, VMA_MEMORY_USAGE_AUTO, false);
+		if (!newBuffer)
 		{
-			m_allData = VulkanHelpers::CreateBuffer(d.GetVMA(), dataMaxSize, m_usageFlags);
-			VulkanHelpers::SetBufferName(d.GetVkDevice(), m_allData, m_debugName);
-			m_allDataAddress = VulkanHelpers::GetBufferDeviceAddress(d.GetVkDevice(), m_allData);
+			LogError("Failed to get buffer from pool");
+			return false;
 		}
-		else
-		{
-			m_bufferPool = pool;
-			auto newBuffer = pool->GetBuffer(dataMaxSize, m_usageFlags, VMA_MEMORY_USAGE_AUTO, false);
-			if (!newBuffer)
-			{
-				LogError("Failed to get buffer from pool");
-				return false;
-			}
-			VulkanHelpers::SetBufferName(d.GetVkDevice(), newBuffer->m_buffer, m_debugName);
-			m_pooledBuffer = *newBuffer;
-		}
+		VulkanHelpers::SetBufferName(d.GetVkDevice(), newBuffer->m_buffer, m_debugName);
+		m_pooledBuffer = *newBuffer;
 		
 		m_allDataMaxSize = dataMaxSize;
 		m_stagingMaxSize = stagingMaxSize;
@@ -93,7 +82,7 @@ namespace R3
 			return false;
 		}
 
-		return m_allData.m_allocation != VK_NULL_HANDLE || m_pooledBuffer.m_buffer.m_allocation != VK_NULL_HANDLE;
+		return m_pooledBuffer.m_buffer.m_allocation != VK_NULL_HANDLE;
 	}
 
 	uint64_t WriteOnlyGpuBuffer::Allocate(uint64_t sizeBytes)
@@ -192,14 +181,7 @@ namespace R3
 		}
 		if (copyRegions.size() > 0)
 		{
-			if (m_bufferPool == nullptr)
-			{
-				vkCmdCopyBuffer(cmds, m_stagingBuffer.m_buffer.m_buffer, m_allData.m_buffer, static_cast<uint32_t>(copyRegions.size()), copyRegions.data());
-			}
-			else
-			{
-				vkCmdCopyBuffer(cmds, m_stagingBuffer.m_buffer.m_buffer, m_pooledBuffer.m_buffer.m_buffer, static_cast<uint32_t>(copyRegions.size()), copyRegions.data());
-			}
+			vkCmdCopyBuffer(cmds, m_stagingBuffer.m_buffer.m_buffer, m_pooledBuffer.m_buffer.m_buffer, static_cast<uint32_t>(copyRegions.size()), copyRegions.data());
 
 			// use a memory barrier to ensure the transfer finishes before any reads
 			VulkanHelpers::DoMemoryBarrier(cmds, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_MEMORY_WRITE_BIT, barrierDst, VK_ACCESS_MEMORY_READ_BIT);
@@ -213,26 +195,22 @@ namespace R3
 
 	bool WriteOnlyGpuBuffer::IsCreated()
 	{
-		return m_allData.m_allocation != VK_NULL_HANDLE || m_pooledBuffer.m_buffer.m_allocation != VK_NULL_HANDLE;
+		return m_pooledBuffer.m_buffer.m_allocation != VK_NULL_HANDLE;
 	}
 
 	void WriteOnlyGpuBuffer::Destroy(Device& d)
 	{
 		R3_PROF_EVENT();
 		ScopedLock doLock(m_mutex);
-		if (m_allData.m_allocation)
-		{
-			vmaDestroyBuffer(d.GetVMA(), m_allData.m_buffer, m_allData.m_allocation);
-		}
+		auto pool = Systems::GetSystem<RenderSystem>()->GetBufferPool();
 		if (m_pooledBuffer.m_buffer.m_allocation)
 		{
-			m_bufferPool->Release(m_pooledBuffer);
+			pool->Release(m_pooledBuffer);
 			m_pooledBuffer = {};
 		}
 		if (m_stagingBuffer.m_buffer.m_buffer != VK_NULL_HANDLE)
 		{
-			auto stagingPool = Systems::GetSystem<RenderSystem>()->GetStagingBufferPool();
-			stagingPool->Release(m_stagingBuffer);
+			pool->Release(m_stagingBuffer);
 			m_stagingBuffer = {};
 		}
 	}
@@ -249,30 +227,11 @@ namespace R3
 
 	VkDeviceAddress WriteOnlyGpuBuffer::GetDataDeviceAddress()
 	{
-		if (m_bufferPool == nullptr)
-		{
-			return m_allDataAddress;
-		}
-		else
-		{
-			return m_pooledBuffer.m_deviceAddress;
-		}
+		return m_pooledBuffer.m_deviceAddress;
 	}
 
 	VkBuffer WriteOnlyGpuBuffer::GetBuffer()
 	{
-		if (m_bufferPool == nullptr)
-		{
-			return m_allData.m_buffer;
-		}
-		else
-		{
-			return m_pooledBuffer.m_buffer.m_buffer;
-		}
-	}
-
-	void WriteOnlyGpuBuffer::SetDebugName(std::string_view n)
-	{
-		m_debugName = n;
+		return m_pooledBuffer.m_buffer.m_buffer;
 	}
 }

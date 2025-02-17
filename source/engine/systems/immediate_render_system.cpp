@@ -51,7 +51,7 @@ namespace R3
 			}
 			m_initialised = true;
 		}
-		m_imRender->WriteVertexData(*render->GetDevice(), *render->GetStagingBufferPool(), ctx.m_graphicsCmds);
+		m_imRender->WriteVertexData(*render->GetDevice(), *render->GetBufferPool(), ctx.m_graphicsCmds);
 	}
 
 	void ImmediateRenderSystem::OnForwardPassDraw(RenderPassContext& ctx)

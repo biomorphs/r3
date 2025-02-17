@@ -218,40 +218,35 @@ namespace R3
 		R3_PROF_EVENT();
 		if (!m_allVertsPosUV.IsCreated())
 		{
-			m_allVertsPosUV.SetDebugName("Static mesh vertex pos/uv");
-			if (!m_allVertsPosUV.Create(*ctx.m_device, c_maxVerticesToStore, c_maxVerticesToStore / 2, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT))
+			if (!m_allVertsPosUV.Create("Static mesh vertex pos/uv",  *ctx.m_device, c_maxVerticesToStore, c_maxVerticesToStore / 2, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT))
 			{
 				LogError("Failed to create vertex buffer");
 			}
 		}
 		if (!m_allVertsNormalTangent.IsCreated())
 		{
-			m_allVertsNormalTangent.SetDebugName("Static mesh vertex normal/tangent");
-			if (!m_allVertsNormalTangent.Create(*ctx.m_device, c_maxVerticesToStore, c_maxVerticesToStore / 2, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT))
+			if (!m_allVertsNormalTangent.Create("Static mesh vertex normal/tangent" , *ctx.m_device, c_maxVerticesToStore, c_maxVerticesToStore / 2, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT))
 			{
 				LogError("Failed to create vertex buffer");
 			}
 		}
 		if (!m_allIndices.IsCreated())
 		{
-			m_allIndices.SetDebugName("Static mesh indices");
-			if (!m_allIndices.Create(*ctx.m_device, c_maxIndicesToStore, c_maxIndicesToStore, VK_BUFFER_USAGE_INDEX_BUFFER_BIT))
+			if (!m_allIndices.Create("Static mesh indices", *ctx.m_device, c_maxIndicesToStore, c_maxIndicesToStore, VK_BUFFER_USAGE_INDEX_BUFFER_BIT))
 			{
 				LogError("Failed to create index buffer");
 			}
 		}
 		if (!m_allMaterialsGpu.IsCreated())
 		{
-			m_allMaterialsGpu.SetDebugName("Static mesh materials");
-			if (!m_allMaterialsGpu.Create(*ctx.m_device, c_maxMaterialsToStore, c_maxMaterialsToStore, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+			if (!m_allMaterialsGpu.Create("Static mesh materials", *ctx.m_device, c_maxMaterialsToStore, c_maxMaterialsToStore, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 			{
 				LogError("Failed to create material buffer");
 			}
 		}
 		if (!m_allMeshPartsGpu.IsCreated())
 		{
-			m_allMeshPartsGpu.SetDebugName("Static mesh parts");
-			if (!m_allMeshPartsGpu.Create(*ctx.m_device, c_maxMeshParts, c_maxMeshParts / 8, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+			if (!m_allMeshPartsGpu.Create("Static mesh parts", *ctx.m_device, c_maxMeshParts, c_maxMeshParts / 8, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 			{
 				LogError("Failed to create mesh parts buffer");
 			}

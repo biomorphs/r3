@@ -7,7 +7,7 @@ namespace R3
 {
 	class Device;
 
-	// a buffer (optionally pooled) that only supports linear writes from a single thread
+	// a buffer that only supports linear writes from a single thread
 	// mainly used for device-local memory with write-combined staging buffer
 	// MUCH faster than WriteOnlyGpuBuffer but less flexible
 	// no random writes, flush + append only
@@ -24,8 +24,7 @@ namespace R3
 		LinearWriteGpuBuffer(LinearWriteGpuBuffer&&) = delete;
 		LinearWriteGpuBuffer(const LinearWriteGpuBuffer&) = delete;
 
-		void SetDebugName(std::string_view);		// call this before create!
-		bool Create(Device& d, uint32_t dataMaxSize, VkBufferUsageFlags usageFlags, BufferPool* pool = nullptr);	// allocates memory, pool is optional
+		bool Create(std::string_view name, Device& d, uint32_t dataMaxSize, VkBufferUsageFlags usageFlags);
 		uint32_t Write(uint32_t sizeBytes, const void* data);	// writes to staging buffer, returns offset where data was written
 		uint8_t* GetWritePtr() const;							// returns ptr to staging buffer at current 'head'. fastest write path. You MUST commit the writes using CommitWrites
 		void CommitWrites(uint32_t sizeBytes);					// increments m_writeOffset, basic bounds checking
@@ -51,16 +50,8 @@ namespace R3
 		uint32_t m_maxSize;
 		std::string m_debugName;
 
-		// staging buffer always pooled
 		PooledBuffer m_stagingBuffer;
-
-		// non-pooled buffer data
-		AllocatedBuffer m_allData;
-		VkDeviceAddress m_allDataAddress;
-
-		// pooled buffer data
 		PooledBuffer m_pooledBuffer;
-		BufferPool* m_bufferPool = nullptr;	// if set, this will acquire buffers from the pool
 	};
 
 	// A linear-write array of gpu data
@@ -71,13 +62,9 @@ namespace R3
 		LinearWriteOnlyGpuArray() = default;
 		LinearWriteOnlyGpuArray(const LinearWriteOnlyGpuArray&) = delete;
 		LinearWriteOnlyGpuArray(LinearWriteOnlyGpuArray&&) = delete;
-		void SetDebugName(std::string_view name)
+		bool Create(std::string_view name, Device& d, uint32_t maxCount, VkBufferUsageFlags usageFlags)
 		{
-			m_buffer.SetDebugName(name);
-		}
-		bool Create(Device& d, uint32_t maxCount, VkBufferUsageFlags usageFlags, BufferPool* pool = nullptr)
-		{
-			return m_buffer.Create(d, maxCount * sizeof(Type), usageFlags, pool);
+			return m_buffer.Create(name, d, maxCount * sizeof(Type), usageFlags);
 		}
 		uint32_t Write(uint32_t count, const Type* data)
 		{

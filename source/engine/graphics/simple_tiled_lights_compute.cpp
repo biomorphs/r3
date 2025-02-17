@@ -5,6 +5,7 @@
 #include "render/device.h"
 #include "render/render_target_cache.h"
 #include "render/descriptors.h"
+#include "render/render_system.h"
 #include "core/profiler.h"
 #include "core/log.h"
 
@@ -45,14 +46,11 @@ namespace R3
 		vkDestroyDescriptorSetLayout(d.GetVkDevice(), m_frustumDescriptorLayout, nullptr);
 		vkDestroySampler(d.GetVkDevice(), m_depthSampler, nullptr);
 		m_descriptorAllocator = {};
-		m_lightTileBufferPool = {};
 	}
 
 	bool TiledLightsCompute::Initialise(Device& d)
 	{
 		R3_PROF_EVENT();
-
-		m_lightTileBufferPool = std::make_unique<BufferPool>("Light Tile Buffers", 32 * 1024 * 1024);
 
 		m_descriptorAllocator = std::make_unique<DescriptorSetSimpleAllocator>();
 		std::vector<VkDescriptorPoolSize> poolSizes = {
@@ -195,7 +193,8 @@ namespace R3
 		const uint32_t c_tilesY = (uint32_t)glm::ceil(screenDimensions.y / (float)c_lightTileDimensions);
 
 		// We need a frustum buffer big enough for all the tiles
-		auto frustumBuffer = m_lightTileBufferPool->GetBuffer(c_tilesX * c_tilesY * sizeof(LightTileFrustum), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO, false);
+		auto bufferPool = Systems::GetSystem<RenderSystem>()->GetBufferPool();
+		auto frustumBuffer = bufferPool->GetBuffer("Tiled Light Frustums", c_tilesX * c_tilesY * sizeof(LightTileFrustum), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO, false);
 		if (!frustumBuffer)
 		{
 			LogError("Failed to allocate tile frustum buffer");
@@ -233,7 +232,7 @@ namespace R3
 		}
 
 		address = frustumBuffer->m_deviceAddress;
-		m_lightTileBufferPool->Release(*frustumBuffer);	// release the buffer back to the pool for a future frame
+		bufferPool->Release(*frustumBuffer);	// release the buffer back to the pool for a future frame
 
 		return address;
 	}
@@ -290,14 +289,15 @@ namespace R3
 		}
 
 		// allocate light data buffers
-		auto lightTileBuffer = m_lightTileBufferPool->GetBuffer(c_tilesX * c_tilesY * sizeof(LightTile), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO, false);
+		auto bufferPool = Systems::GetSystem<RenderSystem>()->GetBufferPool();
+		auto lightTileBuffer = bufferPool->GetBuffer("Light Tiles", c_tilesX * c_tilesY * sizeof(LightTile), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO, false);
 		if (!lightTileBuffer)
 		{
 			LogError("Failed to allocate light tile buffer");
 			return 0;
 		}
 		WriteOnlyGpuBuffer lightIndexBuffer;	// use a write-only buffer with tiny staging buffer so we can write 0 to the count first
-		if(!lightIndexBuffer.Create(d, (1 + c_maxTiledLights) * sizeof(uint32_t), sizeof(uint32_t), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_lightTileBufferPool.get()))
+		if(!lightIndexBuffer.Create("Light Index Buffer", d, (1 + c_maxTiledLights) * sizeof(uint32_t), sizeof(uint32_t), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 		{
 			LogError("Failed to allocate light index buffer");
 			return 0;
@@ -321,7 +321,7 @@ namespace R3
 		metadata.m_lightIndexBuffer = lightIndexBuffer.GetDataDeviceAddress();
 		metadata.m_lightTileBuffer = lightTileBuffer->m_deviceAddress;
 		LinearWriteGpuBuffer metadataBuffer;
-		if (metadataBuffer.Create(d, sizeof(LightTileMetaData), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, m_lightTileBufferPool.get()))
+		if (metadataBuffer.Create("Light Tile Metadata", d, sizeof(LightTileMetaData), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 		{
 			metadataAddress = metadataBuffer.GetBufferDeviceAddress();
 			metadataBuffer.Write(sizeof(LightTileMetaData), &metadata);
@@ -333,7 +333,7 @@ namespace R3
 		}
 
 		// release all temp buffers back to the pool
-		m_lightTileBufferPool->Release(*lightTileBuffer);
+		bufferPool->Release(*lightTileBuffer);
 		lightIndexBuffer.Destroy(d);
 		metadataBuffer.Destroy(d);
 

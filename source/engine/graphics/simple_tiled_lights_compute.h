@@ -57,7 +57,6 @@ namespace R3
 		bool Initialise(Device& d);
 
 		bool m_initialised = false;
-		std::unique_ptr<BufferPool> m_lightTileBufferPool;	// tile buffers are allocated/released here
 
 		std::unique_ptr<DescriptorSetSimpleAllocator> m_descriptorAllocator;	
 		static const uint32_t c_maxSets = 3;		// per-frame descriptor sets for frustum build + debug pipelines

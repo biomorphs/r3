@@ -158,24 +158,21 @@ namespace R3
 	bool MeshInstanceCullingCompute::Initialise(Device& d)
 	{
 		R3_PROF_EVENT();
-		m_bucketPartInstancesGpu.SetDebugName("Compute culling bucket part instances");
-		if (!m_bucketPartInstancesGpu.Create(d, c_maxBucketPartInstances * c_maxBucketPartBuffers, c_maxBucketPartInstances, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+		if (!m_bucketPartInstancesGpu.Create("Compute culling bucket part instances", d, c_maxBucketPartInstances * c_maxBucketPartBuffers, c_maxBucketPartInstances, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 		{
 			LogError("Failed to create bucket part instance buffer");
 			return false;
 		}
 		m_bucketPartInstancesGpu.Allocate(c_maxBucketPartInstances * c_maxBucketPartBuffers);
 
-		m_frustumsGpu.SetDebugName("Compute culling frustums");
-		if (!m_frustumsGpu.Create(d, c_maxFrustums * c_maxFrustumBuffers, c_maxFrustums, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+		if (!m_frustumsGpu.Create("Compute culling frustums", d, c_maxFrustums * c_maxFrustumBuffers, c_maxFrustums, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 		{
 			LogError("Failed to create frustum buffer");
 			return false;
 		}
 		m_frustumsGpu.Allocate(c_maxFrustums * c_maxFrustumBuffers);
 
-		m_cullingTasksGpu.SetDebugName("Compute culling task info");
-		if (!m_cullingTasksGpu.Create(d, c_maxCullingTasks * c_maxCullingBuffers, c_maxCullingTasks, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
+		if (!m_cullingTasksGpu.Create("Compute culling task info", d, c_maxCullingTasks * c_maxCullingBuffers, c_maxCullingTasks, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT))
 		{
 			LogError("Failed to create culling task info buffer");
 			return false;
