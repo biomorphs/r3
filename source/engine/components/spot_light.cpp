@@ -11,7 +11,8 @@ namespace R3
 			"m_outerAngle", &SpotLightComponent::m_outerAngle,
 			"m_innerAngle", &SpotLightComponent::m_innerAngle,
 			"m_brightness", &SpotLightComponent::m_brightness,
-			"m_enabled", &SpotLightComponent::m_enabled
+			"m_enabled", &SpotLightComponent::m_enabled,
+			"m_castShadows", &SpotLightComponent::m_castShadows
 		);
 	}
 
@@ -23,6 +24,7 @@ namespace R3
 		s("InnerAngle", m_innerAngle);
 		s("Brightness", m_brightness);
 		s("Enabled", m_enabled);
+		s("Cast Shadows", m_castShadows);
 	}
 
 	void SpotLightComponent::Inspect(const Entities::EntityHandle& e, Entities::World* w, ValueInspector& i)
@@ -33,5 +35,6 @@ namespace R3
 		i.Inspect("Outer Angle (Degrees)", m_outerAngle, InspectProperty(&SpotLightComponent::m_outerAngle, e, w), 0.1f, glm::max(0.1f,m_innerAngle), 90.0f);
 		i.Inspect("Inner Angle (Degrees)", m_innerAngle, InspectProperty(&SpotLightComponent::m_innerAngle, e, w), 0.1f, 0.1f, glm::min(m_outerAngle, 90.0f));
 		i.Inspect("Enabled", m_enabled, InspectProperty(&SpotLightComponent::m_enabled, e, w));
+		i.Inspect("Cast Shadows", m_castShadows, InspectProperty(&SpotLightComponent::m_castShadows, e, w));
 	}
 }
