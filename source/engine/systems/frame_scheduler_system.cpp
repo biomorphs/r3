@@ -189,6 +189,12 @@ namespace R3
 		auto forwardPass = std::make_unique<DrawPass>();
 		forwardPass->m_name = "Forward Pass";
 		forwardPass->m_colourAttachments.push_back({ mainColour, DrawPass::AttachmentLoadOp::Load });	// reuse previous depth + colour data
+		// add all shadow cascades as input attachments
+		auto lights = GetSystem<LightsSystem>();
+		for (int i = 0; i < lights->GetShadowCascadeCount(); ++i)
+		{
+			forwardPass->m_inputColourAttachments.push_back(lights->GetShadowCascadeTargetInfo(i));
+		}
 		forwardPass->m_depthAttachment = { mainDepth, DrawPass::AttachmentLoadOp::Load };
 		forwardPass->m_getExtentsFn = []() -> glm::vec2 {
 			return GetSystem<RenderSystem>()->GetWindowExtents();

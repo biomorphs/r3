@@ -96,6 +96,20 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		std::vector<VkImageMemoryBarrier2> barriers;	// collect the targets needed + any barriers that need to happen
+		for (const auto& it : m_inputColourAttachments)
+		{
+			auto target = ctx.m_targets->GetTarget(it);
+			if (target)
+			{
+				ctx.m_resolvedTargets.push_back(target);
+				VkImageLayout newLayout = (target->m_info.m_aspectFlags & VK_IMAGE_ASPECT_DEPTH_BIT) ? VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				auto barrier = DoTransition(target, VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT, VK_ACCESS_2_MEMORY_READ_BIT, newLayout);
+				if (barrier)
+				{
+					barriers.push_back(*barrier);
+				}
+			}
+		}
 		for (const auto& it : m_colourAttachments)
 		{
 			auto target = ctx.m_targets->GetTarget(it.m_info);

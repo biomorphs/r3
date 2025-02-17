@@ -75,8 +75,9 @@ namespace R3
 			RenderTargetInfo m_info;
 			AttachmentLoadOp m_loadOp = AttachmentLoadOp::Load;
 		};
-		std::vector<DrawAttachment> m_colourAttachments;
-		std::optional<DrawAttachment> m_depthAttachment;
+		std::vector<RenderTargetInfo> m_inputColourAttachments;	// targets used as input
+		std::vector<DrawAttachment> m_colourAttachments;	// draw to these
+		std::optional<DrawAttachment> m_depthAttachment;	// draw/use these
 		std::function<glm::vec2()> m_getExtentsFn;
 		std::function<glm::vec4()> m_getClearColourFn;
 		std::function<float()> m_getClearDepthFn;
