@@ -105,42 +105,46 @@ namespace R3
 		Systems::GetSystem<StaticMeshSystem>()->UnregisterModelReadyCallback(m_onModelDataLoadedCbToken);
 	}
 
+	void MeshRenderer::ShowPerfStatsGui()
+	{
+		std::string txt = std::format("{} Total Part Instances", m_frameStats.m_totalPartInstances);
+		ImGui::Text(txt.c_str());
+		txt = std::format("    {} Statics / {} Dynamics", m_frameStats.m_totalStaticInstances, m_frameStats.m_totalDynamicInstances);
+		ImGui::Text(txt.c_str());
+		txt = std::format("    {} Opaque Part Instances", m_frameStats.m_totalOpaqueInstances);
+		ImGui::Text(txt.c_str());
+		txt = std::format("    {} Transparent Part Instances", m_frameStats.m_totalTransparentInstances);
+		ImGui::Text(txt.c_str());
+		txt = std::format("Part instances took {:.3f}ms to collect", 1000.0 * (m_frameStats.m_collectInstancesEndTime - m_frameStats.m_collectInstancesStartTime));
+		ImGui::Text(txt.c_str());
+		txt = std::format("Draw buckets took {:.3f}ms to prepare", 1000.0 * (m_frameStats.m_prepareBucketsEndTime - m_frameStats.m_prepareBucketsStartTime));
+		ImGui::Text(txt.c_str());
+		auto totalCmdBufferWriteTime = m_frameStats.m_writeGBufferCmdsEndTime - m_frameStats.m_writeGBufferCmdsStartTime;
+		totalCmdBufferWriteTime += m_frameStats.m_writeForwardCmdsEndTime - m_frameStats.m_writeForwardCmdsStartTime;
+		txt = std::format("Command buffer took {:.3f}ms to write", 1000.0 * totalCmdBufferWriteTime);
+		ImGui::Text(txt.c_str());
+		txt = std::format("    GBuffer Cmds: {:.3f}ms", 1000.0 * (m_frameStats.m_writeGBufferCmdsEndTime - m_frameStats.m_writeGBufferCmdsStartTime));
+		ImGui::Text(txt.c_str());
+		txt = std::format("    Forward Cmds: {:.3f}ms", 1000.0 * (m_frameStats.m_writeForwardCmdsEndTime - m_frameStats.m_writeForwardCmdsStartTime));
+		ImGui::Text(txt.c_str());
+	}
+
 	bool MeshRenderer::ShowGui()
 	{
 		R3_PROF_EVENT();
 		auto& debugMenu = MenuBar::MainMenu().GetSubmenu("Debug");
-		debugMenu.AddItem("Static Mesh Renderer", [this]() {
+		debugMenu.AddItem("Mesh Renderer Settings", [this]() {
 			m_showGui = !m_showGui;
 		});
 		if (m_showGui)
 		{
-			ImGui::Begin("Static Mesh Renderer");
+			ImGui::Begin("Mesh Renderer");
 			ImGui::Checkbox("Enable Compute Culling", &m_enableComputeCulling);
 			ImGui::Checkbox("Enable Shadow Caster Culling", &m_enableLightCascadeCulling);
 			if (ImGui::Button("Rebuild statics"))
 			{
 				SetStaticsDirty();
 			}
-			std::string txt = std::format("{} Total Part Instances", m_frameStats.m_totalPartInstances);
-			ImGui::Text(txt.c_str());
-			txt = std::format("    {} Statics / {} Dynamics", m_frameStats.m_totalStaticInstances, m_frameStats.m_totalDynamicInstances);
-			ImGui::Text(txt.c_str());
-			txt = std::format("    {} Opaque Part Instances", m_frameStats.m_totalOpaqueInstances);
-			ImGui::Text(txt.c_str());
-			txt = std::format("    {} Transparent Part Instances", m_frameStats.m_totalTransparentInstances);
-			ImGui::Text(txt.c_str());
-			txt = std::format("Part instances took {:.3f}ms to collect", 1000.0 * (m_frameStats.m_collectInstancesEndTime - m_frameStats.m_collectInstancesStartTime));
-			ImGui::Text(txt.c_str());
-			txt = std::format("Draw buckets took {:.3f}ms to prepare", 1000.0 * (m_frameStats.m_prepareBucketsEndTime - m_frameStats.m_prepareBucketsStartTime));
-			ImGui::Text(txt.c_str());
-			auto totalCmdBufferWriteTime = m_frameStats.m_writeGBufferCmdsEndTime - m_frameStats.m_writeGBufferCmdsStartTime;
-			totalCmdBufferWriteTime += m_frameStats.m_writeForwardCmdsEndTime - m_frameStats.m_writeForwardCmdsStartTime;
-			txt = std::format("Command buffer took {:.3f}ms to write", 1000.0 * totalCmdBufferWriteTime);
-			ImGui::Text(txt.c_str());
-			txt = std::format("    GBuffer Cmds: {:.3f}ms", 1000.0 * (m_frameStats.m_writeGBufferCmdsEndTime - m_frameStats.m_writeGBufferCmdsStartTime));
-			ImGui::Text(txt.c_str());
-			txt = std::format("    Forward Cmds: {:.3f}ms", 1000.0 * (m_frameStats.m_writeForwardCmdsEndTime - m_frameStats.m_writeForwardCmdsStartTime));
-			ImGui::Text(txt.c_str());
 			ImGui::End();
 		}
 		return true;
@@ -394,7 +398,7 @@ namespace R3
 		R3_PROF_EVENT();
 		if (m_drawIndirectHostVisible.m_mappedBuffer == nullptr)
 		{
-			auto drawBuffer = GetSystem<RenderSystem>()->GetBufferPool()->GetBuffer("Static mesh draw indirect",
+			auto drawBuffer = GetSystem<RenderSystem>()->GetBufferPool()->GetBuffer("Mesh draw indirect",
 				c_maxInstances * c_maxBuffers * sizeof(VkDrawIndexedIndirectCommand),
 				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
 				VMA_MEMORY_USAGE_AUTO, true);
@@ -410,7 +414,7 @@ namespace R3
 		{
 			if (!CreatePipelineLayouts(*ctx.m_device))
 			{
-				LogError("Failed to create static mesh pipeline layout");
+				LogError("Failed to create mesh pipeline layout");
 				return;
 			}
 		}

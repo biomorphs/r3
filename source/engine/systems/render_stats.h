@@ -16,6 +16,8 @@ namespace R3
 		void ShowBufferPoolStats();
 		void ShowTextureStats();
 		void ShowRenderTargetStats();
+		void ShowMeshRenderPerfStats();
+		void ShowGpuPerfStats();
 		bool m_displayStats = false;
 	};
 }

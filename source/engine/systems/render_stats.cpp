@@ -1,6 +1,7 @@
 #include "render_stats.h"
 #include "engine/ui/imgui_menubar_helper.h"
 #include "engine/systems/texture_system.h"
+#include "engine/systems/mesh_renderer.h"
 #include "render/render_system.h"
 #include "render/render_target_cache.h"
 #include "render/buffer_pool.h"
@@ -61,9 +62,18 @@ namespace R3
 		{
 			ImGui::Begin("Render Stats", &m_displayStats);
 			ShowVMAStats();
+			ImVec2 contentSize = ImGui::GetContentRegionAvail();
+			ImGui::BeginChild("MemoryWin", ImVec2(contentSize.x / 2, contentSize.y), ImGuiChildFlags_Borders, 0);
 			ShowBufferPoolStats();
 			ShowTextureStats();
 			ShowRenderTargetStats();
+			ImGui::EndChild();
+			ImGui::SameLine();
+			contentSize = ImGui::GetContentRegionAvail();
+			ImGui::BeginChild("PerfWin", contentSize, ImGuiChildFlags_Borders, 0);
+			ShowGpuPerfStats();
+			ShowMeshRenderPerfStats();
+			ImGui::EndChild();
 			ImGui::End();
 		}
 
@@ -95,6 +105,20 @@ namespace R3
 		}
 	}
 
+	void RenderStatsSystem::ShowMeshRenderPerfStats()
+	{
+		R3_PROF_EVENT();
+		ImGui::SeparatorText("Mesh Renderer");
+		GetSystem<MeshRenderer>()->ShowPerfStatsGui();
+	}
+
+	void RenderStatsSystem::ShowGpuPerfStats()
+	{
+		R3_PROF_EVENT();
+		ImGui::SeparatorText("GPU Profiler");
+		GetSystem<RenderSystem>()->ShowGpuProfilerGui();
+	}
+
 	void RenderStatsSystem::ShowTextureStats()
 	{
 		R3_PROF_EVENT();
@@ -114,7 +138,7 @@ namespace R3
 		vmaGetHeapBudgets(vma, budgets.data());
 		size_t totalAllocatedBytes = 0, totalAllocations = 0;
 		std::string heapStr;
-		ImGui::SeparatorText("Vulkan Memory Allocator");
+		ImGui::SeparatorText("Vulkan Memory");
 		for (int memHeap = 0; memHeap < VK_MAX_MEMORY_HEAPS; ++memHeap)
 		{
 			size_t usage = budgets[memHeap].usage;

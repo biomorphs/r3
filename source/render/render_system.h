@@ -48,6 +48,9 @@ namespace R3
 		using ShutdownCallback = std::function<void(Device&)>;		// called when shutting down renderer
 		CallbackArray<ShutdownCallback> m_onShutdownCbs;
 
+		// called from render stats system
+		void ShowGpuProfilerGui();
+
 	private:
 		void RunGraph(RenderGraph& r, VkCommandBuffer_T* cmdBuffer, VkImage_T* swapImage, VkImageView_T* swapImageView);
 		bool AcquireSwapImage();
@@ -64,7 +67,6 @@ namespace R3
 		bool ShouldEnableVsync();
 		bool m_isWindowMinimised = false;
 		bool m_recreateSwapchain = false;
-		bool m_showGpuProfiler = false;
 		std::unique_ptr<RenderTargetCache> m_renderTargets;
 		std::unique_ptr<RenderGraph> m_renderGraph;
 		std::unique_ptr<Window> m_mainWindow;

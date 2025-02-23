@@ -179,57 +179,26 @@ namespace R3
 		});
 	}
 
+	void RenderSystem::ShowGpuProfilerGui()
+	{
+		R3_PROF_EVENT();
+		auto scopedTimestampValues = m_vk->ThisFrameData().m_timestamps.GetScopedResults();
+		for (const auto& result : scopedTimestampValues)
+		{
+			std::string txt = std::format("{} - {:.3f}ms", result.m_name, result.m_endTime - result.m_startTime);
+			ImGui::Text(txt.c_str());
+		}
+	}
+
 	bool RenderSystem::ShowGui()
 	{
 		R3_PROF_EVENT();
-
-		auto& debugMenu = MenuBar::MainMenu().GetSubmenu("Debug");
-		debugMenu.AddItem("Show GPU Profiler", [this]() {
-			m_showGpuProfiler = true;
-		});
 
 		auto timeSys = GetSystem<TimeSystem>();
 		auto str = std::format("FPS/Frame Time: {:.1f} / {:.4f}ms", 1.0 / timeSys->GetVariableDeltaTime(), timeSys->GetVariableDeltaTime());
 		auto strSizePixels = ImGui::CalcTextSize(str.data());
 		ImGui::GetForegroundDrawList()->AddText({ GetWindowExtents().x - strSizePixels.x - 2,2}, 0xffffffff, str.c_str());
 
-		if (m_showGpuProfiler)
-		{
-			ImGui::Begin("GPU Profiler", &m_showGpuProfiler);
-			auto scopedTimestampValues = m_vk->ThisFrameData().m_timestamps.GetScopedResults();
-			for (const auto& result : scopedTimestampValues)
-			{
-				std::string txt = std::format("{} - {:.3f}ms", result.m_name, result.m_endTime - result.m_startTime);
-				ImGui::Text(txt.c_str());
-			}
-			ImGui::Separator();
-
-			std::vector<VmaBudget> budgets(VK_MAX_MEMORY_HEAPS);
-			vmaGetHeapBudgets(m_device->GetVMA(), budgets.data());
-			size_t totalAllocatedBytes = 0, totalAllocations = 0;
-			std::string heapStr;
-
-			auto bytesToMb = [](size_t bytes)
-			{
-				return bytes / (1024 * 1024);
-			};
-
-			for (int memHeap = 0; memHeap < VK_MAX_MEMORY_HEAPS; ++memHeap)
-			{
-				if (budgets[memHeap].usage > 0)
-				{
-					heapStr = std::format("Heap {}:", memHeap);
-					ImGui::Text(heapStr.c_str());
-					heapStr = std::format("\t{}Mb used ({}Mb budget)", bytesToMb(budgets[memHeap].usage), bytesToMb(budgets[memHeap].budget));
-					ImGui::Text(heapStr.c_str());
-					totalAllocatedBytes += budgets[memHeap].usage;
-					totalAllocations += budgets[memHeap].statistics.allocationCount;
-				}
-			}
-			heapStr = std::format("{}Mb total allocated in {} allocations", bytesToMb(totalAllocatedBytes), totalAllocations);
-			ImGui::Text(heapStr.c_str());
-			ImGui::End();
-		}
 		return true;
 	}
 

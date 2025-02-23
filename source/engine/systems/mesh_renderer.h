@@ -60,6 +60,7 @@ namespace R3
 		void OnShadowCascadeDraw(class RenderPassContext& ctx, const RenderTargetInfo& target, int cascade);
 		void OnDrawEnd(class RenderPassContext& ctx);				// call once all drawing is complete
 		void SetTiledLightinMetadataAddress(VkDeviceAddress addr) { m_lightTileMetadata = addr; }
+		void ShowPerfStatsGui();									// called from render stats system
 	private:
 		struct GlobalConstants;
 		Frustum GetMainCameraFrustum();
