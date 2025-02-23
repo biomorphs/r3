@@ -290,7 +290,7 @@ namespace R3
 
 		// allocate light data buffers
 		auto bufferPool = Systems::GetSystem<RenderSystem>()->GetBufferPool();
-		auto lightTileBuffer = bufferPool->GetBuffer("Light Tiles", c_tilesX * c_tilesY * sizeof(LightTile), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO, false);
+		auto lightTileBuffer = bufferPool->GetBuffer("Light Tiles", c_tilesX * c_tilesY * sizeof(LightTile), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_AUTO, false);
 		if (!lightTileBuffer)
 		{
 			LogError("Failed to allocate light tile buffer");
@@ -311,6 +311,17 @@ namespace R3
 		if (Systems::GetSystem<LightsSystem>()->GetActivePointLights() > 0)
 		{
 			BuildTileDataCompute(d, cmds, screenDimensions, frustumBuffer, lightTileBuffer->m_deviceAddress, lightIndexBuffer.GetDataDeviceAddress());
+		}
+		else
+		{
+			// just clear the tile buffer with 0s if there are no point lights
+			vkCmdFillBuffer(cmds, lightTileBuffer->m_buffer.m_buffer, 0, c_tilesX * c_tilesY * sizeof(LightTile), 0);
+
+			// FillBuffer is a transfer operation, make sure we do the proper barrier
+			VulkanHelpers::DoMemoryBarrier(cmds, VK_PIPELINE_STAGE_2_TRANSFER_BIT, 
+				VK_ACCESS_2_MEMORY_WRITE_BIT, 
+				VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT, 
+				VK_ACCESS_2_MEMORY_READ_BIT);
 		}
 
 		// build metadata object to pass to lighting shaders
