@@ -305,7 +305,7 @@ namespace R3
 		uint32_t resetCount = 0;
 		lightIndexBuffer.Allocate(sizeof(resetCount));
 		lightIndexBuffer.Write(0, sizeof(resetCount), &resetCount);
-		lightIndexBuffer.Flush(d, cmds, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+		lightIndexBuffer.Flush(d, cmds, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
 		// build light tile data in compute...
 		if (Systems::GetSystem<LightsSystem>()->GetActivePointLights() > 0)

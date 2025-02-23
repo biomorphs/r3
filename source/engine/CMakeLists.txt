@@ -57,6 +57,8 @@ set(EngineLib_SourceFiles
 	serialiser.cpp
 	register_engine_components.h
 	register_engine_components.cpp
+	systems/render_stats.h
+	systems/render_stats.cpp
 	systems/immediate_render_system.h
 	systems/immediate_render_system.cpp
 	systems/frame_scheduler_system.h

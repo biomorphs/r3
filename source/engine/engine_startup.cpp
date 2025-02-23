@@ -17,6 +17,7 @@
 #include "systems/transform_system.h"
 #include "systems/immediate_render_system.h"
 #include "systems/frame_scheduler_system.h"
+#include "systems/render_stats.h"
 #include "render/render_system.h"
 #include "entities/systems/entity_system.h"
 #include "core/platform.h"
@@ -49,6 +50,7 @@ namespace R3
 		s.RegisterSystem<LightsSystem>();
 		s.RegisterSystem<LuaSystem>();
 		s.RegisterSystem<TransformSystem>();
+		s.RegisterSystem<RenderStatsSystem>();
 	}
 
 	// the default frame graph
@@ -91,6 +93,7 @@ namespace R3
 				guiUpdate.AddFn("LightsSystem::ShowGui");
 				guiUpdate.AddFn("LuaSystem::ShowGui");
 				guiUpdate.AddFn("FrameScheduler::ShowGui");
+				guiUpdate.AddFn("RenderStats::ShowGui");
 			}
 			{
 				auto& renderUpdate = updateSequence.AddSequence("RenderUpdate");
