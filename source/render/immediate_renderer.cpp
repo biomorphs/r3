@@ -3,7 +3,7 @@
 #include "device.h"
 #include "swap_chain.h"
 #include "pipeline_builder.h"
-#include "buffer_pool.h"
+#include "render_system.h"
 #include "engine/utils/frustum.h"
 #include "core/log.h"
 #include "core/profiler.h"
@@ -372,7 +372,7 @@ namespace R3
 				copyRegion.srcOffset = 0;
 				copyRegion.dstOffset = pfd.m_vertexOffset * sizeof(PosColourVertex);
 				copyRegion.size = dataToCopy;	// may need to adjust for alignment?
-				vkCmdCopyBuffer(cmdBuffer, staging->m_buffer.m_buffer, m_allVertexData.m_buffer, 1, &copyRegion);
+				vkCmdCopyBuffer(cmdBuffer, staging->m_buffer.m_buffer, m_allVertexData.m_buffer.m_buffer, 1, &copyRegion);
 
 				// use a memory barrier to ensure the transfer finishes before we draw
 				VulkanHelpers::DoMemoryBarrier(cmdBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_MEMORY_WRITE_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_ACCESS_MEMORY_READ_BIT);
@@ -408,7 +408,7 @@ namespace R3
 		// pass the vertex to screen transform via push constants along with the buffer address
 		PushConstants pc;
 		pc.m_vertexToScreen = vertexToScreen;
-		pc.m_vertexBufferAddress = m_allvertsBufferAddress;
+		pc.m_vertexBufferAddress = m_allVertexData.m_deviceAddress;
 
 		// draw the triangles with depth testing
 		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_depthEnabledTriPipeline);
@@ -566,14 +566,9 @@ namespace R3
 	{
 		R3_PROF_EVENT();
 		size_t bufferSize = maxVerticesPerFrame * c_framesInFlight * sizeof(PosColourVertex);
-		m_allVertexData = VulkanHelpers::CreateBuffer(d.GetVMA(), bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
-		VulkanHelpers::SetBufferName(d.GetVkDevice(), m_allVertexData, "Immediate render vertex data");
-		m_allvertsBufferAddress = VulkanHelpers::GetBufferDeviceAddress(d.GetVkDevice(), m_allVertexData);
-		if (m_allVertexData.m_allocation == VK_NULL_HANDLE)
-		{
-			LogError("Failed to create vertex buffer of size {} bytes", bufferSize);
-			return false;
-		}
+		auto pool = Systems::GetSystem<RenderSystem>()->GetBufferPool();
+		m_allVertexData = *pool->GetBuffer("Immediate render vertex data", bufferSize, 
+			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VMA_MEMORY_USAGE_AUTO, false);
 		m_thisFramePosColVertices.reserve(maxVerticesPerFrame);
 		m_maxVertices = maxVerticesPerFrame;
 		for (int f = 0; f < c_framesInFlight; ++f)
@@ -618,6 +613,6 @@ namespace R3
 		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayout, nullptr);
 
 		// Destroy the vertex buffers
-		vmaDestroyBuffer(d.GetVMA(), m_allVertexData.m_buffer, m_allVertexData.m_allocation);
+		Systems::GetSystem<RenderSystem>()->GetBufferPool()->Release(m_allVertexData);
 	}
 }

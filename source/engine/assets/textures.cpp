@@ -88,6 +88,16 @@ namespace R3
 				return "RGBA8";
 			case Format::RGBA_BC7:
 				return "RGBA_BC7";
+			case Format::RG_BC5:
+				return "RG_BC5";
+			case Format::R_BC4:
+				return "R_BC4";
+			case Format::RGBA_BC3:
+				return "RGBA_BC3";
+			case Format::RGBA_BC2:
+				return "RGBA_BC2";
+			case Format::RGBA_BC1:
+				return "RGBA_BC1";
 			default:
 				return "Unknown";
 			}

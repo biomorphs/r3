@@ -36,6 +36,7 @@ namespace R3
 
 	void RenderTargetCache::ResetForNewFrame()
 	{
+		R3_PROF_EVENT();
 		for (int i = 0; i < m_allTargets.size(); ++i)
 		{
 			m_allTargets[i].m_lastAccessMode = VK_ACCESS_2_NONE;
@@ -69,6 +70,7 @@ namespace R3
 
 	void RenderTargetCache::AddTarget(const RenderTargetInfo& info, VkImage image, VkImageView view)
 	{
+		R3_PROF_EVENT();
 		auto found = std::find_if(m_allTargets.begin(), m_allTargets.end(), [&](RenderTarget& t)
 		{
 			return t.m_info.m_name == info.m_name;
@@ -92,6 +94,7 @@ namespace R3
 
 	RenderTarget* RenderTargetCache::GetTarget(const RenderTargetInfo& info)
 	{
+		R3_PROF_EVENT();
 		auto found = std::find_if(m_allTargets.begin(), m_allTargets.end(), [&](RenderTarget& t)
 		{
 			return t.m_info.m_name == info.m_name;
@@ -134,5 +137,36 @@ namespace R3
 		newTarget.m_view = newView;
 		m_allTargets.push_back(newTarget);
 		return &m_allTargets[m_allTargets.size()-1];
+	}
+
+	void RenderTargetCache::EnumerateTargets(EnumerateTargetFn fn)
+	{
+		R3_PROF_EVENT();
+		auto render = Systems::GetSystem<RenderSystem>();
+		for (const auto target : m_allTargets)
+		{
+			size_t allocSizeBytes = 0;
+			if (target.m_allocation != nullptr)
+			{
+				VmaAllocationInfo allocInfo = {0};
+				vmaGetAllocationInfo(render->GetDevice()->GetVMA(), target.m_allocation, &allocInfo);
+				allocSizeBytes = allocInfo.size;
+			}
+			else
+			{
+				size_t pixelSizeBytes = 0;
+				switch (target.m_info.m_format)
+				{
+				case VK_FORMAT_B8G8R8A8_SRGB:
+					pixelSizeBytes = 4;
+					break;
+				default:
+					pixelSizeBytes = 0;
+				}
+				glm::vec2 dims = GetTargetSize(target.m_info);
+				allocSizeBytes = (size_t)dims.x * (size_t)dims.y * pixelSizeBytes;
+			}
+			fn(target.m_info, allocSizeBytes);
+		}
 	}
 }

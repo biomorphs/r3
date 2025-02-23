@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vulkan_helpers.h"
+#include "buffer_pool.h"
 #include "core/glm_headers.h"
 
 namespace R3
@@ -21,12 +22,6 @@ namespace R3
 		{
 			glm::vec4 m_position;
 			glm::vec4 m_colour;
-		};
-		struct PosColourUVVertex
-		{
-			glm::vec4 m_position;
-			glm::vec4 m_colour;
-			glm::vec2 m_uv;
 		};
 		bool Initialise(Device& d, VkFormat colourBufferFormat, VkFormat depthBufferFormat, uint32_t maxVerticesPerFrame = 1024 * 256);
 		void Destroy(Device& d);
@@ -60,8 +55,7 @@ namespace R3
 			uint32_t m_vertexCount = 0;
 		};
 		size_t m_maxVertices = 0;
-		AllocatedBuffer m_allVertexData;		// contains c_framesInFlight x max vertices
-		VkDeviceAddress m_allvertsBufferAddress;
+		PooledBuffer m_allVertexData;		// contains c_framesInFlight x max vertices
 		std::vector<PosColourVertex> m_thisFramePosColVertices;
 		std::vector<DrawData> m_thisFrameTriangles;
 		std::vector<DrawData> m_thisFrameLines;

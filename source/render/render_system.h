@@ -37,6 +37,7 @@ namespace R3
 		CommandBufferAllocator* GetCommandBufferAllocator();
 		RenderGraph& GetRenderGraph() { return *m_renderGraph; }
 		RenderTargetInfo GetSwapchainTargetInfo();		// required when render graph nodes need to use the swap chain
+		RenderTargetCache* GetRenderTargetCache();
 
 		// Run some graphics code immediately
 		void RunGraphicsCommandsImmediate(std::function<void(VkCommandBuffer_T*)> fn);

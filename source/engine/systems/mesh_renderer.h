@@ -142,8 +142,7 @@ namespace R3
 		const uint32_t c_maxStaticMaterialOverrides = 1024 * 8;	// max static material overrides we support
 		uint32_t m_thisFrameBuffer = 0;					// determines where to write to draw + dynamic instance data each frame
 
-		AllocatedBuffer m_drawIndirectHostVisible;	// draw indirect entries for each instance, split into c_maxBuffers sub-buffers. populated every frame from buckets
-		void* m_drawIndirectMappedPtr = nullptr;
+		PooledBuffer m_drawIndirectHostVisible;	// draw indirect entries for each instance, split into c_maxBuffers sub-buffers. populated every frame from buckets
 		VkDeviceAddress m_drawIndirectBufferAddress;
 		uint32_t m_currentDrawBufferOffset = 0;		// next write offset for draw data, resets each frame
 		

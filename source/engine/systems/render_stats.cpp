@@ -1,6 +1,8 @@
 #include "render_stats.h"
 #include "engine/ui/imgui_menubar_helper.h"
+#include "engine/systems/texture_system.h"
 #include "render/render_system.h"
+#include "render/render_target_cache.h"
 #include "render/buffer_pool.h"
 #include "render/device.h"
 #include "core/profiler.h"
@@ -60,10 +62,46 @@ namespace R3
 			ImGui::Begin("Render Stats", &m_displayStats);
 			ShowVMAStats();
 			ShowBufferPoolStats();
+			ShowTextureStats();
+			ShowRenderTargetStats();
 			ImGui::End();
 		}
 
 		return true;
+	}
+
+	void RenderStatsSystem::ShowRenderTargetStats()
+	{
+		R3_PROF_EVENT();
+		auto rtCache = GetSystem<RenderSystem>()->GetRenderTargetCache();
+		ImGui::SeparatorText("Render Targets");
+		size_t totalBytesAllocated = 0;
+		auto calcTotalBytes = [&](const RenderTargetInfo& info, size_t sizeBytes)
+		{
+			totalBytesAllocated += sizeBytes;
+		};
+		rtCache->EnumerateTargets(calcTotalBytes);
+		std::string txt = std::format("{:.3f}Mb Total", BytesToMb(totalBytesAllocated));
+		ImGui::Text(txt.c_str());
+
+		if (ImGui::CollapsingHeader("All Targets"))
+		{
+			auto showTarget = [&](const RenderTargetInfo& info, size_t sizeBytes)
+			{
+				txt = std::format("{} - {:.3f}Mb", info.m_name, BytesToMb(sizeBytes));
+				ImGui::Text(txt.c_str());
+			};
+			rtCache->EnumerateTargets(showTarget);
+		}
+	}
+
+	void RenderStatsSystem::ShowTextureStats()
+	{
+		R3_PROF_EVENT();
+		ImGui::SeparatorText("Loaded Textures");
+		auto textures = GetSystem<TextureSystem>();
+		std::string txt = std::format("{:.3f}Mb Total",	BytesToMb(textures->GetTotalGpuMemoryUsedBytes()));
+		ImGui::Text(txt.c_str());
 	}
 
 	void RenderStatsSystem::ShowVMAStats()
@@ -100,11 +138,13 @@ namespace R3
 		auto renderSys = Systems::GetSystem<RenderSystem>();
 		auto pool = renderSys->GetBufferPool();
 
+		size_t allocatedBytes = pool->GetTotalAllocatedBytes();
+		size_t cachedBytes = pool->GetTotalCachedBytes();
 		ImGui::SeparatorText("Buffer Pool");
-		std::string txt = std::format("{:.3f}Mb allocated in {} buffers, {:.3f}Mb cached in {} buffers", 
-			BytesToMb(pool->GetTotalAllocatedBytes()),
+		std::string txt = std::format("{:.3f}Mb Total in {} buffers, {:.3f}Mb cached in {} buffers", 
+			BytesToMb(allocatedBytes),
 			pool->GetTotalAllocatedCount(), 
-			BytesToMb(pool->GetTotalCachedBytes()),
+			BytesToMb(cachedBytes),
 			pool->GetTotalCachedCount());
 		ImGui::Text(txt.c_str());
 

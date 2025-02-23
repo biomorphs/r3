@@ -83,6 +83,11 @@ namespace R3
 		return swapInfo;
 	}
 
+	RenderTargetCache* RenderSystem::GetRenderTargetCache()
+	{
+		return m_renderTargets.get();
+	}
+
 	void RenderSystem::RunGraph(RenderGraph& r, VkCommandBuffer_T* cmdBuffer, VkImage_T* swapImage, VkImageView_T* swapImageView)
 	{
 		R3_PROF_EVENT();

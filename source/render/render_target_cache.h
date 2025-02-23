@@ -3,6 +3,7 @@
 #include "vulkan_helpers.h"
 #include <string>
 #include <vector>
+#include <functional>
 
 namespace R3
 {
@@ -47,6 +48,10 @@ namespace R3
 		void AddTarget(const RenderTargetInfo& info, VkImage image, VkImageView view);	// add an external target to the cache
 		void Clear();	// remove all existing targets + free memory
 		void ResetForNewFrame();	// reset all previous access mode/layouts for a new frame
+
+		using EnumerateTargetFn = std::function<void(const RenderTargetInfo&, size_t)>;	// target info, allocation size in bytes
+		void EnumerateTargets(EnumerateTargetFn);
+
 	private:
 		std::vector<RenderTarget> m_allTargets;
 	};

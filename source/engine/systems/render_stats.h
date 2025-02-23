@@ -14,6 +14,8 @@ namespace R3
 		bool ShowGui();
 		void ShowVMAStats();
 		void ShowBufferPoolStats();
+		void ShowTextureStats();
+		void ShowRenderTargetStats();
 		bool m_displayStats = false;
 	};
 }

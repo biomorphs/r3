@@ -101,11 +101,7 @@ namespace R3
 		vkDestroyPipeline(d.GetVkDevice(), m_shadowPipeline, nullptr);
 		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayout, nullptr);
 		vkDestroyPipelineLayout(d.GetVkDevice(), m_pipelineLayoutWithShadowmaps, nullptr);
-		if (m_drawIndirectHostVisible.m_allocation)
-		{
-			vmaUnmapMemory(d.GetVMA(), m_drawIndirectHostVisible.m_allocation);
-			vmaDestroyBuffer(d.GetVMA(), m_drawIndirectHostVisible.m_buffer, m_drawIndirectHostVisible.m_allocation);
-		}		
+		GetSystem<RenderSystem>()->GetBufferPool()->Release(m_drawIndirectHostVisible);
 		Systems::GetSystem<StaticMeshSystem>()->UnregisterModelReadyCallback(m_onModelDataLoadedCbToken);
 	}
 
@@ -396,14 +392,19 @@ namespace R3
 	void MeshRenderer::PrepareForRendering(class RenderPassContext& ctx)
 	{
 		R3_PROF_EVENT();
-		if (m_drawIndirectMappedPtr == nullptr)
+		if (m_drawIndirectHostVisible.m_mappedBuffer == nullptr)
 		{
-			m_drawIndirectHostVisible = VulkanHelpers::CreateBuffer(ctx.m_device->GetVMA(),
+			auto drawBuffer = GetSystem<RenderSystem>()->GetBufferPool()->GetBuffer("Static mesh draw indirect",
 				c_maxInstances * c_maxBuffers * sizeof(VkDrawIndexedIndirectCommand),
-				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
-			VulkanHelpers::SetBufferName(ctx.m_device->GetVkDevice(), m_drawIndirectHostVisible, "Static mesh draw indirect");
-			vmaMapMemory(ctx.m_device->GetVMA(), m_drawIndirectHostVisible.m_allocation, &m_drawIndirectMappedPtr);
-			m_drawIndirectBufferAddress = VulkanHelpers::GetBufferDeviceAddress(ctx.m_device->GetVkDevice(), m_drawIndirectHostVisible);
+				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+				VMA_MEMORY_USAGE_AUTO, true);
+			if (!drawBuffer)
+			{
+				LogError("Failed to allocate draw indirect buffer");
+				return;
+			}
+			m_drawIndirectHostVisible = *drawBuffer;
+			m_drawIndirectBufferAddress = m_drawIndirectHostVisible.m_deviceAddress;
 		}
 		if (m_pipelineLayout == VK_NULL_HANDLE || m_pipelineLayoutWithShadowmaps == VK_NULL_HANDLE)
 		{
@@ -548,11 +549,11 @@ namespace R3
 		pc.m_instanceDataBufferAddress = m_staticMeshInstances.GetBufferDeviceAddress();
 
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_staticOpaqueDrawData.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_staticOpaqueDrawData.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
+		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer.m_buffer, m_staticOpaqueDrawData.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_staticOpaqueDrawData.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 
 		pc.m_instanceDataBufferAddress = m_dynamicMeshInstances.GetBufferDeviceAddress();
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_dynamicOpaqueDrawData.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_dynamicOpaqueDrawData.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
+		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer.m_buffer, m_dynamicOpaqueDrawData.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_dynamicOpaqueDrawData.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 
 		m_frameStats.m_writeGBufferCmdsEndTime = time->GetElapsedTimeReal();
 	}
@@ -621,11 +622,11 @@ namespace R3
 		pc.m_instanceDataBufferAddress = m_staticMeshInstances.GetBufferDeviceAddress();
 
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, staticDraws.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), staticDraws.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
+		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer.m_buffer, staticDraws.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), staticDraws.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 
 		pc.m_instanceDataBufferAddress = m_dynamicMeshInstances.GetBufferDeviceAddress();
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, dynamicDraws.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), dynamicDraws.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
+		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer.m_buffer, dynamicDraws.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), dynamicDraws.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 
 		m_frameStats.m_writeForwardCmdsEndTime = time->GetElapsedTimeReal();
 	}
@@ -688,11 +689,11 @@ namespace R3
 		pc.m_instanceDataBufferAddress = m_staticMeshInstances.GetBufferDeviceAddress();
 
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayoutWithShadowmaps, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_staticTransparentDrawData.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_staticTransparentDrawData.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
+		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer.m_buffer, m_staticTransparentDrawData.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_staticTransparentDrawData.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 		
 		pc.m_instanceDataBufferAddress = m_dynamicMeshInstances.GetBufferDeviceAddress();
 		vkCmdPushConstants(ctx.m_graphicsCmds, m_pipelineLayoutWithShadowmaps, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(pc), &pc);
-		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer, m_dynamicTransparentDrawData.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_dynamicTransparentDrawData.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
+		vkCmdDrawIndexedIndirect(ctx.m_graphicsCmds, m_drawIndirectHostVisible.m_buffer.m_buffer, m_dynamicTransparentDrawData.m_firstDrawOffset * sizeof(VkDrawIndexedIndirectCommand), m_dynamicTransparentDrawData.m_drawCount, sizeof(VkDrawIndexedIndirectCommand));
 
 		m_frameStats.m_writeForwardCmdsEndTime = time->GetElapsedTimeReal();
 	}
@@ -850,7 +851,7 @@ namespace R3
 		for (const auto& bucketInstance : bucket.m_partInstances)
 		{
 			const MeshPart* currentPartData = staticMeshes->GetMeshPart(bucketInstance.m_partGlobalIndex);
-			VkDrawIndexedIndirectCommand* drawPtr = static_cast<VkDrawIndexedIndirectCommand*>(m_drawIndirectMappedPtr) + currentDrawBufferStart + m_currentDrawBufferOffset;
+			VkDrawIndexedIndirectCommand* drawPtr = static_cast<VkDrawIndexedIndirectCommand*>(m_drawIndirectHostVisible.m_mappedBuffer) + currentDrawBufferStart + m_currentDrawBufferOffset;
 			drawPtr->indexCount = currentPartData->m_indexCount;
 			drawPtr->instanceCount = 1;
 			drawPtr->firstIndex = (uint32_t)currentPartData->m_indexStartOffset;
