@@ -90,7 +90,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Stringlights_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -122,7 +122,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StringLights_01_Orange_Color_Emissive_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -154,7 +154,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StringLights_01_Blue_Color_Emissive_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -186,7 +186,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StringLights_01_White_Color_Emissive_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -218,7 +218,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StringLights_01_Pink_Color_Emissive_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -250,7 +250,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StringLights_01_Red_Color_Emissive_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -282,7 +282,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StringLights_01_Green_Color_Emissive_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -314,7 +314,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Bistro_Main_Door_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -346,7 +346,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Curbstones_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -378,7 +378,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Manhole_Cover_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -410,7 +410,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Cobblestone_Wet_BLENDSHADER_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -442,7 +442,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Focus_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -474,7 +474,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Emissive_StreetLight_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -506,7 +506,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Spotlight_Glass_Emissive_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -538,7 +538,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\LanternEmissive_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -570,7 +570,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Trashcan_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -602,7 +602,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Banner_Metal_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -634,7 +634,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Spotlight_Main_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -666,7 +666,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Spotlight_Emissive_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -698,7 +698,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_TrafficSign_A_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -730,7 +730,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Table_Terrace_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -762,7 +762,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StreetSign_01_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -794,7 +794,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StreetPivot_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -826,7 +826,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Streetlight_Metal_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -858,7 +858,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_StringLights_01_White_Color_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -890,7 +890,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Streetlight_Support_Bulb_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -922,7 +922,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Streetlight_Chains_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -954,7 +954,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Concrete3_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -986,7 +986,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Brick_Small_Red_BLENDSHADER_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1018,7 +1018,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Ground_Wet_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1050,7 +1050,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Cobble_Leaves_BLENDSHADER_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1082,7 +1082,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Cobblestone_01_BLENDSHADER_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1114,7 +1114,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Cobblestone_Wet_Leaves_BLENDSHADER_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1146,7 +1146,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Cobblestone_Small_BLENDSHADER_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1178,7 +1178,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Cobblestone_Big_BLENDSHADER_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1210,7 +1210,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Brick_BLENDSHADER_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1242,7 +1242,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Pavement_Cobblestone_02_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1274,7 +1274,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Sidewalkbarrier_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1306,7 +1306,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Shopsign_Pharmacy_Emissive_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1338,7 +1338,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Shopsign_Book_Store_Emissive_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1370,7 +1370,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Antenna_Metal_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1402,7 +1402,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Shopsign_Bakery_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1434,7 +1434,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Metal_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1466,7 +1466,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Shopsign_Ties_Shop_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1498,7 +1498,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Plantpots_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1530,7 +1530,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\NapkinHolder_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1562,7 +1562,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MenuSign_02_Mesh_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1594,7 +1594,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MenuSign_02_Glass_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1626,7 +1626,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MenuSign_01_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1658,7 +1658,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Balcony_Concrete_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1690,7 +1690,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Balcony_Trims_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1722,7 +1722,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Balcony_Ornaments_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1754,7 +1754,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Balcony_Green_Wood_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1786,7 +1786,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Glass_Dirty_MASKED_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1818,7 +1818,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_01_Glass_Wine_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1850,7 +1850,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_01_Caps_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1882,7 +1882,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_01_Labels_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1914,7 +1914,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Paris_Flowers_BaseColor.dds"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1946,7 +1946,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Flowers_BaseColor.dds"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1978,7 +1978,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\ElectricBox_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2010,7 +2010,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Concrete_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2042,7 +2042,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Concrete_Striped_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2074,7 +2074,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Concrete2_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2106,7 +2106,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Black_Metal_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2138,7 +2138,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Chimneys_Metal_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2170,7 +2170,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Plaster_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2202,7 +2202,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Chair_01_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2234,7 +2234,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Grain_Metal_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2266,7 +2266,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Curtains_BaseColor.dds"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2298,7 +2298,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Plaster_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2330,7 +2330,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Roofing_Shingle_Grey_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2362,7 +2362,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Wood_Painted_Green_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2394,7 +2394,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Room_Interior_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2426,7 +2426,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Brick_Large_Beige_BLENDSHADER_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2458,7 +2458,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Doors_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2490,7 +2490,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2522,7 +2522,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Forge_Metal_BaseColor.dds"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2554,7 +2554,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Wood_Brown_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2586,7 +2586,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Grooved_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2618,7 +2618,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Smooth_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2650,7 +2650,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Plaster1_BLENDSHADER_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2682,7 +2682,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Plastic_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2714,7 +2714,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Frosted_Glass_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2746,7 +2746,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Awning_Fabric_Red_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2778,7 +2778,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Boulangerie_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2810,7 +2810,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Awning_Beams_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2842,7 +2842,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Roofing_Metal_01_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2874,7 +2874,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Details_Dark_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2906,7 +2906,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Rollup_Door_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2938,7 +2938,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Building_Details_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2970,7 +2970,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Wood_Painted_Cyan_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3002,7 +3002,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Glass_Dirty_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3034,7 +3034,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Awning_Fabric_Cyan_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3066,7 +3066,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Wood_Painted3_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3098,7 +3098,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Bronze_BLENDSHADER_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3130,7 +3130,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Wood_Painted_Green_BLENDSHADER_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3162,7 +3162,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Smooth_BLENDSHADER_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3194,7 +3194,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Book_Covers_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3226,7 +3226,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_White_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3258,7 +3258,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Brick_Small_Red_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3290,7 +3290,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Brick_Large_White_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3322,7 +3322,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Light_Bulb_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3354,7 +3354,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Glass_Exterior_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3386,7 +3386,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Side_Letters_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3418,7 +3418,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete1_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3450,7 +3450,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Focus_Ornament_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3482,7 +3482,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Metal_Pipe_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3514,7 +3514,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Wood_Polished_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3546,7 +3546,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Yellow_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3578,7 +3578,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Roofing_Shingle_Green_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3610,7 +3610,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Trim_Cornice_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3642,7 +3642,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Bollards_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3674,7 +3674,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Bistro_Sign_Main_BaseColor.dds"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3706,7 +3706,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Bistro_Sign_Letters_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3738,7 +3738,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Awnings_Hotel_Fabric_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3770,7 +3770,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Awnings_Fabric_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3802,7 +3802,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Awnings_Beams_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3834,7 +3834,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Ashtray_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3866,7 +3866,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Antenna_Plastic_Blue_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3898,7 +3898,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Antenna_Plastic_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3930,7 +3930,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Linde_Tree_Large_Trunk_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3962,7 +3962,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Linde_Tree_Large_Orange_Leaves_BaseColor.dds"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3994,7 +3994,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Linde_Tree_Large_Green_Leaves_BaseColor.dds"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4026,7 +4026,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Ivy_branches_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4058,7 +4058,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Ivy_leaf_a_BaseColor.dds"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4090,7 +4090,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Bux_Hedges46_BaseColor.dds"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4122,7 +4122,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Vespa_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4154,7 +4154,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Vespa_Odometer_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4186,7 +4186,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Vespa_Odometer_Glass_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4218,7 +4218,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Leaves_BaseColor.dds"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4250,7 +4250,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Foliage_Trunk_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4282,7 +4282,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Vespa_Headlight_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4351,7 +4351,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Cashregister_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4383,7 +4383,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Cashregister_Buttons_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4415,7 +4415,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Cashregister_Glass_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4447,7 +4447,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Coasters_01_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4479,7 +4479,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\ToffeeJar_Metal_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4511,7 +4511,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\ToffeeJar_Label_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4543,7 +4543,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\CookieJar_Cookies_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4575,7 +4575,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\TransparentGlass_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4607,7 +4607,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_01_Glass_Wine_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4639,7 +4639,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_01_Caps_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4671,7 +4671,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Metal_Chrome1_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4703,7 +4703,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Cloth_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4735,7 +4735,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Table_cloth_01_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4767,7 +4767,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\curtainA_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4799,7 +4799,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\curtainB1_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4831,7 +4831,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Cutlery_chrome_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4863,7 +4863,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Cutlery_details_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4895,7 +4895,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Doormat_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4927,7 +4927,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\NapkinHolder_01_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4959,7 +4959,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Trolley_Plastic_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4991,7 +4991,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Trolley_Wheels_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5023,7 +5023,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Trolley_Wood_Painted_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5055,7 +5055,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_BarStool_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5087,7 +5087,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Beertap_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5119,7 +5119,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Plaster_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5151,7 +5151,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Wood_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5183,7 +5183,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Wooden_stuco_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5215,7 +5215,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Plaster_Red_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5247,7 +5247,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Wood_Painted3_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5279,7 +5279,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Grid_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5311,7 +5311,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Brushed_Metal_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5343,7 +5343,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Plaster2_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5375,7 +5375,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Frozen_Glass_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5407,7 +5407,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Floor_Tile_Hexagonal_BLENDSHADER_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5439,7 +5439,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Paris_Bartrim_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5471,7 +5471,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_White_Plastic_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5503,7 +5503,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Grid1_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5535,7 +5535,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Material_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5567,7 +5567,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Interior_01_Paris_Lantern_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5599,7 +5599,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Ceiling_Lamp_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5631,7 +5631,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_CeilingFan_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5663,7 +5663,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Table_03_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5695,7 +5695,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Metal_Worn_01_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5727,7 +5727,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Wood_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5759,7 +5759,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Plastic_02_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5791,7 +5791,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Plants_Metal_Base_01_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5823,7 +5823,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Plants_plants_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5855,7 +5855,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_02_Glass_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5887,7 +5887,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_01_Glass_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5919,7 +5919,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_LiquorBottle_03_Glass_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5951,7 +5951,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Painting_Metal_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -5983,7 +5983,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Paintings_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -6015,7 +6015,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Paintings_Glass_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -6047,7 +6047,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Plates_Details_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -6079,7 +6079,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Plates_Ceramic_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -6111,7 +6111,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Radiator_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -6143,7 +6143,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Rubber_Bar_Mat_01_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -6175,7 +6175,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Plastic_01_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -6207,7 +6207,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\ToffeeJar_Toffee_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -6239,7 +6239,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Wall_Light_Interior_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -6271,7 +6271,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Paris_Wall_Bulb_Light_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -6303,7 +6303,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Wall_Lamp_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -6335,7 +6335,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\Metal_Bronze_01_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -6367,7 +6367,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\WickerBasket_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -6399,7 +6399,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Glass_Exterior_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -6431,7 +6431,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Bistro_Main_Door_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -6463,7 +6463,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Yellow_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -6495,7 +6495,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_Grooved_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -6527,7 +6527,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -6559,7 +6559,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\Bistro_v5_2\\Textures\\MASTER_Concrete1_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },

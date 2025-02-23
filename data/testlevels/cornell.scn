@@ -161,7 +161,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -230,7 +230,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },

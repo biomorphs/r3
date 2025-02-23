@@ -1,0 +1,782 @@
+{
+ "AllEntities": [
+  {
+   "EnvironmentSettings": {
+    "Cascade_0": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.0,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Cascade_1": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.5,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Cascade_2": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.5,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Cascade_3": {
+     "BiasClamp": 0.0,
+     "CascadeDepth": 0.0,
+     "ConstantBias": 0.0,
+     "Resolution": 2048,
+     "SlopeBias": 0.0
+    },
+    "Flycam Draw Distance": 32.0,
+    "Flycam Speed": 2.0,
+    "Shadow Cascades": 2,
+    "Sky Ambient": 0.06750000268220901,
+    "Sky Colour": {
+     "X": 0.2701612710952759,
+     "Y": 0.5409078001976013,
+     "Z": 1.0
+    },
+    "Sun Ambient": 0.10499996691942215,
+    "Sun Brightness": 8.0,
+    "Sun Colour": {
+     "X": 0.2056451439857483,
+     "Y": 0.2056451439857483,
+     "Z": 0.2056451439857483
+    },
+    "Sun Direction": {
+     "X": 0.5,
+     "Y": -0.5,
+     "Z": 0.6000000238418579
+    },
+    "Tonemap Type": 7
+   },
+   "ID": 0,
+   "Name": "Globals",
+   "Parent": 2
+  },
+  {
+   "ID": 1,
+   "Name": "Cube",
+   "Parent": 3,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "common\\models\\cube.fbx"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 16.0,
+     "Y": 1.0,
+     "Z": 16.0
+    }
+   }
+  },
+  {
+   "ID": 2,
+   "Name": "New World",
+   "Parent": 4294967295
+  },
+  {
+   "ID": 3,
+   "Name": "Geometry",
+   "Parent": 4294967295
+  },
+  {
+   "ID": 4,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 0.16470588743686676,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 0,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.19291338324546814,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.0,
+     "Y": 2.0,
+     "Z": -2.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 5,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 5
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 0.364705890417099,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 0,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.10000000149011612,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 2.0,
+     "Y": 2.0,
+     "Z": -2.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 6,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 4.0,
+     "Y": 2.0,
+     "Z": -2.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 7,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 7
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 0.3176470696926117,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 0,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.19291338324546814,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -2.0,
+     "Y": 2.0,
+     "Z": -2.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 8,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -4.0,
+     "Y": 2.0,
+     "Z": -2.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 9,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -3.0,
+     "Y": 4.0,
+     "Z": -2.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 10,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -1.0,
+     "Y": 4.0,
+     "Z": -2.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 11,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 1.0,
+     "Y": 4.0,
+     "Z": -2.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 12,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 4294967295
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 3.0,
+     "Y": 4.0,
+     "Z": -2.0
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 13,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 32.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Distance": 16.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 5.088202953338623,
+     "Y": 3.329972267150879,
+     "Z": -3.6552510261535645
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 14,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 32.0,
+    "Colour": {
+     "X": 0.30645132064819336,
+     "Y": 0.0,
+     "Z": 1.0
+    },
+    "Distance": 16.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -0.1524205207824707,
+     "Y": 3.329972267150879,
+     "Z": -3.6552510261535645
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 15,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 32.0,
+    "Colour": {
+     "X": 0.0,
+     "Y": 0.008064508438110352,
+     "Z": 1.0
+    },
+    "Distance": 16.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -4.130407333374023,
+     "Y": 3.329972267150879,
+     "Z": -3.6552510261535645
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 16,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 32.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 0.8225806355476379,
+     "Z": 0.0
+    },
+    "Distance": 16.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.6743288040161133,
+     "Y": 3.329972267150879,
+     "Z": -7.26846170425415
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 17,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 32.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Distance": 16.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 5.088202953338623,
+     "Y": 3.329972267150879,
+     "Z": 4.6487555503845215
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 18,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 32.0,
+    "Colour": {
+     "X": 0.30645132064819336,
+     "Y": 0.0,
+     "Z": 1.0
+    },
+    "Distance": 16.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -0.1524205207824707,
+     "Y": 3.329972267150879,
+     "Z": 4.6487555503845215
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 19,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 32.0,
+    "Colour": {
+     "X": 0.0,
+     "Y": 0.008064508438110352,
+     "Z": 1.0
+    },
+    "Distance": 16.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -4.130407333374023,
+     "Y": 3.329972267150879,
+     "Z": 4.6487555503845215
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 20,
+   "Name": "Point Light",
+   "Parent": 4294967295,
+   "PointLight": {
+    "Brightness": 32.0,
+    "Colour": {
+     "X": 1.0,
+     "Y": 0.8225806355476379,
+     "Z": 0.0
+    },
+    "Distance": 16.0,
+    "Enabled": true
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 0.6743288040161133,
+     "Y": 3.329972267150879,
+     "Z": 1.035544753074646
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  }
+ ],
+ "WorldName": "New World"
+}

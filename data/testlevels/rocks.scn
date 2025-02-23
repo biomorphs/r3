@@ -85,7 +85,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\tiger_rock_4k.gltf\\textures\\tiger_rock_diff_4k.jpg"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -692,7 +692,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\SpeedTree_v2\\Japanese Maple\\HighPoly\\Textures\\T_Cap_02_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -724,7 +724,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\SpeedTree_v2\\Japanese Maple\\HighPoly\\Textures\\T_JapaneseMapleLeaf_1_BaseColor.dds"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -756,7 +756,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\SpeedTree_v2\\Japanese Maple\\HighPoly\\Textures\\T_JapaneseMapleLeaf_2_BaseColor.dds"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -788,7 +788,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\SpeedTree_v2\\Japanese Maple\\HighPoly\\Textures\\T_JapaneseMapleBark_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -857,7 +857,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\SpeedTree_v2\\European Linden\\HighPoly\\Textures\\T_Cap_03_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -889,7 +889,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\SpeedTree_v2\\European Linden\\HighPoly\\Textures\\T_EuropeanLindenBark_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -921,7 +921,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\SpeedTree_v2\\European Linden\\HighPoly\\Textures\\T_EuropeanLindenLeaf_BaseColor.dds"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -953,7 +953,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\SpeedTree_v2\\European Linden\\HighPoly\\Textures\\T_EuropeanLindenLeaf_2_BaseColor.dds"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1022,7 +1022,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_Pink_Flower_BaseColor.dds"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1054,7 +1054,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_Azalea_Leaves_2_BaseColor.dds"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1086,7 +1086,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_Azalea_Leaves_1_BaseColor.dds"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1118,7 +1118,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_Cap_01_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1150,7 +1150,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_FlowerStem_05_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1219,7 +1219,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_Pink_Flower_BaseColor.dds"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1251,7 +1251,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_Azalea_Leaves_2_BaseColor.dds"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1283,7 +1283,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_Azalea_Leaves_1_BaseColor.dds"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1315,7 +1315,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_Cap_01_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1347,7 +1347,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_FlowerStem_05_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1449,7 +1449,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_Pink_Flower_BaseColor.dds"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1481,7 +1481,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_Azalea_Leaves_2_BaseColor.dds"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1513,7 +1513,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_Azalea_Leaves_1_BaseColor.dds"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1545,7 +1545,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_Cap_01_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1577,7 +1577,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\SpeedTree_v2\\Azalea\\HighPoly\\Textures\\T_FlowerStem_05_BaseColor.dds"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },

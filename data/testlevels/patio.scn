@@ -127,7 +127,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\dirty-brick-wall-bl\\dirty-brick-wall_albedo.png"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\textures\\dirty-brick-wall-bl\\dirty-brick-wall_metallic.png"
       },
@@ -196,7 +196,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\older-wood-flooring-bl\\older-wood-flooring_albedo.png"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\textures\\older-wood-flooring-bl\\older-wood-flooring_metallic.png"
       },
@@ -430,7 +430,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\rocky_dirt1-bl\\rocky_dirt1-albedo.png"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\textures\\rocky_dirt1-bl\\rocky_dirt1-metallic.png"
       },
@@ -763,7 +763,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\colored-concrete-wall-bl\\colored-concrete-wall_albedo.png"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\textures\\colored-concrete-wall-bl\\colored-concrete-wall_metallic.png"
       },
@@ -931,7 +931,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\conifer_tree_high-poly\\textures\\nature_bark_fir_07_l_0001.jpg_baseColor.jpeg"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -963,7 +963,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\conifer_tree_high-poly\\textures\\nature_leaves_thuja_01_l_0001.jpg_baseColor.png"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -995,7 +995,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\conifer_tree_high-poly\\textures\\nature_leaves_thuja_01_l_0002.jpg_baseColor.png"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1027,7 +1027,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\conifer_tree_high-poly\\textures\\nature_leaves_thuja_01_l_0003.jpg_baseColor.png"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1059,7 +1059,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\conifer_tree_high-poly\\textures\\nature_leaves_thuja_01_l_0004.jpg_baseColor.png"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1091,7 +1091,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\conifer_tree_high-poly\\textures\\nature_leaves_thuja_01_l_0005.jpg_baseColor.png"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1123,7 +1123,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\conifer_tree_high-poly\\textures\\nature_leaves_thuja_01_l_0006.jpg_baseColor.png"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1155,7 +1155,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\conifer_tree_high-poly\\textures\\nature_leaves_thuja_01_l_0007.jpg_baseColor.png"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1187,7 +1187,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1256,7 +1256,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\tree_gn\\textures\\ClusterB_diffuse.png"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1288,7 +1288,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\tree_gn\\textures\\VinesB_diffuse.png"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1320,7 +1320,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\tree_gn\\textures\\ClusterB2_diffuse.png"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1352,7 +1352,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\tree_gn\\textures\\BarkB_diffuse.png"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1384,7 +1384,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\tree_gn\\textures\\PruneB_diffuse.png"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1416,7 +1416,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\tree_gn\\textures\\CortexB_diffuse.png"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1485,7 +1485,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\italian_cypress_tree\\textures\\trunk_2_1_0Mat_baseColor.png"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1517,7 +1517,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\italian_cypress_tree\\textures\\pine_2_1Mat_baseColor.png"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1549,7 +1549,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1708,7 +1708,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\bigger_mossy_tree_stump\\textures\\Baumpstump03-290k_Material_u1_v1_baseColor.jpeg"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1740,7 +1740,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\bigger_mossy_tree_stump\\textures\\Baumpstump03-290k_Material_u2_v1_baseColor.jpeg"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1772,7 +1772,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -1841,7 +1841,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_01_baseColor.jpeg"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_01_metallicRoughness.png"
       },
@@ -1873,7 +1873,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_02_baseColor.jpeg"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_02_metallicRoughness.png"
       },
@@ -1905,7 +1905,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_03_baseColor.jpeg"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_03_metallicRoughness.png"
       },
@@ -1937,7 +1937,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2006,7 +2006,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_01_baseColor.jpeg"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_01_metallicRoughness.png"
       },
@@ -2038,7 +2038,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_02_baseColor.jpeg"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_02_metallicRoughness.png"
       },
@@ -2070,7 +2070,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_03_baseColor.jpeg"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\wood_fence\\textures\\Wood_fence_03_metallicRoughness.png"
       },
@@ -2102,7 +2102,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2270,7 +2270,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\lupine_plant\\textures\\lambert2SG_baseColor.png"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2372,7 +2372,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\plant_bush\\textures\\Plant1_baseColor.png"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -2507,7 +2507,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\tropical_plant(1)\\textures\\Material_trunk.dds_baseColor.png"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "downloaded\\tropical_plant(1)\\textures\\Material_trunk.dds_metallicRoughness.png"
       },
@@ -2539,7 +2539,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\tropical_plant(1)\\textures\\Material.001_trunk.dds_baseColor.jpeg"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\tropical_plant(1)\\textures\\Material.001_trunk.dds_metallicRoughness.png"
       },
@@ -2571,7 +2571,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\tropical_plant(1)\\textures\\Material.002_leaves.dds_baseColor.png"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "downloaded\\tropical_plant(1)\\textures\\Material.002_leaves.dds_metallicRoughness.png"
       },
@@ -2805,7 +2805,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\plant(1)\\textures\\Material.001_diffuse.png"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3072,7 +3072,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\plant_bush\\textures\\Plant1_baseColor.png"
       },
-      "Flags": 1,
+      "Flags": 3,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3207,7 +3207,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_albedo.png"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_metallic.png"
       },
@@ -3276,7 +3276,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3413,7 +3413,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3482,7 +3482,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_albedo.png"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_metallic.png"
       },
@@ -3585,7 +3585,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3654,7 +3654,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_albedo.png"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_metallic.png"
       },
@@ -3757,7 +3757,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3826,7 +3826,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_albedo.png"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_metallic.png"
       },
@@ -3929,7 +3929,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -3998,7 +3998,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_albedo.png"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_metallic.png"
       },
@@ -4101,7 +4101,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4170,7 +4170,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_albedo.png"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_metallic.png"
       },
@@ -4273,7 +4273,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4342,7 +4342,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_albedo.png"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_metallic.png"
       },
@@ -4445,7 +4445,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4514,7 +4514,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_albedo.png"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_metallic.png"
       },
@@ -4617,7 +4617,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4686,7 +4686,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_albedo.png"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_metallic.png"
       },
@@ -4789,7 +4789,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -4858,7 +4858,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_albedo.png"
       },
-      "Flags": 0,
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\textures\\faux-stone-siding-bl-kea5jb\\faux-stone-siding-bl\\faux-stone-siding_metallic.png"
       },

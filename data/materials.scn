@@ -123,6 +123,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -191,6 +192,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\brick-wall-bl\\brick-wall_albedo.png"
       },
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\textures\\brick-wall-bl\\brick-wall_metallic.png"
       },
@@ -259,6 +261,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\concrete3-bl\\concrete3-albedo.png"
       },
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\textures\\concrete3-bl\\concrete3-Metallic.png"
       },
@@ -327,6 +330,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\metal-compartments-bl\\metal-compartments_albedo.png"
       },
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\textures\\metal-compartments-bl\\metal-compartments_metallic.png"
       },
@@ -429,6 +433,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\rocky_dirt1-bl\\rocky_dirt1-albedo.png"
       },
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\textures\\rocky_dirt1-bl\\rocky_dirt1-metallic.png"
       },
@@ -565,6 +570,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\antique_veneer1_bl\\antique_veneer1_albedo.png"
       },
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\textures\\antique_veneer1_bl\\antique_veneer1_Metallic.png"
       },
@@ -633,6 +639,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\broken_down_concrete2_bl\\broken_down_concrete2_albedo.png"
       },
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\textures\\broken_down_concrete2_bl\\broken_down_concrete2_Metallic.png"
       },
@@ -701,6 +708,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\carbon-fiber-bl\\carbon-fiber_albedo.png"
       },
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\textures\\carbon-fiber-bl\\carbon-fiber_metallic.png"
       },
@@ -769,6 +777,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\cavern-deposits-bl\\cavern-deposits_albedo.png"
       },
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\textures\\cavern-deposits-bl\\cavern-deposits_metallic.png"
       },
@@ -837,6 +846,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\textures\\dented-metal-bl\\dented-metal_albedo.png"
       },
+      "Flags": 2,
       "MetalTex": {
        "PathName": "downloaded\\textures\\dented-metal-bl\\dented-metal_height.png"
       },
@@ -868,6 +878,2076 @@
      "X": 2.0181095600128174,
      "Y": 0.0,
      "Z": -2.329702854156494
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 16,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 16
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.009999999776482582,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 7.7767744064331055,
+     "Y": 0.9728357791900635,
+     "Z": -6.442400932312012
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 17,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 17
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.05000000074505806,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 5.62271785736084,
+     "Y": 0.9728357791900635,
+     "Z": -6.442400932312012
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 18,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 18
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.15000000596046448,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 1.4008839130401611,
+     "Y": 0.9728357791900635,
+     "Z": -6.442400932312012
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 19,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 19
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.10000000149011612,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 3.5549399852752686,
+     "Y": 0.9728357791900635,
+     "Z": -6.442400932312012
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 20,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 20
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.3499999940395355,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -7.114384651184082,
+     "Y": 0.9728357791900635,
+     "Z": -6.442400932312012
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 21,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 21
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.30000001192092896,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -4.960329055786133,
+     "Y": 0.9728357791900635,
+     "Z": -6.442400932312012
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 22,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 22
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.20000000298023224,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -0.738494873046875,
+     "Y": 0.9728357791900635,
+     "Z": -6.442400932312012
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 23,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 23
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.25,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -2.8925509452819824,
+     "Y": 0.9728357791900635,
+     "Z": -6.442400932312012
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 24,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 24
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.4000000059604645,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -9.310855865478516,
+     "Y": 0.9728357791900635,
+     "Z": -6.442400932312012
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 25,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 25
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.44999998807907104,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -11.464912414550781,
+     "Y": 0.9728357791900635,
+     "Z": -6.442400932312012
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 26,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 26
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.009999999776482582,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 7.7767744064331055,
+     "Y": 0.9728357791900635,
+     "Z": -12.825482368469238
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 27,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 27
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.05000000074505806,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 5.62271785736084,
+     "Y": 0.9728357791900635,
+     "Z": -12.825482368469238
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 28,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 28
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.10000000149011612,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 3.5549399852752686,
+     "Y": 0.9728357791900635,
+     "Z": -12.825482368469238
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 29,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 29
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.15000000596046448,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 1.4008839130401611,
+     "Y": 0.9728357791900635,
+     "Z": -12.825482368469238
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 30,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 30
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.20000000298023224,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -0.738494873046875,
+     "Y": 0.9728357791900635,
+     "Z": -12.825482368469238
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 31,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 31
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.25,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -2.8925509452819824,
+     "Y": 0.9728357791900635,
+     "Z": -12.825482368469238
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 32,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 32
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.30000001192092896,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -4.960329055786133,
+     "Y": 0.9728357791900635,
+     "Z": -12.825482368469238
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 33,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 33
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.3499999940395355,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -7.114384651184082,
+     "Y": 0.9728357791900635,
+     "Z": -12.825482368469238
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 34,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 34
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.4000000059604645,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -9.310855865478516,
+     "Y": 0.9728357791900635,
+     "Z": -12.825482368469238
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 35,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 35
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 1.0,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.44999998807907104,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -11.464912414550781,
+     "Y": 0.9728357791900635,
+     "Z": -12.825482368469238
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 36,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 36
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.5,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.009999999776482582,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 7.7767744064331055,
+     "Y": 0.9728357791900635,
+     "Z": -9.430325508117676
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 37,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 37
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.5,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.05000000074505806,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 5.62271785736084,
+     "Y": 0.9728357791900635,
+     "Z": -9.430325508117676
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 38,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 38
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.5,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.10000000149011612,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 3.5549399852752686,
+     "Y": 0.9728357791900635,
+     "Z": -9.430325508117676
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 39,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 39
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.5,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.15000000596046448,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": 1.4008839130401611,
+     "Y": 0.9728357791900635,
+     "Z": -9.430325508117676
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 40,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 40
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.5,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.20000000298023224,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -0.738494873046875,
+     "Y": 0.9728357791900635,
+     "Z": -9.430325508117676
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 41,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 41
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.5,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.25,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -2.8925509452819824,
+     "Y": 0.9728357791900635,
+     "Z": -9.430325508117676
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 42,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 42
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.5,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.30000001192092896,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -4.960329055786133,
+     "Y": 0.9728357791900635,
+     "Z": -9.430325508117676
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 43,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 43
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.5,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.3499999940395355,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -7.114384651184082,
+     "Y": 0.9728357791900635,
+     "Z": -9.430325508117676
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 44,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 44
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.5,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.4000000059604645,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -9.310855865478516,
+     "Y": 0.9728357791900635,
+     "Z": -9.430325508117676
+    },
+    "Relative": false,
+    "Scale": {
+     "X": 1.0,
+     "Y": 1.0,
+     "Z": 1.0
+    }
+   }
+  },
+  {
+   "ID": 45,
+   "Name": "pbrsphere.glb",
+   "Parent": 4294967295,
+   "StaticMesh": {
+    "Draw": true,
+    "MaterialsOverride": {
+     "ID": 45
+    },
+    "Model": {
+     "Path": "common\\models\\pbrsphere.glb"
+    }
+   },
+   "StaticMeshMaterials": {
+    "Materials": [
+     {
+      "AOTex": {
+       "PathName": "invalid"
+      },
+      "AlbedoOpacity": {
+       "W": 1.0,
+       "X": 0.800000011920929,
+       "Y": 0.800000011920929,
+       "Z": 0.800000011920929
+      },
+      "AlbedoTex": {
+       "PathName": "invalid"
+      },
+      "Flags": 2,
+      "MetalTex": {
+       "PathName": "invalid"
+      },
+      "Metallic": 0.5,
+      "NormalTex": {
+       "PathName": "invalid"
+      },
+      "Roughness": 0.44999998807907104,
+      "RoughnessTex": {
+       "PathName": "invalid"
+      },
+      "UVOffsetScale": {
+       "W": 1.0,
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 1.0
+      }
+     }
+    ]
+   },
+   "Transform": {
+    "Orientation": {
+     "W": 1.0,
+     "X": 0.0,
+     "Y": 0.0,
+     "Z": 0.0
+    },
+    "Position": {
+     "X": -11.464912414550781,
+     "Y": 0.9728357791900635,
+     "Z": -9.430325508117676
     },
     "Relative": false,
     "Scale": {
