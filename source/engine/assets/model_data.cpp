@@ -14,8 +14,8 @@
 
 namespace R3
 {
-	const uint32_t c_bakedModelVersion = 2;		// change this to force rebake
-	const uint32_t c_bakedMaterialTexturePathLength = 128;	// avoid std::string in materials
+	const uint32_t c_bakedModelVersion = 3;		// change this to force rebake
+	const uint32_t c_bakedMaterialTexturePathLength = 256;	// avoid std::string in materials
 	const std::string c_bakedModelExtension = ".bmdl";
 	const std::string c_bakeSettingsExtension = ".bakesettings.json";
 
