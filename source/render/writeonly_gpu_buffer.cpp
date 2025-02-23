@@ -26,19 +26,13 @@ namespace R3
 		m_pooledBuffer = *newBuffer;
 	}
 
-	bool WriteOnlyGpuBuffer::AcquireNewStagingBuffer(Device& d)
+	bool WriteOnlyGpuBuffer::AcquireNewStagingBuffer()
 	{
 		R3_PROF_EVENT();
 
-		m_stagingEndOffset.store(0);
-
+		assert(m_stagingBuffer.m_buffer.m_buffer == VK_NULL_HANDLE && m_stagingEndOffset == 0);	// make sure there is no existing staging data
+		
 		auto stagingPool = Systems::GetSystem<RenderSystem>()->GetBufferPool();
-		if (m_stagingBuffer.m_buffer.m_buffer != VK_NULL_HANDLE)	// release the old buffer
-		{
-			stagingPool->Release(m_stagingBuffer);
-			m_stagingBuffer = {};
-		}
-
 		auto newStagingBuffer = stagingPool->GetBuffer(m_debugName + "_staging", m_stagingMaxSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO, true);
 		if (!newStagingBuffer.has_value())
 		{
@@ -75,11 +69,6 @@ namespace R3
 		
 		m_allDataMaxSize = dataMaxSize;
 		m_stagingMaxSize = stagingMaxSize;
-		if (!AcquireNewStagingBuffer(d))
-		{
-			LogError("Failed to acquire staging buffer");
-			return false;
-		}
 
 		return m_pooledBuffer.m_buffer.m_allocation != VK_NULL_HANDLE;
 	}
@@ -107,8 +96,10 @@ namespace R3
 
 		if (m_stagingBuffer.m_buffer.m_buffer == VK_NULL_HANDLE || m_stagingBuffer.m_mappedBuffer == nullptr)
 		{
-			LogError("Gpu buffer {} has no staging buffer!", m_debugName);
-			return false;
+			if (!AcquireNewStagingBuffer())
+			{
+				return false;
+			}
 		}
 		if (sizeBytes == 0 || writeStartOffset == -1 || (writeStartOffset + sizeBytes) > m_allDataCurrentSizeBytes.load())
 		{
@@ -185,9 +176,13 @@ namespace R3
 			// use a memory barrier to ensure the transfer finishes before any reads
 			VulkanHelpers::DoMemoryBarrier(cmds, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_MEMORY_WRITE_BIT, barrierDst, VK_ACCESS_MEMORY_READ_BIT);
 
-			if (!AcquireNewStagingBuffer(d))
+			// now release the staging buffer
+			m_stagingEndOffset.store(0);
+			if (m_stagingBuffer.m_buffer.m_buffer != VK_NULL_HANDLE)
 			{
-				LogError("Failed to acquire new staging buffer! All writes will fail");
+				auto stagingPool = Systems::GetSystem<RenderSystem>()->GetBufferPool();
+				stagingPool->Release(m_stagingBuffer);
+				m_stagingBuffer = {};
 			}
 		}
 	}

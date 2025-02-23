@@ -10,9 +10,9 @@ namespace R3
 {
 	// a gpu buffer with deferred writes
 	// has a fixed max size, set via Create()
-	// fixed-sized staging buffers provided by render system buffer pool (acquired on create + flush)
+	// fixed-sized staging buffers provided by render system buffer pool (acquired on write, released on flush)
 	// writes are copied to staging buffer and scheduled for flush (lock free, thread-safe)
-	// flush will call vkCopyBuffer to push from staging -> the actual buffer, release the old staging buffer + acquire a new one
+	// flush will call vkCopyBuffer to push from staging -> the actual buffer, release the old staging buffer
 	// async write/flush guarded by a mutex
 	// use Write() to schedule individual buffer copies (with write combining)
 	class Device;
@@ -22,7 +22,7 @@ namespace R3
 		WriteOnlyGpuBuffer() = default;
 		WriteOnlyGpuBuffer(const WriteOnlyGpuBuffer&) = delete;
 		WriteOnlyGpuBuffer(WriteOnlyGpuBuffer&&) = delete;
-		void RetirePooledBuffer(Device&);			// old buffer is retired + a new one is created, pooled buffers only. call this before flushing writes
+		void RetirePooledBuffer(Device&);			// old buffer is released + a new one is created. call this before flushing writes
 		bool Create(std::string_view name, Device& d, uint64_t dataMaxSize, uint64_t stagingMaxSize, VkBufferUsageFlags usageFlags);	// allocates memory
 		uint64_t Allocate(uint64_t sizeBytes);									// allocate from internal data
 		bool Write(uint64_t writeStartOffset, uint64_t sizeBytes, const void* data);	// writes to staging buffer + schedules copy
@@ -35,7 +35,7 @@ namespace R3
 		VkBuffer GetBuffer();
 	private:
 		Mutex m_mutex;	// required since write and flush cannot overlap
-		bool AcquireNewStagingBuffer(Device& d);
+		bool AcquireNewStagingBuffer();
 		
 		// keep track of flags used during creation
 		VkBufferUsageFlags m_usageFlags;
