@@ -48,7 +48,6 @@ namespace R3
 		else
 		{
 			m_stagingBuffer = *newStagingBuffer;
-			VulkanHelpers::SetBufferName(d.GetVkDevice(), m_stagingBuffer.m_buffer, m_debugName + " (Staging)");	// can we rename existing buffers?!
 		}
 
 		return true;

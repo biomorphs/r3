@@ -192,12 +192,15 @@ namespace R3
 		r.m_frameReleased = time->GetFrameIndex();
 		r.m_pooledBuffer = buf;
 		{
-			ScopedLock lockReleased(m_releasedBuffersMutex);
+			ScopedLock lockStats(m_debugBuffersMutex);
 			m_totalCachedBytes += buf.sizeBytes;
 			m_totalCached++;
 			m_allocatedBuffers.erase((uint64_t)buf.m_deviceAddress);
 			m_cachedBuffers[(uint64_t)buf.m_deviceAddress] = buf;
 		}
-		m_releasedBuffers.push_back(r);
+		{
+			ScopedLock lockReleased(m_releasedBuffersMutex);
+			m_releasedBuffers.push_back(r);
+		}
 	}
 }
