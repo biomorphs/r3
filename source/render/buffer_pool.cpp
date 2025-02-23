@@ -108,19 +108,30 @@ namespace R3
 		return newBuffer;
 	}
 
-	void BufferPool::CollectAllocatedBufferStats(CollectBufferStatFn fn)
+	void BufferPool::CollectBufferStats(const std::unordered_map<uint64_t, PooledBuffer>& statsMap, CollectBufferStatFn fn)
 	{
 		R3_PROF_EVENT();
 		std::vector<PooledBuffer> buffers;
 		{
 			ScopedLock lockStats(m_debugBuffersMutex);
-			for (const auto& it : m_allocatedBuffers)
+			for (const auto& it : statsMap)
 			{
 				buffers.emplace_back(it.second);
 			}
 		}
 		std::sort(buffers.begin(), buffers.end(), [](const PooledBuffer& b0, const PooledBuffer& b1) {
-			return b0.sizeBytes > b1.sizeBytes;
+			if (b0.sizeBytes > b1.sizeBytes)
+			{
+				return true;
+			}
+			else if (b0.sizeBytes == b1.sizeBytes)
+			{
+				return strcmp(b0.m_name.c_str(), b1.m_name.c_str()) < 0;
+			}
+			else
+			{
+				return false;
+			}
 		});
 		for (const auto& it : buffers)
 		{
@@ -128,24 +139,16 @@ namespace R3
 		}
 	}
 
+	void BufferPool::CollectAllocatedBufferStats(CollectBufferStatFn fn)
+	{
+		R3_PROF_EVENT();
+		CollectBufferStats(m_allocatedBuffers, fn);
+	}
+
 	void BufferPool::CollectCachedBufferStats(CollectBufferStatFn fn)
 	{
 		R3_PROF_EVENT();
-		std::vector<PooledBuffer> buffers;
-		{
-			ScopedLock lockStats(m_debugBuffersMutex);
-			for (const auto& it : m_cachedBuffers)
-			{
-				buffers.emplace_back(it.second);
-			}
-		}
-		std::sort(buffers.begin(), buffers.end(), [](const PooledBuffer& b0, const PooledBuffer& b1) {
-			return b0.sizeBytes > b1.sizeBytes;
-		});
-		for (const auto& it : buffers)
-		{
-			fn(it);
-		}
+		CollectBufferStats(m_cachedBuffers, fn);
 	}
 
 	void BufferPool::CollectGarbage(uint64_t frameIndex, class Device& d)

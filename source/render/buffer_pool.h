@@ -40,6 +40,7 @@ namespace R3
 		void CollectCachedBufferStats(CollectBufferStatFn fn);
 
 	private:
+		void CollectBufferStats(const std::unordered_map<uint64_t, PooledBuffer>& statsMap, CollectBufferStatFn fn);
 		void CollectGarbage(uint64_t frameIndex, class Device& d);
 		Mutex m_releasedBuffersMutex;
 		struct ReleasedBuffer {
