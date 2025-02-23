@@ -90,6 +90,8 @@ namespace R3
 			uint32_t m_totalTransparentInstances = 0;
 			uint32_t m_totalStaticInstances = 0;
 			uint32_t m_totalDynamicInstances = 0;
+			uint32_t m_totalStaticShadowCasters = 0;
+			uint32_t m_totalDynamicShadowCasters = 0;
 			double m_writeGBufferCmdsStartTime = 0.0;
 			double m_writeGBufferCmdsEndTime = 0.0;
 			double m_writeForwardCmdsStartTime = 0.0;
@@ -128,14 +130,16 @@ namespace R3
 		MeshPartInstanceBucket m_staticTransparents;						// all static transparent instances collected here on scene rebuild
 		MeshPartInstanceBucket m_dynamicOpaques;							// all dynamic opaque instances collected here every frame
 		MeshPartInstanceBucket m_dynamicTransparents;						// all dynamic transparent instances collected here every frame
+		MeshPartInstanceBucket m_staticShadowCasters;						// all static shadow caster meshes
+		MeshPartInstanceBucket m_dynamicShadowCasters;						// all dynamic shadow casters
 
 		MeshPartBucketDrawIndirects m_staticOpaqueDrawData;					// draw calls generated from static opaque bucket
 		MeshPartBucketDrawIndirects m_staticTransparentDrawData;			// draw calls generated from static transparents bucket
 		MeshPartBucketDrawIndirects m_dynamicOpaqueDrawData;				// draw calls generated from dynamic opaque bucket
 		MeshPartBucketDrawIndirects m_dynamicTransparentDrawData;			// draw calls generated from dynamic opaque bucket
 
-		MeshPartBucketDrawIndirects m_staticSunShadowCastersDrawData[4];		// draw calls generated from static opaque bucket for sun shadowcasters, 1 per cascade
-		MeshPartBucketDrawIndirects m_dynamicSunShadowCastersDrawData[4];		// draw calls generated from dynamic opaque bucket for sun shadowcasters, 1 per cascade
+		MeshPartBucketDrawIndirects m_staticSunShadowCastersDrawData[4];		// draw calls generated from static shadowcasters, 1 per cascade
+		MeshPartBucketDrawIndirects m_dynamicSunShadowCastersDrawData[4];		// draw calls generated from dynamic shadowcasters, 1 per cascade
 
 		const uint32_t c_maxGlobalsPerFrame = 8;		// need one per drawing pass
 		const uint32_t c_maxInstances = 1024 * 256;		// max static+dynamic instances we support

@@ -29,7 +29,8 @@ namespace R3
 
 	enum class MeshMaterialFlags
 	{
-		EnablePunchThroughAlpha = 1
+		EnablePunchThroughAlpha = 1,
+		CastShadows = 2
 	};
 
 	struct MeshMaterial							// uploaded to GPU in m_allMaterialsGpu
@@ -43,7 +44,7 @@ namespace R3
 		uint32_t m_metalnessTexture = -1;
 		uint32_t m_normalTexture = -1;
 		uint32_t m_aoTexture = -1;
-		uint32_t m_flags = 0;
+		uint32_t m_flags = (uint32_t)MeshMaterialFlags::CastShadows;
 	};
 
 	struct MeshDrawData

@@ -115,6 +115,10 @@ namespace R3
 		ImGui::Text(txt.c_str());
 		txt = std::format("    {} Transparent Part Instances", m_frameStats.m_totalTransparentInstances);
 		ImGui::Text(txt.c_str());
+		txt = std::format("    {} Static Shadow Casters", m_frameStats.m_totalStaticShadowCasters);
+		ImGui::Text(txt.c_str());
+		txt = std::format("    {} Dynamic Shadow Casters", m_frameStats.m_totalDynamicShadowCasters);
+		ImGui::Text(txt.c_str());
 		txt = std::format("Part instances took {:.3f}ms to collect", 1000.0 * (m_frameStats.m_collectInstancesEndTime - m_frameStats.m_collectInstancesStartTime));
 		ImGui::Text(txt.c_str());
 		txt = std::format("Draw buckets took {:.3f}ms to prepare", 1000.0 * (m_frameStats.m_prepareBucketsEndTime - m_frameStats.m_prepareBucketsStartTime));
@@ -385,8 +389,8 @@ namespace R3
 				for (int i = 0; i < cascades; ++i)
 				{
 					Frustum sunShadowFrustum(lights->GetShadowCascadeMatrix(i));
-					PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, sunShadowFrustum, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticOpaques, m_staticSunShadowCastersDrawData[i]);
-					PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, sunShadowFrustum, m_dynamicMeshInstances.GetBufferDeviceAddress(), m_dynamicOpaques, m_dynamicSunShadowCastersDrawData[i]);
+					PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, sunShadowFrustum, m_staticMeshInstances.GetBufferDeviceAddress(), m_staticShadowCasters, m_staticSunShadowCastersDrawData[i]);
+					PrepareAndCullDrawBucketCompute(*ctx.m_device, ctx.m_graphicsCmds, sunShadowFrustum, m_dynamicMeshInstances.GetBufferDeviceAddress(), m_dynamicShadowCasters, m_dynamicSunShadowCastersDrawData[i]);
 				}
 			}
 			m_frameStats.m_prepareBucketsEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
@@ -455,7 +459,7 @@ namespace R3
 		if (m_rebuildingStaticScene)
 		{
 			m_staticMaterialOverrides.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
-			if ((m_staticOpaques.m_partInstances.size() > 0 || m_staticTransparents.m_partInstances.size() > 0))
+			if ((m_staticOpaques.m_partInstances.size() > 0 || m_staticTransparents.m_partInstances.size() > 0 || m_staticShadowCasters.m_partInstances.size() > 0))
 			{
 				m_staticMeshInstances.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 			}
@@ -463,7 +467,7 @@ namespace R3
 		}
 
 		// Flush dynamic data every frame
-		if ((m_dynamicOpaques.m_partInstances.size() > 0 || m_dynamicTransparents.m_partInstances.size() > 0))
+		if ((m_dynamicOpaques.m_partInstances.size() > 0 || m_dynamicTransparents.m_partInstances.size() > 0 || m_dynamicShadowCasters.m_partInstances.size() > 0))
 		{
 			m_dynamicMeshInstances.Flush(*ctx.m_device, ctx.m_graphicsCmds, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 		}
@@ -813,6 +817,19 @@ namespace R3
 						{
 							transparents.m_partInstances.emplace_back(bucketInstance);
 						}
+
+						if (meshMaterial->m_flags & (uint32_t)MeshMaterialFlags::CastShadows)
+						{
+							if constexpr (std::is_same<MeshCmpType, StaticMeshComponent>::value)
+							{
+								m_staticShadowCasters.m_partInstances.emplace_back(bucketInstance);
+							}
+							else
+							{
+								m_dynamicShadowCasters.m_partInstances.emplace_back(bucketInstance);
+							}
+						}
+
 						currentInstanceBufferOffset++;
 					}
 				}
@@ -832,6 +849,7 @@ namespace R3
 		R3_PROF_EVENT();
 		m_staticOpaques.m_partInstances.clear();
 		m_staticTransparents.m_partInstances.clear();
+		m_staticShadowCasters.m_partInstances.clear();
 		RebuildStaticMaterialOverrides();
 		RebuildInstances<StaticMeshComponent, false>(m_staticMeshInstances, m_staticOpaques, m_staticTransparents);
 	}
@@ -841,6 +859,7 @@ namespace R3
 	{
 		m_dynamicOpaques.m_partInstances.clear();
 		m_dynamicTransparents.m_partInstances.clear();
+		m_dynamicShadowCasters.m_partInstances.clear();
 		RebuildInstances<DynamicMeshComponent, true>(m_dynamicMeshInstances, m_dynamicOpaques, m_dynamicTransparents);
 	}
 
@@ -903,11 +922,12 @@ namespace R3
 
 		m_frameStats.m_totalOpaqueInstances = (uint32_t)(m_staticOpaques.m_partInstances.size() + m_dynamicOpaques.m_partInstances.size());
 		m_frameStats.m_totalTransparentInstances = (uint32_t)(m_staticTransparents.m_partInstances.size() + m_dynamicTransparents.m_partInstances.size());
-		m_frameStats.m_totalPartInstances = m_frameStats.m_totalOpaqueInstances + m_frameStats.m_totalTransparentInstances;
-		m_frameStats.m_collectInstancesEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		m_frameStats.m_totalStaticInstances = (uint32_t)(m_staticOpaques.m_partInstances.size() + m_staticTransparents.m_partInstances.size());
 		m_frameStats.m_totalDynamicInstances = (uint32_t)(m_dynamicOpaques.m_partInstances.size() + m_dynamicTransparents.m_partInstances.size());
-
+		m_frameStats.m_totalStaticShadowCasters = (uint32_t)(m_staticShadowCasters.m_partInstances.size());
+		m_frameStats.m_totalDynamicShadowCasters = (uint32_t)(m_dynamicShadowCasters.m_partInstances.size());
+		m_frameStats.m_totalPartInstances = m_frameStats.m_totalOpaqueInstances + m_frameStats.m_totalTransparentInstances;
+		m_frameStats.m_collectInstancesEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		m_frameStats.m_prepareBucketsStartTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();
 		if (!m_enableComputeCulling)		// do nothing here, gpu culling happens later
 		{
@@ -922,8 +942,8 @@ namespace R3
 			const int cascades = lights->GetShadowCascadeCount();
 			for (int i = 0; i < cascades; ++i)
 			{
-				PrepareDrawBucket(m_staticOpaques, m_staticSunShadowCastersDrawData[i]);
-				PrepareDrawBucket(m_dynamicOpaques, m_dynamicSunShadowCastersDrawData[i]);
+				PrepareDrawBucket(m_staticShadowCasters, m_staticSunShadowCastersDrawData[i]);
+				PrepareDrawBucket(m_dynamicShadowCasters, m_dynamicSunShadowCastersDrawData[i]);
 			}
 		}
 		m_frameStats.m_prepareBucketsEndTime = GetSystem<TimeSystem>()->GetElapsedTimeReal();

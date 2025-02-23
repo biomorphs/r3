@@ -152,6 +152,7 @@ namespace R3
 				for (uint32_t mat = 0; mat < newMesh.m_materialCount && gpuIndex != -1; ++mat)
 				{
 					auto& md = m_allMaterials[mat + gpuIndex];		// use same indices for cpu + gpu material data
+					md.m_flags = (uint32_t)MeshMaterialFlags::CastShadows;	// always cast shadows by default
 					md.m_albedoOpacity = { m->m_materials[mat].m_albedo, m->m_materials[mat].m_opacity };
 					md.m_metallic = m->m_materials[mat].m_metallic;
 					md.m_roughness = m->m_materials[mat].m_roughness;

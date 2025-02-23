@@ -76,6 +76,17 @@ void main() {
 		directLight += PBRDirectLighting(mat, viewDir, normalize(pixelToLight), normal, lightRadiance, attenuation);
 	}
 	
+	// Apply spot lights (direct)
+	uint spotLightCount = lightsData.m_spotlightCount;
+	for(uint s=0;s<spotLightCount;++s)
+	{
+		Spotlight sl = lightsData.m_allSpotlights.data[s];
+		vec3 pixelToLight = sl.m_positionDistance.xyz - inWorldSpacePos;
+		vec3 pixelToLightDir = normalize(pixelToLight);
+		float attenuation = GetSpotlightAttenuation(sl, pixelToLight, pixelToLightDir);
+		directLight += PBRDirectLighting(mat, viewDir, pixelToLightDir, normal, sl.m_colourOuterAngle.xyz, attenuation);
+	}
+	
 	// Ambient is a hack, tries to combine sky + sun colour somehow
 	vec3 ambient = PBRGetAmbientLighting(mat, 
 		lightsData.m_sunColourAmbient.xyz, 
