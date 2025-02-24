@@ -31,7 +31,6 @@ function Dungeons_ActionPickupItem(action)
 				_G[pickupItem.m_onPickupFn](action.newOwner, action.itemToPickup)
 			end
 		end
-		R3.RebuildStaticScene()
 	end
 	return 'complete'
 end

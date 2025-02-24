@@ -28,7 +28,6 @@ function Dungeons_TorchOnEquip(actor,torch)
 			light.m_enabled = true
 		end
 	end
-	R3.RebuildStaticScene()	-- temp, remove when we add dynamic meshes
 end
 
 function Dungeons_TorchOnUnequip(actor,torch)
@@ -45,5 +44,4 @@ function Dungeons_TorchOnUnequip(actor,torch)
 			light.m_enabled = false
 		end
 	end
-	R3.RebuildStaticScene()	-- temp, remove when we add dynamic meshes
 end
