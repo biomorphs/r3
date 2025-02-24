@@ -39,10 +39,7 @@
    }
   },
   {
-   "ID": 2,
-   "Name": "Visual Entity",
-   "Parent": 0,
-   "StaticMesh": {
+   "DynamicMesh": {
     "Draw": true,
     "MaterialsOverride": {
      "ID": 4294967295
@@ -51,6 +48,9 @@
      "Path": "downloaded\\KayKit_Adventurers_1.0_FREE\\Assets\\gltf\\shield_badge_color.gltf"
     }
    },
+   "ID": 1,
+   "Name": "Visual Entity",
+   "Parent": 0,
    "Transform": {
     "Orientation": {
      "W": 0.7071068286895752,

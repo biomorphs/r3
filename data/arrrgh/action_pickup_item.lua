@@ -18,7 +18,7 @@ function Dungeons_ActionPickupItem(action)
 		ownerInventory:AddItem(action.itemToPickup)
 		local allChildren = world:GetAllChildren(action.itemToPickup)
 		for c=1,#allChildren do 
-			local meshComponent = world.GetComponent_StaticMesh(allChildren[c])
+			local meshComponent = world.GetComponent_DynamicMesh(allChildren[c])
 			if(meshComponent ~= nil) then 
 				meshComponent:SetShouldDraw(false)
 			end

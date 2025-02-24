@@ -39,10 +39,7 @@
    }
   },
   {
-   "ID": 1,
-   "Name": "Visual Entity",
-   "Parent": 0,
-   "StaticMesh": {
+   "DynamicMesh": {
     "Draw": true,
     "MaterialsOverride": {
      "ID": 4294967295
@@ -51,6 +48,9 @@
      "Path": "downloaded\\KayKit_DungeonRemastered_1.1_FREE\\Assets\\gltf\\torch.gltf"
     }
    },
+   "ID": 1,
+   "Name": "Visual Entity",
+   "Parent": 0,
    "Transform": {
     "Orientation": {
      "W": 1.0,

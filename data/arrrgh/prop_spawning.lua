@@ -40,9 +40,13 @@ function Dungeons_SpawnProp(gridcmp, propName, tilePos, worldPos, rotation)
 		-- add every entity to the grid, even if they are not interactive
 		Arrrgh.SetEntityTilePosition(gridcmp, newEntities[e], tilePos.x, tilePos.y)
 		-- props spawn invisible
-		local staticMesh = world.GetComponent_StaticMesh(newEntities[e])
-		if(staticMesh ~= nil) then 
-			staticMesh:SetShouldDraw(false)
+		local meshComponent = world.GetComponent_DynamicMesh(newEntities[e])
+		if(meshComponent ~= nil) then 
+			meshComponent:SetShouldDraw(false)
+		end
+		meshComponent = world.GetComponent_StaticMesh(newEntities[e])
+		if(meshComponent ~= nil) then 
+			meshComponent:SetShouldDraw(false)
 		end
 	end
 end

@@ -36,9 +36,9 @@ function Dungeons_SpawnItem(gridcmp, itemName, tilePos, worldPos, spawnVisible)
 
 	local makeVisible = spawnVisible or false -- invisible by default
 	for e=1,#newEntities do 
-		local staticMesh = world.GetComponent_StaticMesh(newEntities[e])
-		if(staticMesh ~= nil) then 
-			staticMesh:SetShouldDraw(makeVisible)
+		local meshComponent = world.GetComponent_DynamicMesh(newEntities[e])
+		if(meshComponent ~= nil) then 
+			meshComponent:SetShouldDraw(makeVisible)
 		end
 	end
 

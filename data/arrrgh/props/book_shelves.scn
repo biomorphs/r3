@@ -31,9 +31,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -41,8 +39,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.4000000059604645,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -67,9 +63,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -77,8 +71,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.4000000059604645,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -103,9 +95,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -113,8 +103,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.5,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -139,9 +127,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -149,8 +135,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.30000001192092896,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -175,9 +159,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -185,8 +167,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.5,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -211,9 +191,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -221,8 +199,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.4000000059604645,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -247,9 +223,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -257,8 +231,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.5,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -283,9 +255,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -293,8 +263,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.5,
       "RoughnessTex": {
        "PathName": "invalid"
@@ -319,9 +287,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -329,8 +295,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.5,
       "RoughnessTex": {
        "PathName": "invalid"

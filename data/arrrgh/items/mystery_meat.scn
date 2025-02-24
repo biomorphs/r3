@@ -1,10 +1,7 @@
 {
  "AllEntities": [
   {
-   "ID": 0,
-   "Name": "Visual Entity",
-   "Parent": 1,
-   "StaticMesh": {
+   "DynamicMesh": {
     "Draw": true,
     "MaterialsOverride": {
      "ID": 0
@@ -13,6 +10,9 @@
      "Path": "downloaded\\KayKit_Restaurant_Bits_1.0_FREE\\Assets\\fbx\\food_ingredient_ham.fbx"
     }
    },
+   "ID": 0,
+   "Name": "Visual Entity",
+   "Parent": 1,
    "StaticMeshMaterials": {
     "Materials": [
      {
@@ -28,9 +28,7 @@
       "AlbedoTex": {
        "PathName": "downloaded\\KayKit_Restaurant_Bits_1.0_FREE\\Assets\\textures\\restaurantbits_texture.png"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -38,8 +36,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.30000001192092896,
       "RoughnessTex": {
        "PathName": "invalid"

@@ -19,7 +19,7 @@ function Dungeons_TorchOnEquip(actor,torch)
 	end 
 	local allChildren = world:GetAllChildren(torch)
 	for child=1,#allChildren do 
-		local meshComponent = world.GetComponent_StaticMesh(allChildren[child])
+		local meshComponent = world.GetComponent_DynamicMesh(allChildren[child])
 		if(meshComponent ~= nil) then 
 			meshComponent:SetShouldDraw(true)
 		end
@@ -36,7 +36,7 @@ function Dungeons_TorchOnUnequip(actor,torch)
 	world:SetParent(torch, EntityHandle.new())
 	local allChildren = world:GetAllChildren(torch)
 	for child=1,#allChildren do 
-		local meshComponent = world.GetComponent_StaticMesh(allChildren[child])
+		local meshComponent = world.GetComponent_DynamicMesh(allChildren[child])
 		if(meshComponent ~= nil) then 
 			meshComponent:SetShouldDraw(false)
 		end

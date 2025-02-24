@@ -1,10 +1,7 @@
 {
  "AllEntities": [
   {
-   "ID": 0,
-   "Name": "Visual Entity",
-   "Parent": 1,
-   "StaticMesh": {
+   "DynamicMesh": {
     "Draw": true,
     "MaterialsOverride": {
      "ID": 4294967295
@@ -13,6 +10,9 @@
      "Path": "downloaded\\KayKit_Restaurant_Bits_1.0_FREE\\Assets\\gltf\\food_burger.gltf"
     }
    },
+   "ID": 0,
+   "Name": "Visual Entity",
+   "Parent": 1,
    "Transform": {
     "Orientation": {
      "W": 1.0,

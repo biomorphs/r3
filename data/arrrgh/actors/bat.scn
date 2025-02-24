@@ -37,10 +37,7 @@
    }
   },
   {
-   "ID": 1,
-   "Name": "Bat_Visual",
-   "Parent": 0,
-   "StaticMesh": {
+   "DynamicMesh": {
     "Draw": true,
     "MaterialsOverride": {
      "ID": 1
@@ -49,6 +46,9 @@
      "Path": "downloaded\\Bat\\VAMP_BAT.OBJ"
     }
    },
+   "ID": 1,
+   "Name": "Bat_Visual",
+   "Parent": 0,
    "StaticMeshMaterials": {
     "Materials": [
      {
@@ -64,9 +64,7 @@
       "AlbedoTex": {
        "PathName": "invalid"
       },
-      "HeightmapTex": {
-       "PathName": "invalid"
-      },
+      "Flags": 2,
       "MetalTex": {
        "PathName": "invalid"
       },
@@ -74,8 +72,6 @@
       "NormalTex": {
        "PathName": "invalid"
       },
-      "ParalaxAmount": 0.07999999821186066,
-      "ParalaxShadows": 0,
       "Roughness": 0.10000000149011612,
       "RoughnessTex": {
        "PathName": "invalid"
