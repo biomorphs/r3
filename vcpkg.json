@@ -25,6 +25,7 @@
     "nativefiledialog-extended",
     "concurrentqueue",
     "meshoptimizer",
-	"vulkan-utility-libraries"
-  ]
+    "vulkan-utility-libraries"
+  ],
+  "builtin-baseline": "c50109fdf986b28d54efd76bbad58ea6c9c51f05"
 }
